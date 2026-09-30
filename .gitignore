@@ -1,0 +1,43 @@
+# --- Secrets & local env -------------------------------------------------------
+.env
+.env.*
+*.env
+!.env.example
+!*.env.example
+*.pem
+*.key
+
+# --- OS / editor ------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# --- Python -------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+dist/
+build/
+
+# --- Node / Next.js -----------------------------------------------------------------
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+npm-debug.log*
+
+# --- Docker / misc --------------------------------------------------------------------
+*.log
