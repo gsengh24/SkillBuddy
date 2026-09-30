@@ -1,0 +1,90 @@
+"""Fixtures backed by real PostgreSQL and Redis.
+
+``DATABASE_URL`` must point at a server where the user may create databases (the
+local Compose and CI ``postgres`` users can). Tests never touch that database itself:
+each session, and each migration test, gets a freshly created database that is
+dropped afterwards.
+"""
+
+from __future__ import annotations
+
+import os
+import uuid
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
+from pathlib import Path
+
+import psycopg
+import pytest
+from alembic import command
+from alembic.config import Config
+from asgi_lifespan import LifespanManager
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
+from psycopg import sql
+from sqlalchemy.engine import make_url
+
+from app.core.config import Settings
+from app.main import create_app
+from tests.conftest import SettingsFactory
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+
+
+def _render(url: str, *, drivername: str | None = None, database: str | None = None) -> str:
+    changed = make_url(url).set(drivername=drivername, database=database)
+    return changed.render_as_string(hide_password=False)
+
+
+@contextmanager
+def temporary_database() -> Iterator[str]:
+    """Create an empty database on the configured server; yield its SQLAlchemy URL."""
+    base_url = os.environ["DATABASE_URL"]
+    name = f"{make_url(base_url).database}_test_{uuid.uuid4().hex[:12]}"
+    admin_dsn = _render(base_url, drivername="postgresql")
+    with psycopg.connect(admin_dsn, autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))
+    try:
+        yield _render(base_url, database=name)
+    finally:
+        with psycopg.connect(admin_dsn, autocommit=True) as connection:
+            connection.execute(
+                sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name))
+            )
+
+
+def alembic_config(database_url: str) -> Config:
+    config = Config(str(BACKEND_DIR / "alembic.ini"))
+    config.attributes["database_url"] = database_url
+    config.attributes["skip_logging_config"] = True
+    return config
+
+
+@pytest.fixture(scope="session")
+def migrated_database_url() -> Iterator[str]:
+    """A database migrated to head, shared by the whole test session."""
+    with temporary_database() as url:
+        command.upgrade(alembic_config(url), "head")
+        yield url
+
+
+@pytest.fixture
+def empty_database_url() -> Iterator[str]:
+    """A brand-new database with no migrations applied."""
+    with temporary_database() as url:
+        yield url
+
+
+@pytest.fixture
+def integration_settings(make_settings: SettingsFactory, migrated_database_url: str) -> Settings:
+    return make_settings(database_url=migrated_database_url)
+
+
+@asynccontextmanager
+async def live_client(settings: Settings) -> AsyncIterator[AsyncClient]:
+    """A client for an app with its lifespan running, i.e. real DB and Redis pools."""
+    app: FastAPI = create_app(settings)
+    async with LifespanManager(app) as manager:
+        transport = ASGITransport(app=manager.app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
