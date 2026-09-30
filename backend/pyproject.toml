@@ -1,0 +1,109 @@
+[project]
+name = "matchmaking-api"
+version = "0.1.0"
+description = "API and background worker for the matchmaking platform."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+    "fastapi>=0.140",
+    "uvicorn[standard]>=0.40",
+    "pydantic>=2.12",
+    "pydantic-settings>=2.10",
+    "sqlalchemy[asyncio]>=2.1",
+    "alembic>=1.18",
+    "psycopg[binary,pool]>=3.3",
+    "pgvector>=0.4",
+    "arq>=0.28",
+    "redis>=5.2",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16",
+    "mypy>=2.0",
+    "pytest>=9.0",
+    "pytest-asyncio>=1.0",
+    "pytest-cov>=7.0",
+    "httpx>=0.28",
+    "asgi-lifespan>=2.1",
+    "pre-commit>=4.0",
+]
+
+[tool.uv]
+package = false
+
+# --- Ruff -------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "B",        # bugbear
+    "UP",       # pyupgrade
+    "N",        # pep8-naming
+    "S",        # bandit (security)
+    "C4",       # comprehensions
+    "SIM",      # simplify
+    "RUF",      # ruff-specific
+    "ASYNC",    # async pitfalls
+    "DTZ",      # naive datetimes
+    "T20",      # stray print()
+    "PT",       # pytest style
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+"migrations/versions/**" = ["N999"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tests"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection idiom uses calls in argument defaults.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]
+
+# --- Mypy ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+files = ["app", "tests", "migrations"]
+
+[[tool.mypy.overrides]]
+module = ["arq.*", "pgvector.*", "asgi_lifespan.*"]
+ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# --- Pytest -------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = ["--strict-markers", "--strict-config", "-ra"]
+markers = [
+    "integration: needs real PostgreSQL (with pgvector) and Redis; run via `make test`.",
+]
+
+# --- Coverage -----------------------------------------------------------------------
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 85
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]
