@@ -1,0 +1,58 @@
+# Install once with:  cd backend && uv run pre-commit install
+# Run on everything:  cd backend && uv run pre-commit run --all-files
+#
+# Fast checks run on every commit; mypy and the frontend checks also run in CI.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+
+  # Block commits that contain credentials, tokens or keys.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (backend, strict)
+        entry: bash -c 'cd backend && uv run mypy'
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false
+
+      - id: frontend-prettier
+        name: prettier (frontend)
+        entry: bash -c 'cd frontend && npx prettier --check .'
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
+      - id: frontend-eslint
+        name: eslint (frontend)
+        entry: bash -c 'cd frontend && npm run --silent lint'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|mjs)$
+        pass_filenames: false
