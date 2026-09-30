@@ -14,6 +14,10 @@ consent.
 Past decisions and their reasons live in `docs/adr/`. Read the relevant ADRs before
 proposing structural changes; a change that contradicts one needs a new ADR.
 
+**Product shape:** a responsive web application (Next.js frontend + FastAPI backend). Not a
+mobile app, not a script. A native mobile app may come much later, so the API must stay
+clean and frontend-agnostic (see "API design" below).
+
 Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless asked.
 
 ## Architecture summary
@@ -90,6 +94,23 @@ Without Docker: `cd backend && uv run pytest tests/unit`, `uv run ruff check .`,
 5. **All model output is schema-validated** (Pydantic) before use. Invalid output gets one
    retry, then fails loudly. Treat all user-written text as untrusted input to prompts.
 
+## API design (frontend-agnostic)
+
+The web app is the first client of the API, not the only one. Design every endpoint as if a
+mobile app were calling it tomorrow.
+
+- Versioned REST + JSON under `/api/v1`. The OpenAPI schema is the contract; keep it
+  accurate (response models, status codes, error responses).
+- No presentation concerns in the API: no HTML, no UI copy, and no response shapes tailored
+  to one screen. Return resources and let each client compose them.
+- Authentication must work for non-browser clients (bearer tokens). Cookie sessions for the
+  web, if used, are a layer on top, not the only mechanism.
+- One error envelope (`{"error": {...}}`), stable machine-readable `code`s, and consistent
+  conventions (UTC ISO-8601 timestamps, UUIDs, cursor pagination) across all endpoints.
+- The frontend gets data only from public API endpoints. Never add web-only backdoors, and
+  never put business logic in Next.js that another client would have to duplicate.
+- Breaking changes go in a new API version, not into `/api/v1`.
+
 ## Coding standards
 
 **Backend (Python 3.12)**
@@ -110,6 +131,8 @@ Without Docker: `cd backend && uv run pytest tests/unit`, `uv run ruff check .`,
   `backend/.env.example` with a comment.
 
 **Frontend (TypeScript strict)**
+- Responsive, mobile-first layouts (Tailwind breakpoints scale up from small screens).
+  Every page must work well on a phone-sized viewport.
 - Server components by default; add `"use client"` only when needed.
 - Talk to the API only through `lib/api/client.ts`, with a Zod schema for every response.
 - Read env only through `lib/env.ts`. Never import server-only modules into client components.
