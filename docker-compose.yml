@@ -1,0 +1,151 @@
+# Local development stack. Start with `make up` (or `docker compose up --build`).
+#
+#   db       PostgreSQL 16 + pgvector      localhost:5432
+#   redis    Redis 7 (queue, cache)        localhost:6379
+#   migrate  one-shot `alembic upgrade head`, runs before api/worker start
+#   api      FastAPI, hot reload           http://localhost:8000  (docs at /docs)
+#   worker   Arq background worker, hot reload
+#   web      Next.js dev server            http://localhost:3000
+#
+# Every value below has a local-only default; override any of them in a root .env file
+# (see .env.example). Ports bind to 127.0.0.1 so nothing is exposed to the network.
+
+name: matchmaking
+
+x-backend-build: &backend-build
+  context: ./backend
+  target: dev
+
+x-backend-environment: &backend-environment
+  ENVIRONMENT: local
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_JSON: ${LOG_JSON:-true}
+  # Local development only. Production requires a real secret (docker-compose.prod.yml).
+  SECRET_KEY: ${SECRET_KEY:-local-development-only-secret-not-for-real-use}
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@db:5432/${POSTGRES_DB:-app}
+  REDIS_URL: redis://redis:6379/0
+  CORS_ALLOW_ORIGINS: http://localhost:${WEB_PORT:-3000}
+  # Docker Desktop bind mounts do not deliver file events; poll for hot reload.
+  WATCHFILES_FORCE_POLLING: "true"
+
+x-backend-service: &backend-service
+  build: *backend-build
+  image: matchmaking-backend:dev
+  environment: *backend-environment
+  volumes:
+    - ./backend:/app
+  init: true
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.6-pg16-trixie
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    <<: *backend-service
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *backend-service
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # Readiness, not just liveness: "healthy" means the DB, pgvector and Redis are usable.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=4)"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  worker:
+    <<: *backend-service
+    command: ["arq", "app.worker.settings.WorkerSettings", "--watch", "app"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "arq", "--check", "app.worker.settings.WorkerSettings"]
+      interval: 15s
+      timeout: 10s
+      retries: 4
+      start_period: 20s
+
+  web:
+    build:
+      context: ./frontend
+      target: dev
+    image: matchmaking-web:dev
+    init: true
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      # Keep the container's own Linux node_modules and build cache, not the host's.
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+volumes:
+  postgres-data:
+  redis-data:

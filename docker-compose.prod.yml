@@ -1,0 +1,152 @@
+# Reference production layout: a single-host deployment of the production images.
+#
+# Not used for local development. It documents how the pieces fit together and is a
+# working starting point for a small VPS. On a managed cloud, replace `db` and `redis`
+# with managed PostgreSQL (with pgvector) and Redis, and point the URLs at them.
+#
+#   cp infra/production.env.example infra/production.env   # then fill in every value
+#   docker compose -f docker-compose.prod.yml --env-file infra/production.env up -d --build
+#
+# A TLS-terminating reverse proxy (Caddy, nginx, or a cloud load balancer) is expected
+# in front of `web` and `api`; neither is published on a public interface here.
+
+name: matchmaking-prod
+
+x-backend-environment: &backend-environment
+  ENVIRONMENT: production
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_JSON: "true"
+  API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+  DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+  REDIS_URL: ${REDIS_URL:?REDIS_URL must be set}
+  CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:?CORS_ALLOW_ORIGINS must be set}
+  # Only trust X-Forwarded-* headers from the reverse proxy.
+  FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
+
+x-backend-service: &backend-service
+  build:
+    context: ./backend
+    target: runtime
+    args:
+      APP_VERSION: ${APP_VERSION:-unversioned}
+  image: ${REGISTRY:-matchmaking}/backend:${APP_VERSION:-unversioned}
+  environment: *backend-environment
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.6-pg16-trixie
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" --no-auth-warning ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    restart: unless-stopped
+    logging: *logging
+
+  # One-shot: apply migrations, then exit. Deploys run it before rolling api/worker.
+  migrate:
+    <<: *backend-service
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *backend-service
+    # Liveness healthcheck is built into the image.
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  worker:
+    <<: *backend-service
+    command: ["arq", "app.worker.settings.WorkerSettings"]
+    healthcheck:
+      test: ["CMD", "arq", "--check", "app.worker.settings.WorkerSettings"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  web:
+    build:
+      context: ./frontend
+      target: runtime
+    image: ${REGISTRY:-matchmaking}/web:${APP_VERSION:-unversioned}
+    environment:
+      API_INTERNAL_URL: http://api:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache:uid=1000,gid=1000
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+volumes:
+  postgres-data:
+  redis-data:

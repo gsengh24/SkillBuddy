@@ -1,0 +1,48 @@
+# Infrastructure
+
+Phase 0 ships container images and a reference Compose layout. Terraform for staging and
+production is added once the hosting decision is made (`docs/ARCHITECTURE.md`, section 12).
+
+## Images
+
+| Image | Dockerfile target | Runs |
+| --- | --- | --- |
+| backend | `backend/Dockerfile` → `runtime` | API (default command), worker (`arq app.worker.settings.WorkerSettings`), migrations (`alembic upgrade head`) |
+| web | `frontend/Dockerfile` → `runtime` | Next.js standalone server |
+
+Both images run as non-root users, contain no build tooling, and define a `HEALTHCHECK`.
+The backend image takes an `APP_VERSION` build argument (use the git SHA), which is
+reported by `GET /api/v1/health`.
+
+## Deploy order
+
+1. Build and push images tagged with the git SHA.
+2. Run the migration job once: `alembic upgrade head` with the new backend image.
+   Migrations must be backwards compatible with the currently running version
+   (expand → migrate → contract), because old API/worker containers keep running during
+   the rollout.
+3. Roll the `api` and `worker` services to the new image. Gate traffic on
+   `GET /api/v1/health/ready`.
+4. Roll the `web` service.
+
+## Reference single-host layout
+
+`docker-compose.prod.yml` at the repo root runs everything on one machine behind a TLS
+reverse proxy:
+
+```bash
+cp infra/production.env.example infra/production.env   # fill in every value
+docker compose -f docker-compose.prod.yml --env-file infra/production.env up -d --build
+```
+
+On a managed cloud, drop the `db` and `redis` services and point `DATABASE_URL` and
+`REDIS_URL` at managed PostgreSQL 16 (with the `vector` extension allowed) and managed Redis.
+
+## Health endpoints
+
+| Endpoint | Use for |
+| --- | --- |
+| `GET /api/v1/health` | Liveness: the process is up. No dependency checks. |
+| `GET /api/v1/health/ready` | Readiness / load-balancer gating: PostgreSQL, pgvector, Redis. Returns 503 with per-check detail on failure. |
+| `GET /api/health` (web) | Web server liveness. |
+| `arq --check app.worker.settings.WorkerSettings` | Worker liveness (exit code). |
