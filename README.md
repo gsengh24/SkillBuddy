@@ -1,0 +1,126 @@
+# Skill Buddy
+
+An AI matchmaking platform that introduces people to collaborators, skill partners and
+interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-product).
+
+> **Status: Phase 0 (foundations).** This repository contains a production-grade skeleton:
+> API, background worker, database schema, web app, Docker, CI. It has no product features
+> yet. The plan lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Stack
+
+| Layer | Technology |
+| --- | --- |
+| API | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 (async), Alembic, psycopg 3 |
+| Background jobs | Arq on Redis |
+| Database | PostgreSQL 16 + pgvector |
+| Web | Next.js (App Router), TypeScript (strict), Tailwind CSS |
+| Local dev | Docker Compose |
+| CI | GitHub Actions |
+
+## Quick start
+
+**Requirements:** Docker (Desktop, or Engine with Compose v2.24+) and `make`.
+On Windows, run the commands from WSL 2 or Git Bash. `make` is available via
+`winget install ezwinports.make`; if you don't have it, every target in the `Makefile` is a
+plain `docker compose` command you can run directly.
+
+```bash
+make up          # build and start everything; returns when all services are healthy
+```
+
+Then open:
+
+- Web app: <http://localhost:3000>. The status panel should read **API connected**.
+- API docs: <http://localhost:8000/docs>
+- Readiness: <http://localhost:8000/api/v1/health/ready>
+
+No configuration is needed for local development. To change ports or credentials, copy
+`.env.example` to `.env` and edit it.
+
+`make up` runs `docker compose up --build --detach --wait`. Plain
+`docker compose up --build` works too, with logs in the foreground.
+
+### Services
+
+| Service | What it is | Local address |
+| --- | --- | --- |
+| `db` | PostgreSQL 16 with pgvector | `localhost:5432` (user/password/db `app`) |
+| `redis` | Redis 7: job queue and cache | `localhost:6379` |
+| `migrate` | One-shot `alembic upgrade head`; exits when done | n/a |
+| `api` | FastAPI with hot reload | <http://localhost:8000> |
+| `worker` | Arq worker with hot reload | n/a |
+| `web` | Next.js dev server | <http://localhost:3000> |
+
+`api` and `worker` wait for `migrate` to complete, and `web` waits for `api` to be healthy.
+
+## Everyday commands
+
+| Command | What it does |
+| --- | --- |
+| `make up` / `make down` | Start / stop the stack (data volumes are kept) |
+| `make logs` / `make logs s=api` | Follow logs for all services or one |
+| `make ps` | Service status and health |
+| `make migrate` | Apply migrations (`rev=<id>` for a specific target) |
+| `make downgrade` | Revert one migration (`rev=base` to revert all) |
+| `make revision m="add requests"` | Autogenerate a migration from model changes |
+| `make test` | Backend tests: unit + integration against real Postgres and Redis |
+| `make lint` | Ruff, mypy (strict), ESLint, TypeScript, Prettier |
+| `make format` | Auto-format backend and frontend |
+| `make psql` | psql shell on the local database |
+
+To wipe local data, run `docker compose down -v`.
+
+## Running without Docker (optional)
+
+Backend (needs local Postgres with pgvector, and Redis):
+
+```bash
+cd backend
+uv sync
+cp .env.example .env            # set SECRET_KEY, DATABASE_URL, REDIS_URL
+uv run alembic upgrade head
+uv run uvicorn app.main:create_app --factory --reload
+uv run arq app.worker.settings.WorkerSettings        # in another terminal
+uv run pytest tests/unit                               # no infrastructure needed
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+## Repository layout
+
+```
+backend/    FastAPI app, Arq worker, Alembic migrations, tests
+frontend/   Next.js web app
+infra/      Deployment notes and production environment template
+docs/       ARCHITECTURE.md (source of truth) and ADRs (docs/adr)
+```
+
+See [CLAUDE.md](CLAUDE.md) for a detailed folder map and coding standards, and
+[CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+
+## Renaming the product
+
+The product name is defined once per app:
+
+- Backend: `app_name` default in `backend/app/core/config.py` (overridable with `APP_NAME`)
+- Frontend: `frontend/lib/brand.ts`
+
+Internal identifiers (package names, image names, the Compose project) use the neutral name
+`matchmaking` and do not need to change.
+
+## Production
+
+`docker-compose.prod.yml` is a reference single-host layout that uses the production image
+targets. See [infra/README.md](infra/README.md).
+
+## License
+
+Proprietary. All rights reserved. See [LICENSE](LICENSE).
