@@ -98,6 +98,9 @@ markers = [
 [tool.coverage.run]
 source = ["app"]
 branch = true
+# SQLAlchemy's asyncio layer runs code inside greenlets; trace them too, or every line
+# after the first database await is reported as missed.
+concurrency = ["thread", "greenlet"]
 
 [tool.coverage.report]
 show_missing = true
