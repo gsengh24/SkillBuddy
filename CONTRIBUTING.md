@@ -53,8 +53,8 @@ Copy this into the PR description and tick every item that applies.
 
 - [ ] Title follows Conventional Commits.
 - [ ] The change is scoped to one concern; unrelated refactors are in separate PRs.
-- [ ] Backend and frontend lint/typecheck and the backend tests pass (the `docker compose run`
-      commands in README.md, or the equivalent `make lint` / `make test`).
+- [ ] CI is green (Backend, Frontend, Docker images); no check was disabled or weakened.
+- [ ] The description says what changed, how it was verified and what was not verified.
 - [ ] Every new or changed endpoint has tests (success and failure paths).
 - [ ] Every database change has an Alembic migration, and it downgrades cleanly.
 - [ ] New settings are added to `backend/.env.example` (or `frontend/.env.example`) with a

@@ -18,6 +18,23 @@ interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-
 | Local dev | Docker Compose |
 | CI | GitHub Actions |
 
+## How we work
+
+- **No local app.** Docker is not used on the development laptop. GitHub Actions CI is the
+  test runner, and a staging site (not set up yet) is where the running app is checked.
+  A Codespace can run the full stack when needed (see below).
+- **Locally, run only checks that need no Docker, Postgres or Redis:** Ruff, mypy, backend
+  unit tests, and frontend lint, typecheck and format checks. Commands are in
+  [CLAUDE.md](CLAUDE.md#commands).
+- **Branches and PRs.** Every change goes on a short-lived feature branch and through a pull
+  request; nothing is pushed directly to `main`. A change is done when its CI is green.
+- **Red CI is fixed, not bypassed.** Read the failing job's logs, fix the cause and push
+  again. Checks, tests and thresholds are never disabled or weakened to get green.
+- **Secrets** never go in the repo. Staging and production secrets are set in the hosting
+  dashboard.
+- **PR descriptions** state what changed, how it was verified (which CI jobs passed) and what
+  was not verified.
+
 ## Develop in Codespaces
 
 No local Docker needed: the whole stack runs inside a GitHub Codespace via

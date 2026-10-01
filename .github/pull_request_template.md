@@ -1,19 +1,25 @@
-## What and why
+## What changed
 
-<!-- One or two sentences. Link the issue or ARCHITECTURE.md section if relevant. -->
+<!-- What and why, in a few bullets. Link the issue or ARCHITECTURE.md section if relevant. -->
 
-## How it was tested
+## How it was verified
 
-<!-- Commands run, new tests added, manual checks. -->
+<!-- CI jobs that passed (Backend, Frontend, Docker images) and any local checks run
+     (ruff, mypy, unit tests, frontend lint/typecheck). New tests added. -->
+
+## Not verified
+
+<!-- Anything not covered by CI or local checks, e.g. behaviour only visible on staging.
+     Write "Nothing" if everything was verified. -->
 
 ## Checklist
 
-- [ ] Title follows Conventional Commits.
-- [ ] Backend and frontend lint/typecheck and the backend tests pass (the `docker compose run`
-      commands in README.md, or the equivalent `make lint` / `make test`).
+- [ ] Title follows Conventional Commits; branch is a short-lived feature branch.
+- [ ] CI is green (Backend, Frontend, Docker images); no check was disabled or weakened.
 - [ ] New or changed endpoints have tests (success and failure paths).
 - [ ] Database changes have an Alembic migration that downgrades cleanly.
-- [ ] New settings are documented in `.env.example` and validated.
+- [ ] New settings are documented in `.env.example` and validated; secrets live only in the
+      hosting dashboard.
 - [ ] No secrets or personal data in code, tests, fixtures or logs.
 - [ ] Model calls go only through the AI gateway; model output is schema-validated.
 - [ ] Significant decisions have an ADR in `docs/adr/`.

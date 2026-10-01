@@ -20,6 +20,30 @@ clean and frontend-agnostic (see "API design" below).
 
 Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless asked.
 
+## How we work
+
+**Where things run.** The developer laptop has no Docker and never runs the app.
+
+| Where | What runs there |
+| --- | --- |
+| Laptop | Editing, git, and checks that need no Docker, Postgres or Redis |
+| GitHub Actions CI | The test runner: lint, types, migrations, unit + integration tests, image builds |
+| Staging site | The running app, for seeing changes (hosting not set up yet) |
+| GitHub Codespaces | Optional: the full stack via `docker compose` (`.devcontainer/`) |
+
+**Workflow rules**
+
+1. Work on a short-lived feature branch (`<type>/<short-description>`). Never push directly
+   to `main`; every change goes through a pull request.
+2. Never try to run Docker, Postgres or Redis on the laptop. Run only the local checks below
+   and rely on CI for everything else.
+3. A task is done only when its PR's CI is green. Say so with the job names that passed.
+4. If CI fails, read the logs (`gh run view --log-failed`, or ask for them to be pasted), fix
+   the cause and push again. Never disable, skip or weaken a check, test or threshold to get
+   green.
+5. Every PR description states what changed, how it was verified (which CI jobs passed, which
+   local checks ran) and anything not verified. Use `.github/pull_request_template.md`.
+
 ## Architecture summary
 
 - **Modular monolith + worker** (ADR 0002). One backend codebase, two processes:
@@ -62,9 +86,19 @@ docs/                    ARCHITECTURE.md, adr/
 
 ## Commands
 
-Development happens in GitHub Codespaces (`.devcontainer/`); the stack runs with plain
-`docker compose` from the repo root. Use these commands; `make` is not assumed to exist
-(the `Makefile` targets are optional shortcuts for the same commands).
+**Local checks (laptop, no Docker).** Install dependencies once with `cd backend && uv sync`
+and `cd frontend && npm ci`.
+
+| Check | Command |
+| --- | --- |
+| Backend lint + format | `cd backend && uv run ruff check . && uv run ruff format --check .` |
+| Backend types | `cd backend && uv run mypy` |
+| Backend unit tests | `cd backend && uv run pytest tests/unit` |
+| Frontend lint + types + format | `cd frontend && npm run lint && npm run typecheck && npm run format:check` |
+
+Integration tests, migrations and image builds run in CI. The full stack runs only in CI or
+a Codespace, with plain `docker compose` from the repo root (`make` is not assumed to exist;
+`Makefile` targets are optional shortcuts):
 
 | Task | Command |
 | --- | --- |
@@ -79,18 +113,15 @@ Development happens in GitHub Codespaces (`.devcontainer/`); the stack runs with
 | New migration | `docker compose run --rm migrate alembic revision --autogenerate -m "describe change"` |
 | DB shell | `docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'` |
 
-Without the stack (editor-side, deps installed by the dev container):
-`cd backend && uv run pytest tests/unit && uv run ruff check . && uv run mypy`;
-`cd frontend && npm run lint && npm run typecheck && npm run build`.
-
 ## Rules (non-negotiable)
 
 1. **Never commit secrets.** No keys, tokens, passwords or real personal data in code,
    tests, fixtures, logs or docs. Configuration comes from the environment; document every
-   variable in the relevant `.env.example`. Gitleaks runs in pre-commit.
+   variable in the relevant `.env.example`. Staging and production secrets are set in the
+   hosting dashboard, never in the repo. Gitleaks runs in pre-commit.
 2. **Every DB change needs an Alembic migration.** Change the model, generate one with
-   `alembic revision --autogenerate` (see Commands), review and edit the generated file, and make sure `downgrade()`
-   works. CI runs upgrade → downgrade → upgrade and `alembic check` (model/migration drift).
+   `alembic revision --autogenerate` (see Commands), review and edit it, and make sure
+   `downgrade()` works. CI runs upgrade → downgrade → upgrade and `alembic check`.
 3. **Every endpoint needs tests**, covering at least the success path and the main failure
    paths (validation, not found, unauthorised). Use real Postgres/Redis in integration tests,
    not mocks of our own infrastructure.
