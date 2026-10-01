@@ -32,11 +32,11 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U app -d app"
           --health-interval 5s --health-timeout 5s --health-retries 10
-      redis:
-        image: redis:7.4-alpine
+      valkey:
+        image: valkey/valkey:9.1.2-alpine
         ports: ["6379:6379"]
         options: >-
-          --health-cmd "redis-cli ping"
+          --health-cmd "valkey-cli ping"
           --health-interval 5s --health-timeout 3s --health-retries 10
 
     env:
@@ -78,6 +78,11 @@ jobs:
 
       - name: Tests
         run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
+
+      - name: Auth modules coverage (at least 90%)
+        run: >-
+          uv run coverage report --fail-under=90 --show-missing
+          --include="app/services/auth/*,app/api/v1/auth.py,app/api/v1/account.py,app/api/deps.py,app/api/session_cookies.py,app/core/security.py"
 
       - name: Upload coverage report
         if: always()
@@ -133,7 +138,7 @@ jobs:
         env:
           SECRET_KEY: validate-only-placeholder-value-0000000000
           DATABASE_URL: postgresql+psycopg://u:p@db:5432/app
-          REDIS_URL: redis://:p@redis:6379/0
+          REDIS_URL: redis://:p@valkey:6379/0
           CORS_ALLOW_ORIGINS: https://app.example.com
           POSTGRES_USER: u
           POSTGRES_PASSWORD: p

@@ -16,8 +16,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import ConnectionPool
 
+from app.api.deps import CSRF_HEADER
 from app.api.v1.router import api_router
-from app.core.config import Settings, get_settings
+from app.core.config import Environment, Settings, get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.request_context import REQUEST_ID_HEADER, RequestContextMiddleware
@@ -78,14 +79,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Middleware added last runs first: request context wraps everything else, so even
     # CORS preflights and security-header responses carry a request id.
-    app.add_middleware(SecurityHeadersMiddleware)
+    deployed = settings.environment in {Environment.STAGING, Environment.PRODUCTION}
+    app.add_middleware(SecurityHeadersMiddleware, hsts=deployed)
     if settings.cors_allow_origins:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=settings.cors_allow_origins,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-            allow_headers=["Authorization", "Content-Type", REQUEST_ID_HEADER],
+            allow_headers=["Authorization", "Content-Type", CSRF_HEADER, REQUEST_ID_HEADER],
             expose_headers=[REQUEST_ID_HEADER],
         )
     app.add_middleware(RequestContextMiddleware)

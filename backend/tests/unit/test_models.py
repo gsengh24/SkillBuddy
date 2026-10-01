@@ -14,16 +14,24 @@ def _table(name: str) -> Table:
     return Base.metadata.tables[name]
 
 
-def test_metadata_contains_phase_zero_tables() -> None:
-    assert set(Base.metadata.tables) == {"users", "profiles", "profile_embeddings"}
+def test_metadata_contains_all_tables() -> None:
+    assert set(Base.metadata.tables) == {
+        "users",
+        "profiles",
+        "profile_embeddings",
+        "auth_identities",
+        "otp_codes",
+        "sessions",
+        "auth_events",
+    }
 
 
-def test_every_table_uses_timezone_aware_timestamps() -> None:
+def test_every_timestamp_is_timezone_aware() -> None:
     for table in Base.metadata.tables.values():
-        for column in ("created_at", "updated_at"):
-            column_type = table.c[column].type
-            assert isinstance(column_type, DateTime)
-            assert column_type.timezone is True, f"{table.name}.{column}"
+        assert "created_at" in table.c, table.name
+        for column in table.c:
+            if isinstance(column.type, DateTime):
+                assert column.type.timezone is True, f"{table.name}.{column.name}"
 
 
 def test_embedding_ddl_uses_vector_and_hnsw_cosine_index() -> None:

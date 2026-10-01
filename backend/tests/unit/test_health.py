@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
-from app.core.config import Settings
+from app.core.config import Environment, Settings
+from app.main import create_app
+from tests.conftest import SettingsFactory
 
 
 async def test_liveness_reports_service_identity(client: AsyncClient, settings: Settings) -> None:
@@ -31,3 +33,18 @@ async def test_openapi_documents_health_endpoints(client: AsyncClient) -> None:
     paths = response.json()["paths"]
     assert "/api/v1/health" in paths
     assert "/api/v1/health/ready" in paths
+
+
+async def test_responses_are_not_cacheable(client: AsyncClient) -> None:
+    response = await client.get("/api/v1/health")
+
+    assert response.headers["Cache-Control"] == "no-store"
+    assert "Strict-Transport-Security" not in response.headers  # local: plain http
+
+
+async def test_deployed_environments_send_hsts(make_settings: SettingsFactory) -> None:
+    app = create_app(make_settings(environment=Environment.STAGING))
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as client:
+        response = await client.get("/api/v1/health")
+
+    assert response.headers["Strict-Transport-Security"].startswith("max-age=31536000")

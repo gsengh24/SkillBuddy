@@ -12,7 +12,7 @@ interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-
 | Layer | Technology |
 | --- | --- |
 | API | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 (async), Alembic, psycopg 3 |
-| Background jobs | Arq on Redis |
+| Background jobs | Arq on Valkey (Redis-compatible) |
 | Database | PostgreSQL 16 + pgvector |
 | Web | Next.js (App Router), TypeScript (strict), Tailwind CSS |
 | Local dev | Docker Compose |
@@ -103,7 +103,7 @@ No configuration is needed for local development. To change ports or credentials
 | Service | What it is | Local address |
 | --- | --- | --- |
 | `db` | PostgreSQL 16 with pgvector | `localhost:5432` (user/password/db `app`) |
-| `redis` | Redis 7: job queue and cache | `localhost:6379` |
+| `valkey` | Valkey 9 (Redis-compatible): job queue, cache, rate limits | `localhost:6379` |
 | `migrate` | One-shot `alembic upgrade head`; exits when done | n/a |
 | `api` | FastAPI with hot reload | <http://localhost:8000> |
 | `worker` | Arq worker with hot reload | n/a |

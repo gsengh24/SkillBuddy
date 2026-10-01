@@ -11,12 +11,13 @@ import logging
 from typing import Any, ClassVar
 
 from arq.connections import RedisSettings
+from arq.worker import func
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
-from app.worker.jobs import ping
+from app.worker.jobs import ping, send_login_code
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,8 @@ async def on_shutdown(ctx: dict[str, Any]) -> None:
 
 
 class WorkerSettings:
-    functions: ClassVar = [ping]
+    # keep_result=0: a login code must not linger in Valkey as a stored job result.
+    functions: ClassVar = [ping, func(send_login_code, keep_result=0, max_tries=3)]
     on_startup = on_startup
     on_shutdown = on_shutdown
     redis_settings = RedisSettings.from_dsn(_settings.redis_url.unicode_string())

@@ -32,14 +32,15 @@ data; events kept raw for 30 days.
 
 | Table | What is stored per user | Assumption | Per user (384-dim) | Per user (768-dim) |
 | --- | --- | --- | --- | --- |
-| `users` | 1 row + primary key and unique email index | ~150 B row | ~0.3 KB | ~0.3 KB |
+| `users` | 1 row + primary key and unique email index (+ consent and deletion columns, migration 0002) | ~200 B row | ~0.3 KB | ~0.3 KB |
+| `auth_identities` | 1 email identity (Google later) + unique (provider, subject) index | ~150 B | ~0.3 KB | ~0.3 KB |
 | `profiles` | About text, structured JSON, timezone, languages | ~2 KB text + ~1.5 KB JSON | ~4 KB | ~4 KB |
 | `profile_embeddings` | 4 vectors + HNSW index + unique index | 4 × (vector + ~120 B row) × 2.2 | ~14 KB | ~28 KB |
 | `events` | Behavioural log, raw 30 days | 5 events/day × 30 days × ~200 B | ~30 KB | ~30 KB |
 | `messages` | Chat messages sent | 100 retained messages × ~300 B | ~30 KB | ~30 KB |
-| `sessions` + OTP codes | Active sessions; codes purged daily | 2 sessions × ~250 B | ~0.5 KB | ~0.5 KB |
+| `sessions` + `otp_codes` | Active sessions (max 90 days); codes purged once expired | 2 sessions × ~300 B | ~0.6 KB | ~0.6 KB |
 | `auth_events` | Logins, failures | 20 in the retention window × ~200 B | ~4 KB | ~4 KB |
-| **Total** | | | **~83 KB** | **~97 KB** |
+| **Total** | | | **~84 KB** | **~97 KB** |
 
 Planned dimension: **384** (a small open-source CPU model; the final choice is made in the
 Phase 1 AI-gateway ADR). The current schema uses 768.

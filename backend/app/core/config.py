@@ -51,6 +51,24 @@ class Settings(BaseSettings):
     # --- Security --------------------------------------------------------------
     secret_key: SecretStr = Field(min_length=32)
 
+    # --- Authentication (ADR 0006) ---------------------------------------------
+    session_cookie_name: str = Field(default="session", pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    csrf_cookie_name: str = Field(default="csrf_token", pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    # Must be true wherever the site is served over HTTPS (refused otherwise in staging/prod).
+    session_cookie_secure: bool = True
+    session_idle_days: int = Field(default=30, ge=1, le=90)
+    session_max_days: int = Field(default=90, ge=1, le=365)
+    otp_ttl_minutes: int = Field(default=10, ge=1, le=60)
+    otp_max_attempts: int = Field(default=5, ge=1, le=10)
+    rate_limit_window_seconds: int = Field(default=600, ge=10, le=86_400)
+    otp_request_limit_per_email: int = Field(default=3, ge=1, le=100)
+    otp_request_limit_per_ip: int = Field(default=10, ge=1, le=1000)
+    otp_verify_limit_per_email: int = Field(default=10, ge=1, le=100)
+    otp_verify_limit_per_ip: int = Field(default=30, ge=1, le=1000)
+    account_deletion_grace_days: int = Field(default=30, ge=1, le=90)
+    # Recorded on each account when the user accepts the terms.
+    terms_version: str = Field(default="2026-10-01-draft", min_length=1, max_length=32)
+
     # --- Data stores -----------------------------------------------------------
     database_url: PostgresDsn
     db_pool_size: int = Field(default=5, ge=1, le=100)
@@ -87,6 +105,11 @@ class Settings(BaseSettings):
                 raise ValueError("CORS_ALLOW_ORIGINS must not contain '*' in production")
             if self.db_echo:
                 raise ValueError("DB_ECHO must be false in production")
+        deployed = self.environment in {Environment.STAGING, Environment.PRODUCTION}
+        if deployed and not self.session_cookie_secure:
+            raise ValueError("SESSION_COOKIE_SECURE must be true in staging and production")
+        if self.session_max_days < self.session_idle_days:
+            raise ValueError("SESSION_MAX_DAYS must be at least SESSION_IDLE_DAYS")
         return self
 
     @property

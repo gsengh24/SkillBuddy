@@ -9,9 +9,9 @@ import pytest
 from fastapi import APIRouter, Depends, FastAPI, Query
 from httpx import ASGITransport, AsyncClient
 
+from app.api.deps import get_current_user
 from app.core.config import Settings
 from app.core.errors import ConflictError, NotFoundError
-from app.core.security import require_authenticated_user
 from app.main import create_app
 
 router = APIRouter(prefix="/_test")
@@ -37,7 +37,7 @@ async def crash() -> None:
     raise RuntimeError("database password is hunter2")
 
 
-@router.get("/protected", dependencies=[Depends(require_authenticated_user)])
+@router.get("/protected", dependencies=[Depends(get_current_user)])
 async def protected() -> None:
     return None
 
@@ -116,7 +116,7 @@ async def test_unhandled_error_hides_internals(error_client: AsyncClient) -> Non
     assert error["request_id"] == response.headers["X-Request-ID"]
 
 
-async def test_auth_stub_fails_closed(error_client: AsyncClient) -> None:
+async def test_protected_route_without_session_returns_401(error_client: AsyncClient) -> None:
     response = await error_client.get("/_test/protected")
 
     assert response.status_code == 401
