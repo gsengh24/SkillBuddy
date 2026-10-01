@@ -22,6 +22,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "playwright-report/**",
     "test-results/**",
+    // Separate package with its own dependencies (see e2e/package.json).
+    "e2e/**",
   ]),
 ]);
 

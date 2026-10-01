@@ -1,0 +1,11 @@
+{
+  "name": "matchmaking-e2e",
+  "private": true,
+  "description": "Playwright end-to-end tests. Kept separate from the web app so CI installs only Playwright.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

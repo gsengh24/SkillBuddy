@@ -204,36 +204,24 @@ jobs:
       - name: Smoke checks
         run: bash .github/scripts/smoke.sh
 
-      # The end-to-end test reuses the running stack instead of booting its own.
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install Playwright (Chromium only)
-        working-directory: frontend
-        run: |
-          # Docker created these as root-owned mount points for the web container's own
-          # volumes; take them back so npm can install on the runner (the container keeps
-          # its volumes and is unaffected).
-          sudo chown -R "$(id -u):$(id -g)" node_modules .next 2>/dev/null || true
-          npm ci --no-audit --no-fund
-          npx playwright install --with-deps chromium
-
+      # The end-to-end test reuses the running stack instead of booting its own, and runs in
+      # the official Playwright image (browsers and OS libraries preinstalled) so only the
+      # small frontend/e2e package is installed. Keep the image tag equal to the
+      # @playwright/test version in frontend/e2e/package.json.
       - name: End-to-end sign-in test (Playwright)
-        working-directory: frontend
-        env:
-          E2E_BASE_URL: http://localhost:3000
-          MAILPIT_URL: http://localhost:8025
-        run: npx playwright test
+        run: >-
+          docker run --rm --network host --ipc=host
+          -e CI=true -e E2E_BASE_URL=http://localhost:3000 -e MAILPIT_URL=http://localhost:8025
+          -v "$PWD/frontend/e2e:/e2e" -w /e2e
+          mcr.microsoft.com/playwright:v1.63.0-noble
+          sh -c "npm ci --no-audit --no-fund && npx playwright test"
 
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: frontend/playwright-report
+          path: frontend/e2e/playwright-report
           if-no-files-found: ignore
 
       - name: Service status and logs

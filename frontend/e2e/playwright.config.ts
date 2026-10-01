@@ -1,11 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * End-to-end tests against a running stack (CI job "Smoke": docker compose + Mailpit).
- * Locally: start the stack, then `npm run test:e2e`.
+ * End-to-end tests against a running stack (CI job "Smoke": docker compose + Mailpit),
+ * run inside the official Playwright image (browsers preinstalled).
+ * Elsewhere: start the stack, then `npm ci && npx playwright install chromium && npm test` here.
  */
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./tests",
   timeout: 90_000,
   expect: { timeout: 20_000 },
   retries: process.env.CI ? 1 : 0,
