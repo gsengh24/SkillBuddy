@@ -36,12 +36,13 @@ async def test_send_login_code_emails_the_code_but_never_logs_it(
     assert any(r.getMessage() == "login_code_sent" for r in caplog.records)
 
 
-def test_daily_retention_jobs_are_scheduled() -> None:
+def test_retention_jobs_are_scheduled() -> None:
     scheduled = {job.name: (job.hour, job.minute) for job in WorkerSettings.cron_jobs}
 
     assert scheduled == {
         "cron:hard_delete_accounts": ({3}, {0}),
         "cron:purge_auth_data": ({3}, {30}),
+        "cron:purge_job_tables": (None, {15}),  # every hour
     }
 
 

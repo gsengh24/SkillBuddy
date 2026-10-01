@@ -73,6 +73,13 @@ class Settings(BaseSettings):
     # Audit-log retention; the daily purge job deletes older auth_events.
     auth_event_retention_days: int = Field(default=90, ge=7, le=730)
 
+    # --- Background jobs and email log retention (ADR 0008) ---------------------
+    # The hourly purge deletes finished jobs and email_log rows older than these.
+    job_succeeded_retention_days: int = Field(default=7, ge=1, le=90)
+    job_dead_retention_days: int = Field(default=30, ge=1, le=365)
+    # At least 2 days: the email cap counts sends over the trailing 24 hours.
+    email_log_retention_days: int = Field(default=30, ge=2, le=365)
+
     # --- Email -----------------------------------------------------------------
     # "console" prints messages to stdout (local development and tests only);
     # "smtp" sends through any SMTP server (Mailpit locally, a free relay on staging).

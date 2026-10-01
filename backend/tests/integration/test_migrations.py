@@ -15,7 +15,8 @@ from tests.integration.conftest import alembic_config
 
 PHASE_ZERO_TABLES = {"users", "profiles", "profile_embeddings"}
 AUTH_TABLES = {"auth_identities", "otp_codes", "sessions", "auth_events"}
-ALL_TABLES = PHASE_ZERO_TABLES | AUTH_TABLES
+JOB_TABLES = {"jobs", "rate_limit_counters", "email_log"}
+ALL_TABLES = PHASE_ZERO_TABLES | AUTH_TABLES | JOB_TABLES
 
 
 @pytest.fixture
@@ -94,6 +95,21 @@ def test_auth_migration_downgrades_to_0001_and_back(
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
     assert "auth_provider" not in _user_columns(engine)
+
+
+def test_job_tables_migration_downgrades_to_0002_and_back(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(text("INSERT INTO jobs (kind) VALUES ('ping')"))
+
+    command.downgrade(config, "0002")
+    assert _tables(engine) == PHASE_ZERO_TABLES | AUTH_TABLES
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
 
 
 def test_models_and_migrations_are_in_sync(migrated_database_url: str) -> None:
