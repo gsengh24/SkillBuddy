@@ -42,8 +42,8 @@ data; events kept raw for 30 days.
 | `auth_events` | Logins, failures | 20 in the retention window × ~200 B | ~4 KB | ~4 KB |
 | **Total** | | | **~84 KB** | **~97 KB** |
 
-Planned dimension: **384** (a small open-source CPU model; the final choice is made in the
-Phase 1 AI-gateway ADR). The current schema uses 768.
+Chosen dimension: **384** (`BAAI/bge-small-en-v1.5`, [ADR 0007](adr/0007-ai-gateway.md)).
+The current schema still uses 768 until migration 0003 changes it.
 
 ## What fits
 

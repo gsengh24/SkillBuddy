@@ -1,6 +1,7 @@
 # 4. Zero-cost constraint
 
-- **Status:** Accepted
+- **Status:** Accepted; decision 2 partly superseded by [ADR 0007](0007-ai-gateway.md) (the LLM
+  is a core pipeline stage, used by default; the no-LLM path is a fallback only)
 - **Date:** 2026-10-01
 
 ## Context

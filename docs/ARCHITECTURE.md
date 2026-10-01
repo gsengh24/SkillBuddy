@@ -162,7 +162,7 @@ The AI layer sits behind one internal interface, so models can be swapped withou
 | --- | --- | --- |
 | Profile and request extraction | Mid-size LLM with JSON-schema output | Validated against a schema; one automatic retry on invalid output |
 | Clarifying questions | Same LLM, short prompt | Only asked when the request is under-specified |
-| Embeddings | Text embedding model, about 768 to 1536 dimensions | Stored per facet with model\_version |
+| Embeddings | Text embedding model; at launch bge-small-en-v1.5, 384 dimensions, run locally (ADR 0007) | Stored per facet with model\_version |
 | Final selection and explanations | Stronger LLM | Sees only the top 15 to 20 candidates |
 | Safety screening | Small classifier plus LLM for edge cases | Runs on profiles, requests and first messages |
 | Learned ranker (later) | Gradient-boosted trees, then neural | Trained on the events and feedback tables |
