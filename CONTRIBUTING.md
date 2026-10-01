@@ -53,7 +53,8 @@ Copy this into the PR description and tick every item that applies.
 
 - [ ] Title follows Conventional Commits.
 - [ ] The change is scoped to one concern; unrelated refactors are in separate PRs.
-- [ ] CI is green (Backend, Frontend, Docker images); no check was disabled or weakened.
+- [ ] CI is green (Backend, Frontend, Docker images, Smoke, Secret scan); no check was
+      disabled or weakened.
 - [ ] The description says what changed, how it was verified and what was not verified.
 - [ ] Every new or changed endpoint has tests (success and failure paths).
 - [ ] Every database change has an Alembic migration, and it downgrades cleanly.

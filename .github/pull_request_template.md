@@ -15,7 +15,8 @@
 ## Checklist
 
 - [ ] Title follows Conventional Commits; branch is a short-lived feature branch.
-- [ ] CI is green (Backend, Frontend, Docker images); no check was disabled or weakened.
+- [ ] CI is green (Backend, Frontend, Docker images, Smoke, Secret scan); no check was
+      disabled or weakened.
 - [ ] New or changed endpoints have tests (success and failure paths).
 - [ ] Database changes have an Alembic migration that downgrades cleanly.
 - [ ] New growing tables: retention policy and estimated growth stated above, row added to
