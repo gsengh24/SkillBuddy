@@ -214,6 +214,10 @@ jobs:
       - name: Install Playwright (Chromium only)
         working-directory: frontend
         run: |
+          # Docker created these as root-owned mount points for the web container's own
+          # volumes; take them back so npm can install on the runner (the container keeps
+          # its volumes and is unaffected).
+          sudo chown -R "$(id -u):$(id -g)" node_modules .next 2>/dev/null || true
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
 
