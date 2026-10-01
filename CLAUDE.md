@@ -81,7 +81,8 @@ frontend/
   lib/api/               Typed API client + response schemas
 .devcontainer/           GitHub Codespaces config (Docker-in-Docker; stack via docker compose)
 infra/                   Deployment notes, production env template
-docs/                    ARCHITECTURE.md, adr/, deployment-plan.md, free-tier-limits.md
+docs/                    ARCHITECTURE.md, adr/, deployment-plan.md, free-tier-limits.md,
+                         storage-budget.md, roadmap.md
 ```
 
 ## Commands
@@ -153,6 +154,26 @@ free tiers or open-source software, with no credit card on any account.
 6. **Keep CI cheap:** cache dependencies, run the full pipeline only on pull requests and
    `main`, keep the Dependabot open-PR limit low.
 7. **Stay small:** prefer slim Docker images and low memory use; free hosts have little RAM.
+
+## Storage rules
+
+The free database holds 0.5 GB; we budget 70% of it (numbers in
+[docs/storage-budget.md](docs/storage-budget.md)). Every task follows these rules:
+
+1. **Cap text sizes** with validation limits on every user-written field (profile text,
+   request text, messages). **No file or image uploads**: use initials avatars or links.
+2. **Retention from day one.** Every table that grows over time ships with its retention
+   policy: expired OTP codes and sessions purged daily; `auth_events` and `events` pruned or
+   aggregated after a set number of days; soft-deleted accounts hard-deleted on schedule.
+3. **No raw LLM prompts or responses** stored beyond a short debug window; keep metadata
+   (prompt version, tokens, latency) instead.
+4. **Compact storage:** smallest workable embedding dimension, no duplicated data, no
+   unused indexes.
+5. **Size monitor:** database size is exposed as a metric on a protected admin or health
+   endpoint. At 70% it warns; at 90% the app pauses new signups and non-essential writes
+   and users see a clear message, not errors.
+6. **PR description:** every migration that adds a growing table states its retention and
+   estimated growth, and adds a row to `docs/storage-budget.md`.
 
 ## API design (frontend-agnostic)
 
