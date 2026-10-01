@@ -60,6 +60,8 @@ def upgrade() -> None:
     op.drop_constraint(op.f("ck_users_auth_provider_valid"), "users", type_="check")
     op.drop_column("users", "auth_provider")
     op.drop_constraint(op.f("ck_users_status_valid"), "users", type_="check")
+    # 0001's 'deleted' status (soft-deleted, awaiting purge) is now 'pending_deletion'.
+    op.execute("UPDATE users SET status = 'pending_deletion' WHERE status = 'deleted'")
     op.create_check_constraint(
         op.f("ck_users_status_valid"),
         "users",
