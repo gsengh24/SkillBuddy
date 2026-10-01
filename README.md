@@ -21,9 +21,8 @@ interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-
 ## Quick start
 
 **Requirements:** Docker (Desktop, or Engine with Compose v2.24+) and `make`.
-On Windows, run the commands from WSL 2 or Git Bash. `make` is available via
-`winget install ezwinports.make`; if you don't have it, every target in the `Makefile` is a
-plain `docker compose` command you can run directly.
+On Windows without `make`, see [Windows without make](#windows-without-make) for the
+equivalent `docker compose` commands.
 
 ```bash
 make up          # build and start everything; returns when all services are healthy
@@ -70,6 +69,26 @@ No configuration is needed for local development. To change ports or credentials
 | `make psql` | psql shell on the local database |
 
 To wipe local data, run `docker compose down -v`.
+
+### Windows without make
+
+Every `make` target is a thin wrapper around `docker compose`. From the repo root in
+PowerShell (or any shell), run these instead:
+
+| make | Equivalent command |
+| --- | --- |
+| `make up` | `docker compose up --build --detach --wait` |
+| `make down` | `docker compose down` |
+| `make logs s=api` | `docker compose logs --follow api` |
+| `make ps` | `docker compose ps` |
+| `make migrate` | `docker compose run --rm migrate alembic upgrade head` |
+| `make downgrade` | `docker compose run --rm migrate alembic downgrade -1` |
+| `make downgrade rev=base` | `docker compose run --rm migrate alembic downgrade base` |
+| `make revision m="..."` | `docker compose run --rm migrate alembic revision --autogenerate -m "..."` |
+| `make test` | `docker compose up --detach --wait db redis` then<br>`docker compose run --rm --no-deps api pytest --cov --cov-report=term-missing` |
+| `make lint` | `docker compose run --rm --no-deps api sh -c "ruff check . && ruff format --check . && mypy"` then<br>`docker compose run --rm --no-deps web sh -c "npm run lint && npm run typecheck && npm run format:check"` |
+| `make format` | `docker compose run --rm --no-deps api sh -c "ruff format . && ruff check --fix ."` then<br>`docker compose run --rm --no-deps web sh -c "npm run format && npm run lint:fix"` |
+| `make psql` | `docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'` |
 
 ## Running without Docker (optional)
 
