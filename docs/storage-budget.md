@@ -42,6 +42,14 @@ data; events kept raw for 30 days.
 | `auth_events` | Logins, failures | 20 in the retention window × ~200 B | ~4 KB | ~4 KB |
 | **Total** | | | **~84 KB** | **~97 KB** |
 
+Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runtime-jobs-and-email.md)):
+
+| Table | What is stored | Retention | Estimated size |
+| --- | --- | --- | --- |
+| `jobs` | One row per background job (IDs only, no personal data), about 300 B | Succeeded: 7 days; dead: 30 days; queued/running: until done | Under 1 MB at campus scale (a few thousand jobs a day) |
+| `rate_limit_counters` | One row per key and window, about 150 B | Deleted hourly once the window has expired | A few KB |
+| `email_log` | One row per email recipient: purpose, keyed hash, provider, time; about 150 B | 30 days | Under 2 MB (at most 450 emails a day) |
+
 Chosen dimension: **384** (`BAAI/bge-small-en-v1.5`, [ADR 0007](adr/0007-ai-gateway.md)).
 The current schema still uses 768 until migration 0003 changes it.
 

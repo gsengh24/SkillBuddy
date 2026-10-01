@@ -19,7 +19,13 @@ from app.core.logging import configure_logging
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
 from app.services.email import build_email_sender
-from app.worker.jobs import hard_delete_accounts, ping, purge_auth_data, send_login_code
+from app.worker.jobs import (
+    hard_delete_accounts,
+    ping,
+    purge_auth_data,
+    purge_job_tables,
+    send_login_code,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +56,8 @@ class WorkerSettings:
     cron_jobs: ClassVar = [
         cron(hard_delete_accounts, hour={3}, minute={0}, unique=True),
         cron(purge_auth_data, hour={3}, minute={30}, unique=True),
+        # Hourly: the job-queue tables (ADR 0008); counters expire within the hour.
+        cron(purge_job_tables, minute={15}, unique=True),
     ]
     on_startup = on_startup
     on_shutdown = on_shutdown

@@ -7,7 +7,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.schema import CreateIndex, CreateTable
 
 from app.db.base import Base
-from app.models import EMBEDDING_DIMENSIONS, EmbeddingFacet
+from app.models import EMBEDDING_DIMENSIONS, EmbeddingFacet, JobStatus
 
 
 def _table(name: str) -> Table:
@@ -23,6 +23,9 @@ def test_metadata_contains_all_tables() -> None:
         "otp_codes",
         "sessions",
         "auth_events",
+        "jobs",
+        "rate_limit_counters",
+        "email_log",
     }
 
 
@@ -43,6 +46,28 @@ def test_embedding_ddl_uses_vector_and_hnsw_cosine_index() -> None:
     assert f"embedding VECTOR({EMBEDDING_DIMENSIONS}) NOT NULL" in create_table
     assert "UNIQUE (user_id, facet)" in create_table
     assert any("USING hnsw (embedding vector_cosine_ops)" in ddl for ddl in indexes)
+
+
+def test_job_status_check_constraint_matches_enum() -> None:
+    constraint_sql = next(
+        str(constraint.sqltext)
+        for constraint in _table("jobs").constraints
+        if isinstance(constraint, CheckConstraint) and constraint.name == "ck_jobs_status_valid"
+    )
+
+    for status in JobStatus:
+        assert f"'{status.value}'" in constraint_sql
+
+
+def test_job_claim_index_covers_only_queued_jobs() -> None:
+    dialect = postgresql.dialect()  # type: ignore[no-untyped-call]
+    indexes = {
+        str(index.name): str(CreateIndex(index).compile(dialect=dialect))
+        for index in _table("jobs").indexes
+    }
+
+    assert "ON jobs (priority, run_at) WHERE status = 'queued'" in indexes["ix_jobs_claim"]
+    assert "WHERE status = 'running'" in indexes["ix_jobs_lease"]
 
 
 def test_facet_check_constraint_matches_enum() -> None:

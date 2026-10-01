@@ -17,6 +17,7 @@ from app.core.security import mask_email
 from app.services.auth.retention import hard_delete_due_accounts, purge_expired_auth_data
 from app.services.email import EmailSender
 from app.services.email.templates import login_code_email
+from app.services.housekeeping import purge_job_tables as purge_job_tables_service
 
 logger = logging.getLogger(__name__)
 
@@ -54,4 +55,16 @@ async def purge_auth_data(ctx: dict[str, Any]) -> dict[str, int]:
         "otp_codes": result.otp_codes,
         "sessions": result.sessions,
         "auth_events": result.auth_events,
+    }
+
+
+async def purge_job_tables(ctx: dict[str, Any]) -> dict[str, int]:
+    """Hourly: delete finished jobs, expired rate-limit counters and old email_log rows."""
+    session_factory: async_sessionmaker[AsyncSession] = ctx["session_factory"]
+    async with session_factory() as db:
+        result = await purge_job_tables_service(db, ctx["settings"], datetime.now(UTC))
+    return {
+        "jobs": result.jobs,
+        "rate_limit_counters": result.rate_limit_counters,
+        "email_log": result.email_log,
     }

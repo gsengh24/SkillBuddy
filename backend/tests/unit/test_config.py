@@ -103,6 +103,19 @@ def test_auth_defaults_match_the_policy(make_settings: SettingsFactory) -> None:
     assert settings.account_deletion_grace_days == 30
 
 
+def test_job_table_retention_defaults_match_adr_0008(make_settings: SettingsFactory) -> None:
+    settings = make_settings()
+
+    assert settings.job_succeeded_retention_days == 7
+    assert settings.job_dead_retention_days == 30
+    assert settings.email_log_retention_days == 30
+
+
+def test_email_log_must_cover_the_24_hour_cap_window(make_settings: SettingsFactory) -> None:
+    with pytest.raises(ValidationError, match="email_log_retention_days"):
+        make_settings(email_log_retention_days=1)
+
+
 @pytest.mark.parametrize("environment", [Environment.STAGING, Environment.PRODUCTION])
 def test_deployed_environments_must_send_real_email(
     make_settings: SettingsFactory, environment: Environment
