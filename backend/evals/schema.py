@@ -55,7 +55,7 @@ class SyntheticProfile(BaseModel):
 
     id: ProfileId
     name: str = Field(min_length=1, max_length=80)
-    age: int = Field(ge=18, le=100, description="Adults only.")
+    age: int = Field(ge=18, le=100, description="Adults only (18+; ADR 0009).")
     city: str = Field(min_length=1, max_length=80)
     country: str = Field(min_length=1, max_length=80)
     timezone: str = Field(description="IANA timezone name, e.g. Asia/Kolkata.")

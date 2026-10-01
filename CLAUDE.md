@@ -62,7 +62,8 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
   calls the web app's own `/api/v1/*`, which forwards to the API (same-origin cookies).
 - **Authentication** (ADR 0006): passwordless email codes, server-side sessions in an
   httpOnly cookie, signed double-submit CSRF, Valkey rate limits, 30-day deletion grace
-  period. Email is sent only by the worker (Mailpit catches it in dev and CI).
+  period. Email is sent only by the worker (Mailpit catches it in dev and CI). 18+ only, by
+  a required self-declaration tick box; no verification (ADR 0009).
 - Migrations run as a **separate one-shot step** (`migrate` service), never at API startup.
 
 ## Folder map

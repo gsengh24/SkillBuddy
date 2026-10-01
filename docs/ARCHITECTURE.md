@@ -192,7 +192,7 @@ A platform that introduces strangers carries real safety risk, so these controls
 - **Block and report** on every profile and message, with blocks enforced as hard filters in retrieval.
 - **Automated screening** of profiles and first messages for scams, harassment, solicitation and minors-related risk, with a human moderation queue for flagged items.
 - **Rate limits** on intros per day, tuned up as a user earns trust through accepted conversations.
-- **Age gate.** Adults only at launch (18+). This removes the largest class of legal and safety problems; revisit only with a dedicated design.
+- **Age gate.** Adults only (18+), by a required self-declaration tick box at sign-up; no verification is done ([ADR 0009](adr/0009-adults-only-self-declaration.md)). Accounts without a recorded confirmation must confirm on their next sign-in. Self-declaration is not verification and some students may be 17; legal review of the privacy policy and terms is pending before launch.
 - **Safety nudges.** First-chat tips such as keeping conversations on the platform until comfortable and never sharing financial details.
 
 **Privacy**
