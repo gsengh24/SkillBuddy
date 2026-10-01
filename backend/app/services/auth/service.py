@@ -32,6 +32,7 @@ from app.services.auth.errors import (
 from app.services.auth.events import ClientInfo, record_event
 from app.services.auth.rate_limit import RateLimiter
 from app.services.auth.sessions import create_session, revoke_all_sessions, revoke_session
+from app.services.storage import SignupsPausedError, StorageMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +52,13 @@ class AuthService:
         settings: Settings,
         limiter: RateLimiter,
         delivery: OtpDelivery,
+        storage: StorageMonitor,
     ) -> None:
         self._db = db
         self._settings = settings
         self._limiter = limiter
         self._delivery = delivery
+        self._storage = storage
 
     async def _limit(
         self, action: str, email: str, client: ClientInfo, *, per_email: int, per_ip: int
@@ -141,6 +144,13 @@ class AuthService:
             # Keep the code usable so the person can tick the boxes and resubmit.
             await self._db.rollback()
             raise ConsentRequiredError
+        if user is None:
+            # Near the free storage limit, refuse new accounts (existing users still sign in).
+            try:
+                await self._storage.ensure_signups_allowed()
+            except SignupsPausedError:
+                await self._db.rollback()
+                raise
 
         otp.consumed_at = now
         if user is not None and user.status != UserStatus.ACTIVE:

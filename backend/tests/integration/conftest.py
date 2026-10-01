@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 import uuid
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator, Sequence
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 from typing import Any
@@ -21,7 +21,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from asgi_lifespan import LifespanManager
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from httpx import ASGITransport, AsyncClient
 from psycopg import sql
 from sqlalchemy import create_engine, text
@@ -138,12 +138,15 @@ async def auth_client(
     *,
     client_ip: str = "198.51.100.10",
     base_url: str = "https://testserver",
+    routers: Sequence[APIRouter] = (),
 ) -> AsyncIterator[AsyncClient]:
     """A client for a running app; HTTPS by default so Secure cookies behave as in prod.
 
     With ``delivery=None`` the real queue-based delivery is used.
     """
     app: FastAPI = create_app(settings)
+    for router in routers:
+        app.include_router(router)
     if delivery is not None:
         app.dependency_overrides[get_otp_delivery] = lambda: delivery
     async with LifespanManager(app) as manager:

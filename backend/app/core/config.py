@@ -30,6 +30,8 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         frozen=True,
+        # An empty variable (e.g. `ADMIN_API_TOKEN=` from a Compose default) means "unset".
+        env_ignore_empty=True,
     )
 
     # --- Identity --------------------------------------------------------------
@@ -68,6 +70,27 @@ class Settings(BaseSettings):
     account_deletion_grace_days: int = Field(default=30, ge=1, le=90)
     # Recorded on each account when the user accepts the terms.
     terms_version: str = Field(default="2026-10-01-draft", min_length=1, max_length=32)
+    # Audit-log retention; the daily purge job deletes older auth_events.
+    auth_event_retention_days: int = Field(default=90, ge=7, le=730)
+
+    # --- Email -----------------------------------------------------------------
+    # "console" prints messages to stdout (local development and tests only);
+    # "smtp" sends through any SMTP server (Mailpit locally, a free relay on staging).
+    email_backend: Literal["console", "smtp"] = "console"
+    email_from_address: str = Field(default="no-reply@localhost", pattern=r"^[^@\s]+@[^@\s]+$")
+    smtp_host: str = "localhost"
+    smtp_port: int = Field(default=587, ge=1, le=65_535)
+    smtp_security: Literal["none", "starttls", "ssl"] = "starttls"
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+
+    # --- Storage guard (docs/storage-budget.md) --------------------------------
+    database_size_limit_mb: int = Field(default=500, ge=1)
+    storage_warn_percent: int = Field(default=70, ge=1, le=100)
+    storage_pause_percent: int = Field(default=90, ge=1, le=100)
+    # Enables GET /api/v1/admin/storage when set (send it as X-Admin-Token).
+    admin_api_token: SecretStr | None = Field(default=None, min_length=32)
 
     # --- Data stores -----------------------------------------------------------
     database_url: PostgresDsn
@@ -108,8 +131,12 @@ class Settings(BaseSettings):
         deployed = self.environment in {Environment.STAGING, Environment.PRODUCTION}
         if deployed and not self.session_cookie_secure:
             raise ValueError("SESSION_COOKIE_SECURE must be true in staging and production")
+        if deployed and self.email_backend != "smtp":
+            raise ValueError("EMAIL_BACKEND must be 'smtp' in staging and production")
         if self.session_max_days < self.session_idle_days:
             raise ValueError("SESSION_MAX_DAYS must be at least SESSION_IDLE_DAYS")
+        if self.storage_warn_percent >= self.storage_pause_percent:
+            raise ValueError("STORAGE_WARN_PERCENT must be below STORAGE_PAUSE_PERCENT")
         return self
 
     @property

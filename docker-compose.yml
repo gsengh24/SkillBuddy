@@ -3,6 +3,7 @@
 #
 #   db       PostgreSQL 16 + pgvector      localhost:5432
 #   valkey   Valkey 9 (Redis-compatible)   localhost:6379
+#   mailpit  catches all outgoing email    http://localhost:8025 (web UI)
 #   migrate  one-shot `alembic upgrade head`, runs before api/worker start
 #   api      FastAPI, hot reload           http://localhost:8000  (docs at /docs)
 #   worker   Arq background worker, hot reload
@@ -28,6 +29,11 @@ x-backend-environment: &backend-environment
   CORS_ALLOW_ORIGINS: http://localhost:${WEB_PORT:-3000}
   # The dev stack serves plain http on localhost, so the session cookie cannot be Secure.
   SESSION_COOKIE_SECURE: "false"
+  # All email goes to Mailpit; read it at http://localhost:8025. Nothing leaves the machine.
+  EMAIL_BACKEND: smtp
+  SMTP_HOST: mailpit
+  SMTP_PORT: "1025"
+  SMTP_SECURITY: none
   # Docker Desktop bind mounts do not deliver file events; poll for hot reload.
   WATCHFILES_FORCE_POLLING: "true"
 
@@ -70,6 +76,16 @@ services:
       timeout: 3s
       retries: 10
 
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   migrate:
     <<: *backend-service
     command: ["alembic", "upgrade", "head"]
@@ -108,6 +124,8 @@ services:
       db:
         condition: service_healthy
       valkey:
+        condition: service_healthy
+      mailpit:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully

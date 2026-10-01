@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.v1 import account, auth, health
+from app.api.v1 import account, admin, auth, health
 
 API_V1_PREFIX = "/api/v1"
 
@@ -12,3 +12,4 @@ api_router = APIRouter(prefix=API_V1_PREFIX)
 api_router.include_router(health.router)
 api_router.include_router(auth.router)
 api_router.include_router(account.router)
+api_router.include_router(admin.router)

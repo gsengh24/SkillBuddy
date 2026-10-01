@@ -58,6 +58,20 @@ Events and messages dominate, not embeddings. Shorter event retention (or aggreg
 events into daily counts) and a message history cap are the biggest levers if space gets
 tight.
 
+## Monitoring and enforcement
+
+- `GET /api/v1/admin/storage` (enabled when `ADMIN_API_TOKEN` is set; send it as
+  `X-Admin-Token`) reports the database size, the limit, the percentage used, the status
+  (`ok`, `warning` at 70%, `critical` at 90%) and the ten largest tables.
+- At **90%** new sign-ups are refused with `503 signups_paused` ("try again later"); existing
+  users can still sign in. Endpoints that perform non-essential writes add the
+  `require_storage_capacity` dependency and refuse with `503 storage_full`.
+- The limit and thresholds are settings: `DATABASE_SIZE_LIMIT_MB` (500),
+  `STORAGE_WARN_PERCENT` (70), `STORAGE_PAUSE_PERCENT` (90).
+- The worker runs the retention jobs daily (03:00 and 03:30 UTC): hard-deleting accounts past
+  the 30-day grace period, purging expired codes and sessions, and pruning `auth_events`
+  older than `AUTH_EVENT_RETENTION_DAYS` (90).
+
 ## Keeping it current
 
 - When a migration adds a growing table, add a row here and state its retention and
