@@ -18,6 +18,47 @@ interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-
 | Local dev | Docker Compose |
 | CI | GitHub Actions |
 
+## Develop in Codespaces
+
+No local Docker needed: the whole stack runs inside a GitHub Codespace via
+Docker-in-Docker. The setup lives in [.devcontainer/](.devcontainer/).
+
+1. On GitHub, open the repository, click **Code → Codespaces → Create codespace on main**.
+   (The config requests a machine with at least 8 GB RAM.)
+2. Wait for the post-create step to finish. It installs the backend dependencies
+   (`uv sync`), the frontend dependencies (`npm ci`) and the git pre-commit hooks, and the
+   editor extensions (Python, Ruff, Mypy, ESLint, Prettier, Tailwind CSS).
+3. In the Codespace terminal, start the stack and wait until every service is healthy
+   (the first build takes a few minutes):
+   ```bash
+   docker compose up --build --detach --wait
+   docker compose ps
+   ```
+4. Open the **Ports** tab. Port **3000** is the web app (the status panel should read
+   **API connected**) and port **8000** is the API (add `/docs` for the interactive docs).
+
+Everyday commands, run from the repository root:
+
+```bash
+docker compose logs --follow api                         # follow one service's logs
+docker compose run --rm migrate alembic upgrade head     # apply migrations
+docker compose run --rm migrate alembic downgrade -1     # revert one migration (or: base)
+docker compose run --rm migrate alembic revision --autogenerate -m "describe change"
+
+# Backend tests (unit + integration against the real Postgres and Redis)
+docker compose run --rm --no-deps api pytest --cov --cov-report=term-missing
+
+# Lint and type-check
+docker compose run --rm --no-deps api sh -c "ruff check . && ruff format --check . && mypy"
+docker compose run --rm --no-deps web sh -c "npm run lint && npm run typecheck && npm run format:check"
+
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'   # database shell
+docker compose down                                     # stop (add -v to wipe data)
+```
+
+Stop the Codespace from GitHub when you are done; it does not need to keep running for
+your changes to be kept, but uncommitted work only lives in that Codespace until pushed.
+
 ## Quick start
 
 **Requirements:** Docker (Desktop, or Engine with Compose v2.24+) and `make`.

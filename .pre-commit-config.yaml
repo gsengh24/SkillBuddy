@@ -14,6 +14,7 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: check-json
+        exclude: ^\.devcontainer/devcontainer\.json$ # JSONC (comments allowed)
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=500]

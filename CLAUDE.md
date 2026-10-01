@@ -55,6 +55,7 @@ frontend/
   lib/brand.ts           Product name and copy (the only place the name is defined)
   lib/env.ts             Server env validation (zod)
   lib/api/               Typed API client + response schemas
+.devcontainer/           GitHub Codespaces config (Docker-in-Docker; stack via docker compose)
 infra/                   Deployment notes, production env template
 docs/                    ARCHITECTURE.md, adr/
 ```
