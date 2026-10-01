@@ -1,6 +1,7 @@
 # 5. Valkey instead of Redis
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0008](0008-free-runtime-jobs-and-email.md) (no Redis-compatible store; queue and rate
+  limits move to PostgreSQL)
 - **Date:** 2026-10-01
 
 ## Context

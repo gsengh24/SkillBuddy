@@ -1,6 +1,8 @@
 # 2. Modular monolith with a separate background worker
 
-- **Status:** Accepted
+- **Status:** Accepted; the always-on Arq worker on Redis is superseded by
+  [ADR 0008](0008-free-runtime-jobs-and-email.md) (Postgres job queue, run in the API process on free hosting or as
+  a separate process when affordable). The API/worker module boundary still applies.
 - **Date:** 2026-10-01
 
 ## Context

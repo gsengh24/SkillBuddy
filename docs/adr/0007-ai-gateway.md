@@ -147,12 +147,138 @@ drops from about 97 KB to about 84 KB per user.
 
 **Catches:**
 
-- Groq's terms say the service is "not for consumer use". We are the customer and the
-  students use our product, so this fits, but a lawyer hasn't reviewed it.
+- Groq's terms say the service is "not for consumer use". Section 3a below checks what this
+  means for Skill Buddy.
 - Groq's free-service liability is capped at $5,000.
 - `gpt-oss` models produce reasoning tokens, which count towards the token limits. Calls
   set low reasoning effort, and the budget below assumes that.
 - Neither provider offers a service-level agreement on the free tier.
+
+### 3a. Terms check: may a campus app for students use these free plans?
+
+*Added 2026-10-01, before this ADR was merged.* The quotes below were copied from each
+provider's live page on **2026-10-01**, through a text-extraction tool. Before launch,
+compare each one with the live page; the wording can change without notice.
+
+**Groq**
+
+The API is governed by the **Groq Services Agreement**, "Last Modified: June 22, 2026"
+(<https://console.groq.com/docs/legal/services-agreement>). The website Terms of Use (dated
+October 15, 2025, <https://groq.com/terms-of-use>) say: "These Terms do not apply to you in
+connection with your use of Groq's cloud services, including GroqChat, Groq Playground, and
+GroqCloud. If you are interacting with Groq as a customer of our services, the Groq Services
+Agreement governs."
+
+Relevant text in the Services Agreement:
+
+- Opening paragraph: "Cloud Services and the AI Model Services under this Agreement are not
+  for consumer use."
+- Section 1, definitions:
+  - "**Customer**" means "the person or entity agreeing to the Agreement".
+  - "**Customer Application**" means "Customer's applications, products, or services in
+    which Customer may integrate the Cloud Services and AI Model Services as permitted by
+    this Agreement."
+  - "**End Users**" means "the end users of a Customer Application who are authorized by
+    Customer to access or use the Cloud Services and AI Model Services through such Customer
+    Application."
+  - "**Authorized Users**" means "Authorized Account Users and End Users".
+- Section 3.1 grants "the right to use Groq's APIs to integrate the Cloud Services and AI
+  Model Services into your Customer Application and to make the Cloud Services and AI Model
+  Services available to End Users through your Customer Applications."
+- Age: "You must be 18 years of age or older to access or use the Cloud Services." On
+  minors: "To the extent Customer or its Authorized Users use the Cloud Services and AI Model
+  Services as part of a Customer Application that is directed towards or is likely to be
+  accessed by individuals under the age of majority in their state or territory, Customer
+  will be solely responsible for ensuring that the Customer Application complies with all
+  applicable laws and regulations related to (x) the use of the Customer Application by
+  individuals under the age of majority in their state or territory, and (y) any collection
+  of Personal Data from individuals under the age of majority."
+- Section 5.1, free use: "Certain Cloud Services and AI Model Services may be designated as
+  fee-free or otherwise available without triggering a payment for a limited time or based
+  on usage limits."
+- Liability: "GROQ'S TOTAL AGGREGATE LIABILITY FOR DAMAGES ARISING OUT OF OR RELATED TO BETA
+  SERVICES AND ANY CLOUD SERVICES PROVIDED FREE OF CHARGE IS LIMITED TO $5,000."
+- **Production use:** no clause was found that restricts production use, or that limits the
+  free plan to evaluation.
+
+The Acceptable Use & Responsible AI Policy ("Effective: October 15, 2025",
+<https://console.groq.com/docs/legal/ai-policy>) forbids using the services "to make automated
+decisions that have a material detrimental impact on individual rights without human
+supervision in high-risk domains, such as in employment, healthcare, finance, legal,
+housing, insurance, or social welfare". It says nothing about consumer-facing apps,
+students or education.
+
+**Verdict for Groq: allowed, on our reading, with conditions. This is not legal advice.**
+
+- The agreement defines End Users of a Customer Application. Section 3.1 explicitly allows
+  making the services available to them.
+- "Not for consumer use" is therefore best read as being about who signs the agreement: the
+  Customer must not be a consumer using Groq for personal purposes. It is not a ban on
+  products that consumers use. The agreement doesn't define "consumer use", so this reading
+  is our interpretation.
+- **Conditions:**
+  1. The owner signs up as the operator of Skill Buddy (a "person" may be the Customer), not
+     for personal use.
+  2. The account holder is 18 or over.
+  3. Skill Buddy stays adults-only (ADR 0006). This matters because some first-year students
+     may be 17; the 18+ check at sign-up keeps the app out of the under-majority clause.
+  4. Matches are suggestions that need two-sided consent and make no decision with
+     "material detrimental impact" in the listed high-risk domains. Skill Buddy must not
+     drift into hiring or admissions decisions.
+- **Residual risk:** the meaning of "consumer use" is undefined, and free services can be
+  withdrawn ("for a limited time or based on usage limits").
+
+**Cloudflare**
+
+The Self-Serve Subscription Agreement is "Last Updated September 12, 2025"
+(<https://www.cloudflare.com/terms/>):
+
+- It applies to "you" or "the Entity you represent". No business-only, consumer-use or
+  age clause was found.
+- On free services: "We will have no liability for any harm or damage arising out of or in
+  connection with any Free Services". Free Services may be discontinued "at any time in our
+  sole discretion".
+
+The Developer Platform Service-Specific Terms are "Last Updated: September 28, 2026"
+(<https://www.cloudflare.com/service-specific-terms-developer-platform/>). For Workers AI:
+
+- "Unless otherwise agreed, Cloudflare does not use any Customer Content to train generative
+  AI tools."
+- On third-party models: "Your use thereof may be subject to additional terms between you
+  and the model or search service provider (as applicable)."
+- "You are solely responsible for all Outputs and Actions and acknowledge and agree that
+  Outputs and Actions may not be accurate, error free, or operate as intended."
+
+**Verdict for Cloudflare: allowed.** No clause was found that restricts consumer-facing or
+production use. The conditions are:
+
+- the model licences: `gpt-oss-20b` is Apache-2.0; Llama models carry the Llama Community
+  Licence and its acceptable-use policy;
+- our responsibility for outputs, which we already validate;
+- the right to discontinue free services at any time.
+
+**If Groq turns out to be disallowed (or withdraws its free plan):**
+
+| Mode | Match quality | Capacity |
+| --- | --- | --- |
+| **Cloudflare only** (`gpt-oss-20b` for selection; `llama-3.1-8b-instruct-fp8-fast` for parsing, at about 18 neurons per parse) | Lower. Stage 4 runs on a 20B model instead of a 120B one; parsing runs on an 8B model. Expect weaker contradiction checks and blander explanations; to be measured on the eval set. | About **130 match calls/day**: **about 100 daily active users** if all request fresh matches, **about 200** at 40%. Invite waves must shrink to match. |
+| **Template only** (the fallback path in section 6, as the normal mode) | Lowest. Retrieval and code scoring still use local embeddings, so matches are still AI-ranked. There is no LLM selection, contradiction check or written reason; explanations come from templates. | No AI limit. Bounded only by hosting, database and email limits. |
+
+If Groq is lost, the order is Cloudflare only, and then template only if Cloudflare is lost
+as well. Each switch is a settings change (`AI_LLM_PROVIDERS`, `AI_LLM_ENABLED`); no code
+changes.
+
+**Not verified:**
+
+- Whether `@cf/openai/gpt-oss-20b` is available on the **Workers Free** plan. The limits
+  page says some models "require the Workers Paid plan", but the model's page shows no plan
+  requirement. If it needs the paid plan, Cloudflare runs `llama-3.1-8b-instruct-fp8-fast`
+  for both tasks. Check this in the dashboard before launch.
+- Groq's account sign-up and Data Controls screens. The terms say nothing about cards; that
+  no card is needed comes from third-party guides.
+- Neither verdict has had a legal review, and nobody asked Groq to confirm the meaning of
+  "consumer use". A one-line email to Groq support before launch would remove the main
+  doubt.
 
 ### 4. Daily call budget and supported daily active users
 
@@ -417,9 +543,11 @@ applied here.
 - **Tight RAM.** The embedding model takes about half of a 512 MB host. It must be measured
   before launch, with Cloudflare embeddings ready as the fallback.
 - **Job runner prerequisite.** Every model call runs in a background job, but staging has no
-  free always-on worker (ADR 0003). How jobs run on free hosting needs its own ADR before
-  launch, and email sending (ADR 0006) has the same dependency.
-- Groq's "not for consumer use" clause and the privacy wording have not had legal review.
+  free always-on worker (ADR 0003). [ADR 0008](0008-free-runtime-jobs-and-email.md) settles
+  how jobs run on free hosting; email sending (ADR 0006) depends on it too.
+- Groq's "not for consumer use" clause is read as allowing Skill Buddy (section 3a), but
+  neither that reading nor the privacy wording has had legal review. If Groq is
+  disallowed, capacity falls to about 100–200 daily active users on Cloudflare only.
 - Evaluation quality depends on the offline eval set (`backend/evals`), which is still 100
   unreviewed drafts. Prompt changes can't be judged until those pairs are reviewed.
 
@@ -431,8 +559,8 @@ applied here.
 
 ## Build order
 
-1. **Job runner on free hosting (ADR 0008).** Decide where background jobs run at zero cost.
-   This blocks everything below, and email too.
+1. **Job runner on free hosting ([ADR 0008](0008-free-runtime-jobs-and-email.md)).** Decides
+   where background jobs run at zero cost. This blocks everything below, and email too.
 2. **Migration 0003 and settings:** `vector(384)`; `EMBEDDING_MODEL` and
    `EMBEDDING_DIMENSIONS` with the start-up guard; `.env.example` entries; storage-budget
    update.

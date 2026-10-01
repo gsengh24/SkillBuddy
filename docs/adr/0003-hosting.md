@@ -1,6 +1,7 @@
 # 3. Zero-cost staging hosting
 
-- **Status:** Accepted
+- **Status:** Accepted; the worker question is settled by [ADR 0008](0008-free-runtime-jobs-and-email.md), which also
+  drops Upstash and notes that Koyeb Free now needs a card for new accounts
 - **Date:** 2026-10-01
 
 ## Context
