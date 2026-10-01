@@ -7,8 +7,6 @@ import uuid
 from typing import Any
 
 import pytest
-from arq import create_pool
-from arq.connections import RedisSettings
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient, Response
 
@@ -435,17 +433,23 @@ async def test_rate_limiter_fails_closed_when_valkey_is_down(
 # --- delivery and logging ---------------------------------------------------------------
 
 
-async def test_code_is_queued_for_the_worker(auth_settings: Settings) -> None:
+async def test_code_is_queued_as_a_job_with_the_code_kept_out_of_the_table(
+    auth_settings: Settings, migrated_database_url: str
+) -> None:
+    email = new_email()
     async with auth_client(auth_settings, delivery=None) as client:
-        response = await request_code(client, new_email())
+        response = await request_code(client, email)
 
-    queue = await create_pool(RedisSettings.from_dsn(auth_settings.redis_url.unicode_string()))
-    try:
-        jobs = await queue.queued_jobs()
-    finally:
-        await queue.aclose()
     assert response.status_code == 202
-    assert [job.function for job in jobs] == ["send_login_code"]
+    otp = run_sql(migrated_database_url, "SELECT id FROM otp_codes WHERE email = :e", e=email)
+    jobs = run_sql(
+        migrated_database_url,
+        "SELECT kind, payload, payload::text AS raw FROM jobs WHERE payload->>'otp_id' = :o",
+        o=str(otp[0]["id"]),
+    )
+    assert [job["kind"] for job in jobs] == ["send_login_code"]  # committed with the code
+    assert set(jobs[0]["payload"]) == {"otp_id", "_runner"}  # ids only
+    assert email not in jobs[0]["raw"]
 
 
 async def test_codes_tokens_and_addresses_are_never_logged(

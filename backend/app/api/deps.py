@@ -102,10 +102,8 @@ async def get_optional_user(
     return context.user if context else None
 
 
-def get_otp_delivery(request: Request, settings: SettingsDep) -> OtpDelivery:
-    return QueuedOtpDelivery(
-        request.app.state.redis, code_ttl=timedelta(minutes=settings.otp_ttl_minutes)
-    )
+def get_otp_delivery(settings: SettingsDep) -> OtpDelivery:
+    return QueuedOtpDelivery(code_ttl=timedelta(minutes=settings.otp_ttl_minutes))
 
 
 def get_storage_monitor(request: Request, settings: SettingsDep) -> StorageMonitor:

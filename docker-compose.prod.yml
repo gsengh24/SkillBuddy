@@ -28,6 +28,7 @@ x-backend-environment: &backend-environment
   SMTP_USERNAME: ${SMTP_USERNAME:-}
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
   ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
+  JOBS_TICK_TOKEN: ${JOBS_TICK_TOKEN:-}
   CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:?CORS_ALLOW_ORIGINS must be set}
   # Only trust X-Forwarded-* headers from the reverse proxy.
   FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
@@ -111,9 +112,18 @@ services:
 
   worker:
     <<: *backend-service
-    command: ["arq", "app.worker.settings.WorkerSettings"]
+    # Every job except login-code emails, which the api process sends itself (ADR 0008).
+    command: ["python", "-m", "app.jobs.worker"]
+    environment:
+      <<: *backend-environment
+      JOBS_IDLE_POLL_SECONDS: "5"
+      JOBS_HEARTBEAT_FILE: /tmp/jobs-worker.heartbeat
     healthcheck:
-      test: ["CMD", "arq", "--check", "app.worker.settings.WorkerSettings"]
+      test:
+        - CMD
+        - python
+        - -c
+        - "import os, sys, time; sys.exit(time.time() - os.path.getmtime('/tmp/jobs-worker.heartbeat') > 45)"
       interval: 30s
       timeout: 10s
       retries: 3

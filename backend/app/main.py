@@ -7,14 +7,14 @@ create isolated app instances with their own settings.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from arq.connections import ArqRedis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from redis.asyncio import ConnectionPool
+from redis.asyncio import ConnectionPool, Redis
 
 from app.api.deps import CSRF_HEADER
 from app.api.v1.router import api_router
@@ -25,16 +25,21 @@ from app.core.request_context import REQUEST_ID_HEADER, RequestContextMiddleware
 from app.core.security import SecurityHeadersMiddleware
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
+from app.jobs.runner import JobRunner
+from app.jobs.tasks import build_registry
 
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Open shared connection pools on startup and close them on shutdown.
+    """Open shared connection pools and start the job runner; stop both on shutdown.
 
     Pools connect lazily, so the API starts (and reports liveness) even while a
     dependency is down; the readiness probe is what reports the outage.
+
+    The in-process job runner (ADR 0008) always runs jobs with a secret (login codes,
+    whose code exists only in this process). With ``JOBS_RUN_IN_API`` it runs every job.
     """
     settings: Settings = app.state.settings
     engine = create_engine(settings)
@@ -43,19 +48,32 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         socket_connect_timeout=settings.readiness_timeout_seconds,
         socket_timeout=settings.readiness_timeout_seconds,
     )
-    # ArqRedis is a redis client that can also enqueue background jobs for the worker.
-    redis = ArqRedis(pool_or_conn=redis_pool)
+    redis = Redis(connection_pool=redis_pool)
+    session_factory = create_session_factory(engine)
+
+    registry = build_registry()
+    if not settings.jobs_run_in_api:
+        registry = registry.subset(lambda spec: spec.needs_secret)
+    runner = JobRunner(session_factory, registry, settings)
+    runner_task = asyncio.create_task(runner.run_forever(), name="job-runner")
 
     app.state.engine = engine
-    app.state.session_factory = create_session_factory(engine)
+    app.state.session_factory = session_factory
     app.state.redis = redis
+    app.state.job_runner = runner
     logger.info(
         "startup",
-        extra={"app_name": settings.app_name, "environment": settings.environment.value},
+        extra={
+            "app_name": settings.app_name,
+            "environment": settings.environment.value,
+            "jobs_run_in_api": settings.jobs_run_in_api,
+        },
     )
     try:
         yield
     finally:
+        runner.stop()
+        await runner_task
         await redis.aclose()
         await redis_pool.aclose()
         await engine.dispose()

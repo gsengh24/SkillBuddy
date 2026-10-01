@@ -1,4 +1,4 @@
-"""Outgoing email. Sending happens only in the Arq worker, never inside an API request."""
+"""Outgoing email. Sending happens only in background jobs, never inside an API request."""
 
 from app.services.email.senders import (
     ConsoleEmailSender,

@@ -8,7 +8,7 @@ infrastructure as code (e.g. Terraform) is added once staging is actually set up
 
 | Image | Dockerfile target | Runs |
 | --- | --- | --- |
-| backend | `backend/Dockerfile` → `runtime` | API (default command), worker (`arq app.worker.settings.WorkerSettings`), migrations (`alembic upgrade head`) |
+| backend | `backend/Dockerfile` → `runtime` | API (default command), worker (`python -m app.jobs.worker`), migrations (`alembic upgrade head`) |
 | web | `frontend/Dockerfile` → `runtime` | Next.js standalone server |
 
 Both images run as non-root users, contain no build tooling, and define a `HEALTHCHECK`.
@@ -46,4 +46,5 @@ On a managed cloud, drop the `db` and `redis` services and point `DATABASE_URL` 
 | `GET /api/v1/health` | Liveness: the process is up. No dependency checks. |
 | `GET /api/v1/health/ready` | Readiness / load-balancer gating: PostgreSQL, pgvector, Redis. Returns 503 with per-check detail on failure. |
 | `GET /api/health` (web) | Web server liveness. |
-| `arq --check app.worker.settings.WorkerSettings` | Worker liveness (exit code). |
+| `JOBS_HEARTBEAT_FILE` age | Worker liveness: the worker touches the file every 10 s; the compose healthcheck fails if it is over 45 s old. |
+| `POST /api/v1/admin/jobs/tick` | Scheduler entry point (`X-Jobs-Tick-Token`): enqueues due daily and hourly jobs. |

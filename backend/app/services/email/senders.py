@@ -27,7 +27,7 @@ class EmailMessage:
 
 
 class EmailDeliveryError(Exception):
-    """Sending failed; the worker job raises it so Arq retries."""
+    """Sending failed; the job raises it so the runner retries."""
 
 
 class EmailSender(Protocol):

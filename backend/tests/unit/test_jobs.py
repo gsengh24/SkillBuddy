@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -13,6 +15,7 @@ from app.jobs import JobContext, JobGroup, JobPayloadError, JobRegistry, JobRunn
 from app.jobs.queue import PAYLOAD_MAX_BYTES, enqueue
 from app.jobs.runner import retry_delay_seconds
 from app.jobs.secrets import EphemeralSecrets
+from app.jobs.worker import run_worker
 from tests.conftest import SettingsFactory
 
 
@@ -116,3 +119,21 @@ def test_job_runner_defaults_match_adr_0008(make_settings: SettingsFactory) -> N
 def test_retry_base_must_not_exceed_the_maximum(make_settings: SettingsFactory) -> None:
     with pytest.raises(ValidationError, match="JOBS_RETRY_BASE_SECONDS"):
         make_settings(jobs_retry_base_seconds=100, jobs_retry_max_seconds=50)
+
+
+async def test_worker_touches_its_heartbeat_file_while_running(
+    make_settings: SettingsFactory, tmp_path: Path
+) -> None:
+    beat = tmp_path / "jobs-worker.heartbeat"
+    settings = make_settings(jobs_heartbeat_file=str(beat))
+    stop = asyncio.Event()
+    # No job kinds: the worker never needs the database.
+    worker = asyncio.create_task(run_worker(settings, JobRegistry(), stop))
+    for _ in range(100):
+        if beat.exists():
+            break
+        await asyncio.sleep(0.05)
+    stop.set()
+    await asyncio.wait_for(worker, 5)
+
+    assert beat.exists()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -84,8 +85,10 @@ class AuthService:
             delete(OtpCode).where(OtpCode.email == email, OtpCode.consumed_at.is_(None))
         )
         code = generate_numeric_code(OTP_DIGITS)
+        otp_id = uuid.uuid4()
         self._db.add(
             OtpCode(
+                id=otp_id,
                 email=email,
                 code_hash=otp_hash(self._settings, email, code),
                 expires_at=datetime.now(UTC) + timedelta(minutes=self._settings.otp_ttl_minutes),
@@ -95,8 +98,9 @@ class AuthService:
         record_event(
             self._db, self._settings, AuthEventType.OTP_REQUESTED, client=client, email=email
         )
+        # The email job commits with the code: both exist, or neither (ADR 0008).
+        await self._delivery.send_login_code(self._db, otp_id, email, code)
         await self._db.commit()
-        await self._delivery.send_login_code(email, code)
         logger.info("login_code_requested", extra={"email": mask_email(email)})
 
     async def verify_code(

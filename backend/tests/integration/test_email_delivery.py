@@ -1,20 +1,15 @@
-"""Email goes out through real SMTP (Mailpit), sent by the Arq worker, never inline."""
+"""Email goes out through real SMTP (Mailpit), sent by a background job, never inline."""
 
 from __future__ import annotations
 
 import os
 import uuid
 
-from arq import Worker, create_pool
-from arq.connections import RedisSettings
-from arq.worker import func
-
 from app.core.config import Settings
 from app.services.email import EmailMessage, SmtpEmailSender, build_email_sender
 from app.services.email.templates import login_code_email
-from app.worker.jobs import send_login_code
 from tests.conftest import SettingsFactory
-from tests.integration.conftest import AUTH_VALKEY_DB, auth_client, redis_url_with_db
+from tests.integration.conftest import AUTH_VALKEY_DB, auth_client, redis_url_with_db, run_sql
 from tests.integration.mailpit import code_from, wait_for_message
 
 
@@ -62,10 +57,11 @@ async def test_login_code_email_uses_the_product_name(make_settings: SettingsFac
     assert "10 minutes" in message["Text"]
 
 
-async def test_worker_emails_the_code_and_it_signs_the_user_in(
+async def test_api_emails_the_code_in_the_background_and_it_signs_the_user_in(
     make_settings: SettingsFactory, migrated_database_url: str
 ) -> None:
-    """The full path: API enqueues, worker sends via SMTP, the emailed code signs in."""
+    """The full path: the API enqueues the job with the code, its in-process runner sends it
+    via SMTP after the request has returned, and the emailed code signs in (ADR 0008)."""
     settings = smtp_settings(
         make_settings,
         database_url=migrated_database_url,
@@ -74,21 +70,6 @@ async def test_worker_emails_the_code_and_it_signs_the_user_in(
     email = new_email()
     async with auth_client(settings, delivery=None) as client:
         requested = await client.post("/api/v1/auth/otp/request", json={"email": email})
-
-        redis = await create_pool(RedisSettings.from_dsn(settings.redis_url.unicode_string()))
-        worker = Worker(
-            functions=[func(send_login_code, keep_result=0)],
-            redis_pool=redis,
-            burst=True,
-            handle_signals=False,
-            poll_delay=0.05,
-            ctx={"settings": settings, "email_sender": build_email_sender(settings)},
-        )
-        try:
-            await worker.main()
-        finally:
-            await worker.close()
-
         code = code_from(await wait_for_message(email))
         signed_in = await client.post(
             "/api/v1/auth/otp/verify",
@@ -98,3 +79,11 @@ async def test_worker_emails_the_code_and_it_signs_the_user_in(
     assert requested.status_code == 202
     assert signed_in.status_code == 200
     assert signed_in.json()["email"] == email
+    jobs = run_sql(
+        migrated_database_url,
+        "SELECT status, payload::text AS payload FROM jobs WHERE kind = 'send_login_code' "
+        "AND created_at > now() - interval '1 minute' ORDER BY created_at DESC LIMIT 1",
+    )
+    assert jobs[0]["status"] == "succeeded"
+    assert code not in jobs[0]["payload"]  # the code never reaches the jobs table
+    assert email not in jobs[0]["payload"]

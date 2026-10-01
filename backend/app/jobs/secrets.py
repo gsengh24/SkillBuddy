@@ -3,7 +3,9 @@
 A login code must never be written to the jobs table, so it is kept here, keyed by job id,
 until the job has run. Entries expire, so a job that never runs (its transaction rolled
 back, or it was claimed by another process) cannot leave a secret behind for long. A
-restart loses every entry; the job then fails as ``SecretUnavailable``.
+restart loses every entry; the job then fails as ``SecretUnavailable``. Such jobs are tied
+to the process that enqueued them (``PROCESS_ID``), so with several API processes each one
+runs only its own.
 """
 
 from __future__ import annotations
@@ -11,6 +13,11 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Callable
+from typing import Final
+
+# Identifies this process. A job with a secret records it, and only this process's runners
+# claim it, because only this process holds the secret.
+PROCESS_ID: Final = uuid.uuid4().hex
 
 
 class EphemeralSecrets:
