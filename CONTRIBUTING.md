@@ -2,10 +2,12 @@
 
 ## Setup
 
-1. Install Docker and `make`, then run `make up` (see [README.md](README.md)).
+1. Open the repository in GitHub Codespaces and start the stack with
+   `docker compose up --build --detach --wait` (see "Develop in Codespaces" in
+   [README.md](README.md)).
 2. Install the git hooks (requires [uv](https://docs.astral.sh/uv/)):
    ```bash
-   cd backend && uv sync && uv run pre-commit install
+   cd backend && uv sync && uv run pre-commit install   # done automatically in Codespaces
    ```
 3. Read [CLAUDE.md](CLAUDE.md) for the coding standards and [docs/adr](docs/adr) for past
    decisions.
@@ -51,7 +53,8 @@ Copy this into the PR description and tick every item that applies.
 
 - [ ] Title follows Conventional Commits.
 - [ ] The change is scoped to one concern; unrelated refactors are in separate PRs.
-- [ ] `make lint` and `make test` pass locally.
+- [ ] Backend and frontend lint/typecheck and the backend tests pass (the `docker compose run`
+      commands in README.md, or the equivalent `make lint` / `make test`).
 - [ ] Every new or changed endpoint has tests (success and failure paths).
 - [ ] Every database change has an Alembic migration, and it downgrades cleanly.
 - [ ] New settings are added to `backend/.env.example` (or `frontend/.env.example`) with a

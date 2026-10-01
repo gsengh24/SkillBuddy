@@ -90,7 +90,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = ["--strict-markers", "--strict-config", "-ra"]
 markers = [
-    "integration: needs real PostgreSQL (with pgvector) and Redis; run via `make test`.",
+    "integration: needs real PostgreSQL (with pgvector) and Redis; run inside the compose stack (see README).",
 ]
 
 # --- Coverage -----------------------------------------------------------------------

@@ -9,7 +9,8 @@
 ## Checklist
 
 - [ ] Title follows Conventional Commits.
-- [ ] `make lint` and `make test` pass locally.
+- [ ] Backend and frontend lint/typecheck and the backend tests pass (the `docker compose run`
+      commands in README.md, or the equivalent `make lint` / `make test`).
 - [ ] New or changed endpoints have tests (success and failure paths).
 - [ ] Database changes have an Alembic migration that downgrades cleanly.
 - [ ] New settings are documented in `.env.example` and validated.

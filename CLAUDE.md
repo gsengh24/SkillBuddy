@@ -62,30 +62,34 @@ docs/                    ARCHITECTURE.md, adr/
 
 ## Commands
 
-All from the repo root; they run inside Docker.
+Development happens in GitHub Codespaces (`.devcontainer/`); the stack runs with plain
+`docker compose` from the repo root. Use these commands; `make` is not assumed to exist
+(the `Makefile` targets are optional shortcuts for the same commands).
 
 | Task | Command |
 | --- | --- |
-| Start / stop | `make up` / `make down` |
-| Logs | `make logs` or `make logs s=api` |
-| Test (backend) | `make test` |
-| Lint + typecheck (all) | `make lint` |
-| Format (all) | `make format` |
-| Apply migrations | `make migrate` |
-| Revert one migration | `make downgrade` |
-| New migration | `make revision m="describe change"` |
-| DB shell | `make psql` |
+| Start (wait until healthy) | `docker compose up --build --detach --wait` |
+| Stop / wipe data | `docker compose down` / `docker compose down -v` |
+| Status / logs | `docker compose ps` / `docker compose logs --follow api` |
+| Test (backend) | `docker compose run --rm --no-deps api pytest --cov --cov-report=term-missing` |
+| Lint + typecheck (backend) | `docker compose run --rm --no-deps api sh -c "ruff check . && ruff format --check . && mypy"` |
+| Lint + typecheck (frontend) | `docker compose run --rm --no-deps web sh -c "npm run lint && npm run typecheck && npm run format:check"` |
+| Apply migrations | `docker compose run --rm migrate alembic upgrade head` |
+| Revert one migration | `docker compose run --rm migrate alembic downgrade -1` |
+| New migration | `docker compose run --rm migrate alembic revision --autogenerate -m "describe change"` |
+| DB shell | `docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'` |
 
-Without Docker: `cd backend && uv run pytest tests/unit`, `uv run ruff check .`,
-`uv run mypy`; `cd frontend && npm run lint && npm run typecheck && npm run build`.
+Without the stack (editor-side, deps installed by the dev container):
+`cd backend && uv run pytest tests/unit && uv run ruff check . && uv run mypy`;
+`cd frontend && npm run lint && npm run typecheck && npm run build`.
 
 ## Rules (non-negotiable)
 
 1. **Never commit secrets.** No keys, tokens, passwords or real personal data in code,
    tests, fixtures, logs or docs. Configuration comes from the environment; document every
    variable in the relevant `.env.example`. Gitleaks runs in pre-commit.
-2. **Every DB change needs an Alembic migration.** Change the model, run
-   `make revision m="..."`, review and edit the generated file, and make sure `downgrade()`
+2. **Every DB change needs an Alembic migration.** Change the model, generate one with
+   `alembic revision --autogenerate` (see Commands), review and edit the generated file, and make sure `downgrade()`
    works. CI runs upgrade → downgrade → upgrade and `alembic check` (model/migration drift).
 3. **Every endpoint needs tests**, covering at least the success path and the main failure
    paths (validation, not found, unauthorised). Use real Postgres/Redis in integration tests,

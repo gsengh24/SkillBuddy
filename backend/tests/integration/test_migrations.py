@@ -71,4 +71,6 @@ def test_models_and_migrations_are_in_sync(migrated_database_url: str) -> None:
     finally:
         engine.dispose()
 
-    assert diff == [], f"Models and migrations differ; run `make revision`: {diff}"
+    assert diff == [], (
+        f"Models and migrations differ; run `alembic revision --autogenerate`: {diff}"
+    )
