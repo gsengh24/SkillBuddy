@@ -18,6 +18,8 @@
 - [ ] CI is green (Backend, Frontend, Docker images); no check was disabled or weakened.
 - [ ] New or changed endpoints have tests (success and failure paths).
 - [ ] Database changes have an Alembic migration that downgrades cleanly.
+- [ ] New growing tables: retention policy and estimated growth stated above, row added to
+      `docs/storage-budget.md`.
 - [ ] New settings are documented in `.env.example` and validated; secrets live only in the
       hosting dashboard.
 - [ ] No secrets or personal data in code, tests, fixtures or logs.
