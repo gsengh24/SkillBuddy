@@ -1,9 +1,12 @@
+# Weekly dependency updates. Minor and patch updates are grouped into one PR per
+# ecosystem; major versions of the core toolchain are deferred to planned upgrades.
 version: 2
 updates:
   - package-ecosystem: uv
     directory: /backend
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
     groups:
       backend-minor:
         update-types: [minor, patch]
@@ -12,16 +15,34 @@ updates:
     directory: /frontend
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
     groups:
       frontend-minor:
         update-types: [minor, patch]
+    ignore:
+      # Major upgrades of the toolchain are done deliberately, not by bot PRs.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      # Keep the Node type definitions on our Node major (24, see frontend/Dockerfile).
+      - dependency-name: "@types/node"
+        versions: [">=25.0.0"]
 
   - package-ecosystem: docker
     directories: [/backend, /frontend]
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      docker-minor-patch:
+        update-types: [minor, patch]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
