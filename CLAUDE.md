@@ -101,7 +101,8 @@ frontend/
 .devcontainer/           GitHub Codespaces config (Docker-in-Docker; stack via docker compose)
 infra/                   Deployment notes, production env template
 docs/                    ARCHITECTURE.md, adr/, deployment-plan.md, free-tier-limits.md,
-                         storage-budget.md, roadmap.md, phase-0-exit-report.md
+                         storage-budget.md, roadmap.md, phase-0-exit-report.md,
+                         pre-launch-checklist.md
 ```
 
 ## Commands
