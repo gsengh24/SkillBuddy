@@ -14,9 +14,9 @@ export default function PrivacyPage() {
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">What we collect</h2>
         <p>
-          Your email address, so you can sign in with a one-time code, and the date you confirmed
-          you are 18 or older and accepted the terms. For security we keep a short log of sign-in
-          activity (with your IP address and browser), which is deleted after 90 days.
+          Your email address, so you can sign in with a one-time code, and the date you accepted the
+          terms. We do not ask for your age or date of birth. For security we keep a short log of
+          sign-in activity (with your IP address and browser), which is deleted after 90 days.
         </p>
       </section>
       <section className="flex flex-col gap-2">

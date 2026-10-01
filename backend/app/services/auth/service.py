@@ -104,7 +104,6 @@ class AuthService:
         raw_email: str,
         code: str,
         *,
-        age_confirmed: bool,
         accept_terms: bool,
         client: ClientInfo,
     ) -> SignInResult:
@@ -140,8 +139,8 @@ class AuthService:
             raise CodeLockedError if locked else InvalidCodeError
 
         user = await self._db.scalar(select(User).where(User.email == email))
-        if user is None and not (age_confirmed and accept_terms):
-            # Keep the code usable so the person can tick the boxes and resubmit.
+        if user is None and not accept_terms:
+            # Keep the code usable so the person can accept the terms and resubmit.
             await self._db.rollback()
             raise ConsentRequiredError
         if user is None:
@@ -172,7 +171,6 @@ class AuthService:
             user = User(
                 email=email,
                 email_verified_at=now,
-                age_confirmed_at=now,
                 terms_accepted_at=now,
                 terms_version=self._settings.terms_version,
             )

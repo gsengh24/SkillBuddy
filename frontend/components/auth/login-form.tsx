@@ -17,7 +17,7 @@ const EMAIL_MAX_LENGTH = 254;
 type Step = "email" | "code";
 
 /**
- * Two-step passwordless sign-in: (1) email plus age and terms confirmation, (2) the 6-digit
+ * Two-step passwordless sign-in: (1) email plus terms acceptance, (2) the 6-digit
  * code from the email. Uses native form controls, labelled fields, and announces errors
  * (role="alert") and progress (role="status") to assistive technology.
  */
@@ -26,7 +26,6 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   const ids = useId();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
-  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +77,8 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       setError("Enter a valid email address, like name@example.com.");
       return;
     }
-    if (!ageConfirmed || !acceptTerms) {
-      setError("To continue, confirm that you are 18 or older and accept the terms.");
+    if (!acceptTerms) {
+      setError("To continue, accept the terms.");
       return;
     }
     if (await sendCode()) {
@@ -104,7 +103,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
     try {
       await browserApi("/auth/otp/verify", userSchema, {
         method: "POST",
-        body: { email: email.trim(), code, age_confirmed: ageConfirmed, accept_terms: acceptTerms },
+        body: { email: email.trim(), code, accept_terms: acceptTerms },
       });
       setStatus("You're signed in. Taking you there now…");
       router.replace(nextPath);
@@ -167,16 +166,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           </div>
 
           <fieldset className="flex flex-col gap-3">
-            <legend className="sr-only">Confirmations</legend>
-            <label className="flex items-start gap-3 text-slate-700">
-              <input
-                type="checkbox"
-                checked={ageConfirmed}
-                onChange={(event) => setAgeConfirmed(event.target.checked)}
-                className="mt-1 size-4"
-              />
-              <span>I am 18 or older.</span>
-            </label>
+            <legend className="sr-only">Terms</legend>
             <label className="flex items-start gap-3 text-slate-700">
               <input
                 type="checkbox"

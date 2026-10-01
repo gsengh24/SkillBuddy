@@ -56,9 +56,10 @@ Docker-in-Docker. The setup lives in [.devcontainer/](.devcontainer/).
    **API connected**) and port **8000** is the API (add `/docs` for the interactive docs).
 
 **Signing in on the dev stack.** Open `/login` on port 3000, enter any email address and tick
-the two boxes. The worker sends the 6-digit code to **Mailpit** (port **8025**), which
+the terms box. The worker sends the 6-digit code to **Mailpit** (port **8025**), which
 catches every email; nothing leaves the Codespace. Authentication is described in
-[ADR 0006](docs/adr/0006-authentication-and-sessions.md).
+[ADR 0006](docs/adr/0006-authentication-and-sessions.md); [ADR 0009](docs/adr/0009-minors-permitted.md)
+removed its age requirement.
 
 Everyday commands, run from the repository root:
 

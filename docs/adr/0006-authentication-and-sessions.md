@@ -1,6 +1,6 @@
 # 6. Passwordless email codes, server-side sessions, CSRF protection
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR 0009
 - **Date:** 2026-10-01
 
 ## Context

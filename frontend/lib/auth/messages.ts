@@ -5,7 +5,7 @@ const MESSAGES: Record<string, string> = {
   invalid_code:
     "That code is incorrect or has expired. Check your latest email or request a new code.",
   code_locked: "Too many incorrect attempts. Request a new code to try again.",
-  consent_required: "To create an account, confirm that you are 18 or older and accept the terms.",
+  consent_required: "To create an account, accept the terms.",
   account_suspended: "This account is suspended. Contact support for help.",
   signups_paused:
     "We're not accepting new sign-ups right now. Please try again later. Existing accounts can still sign in.",

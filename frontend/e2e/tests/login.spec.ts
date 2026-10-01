@@ -27,9 +27,9 @@ test("sign up with an emailed code, reach home, sign out", async ({ page, reques
   await page.goto("/home");
   await expect(page).toHaveURL(/\/login\?next=%2Fhome/);
 
-  // Step 1: email plus the age and terms confirmations.
+  // Step 1: email plus terms acceptance (no age question; ADR 0009).
   await page.getByLabel("Email address").fill(email);
-  await page.getByRole("checkbox", { name: /18 or older/ }).check();
+  await expect(page.getByRole("checkbox", { name: /18 or older/ })).toHaveCount(0);
   await page.getByRole("checkbox", { name: /accept the/ }).check();
   await page.getByRole("button", { name: "Email me a code" }).click();
 

@@ -13,7 +13,7 @@ export default function TermsPage() {
       <DraftNotice />
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">Who can use {brand.name}</h2>
-        <p>You must be 18 or older. You confirm this when you create your account.</p>
+        <p>Anyone can create an account. You accept these terms when you create your account.</p>
       </section>
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">What the service does</h2>

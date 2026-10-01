@@ -92,7 +92,7 @@ async def test_worker_emails_the_code_and_it_signs_the_user_in(
         code = code_from(await wait_for_message(email))
         signed_in = await client.post(
             "/api/v1/auth/otp/verify",
-            json={"email": email, "code": code, "age_confirmed": True, "accept_terms": True},
+            json={"email": email, "code": code, "accept_terms": True},
         )
 
     assert requested.status_code == 202

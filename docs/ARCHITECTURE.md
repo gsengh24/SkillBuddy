@@ -192,7 +192,7 @@ A platform that introduces strangers carries real safety risk, so these controls
 - **Block and report** on every profile and message, with blocks enforced as hard filters in retrieval.
 - **Automated screening** of profiles and first messages for scams, harassment, solicitation and minors-related risk, with a human moderation queue for flagged items.
 - **Rate limits** on intros per day, tuned up as a user earns trust through accepted conversations.
-- **Age gate.** Adults only at launch (18+). This removes the largest class of legal and safety problems; revisit only with a dedicated design.
+- **No age requirement** ([ADR 0009](adr/0009-minors-permitted.md)). Minors may join and are treated like everyone else; no age is collected. Legal review of children's-data obligations (India's DPDP Act) is pending before launch.
 - **Safety nudges.** First-chat tips such as keeping conversations on the platform until comfortable and never sharing financial details.
 
 **Privacy**

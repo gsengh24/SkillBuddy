@@ -49,8 +49,9 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     email_verified_at: Mapped[datetime | None]
     last_login_at: Mapped[datetime | None]
-    # Consent captured when the account is created (adults only; ARCHITECTURE.md §8).
+    # Unused since ADR 0009 (no age requirement); kept, nullable, so no migration is needed.
     age_confirmed_at: Mapped[datetime | None]
+    # Consent captured when the account is created.
     terms_accepted_at: Mapped[datetime | None]
     terms_version: Mapped[str | None] = mapped_column(String(32))
     # Soft delete: when deletion was requested, and when the hard-delete job removes the row.

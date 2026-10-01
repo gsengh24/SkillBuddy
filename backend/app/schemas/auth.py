@@ -41,8 +41,11 @@ class OtpVerifyIn(BaseModel):
 
     email: Email
     code: str = Field(pattern=r"^\d{6}$", description="The 6-digit code from the email.")
-    age_confirmed: bool = Field(
-        default=False, description="Required when creating an account: the user is 18 or older."
+    # Kept only so existing clients that still send it are not rejected (extra="forbid").
+    age_confirmed: bool | None = Field(
+        default=None,
+        deprecated=True,
+        description="Deprecated and ignored: there is no age requirement (ADR 0009).",
     )
     accept_terms: bool = Field(
         default=False, description="Required when creating an account: the user accepts the terms."

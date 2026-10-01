@@ -25,7 +25,7 @@ class CodeLockedError(AppError):
 class ConsentRequiredError(AppError):
     status_code = HTTPStatus.BAD_REQUEST
     code = "consent_required"
-    default_message = "To create an account, confirm that you are 18 or older and accept the terms."
+    default_message = "To create an account, accept the terms."
 
 
 class AccountPendingDeletionError(AppError):

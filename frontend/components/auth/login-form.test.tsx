@@ -46,21 +46,27 @@ afterEach(() => {
 async function fillFirstStep(user: ReturnType<typeof userEvent.setup>, consent = true) {
   await user.type(screen.getByLabelText("Email address"), "ananya@example.com");
   if (consent) {
-    await user.click(screen.getByRole("checkbox", { name: /18 or older/ }));
     await user.click(screen.getByRole("checkbox", { name: /accept the/ }));
   }
   await user.click(screen.getByRole("button", { name: "Email me a code" }));
 }
 
 describe("LoginForm", () => {
-  it("requires age confirmation and the terms before sending a code", async () => {
+  it("requires the terms before sending a code", async () => {
     const user = userEvent.setup();
     render(<LoginForm nextPath="/home" />);
 
     await fillFirstStep(user, false);
 
-    expect(screen.getByRole("alert")).toHaveTextContent(/18 or older and accept the terms/);
+    expect(screen.getByRole("alert")).toHaveTextContent("To continue, accept the terms.");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("asks for no age or date of birth", () => {
+    render(<LoginForm nextPath="/home" />);
+
+    expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+    expect(screen.queryByText(/18 or older|date of birth|your age/i)).toBeNull();
   });
 
   it("rejects an invalid email address without calling the API", async () => {
@@ -166,7 +172,7 @@ describe("LoginForm", () => {
     );
   });
 
-  it("signs in with consent flags and goes to the next page", async () => {
+  it("signs in with terms acceptance and goes to the next page", async () => {
     fetchMock.mockResolvedValueOnce(json(202, SENT)).mockResolvedValueOnce(json(200, USER));
     const user = userEvent.setup();
     render(<LoginForm nextPath="/settings/account" />);
@@ -179,7 +185,6 @@ describe("LoginForm", () => {
     expect(JSON.parse(init.body as string)).toEqual({
       email: "ananya@example.com",
       code: "123456",
-      age_confirmed: true,
       accept_terms: true,
     });
     expect(router.replace).toHaveBeenCalledWith("/settings/account");

@@ -38,7 +38,7 @@ async def request_code(client: AsyncClient, email: str) -> Response:
 async def verify(client: AsyncClient, email: str, code: str, *, consent: bool = True) -> Response:
     return await client.post(
         VERIFY,
-        json={"email": email, "code": code, "age_confirmed": consent, "accept_terms": consent},
+        json={"email": email, "code": code, "accept_terms": consent},
     )
 
 
@@ -90,6 +90,39 @@ async def test_first_sign_in_creates_account_identity_and_session(
         id=user["id"],
     )
     assert {"event_type": "signup"} in events
+    consent = run_sql(
+        migrated_database_url,
+        "SELECT age_confirmed_at, terms_accepted_at FROM users WHERE id = :id",
+        id=user["id"],
+    )
+    assert consent[0]["age_confirmed_at"] is None  # no age is asked or recorded (ADR 0009)
+    assert consent[0]["terms_accepted_at"] is not None
+
+
+async def test_deprecated_age_field_is_accepted_and_ignored(
+    auth_settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    """Clients that still send ``age_confirmed`` (any value) are not rejected or restricted."""
+    email = new_email()
+    async with auth_client(auth_settings, delivery) as client:
+        await request_code(client, email)
+        signed_in = await client.post(
+            VERIFY,
+            json={
+                "email": email,
+                "code": delivery.last_code(email),
+                "age_confirmed": False,
+                "accept_terms": True,
+            },
+        )
+
+    assert signed_in.status_code == 200, signed_in.text
+    rows = run_sql(
+        migrated_database_url,
+        "SELECT age_confirmed_at FROM users WHERE id = :id",
+        id=signed_in.json()["id"],
+    )
+    assert rows == [{"age_confirmed_at": None}]
 
 
 async def test_existing_account_signs_in_without_consent_again(
@@ -138,7 +171,7 @@ async def test_request_response_is_identical_for_known_and_unknown_addresses(
 # --- code rules -------------------------------------------------------------------------
 
 
-async def test_new_account_requires_age_and_terms_and_keeps_code_usable(
+async def test_new_account_requires_terms_and_keeps_code_usable(
     auth_settings: Settings, delivery: CapturingDelivery
 ) -> None:
     email = new_email()

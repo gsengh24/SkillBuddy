@@ -92,7 +92,7 @@ PY
   sleep 2
 done
 [ -n "$code" ] || fail "no sign-in email reached Mailpit within 60s"
-body="{\"email\": \"$email\", \"code\": \"$code\", \"age_confirmed\": true, \"accept_terms\": true}"
+body="{\"email\": \"$email\", \"code\": \"$code\", \"accept_terms\": true}"
 status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -X POST \
   "$API/api/v1/auth/otp/verify" -H "Content-Type: application/json" -d "$body")
 [ "$status" = "200" ] || fail "verifying the emailed code returned HTTP $status"

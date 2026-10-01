@@ -58,7 +58,7 @@ def test_committed_dataset_is_valid_and_complete() -> None:
     assert len(eval_set.profiles) == 40
     assert len(eval_set.pairs) == 100
     assert {pair.intent for pair in eval_set.pairs} == set(Intent)
-    assert all(profile.age >= 18 for profile in eval_set.profiles)
+    assert all(1 <= profile.age <= 100 for profile in eval_set.profiles)
 
 
 def test_committed_pairs_are_all_unreviewed_drafts() -> None:
@@ -84,10 +84,15 @@ def test_every_profile_appears_in_a_pair() -> None:
 # --- record validation ------------------------------------------------------------------
 
 
+def test_profile_may_be_under_18() -> None:
+    assert SyntheticProfile.model_validate(_profile(age=16)).age == 16
+
+
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
-        ({"age": 17}, "greater than or equal to 18"),
+        ({"age": 0}, "greater than or equal to 1"),
+        ({"age": 101}, "less than or equal to 100"),
         ({"timezone": "Mars/Olympus_Mons"}, "unknown IANA timezone"),
         ({"about": "too short"}, "at least 100 characters"),
         ({"about": "x" * 2001}, "at most 2000 characters"),
