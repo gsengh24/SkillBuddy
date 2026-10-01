@@ -215,7 +215,8 @@ async def test_login_code_jobs_of_another_process_are_left_alone_then_buried(
     other_process = uuid.uuid4().hex
     insert = (
         "INSERT INTO jobs (kind, payload, created_at) VALUES ('send_login_code', "
-        "jsonb_build_object('otp_id', :o, '_runner', :r), now() - make_interval(mins => :m)) "
+        "jsonb_build_object('otp_id', CAST(:o AS text), '_runner', CAST(:r AS text)), "
+        "now() - make_interval(mins => :m)) "
         "RETURNING id"
     )
     fresh = run_sql(migrated_database_url, insert, o=str(uuid.uuid4()), r=other_process, m=1)
