@@ -141,7 +141,12 @@ export function StyleGuide() {
           Text needs 4.5:1; borders, focus rings and control states need 3:1. Checked by a test on
           every change.
         </p>
-        <div className="rounded-card border-line bg-paper overflow-x-auto border">
+        <div
+          role="region"
+          aria-label="Colour pairs table"
+          tabIndex={0}
+          className="rounded-card border-line bg-paper overflow-x-auto border"
+        >
           <table className="text-small w-full min-w-[640px] text-left">
             <thead>
               <tr className="border-line border-b">

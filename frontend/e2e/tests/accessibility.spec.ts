@@ -43,7 +43,8 @@ for (const viewport of VIEWPORTS) {
       // The error state too: submitting without the tick boxes shows an alert.
       await page.getByLabel("Email address").fill("someone@example.com");
       await page.getByRole("button", { name: "Email me a code" }).click();
-      await expect(page.getByRole("alert")).toBeVisible();
+      // (Next.js also renders an empty role="alert" route announcer, so match the text.)
+      await expect(page.getByRole("alert").filter({ hasText: /18 or older/ })).toBeVisible();
       await expectNoViolations(page);
     });
   });
