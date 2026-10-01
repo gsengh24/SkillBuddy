@@ -54,6 +54,11 @@ Docker-in-Docker. The setup lives in [.devcontainer/](.devcontainer/).
 4. Open the **Ports** tab. Port **3000** is the web app (the status panel should read
    **API connected**) and port **8000** is the API (add `/docs` for the interactive docs).
 
+**Signing in on the dev stack.** Open `/login` on port 3000, enter any email address and tick
+the two boxes. The worker sends the 6-digit code to **Mailpit** (port **8025**), which
+catches every email; nothing leaves the Codespace. Authentication is described in
+[ADR 0006](docs/adr/0006-authentication-and-sessions.md).
+
 Everyday commands, run from the repository root:
 
 ```bash
@@ -62,7 +67,7 @@ docker compose run --rm migrate alembic upgrade head     # apply migrations
 docker compose run --rm migrate alembic downgrade -1     # revert one migration (or: base)
 docker compose run --rm migrate alembic revision --autogenerate -m "describe change"
 
-# Backend tests (unit + integration against the real Postgres and Redis)
+# Backend tests (unit + integration against the real Postgres, Valkey and Mailpit)
 docker compose run --rm --no-deps api pytest --cov --cov-report=term-missing
 
 # Lint and type-check
@@ -104,6 +109,7 @@ No configuration is needed for local development. To change ports or credentials
 | --- | --- | --- |
 | `db` | PostgreSQL 16 with pgvector | `localhost:5432` (user/password/db `app`) |
 | `valkey` | Valkey 9 (Redis-compatible): job queue, cache, rate limits | `localhost:6379` |
+| `mailpit` | Catches all outgoing email (sign-in codes) | <http://localhost:8025> |
 | `migrate` | One-shot `alembic upgrade head`; exits when done | n/a |
 | `api` | FastAPI with hot reload | <http://localhost:8000> |
 | `worker` | Arq worker with hot reload | n/a |

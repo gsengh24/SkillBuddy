@@ -54,7 +54,11 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
   - **Worker** (Arq on Valkey): runs background jobs, including every model call.
 - **PostgreSQL 16 + pgvector** is the single source of truth, including embeddings.
   **Valkey** (Redis-compatible, ADR 0005) is the queue, cache and rate-limit store.
-- **Next.js** web app. Server components call the API through a typed client.
+- **Next.js** web app. Server components call the API through a typed client; the browser
+  calls the web app's own `/api/v1/*`, which forwards to the API (same-origin cookies).
+- **Authentication** (ADR 0006): passwordless email codes, server-side sessions in an
+  httpOnly cookie, signed double-submit CSRF, Valkey rate limits, 30-day deletion grace
+  period. Email is sent only by the worker (Mailpit catches it in dev and CI).
 - Migrations run as a **separate one-shot step** (`migrate` service), never at API startup.
 
 ## Folder map
@@ -71,17 +75,24 @@ backend/
     api/deps.py          Shared FastAPI dependencies
     api/v1/              Routers; router.py aggregates them under /api/v1
     services/            Business logic; endpoints and jobs call these
+      auth/              Sign-in codes, sessions, rate limits, audit log, retention jobs
+      email/             EmailSender (console/SMTP) and templates
+      storage.py         Database size monitor and the 90% write pause
     worker/              Arq settings (settings.py) and job functions (jobs.py)
   migrations/            Alembic env + versions (one file per migration)
   evals/                 Matcher evaluation set: synthetic profiles + draft-labelled pairs
   tests/unit/            No infrastructure needed
   tests/integration/     Real Postgres + Valkey; each run uses a throwaway database
 frontend/
-  app/                   App Router pages and route handlers (app/api/health = web liveness)
+  app/                   App Router pages: /login, /home, /settings/account, /terms, /privacy
+  app/api/v1/[...path]/  Same-origin forwarder to the API (app/api/health = web liveness)
+  proxy.ts               Next.js Proxy: sends signed-out visitors of protected pages to /login
   components/            React components
   lib/brand.ts           Product name and copy (the only place the name is defined)
   lib/env.ts             Server env validation (zod)
-  lib/api/               Typed API client + response schemas
+  lib/api/               Typed API clients (client.ts server, browser.ts browser) + schemas
+  lib/auth/              Session check (server), cookie names, redirects, error messages
+  e2e/                   Playwright end-to-end tests (run by the CI Smoke job)
 .devcontainer/           GitHub Codespaces config (Docker-in-Docker; stack via docker compose)
 infra/                   Deployment notes, production env template
 docs/                    ARCHITECTURE.md, adr/, deployment-plan.md, free-tier-limits.md,
@@ -99,6 +110,7 @@ and `cd frontend && npm ci`.
 | Backend types | `cd backend && uv run mypy` |
 | Backend unit tests | `cd backend && uv run pytest tests/unit` |
 | Frontend lint + types + format | `cd frontend && npm run lint && npm run typecheck && npm run format:check` |
+| Frontend component tests | `cd frontend && npm test` |
 
 Integration tests, migrations and image builds run in CI. The full stack runs only in CI or
 a Codespace, with plain `docker compose` from the repo root (`make` is not assumed to exist;
@@ -211,6 +223,11 @@ mobile app were calling it tomorrow.
 - Models: UUID primary keys, `timestamptz` columns, constraint names from the naming
   convention, `CHECK` constraints instead of Postgres enums (cheaper to migrate).
 - Jobs must be idempotent (Arq retries).
+- Protect endpoints with `Depends(get_current_user)` (or `get_optional_user`). Cookie-
+  authenticated writes are CSRF-checked automatically; never bypass that dependency.
+- Send email only from worker jobs through `EmailSender`; never log codes, tokens or full
+  email addresses (use `mask_email`).
+- Add `Depends(require_storage_capacity)` to endpoints that make non-essential writes.
 - Settings: add to `Settings` in `app/core/config.py` with a type and validation, and to
   `backend/.env.example` with a comment.
 
@@ -218,7 +235,10 @@ mobile app were calling it tomorrow.
 - Responsive, mobile-first layouts (Tailwind breakpoints scale up from small screens).
   Every page must work well on a phone-sized viewport.
 - Server components by default; add `"use client"` only when needed.
-- Talk to the API only through `lib/api/client.ts`, with a Zod schema for every response.
+- Talk to the API only through `lib/api/client.ts` (server) or `lib/api/browser.ts` (browser,
+  same-origin, sends the CSRF header), with a Zod schema for every response.
+- Protected pages call `getCurrentUser()` (`lib/auth/session.ts`) and redirect when it is
+  null; `proxy.ts` is only a fast first check.
 - Read env only through `lib/env.ts`. Never import server-only modules into client components.
 - Use the brand name only from `lib/brand.ts`.
 - ESLint (`--max-warnings=0`) and Prettier must pass.

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 
 import { ApiStatusFallback, ApiStatusIndicator } from "@/components/api-status";
@@ -17,6 +18,14 @@ export default function HomePage() {
           {brand.tagline}
         </h1>
         <p className="max-w-2xl text-lg text-pretty text-slate-600">{brand.description}</p>
+        <div>
+          <Link
+            href="/login"
+            className="inline-block rounded-md bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700"
+          >
+            Sign in or create an account
+          </Link>
+        </div>
       </header>
 
       <section aria-label="System status">

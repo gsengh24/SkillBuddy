@@ -1,6 +1,7 @@
 import "server-only";
 
-import { ApiError, apiRequest } from "./client";
+import { apiRequest } from "./client";
+import { ApiError } from "./errors";
 import { readinessResponseSchema, type ReadinessResponse } from "./schemas";
 
 export type ApiStatus =

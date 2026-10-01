@@ -128,6 +128,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Unit and component tests
+        run: npm test
+
       - name: Build
         run: npm run build
         env:
@@ -200,6 +203,34 @@ jobs:
 
       - name: Smoke checks
         run: bash .github/scripts/smoke.sh
+
+      # The end-to-end test reuses the running stack instead of booting its own.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Playwright (Chromium only)
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: End-to-end sign-in test (Playwright)
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost:3000
+          MAILPIT_URL: http://localhost:8025
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          if-no-files-found: ignore
 
       - name: Service status and logs
         if: failure()

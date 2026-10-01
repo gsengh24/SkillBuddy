@@ -1,0 +1,61 @@
+import { expect, test, type APIRequestContext } from "@playwright/test";
+
+const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://localhost:8025";
+
+async function codeFromMailpit(request: APIRequestContext, email: string): Promise<string> {
+  let code: string | undefined;
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(`${MAILPIT_URL}/api/v1/search`, {
+          params: { query: `to:"${email}"` },
+        });
+        const body = (await response.json()) as { messages?: { Snippet?: string }[] };
+        code = body.messages?.[0]?.Snippet?.match(/\b(\d{6})\b/)?.[1];
+        return code;
+      },
+      { message: `waiting for the sign-in email to ${email}`, timeout: 60_000 },
+    )
+    .toBeDefined();
+  return code as string;
+}
+
+test("sign up with an emailed code, reach home, sign out", async ({ page, request }) => {
+  const email = `e2e-${Date.now()}@example.com`;
+
+  // Protected pages send signed-out visitors to the login page.
+  await page.goto("/home");
+  await expect(page).toHaveURL(/\/login\?next=%2Fhome/);
+
+  // Step 1: email plus the age and terms confirmations.
+  await page.getByLabel("Email address").fill(email);
+  await page.getByRole("checkbox", { name: /18 or older/ }).check();
+  await page.getByRole("checkbox", { name: /accept the/ }).check();
+  await page.getByRole("button", { name: "Email me a code" }).click();
+
+  // Step 2: the code from the email (delivered by the worker to Mailpit).
+  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Resend code in \d+s/ })).toBeDisabled();
+  const code = await codeFromMailpit(request, email);
+  await page.getByLabel("Sign-in code").fill(code);
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  await expect(page).toHaveURL(/\/home$/);
+  await expect(page.getByText(`You're signed in as ${email}`)).toBeVisible();
+
+  // The session cookie is httpOnly and SameSite=Lax; the CSRF cookie is readable.
+  const cookies = await page.context().cookies();
+  const session = cookies.find((cookie) => cookie.name === "session");
+  expect(session?.httpOnly).toBe(true);
+  expect(session?.sameSite).toBe("Lax");
+  expect(cookies.find((cookie) => cookie.name === "csrf_token")?.httpOnly).toBe(false);
+
+  // Sign out from account settings (a CSRF-protected POST).
+  await page.getByRole("link", { name: "Account settings" }).click();
+  await expect(page.getByRole("heading", { name: "Account settings" })).toBeVisible();
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page).toHaveURL(/\/login/);
+
+  await page.goto("/home");
+  await expect(page).toHaveURL(/\/login/);
+});

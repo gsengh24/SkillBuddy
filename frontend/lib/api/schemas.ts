@@ -35,3 +35,31 @@ export const readinessResponseSchema = z.object({
   checks: z.record(z.string(), dependencyCheckSchema),
 });
 export type ReadinessResponse = z.infer<typeof readinessResponseSchema>;
+
+export const userSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  created_at: z.string(),
+  email_verified_at: z.string().nullable(),
+  last_login_at: z.string().nullable(),
+  terms_version: z.string().nullable(),
+  terms_accepted_at: z.string().nullable(),
+});
+export type User = z.infer<typeof userSchema>;
+
+export const otpRequestResponseSchema = z.object({
+  status: z.literal("sent"),
+  message: z.string(),
+  expires_in_seconds: z.number(),
+});
+export type OtpRequestResponse = z.infer<typeof otpRequestResponseSchema>;
+
+export const deletionScheduledSchema = z.object({
+  status: z.literal("pending_deletion"),
+  deletion_scheduled_for: z.string(),
+  message: z.string(),
+});
+export type DeletionScheduled = z.infer<typeof deletionScheduledSchema>;
+
+/** For endpoints that answer 204 No Content. */
+export const noContentSchema = z.undefined();

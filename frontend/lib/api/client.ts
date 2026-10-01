@@ -4,7 +4,10 @@ import type { z } from "zod";
 
 import { getServerEnv } from "@/lib/env";
 
-import { errorResponseSchema, type ErrorResponse } from "./schemas";
+import { ApiError, retryAfterFrom } from "./errors";
+import { errorResponseSchema } from "./schemas";
+
+export { ApiError } from "./errors";
 
 /**
  * Typed server-side client for the backend API.
@@ -13,22 +16,11 @@ import { errorResponseSchema, type ErrorResponse } from "./schemas";
  * before it reaches a component. Non-2xx responses surface as {@link ApiError} with the
  * backend's standard error envelope when one is present.
  *
- * Browser-side calls (with the user's session) arrive with auth in Phase 1.
+ * Server components forward the user's cookies via `headers`; browser code uses
+ * `lib/api/browser.ts` instead.
  */
 
 const DEFAULT_TIMEOUT_MS = 5_000;
-
-export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    readonly body: ErrorResponse | undefined,
-    /** The raw JSON body, for endpoints that return data alongside an error status. */
-    readonly payload: unknown,
-  ) {
-    super(body?.error.message ?? `API request failed with status ${status}`);
-    this.name = "ApiError";
-  }
-}
 
 export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -62,7 +54,12 @@ export async function apiRequest<TSchema extends z.ZodType>(
 
   if (!response.ok) {
     const envelope = errorResponseSchema.safeParse(payload);
-    throw new ApiError(response.status, envelope.success ? envelope.data : undefined, payload);
+    throw new ApiError(
+      response.status,
+      envelope.success ? envelope.data : undefined,
+      payload,
+      retryAfterFrom(response.headers),
+    );
   }
   return schema.parse(payload);
 }
