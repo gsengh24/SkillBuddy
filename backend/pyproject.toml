@@ -14,7 +14,8 @@ dependencies = [
     "psycopg[binary,pool]>=3.3",
     "pgvector>=0.4",
     "arq>=0.28",
-    "redis>=5.2",
+    # arq 0.28 requires redis<6; lift the cap when arq supports newer redis.
+    "redis>=5.2,<6",
 ]
 
 [dependency-groups]

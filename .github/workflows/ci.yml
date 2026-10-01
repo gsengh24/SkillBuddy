@@ -57,7 +57,8 @@ jobs:
           cache-dependency-glob: backend/uv.lock
 
       - name: Install dependencies
-        run: uv sync --frozen
+        # --locked also fails if uv.lock is out of date with pyproject.toml.
+        run: uv sync --locked
 
       - name: Ruff lint
         run: uv run ruff check --output-format=github .
