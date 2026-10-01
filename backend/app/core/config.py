@@ -80,6 +80,21 @@ class Settings(BaseSettings):
     # At least 2 days: the email cap counts sends over the trailing 24 hours.
     email_log_retention_days: int = Field(default=30, ge=2, le=365)
 
+    # --- Background job runner (ADR 0008) ----------------------------------------
+    # How long a claimed job is reserved; a job whose process died runs again after this.
+    jobs_lease_seconds: int = Field(default=300, ge=30, le=3600)
+    # Retry delay: base * 2^(attempt - 1), capped at the maximum.
+    jobs_retry_base_seconds: int = Field(default=10, ge=1, le=3600)
+    jobs_retry_max_seconds: int = Field(default=3600, ge=1, le=86_400)
+    # 0: never query the database while idle (free hosting; ADR 0008). The runner then wakes
+    # only for jobs enqueued in its own process, known due times and ticks. A separate worker
+    # process (dev stack, CI) sets a few seconds so it sees jobs other processes enqueue.
+    jobs_idle_poll_seconds: float = Field(default=0, ge=0, le=3600)
+    jobs_io_concurrency: int = Field(default=2, ge=1, le=20)
+    # AI jobs run one at a time to protect the 512 MB host.
+    jobs_ai_concurrency: int = Field(default=1, ge=1, le=4)
+    jobs_shutdown_grace_seconds: float = Field(default=10, ge=0, le=300)
+
     # --- Email -----------------------------------------------------------------
     # "console" prints messages to stdout (local development and tests only);
     # "smtp" sends through any SMTP server (Mailpit locally, a free relay on staging).
@@ -142,6 +157,8 @@ class Settings(BaseSettings):
             raise ValueError("EMAIL_BACKEND must be 'smtp' in staging and production")
         if self.session_max_days < self.session_idle_days:
             raise ValueError("SESSION_MAX_DAYS must be at least SESSION_IDLE_DAYS")
+        if self.jobs_retry_base_seconds > self.jobs_retry_max_seconds:
+            raise ValueError("JOBS_RETRY_BASE_SECONDS must not exceed JOBS_RETRY_MAX_SECONDS")
         if self.storage_warn_percent >= self.storage_pause_percent:
             raise ValueError("STORAGE_WARN_PERCENT must be below STORAGE_PAUSE_PERCENT")
         return self
