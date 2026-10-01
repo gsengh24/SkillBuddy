@@ -1,7 +1,8 @@
 # Infrastructure
 
-Phase 0 ships container images and a reference Compose layout. Terraform for staging and
-production is added once the hosting decision is made (`docs/ARCHITECTURE.md`, section 12).
+Phase 0 ships container images and a reference Compose layout. Staging is planned on free
+tiers ([ADR 0003](../docs/adr/0003-hosting.md), [deployment plan](../docs/deployment-plan.md));
+infrastructure as code (e.g. Terraform) is added once staging is actually set up.
 
 ## Images
 
