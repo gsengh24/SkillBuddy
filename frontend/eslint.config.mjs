@@ -15,7 +15,16 @@ const eslintConfig = defineConfig([
   },
   // Must come last: turns off rules that conflict with Prettier's formatting.
   prettier,
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "playwright-report/**",
+    "test-results/**",
+    // Separate package with its own dependencies (see e2e/package.json).
+    "e2e/**",
+  ]),
 ]);
 
 export default eslintConfig;

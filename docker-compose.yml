@@ -29,6 +29,9 @@ x-backend-environment: &backend-environment
   CORS_ALLOW_ORIGINS: http://localhost:${WEB_PORT:-3000}
   # The dev stack serves plain http on localhost, so the session cookie cannot be Secure.
   SESSION_COOKIE_SECURE: "false"
+  # The web app forwards /api/v1 calls; trust its X-Forwarded-For so per-IP rate limits see
+  # the visitor, not the web container. Dev only: in production list the proxy's IP.
+  FORWARDED_ALLOW_IPS: "*"
   # All email goes to Mailpit; read it at http://localhost:8025. Nothing leaves the machine.
   EMAIL_BACKEND: smtp
   SMTP_HOST: mailpit
