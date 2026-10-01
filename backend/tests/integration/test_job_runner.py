@@ -10,15 +10,17 @@ import asyncio
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy import make_url
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import Settings
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
 from app.jobs import JobContext, JobGroup, JobRegistry, JobRunner, JobSpec, enqueue
+from app.jobs import runner as runner_module
 from app.jobs.queue import add_wake_listener, remove_wake_listener
 from app.jobs.secrets import EphemeralSecrets
 from app.jobs.worker import run_worker
@@ -524,3 +526,100 @@ async def test_due_time_is_computed_in_the_database(
 
     assert seconds is not None
     assert 590 < seconds <= 600
+
+
+# --- database errors ----------------------------------------------------------------
+
+
+class _FlakySessions:
+    """Hands out sessions that cannot connect for the first ``failures`` calls."""
+
+    def __init__(
+        self,
+        good: async_sessionmaker[AsyncSession],
+        bad: async_sessionmaker[AsyncSession],
+        failures: int,
+    ) -> None:
+        self._good, self._bad, self.failures = good, bad, failures
+
+    def __call__(self) -> AsyncSession:
+        if self.failures > 0:
+            self.failures -= 1
+            return self._bad()
+        return self._good()
+
+
+async def test_runner_carries_on_after_a_database_error(
+    session_factory: async_sessionmaker[AsyncSession],
+    job_settings: Settings,
+    migrated_database_url: str,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The first claims fail to connect (as while Neon wakes up); the runner keeps going."""
+    monkeypatch.setattr(runner_module, "ERROR_BACKOFF_SECONDS", 0.2)
+    done = asyncio.Event()
+
+    async def handler(_: JobContext) -> None:
+        done.set()
+
+    spec = _spec(handler)
+    # Inserted directly, so no in-process wake-up: only the error backoff brings the runner
+    # back to the queue.
+    run_sql(migrated_database_url, "INSERT INTO jobs (kind) VALUES (:k)", k=spec.kind)
+    # Nothing listens on port 1, so connecting fails at once.
+    unreachable = make_url(migrated_database_url).set(port=1)
+    bad_engine = create_async_engine(unreachable, pool_pre_ping=True)
+    flaky = _FlakySessions(session_factory, create_session_factory(bad_engine), failures=2)
+    runner = JobRunner(
+        cast(async_sessionmaker[AsyncSession], flaky), JobRegistry([spec]), job_settings
+    )
+
+    try:
+        with caplog.at_level("ERROR", logger="app.jobs.runner"):
+            process = asyncio.create_task(runner.run_forever())
+            await asyncio.wait_for(done.wait(), 10)
+            runner.stop()
+            await asyncio.wait_for(process, 5)
+    finally:
+        await bad_engine.dispose()
+
+    assert flaky.failures == 0
+    errors = [r for r in caplog.records if r.getMessage() == "job_runner_error"]
+    assert len(errors) == 2
+    assert {getattr(r, "error", None) for r in errors} == {"OperationalError"}
+
+
+async def test_runner_recovers_when_its_database_connections_are_dropped(
+    session_factory: async_sessionmaker[AsyncSession],
+    job_settings: Settings,
+    migrated_database_url: str,
+) -> None:
+    """Server-side disconnects (e.g. a compute restart) are survived by the pool."""
+    runs = 0
+    ran = asyncio.Event()
+
+    async def handler(_: JobContext) -> None:
+        nonlocal runs
+        runs += 1
+        ran.set()
+
+    spec = _spec(handler)
+    runner = JobRunner(session_factory, JobRegistry([spec]), job_settings)
+    process = asyncio.create_task(runner.run_forever())
+    await _enqueue(session_factory, spec)
+    await asyncio.wait_for(ran.wait(), 5)
+    ran.clear()
+
+    dropped = run_sql(
+        migrated_database_url,
+        "SELECT count(pg_terminate_backend(pid)) AS n FROM pg_stat_activity "
+        "WHERE datname = current_database() AND pid <> pg_backend_pid()",
+    )
+    await _enqueue(session_factory, spec)
+    await asyncio.wait_for(ran.wait(), 10)
+    runner.stop()
+    await asyncio.wait_for(process, 5)
+
+    assert dropped[0]["n"] >= 1  # the pooled connections really were closed
+    assert runs == 2
