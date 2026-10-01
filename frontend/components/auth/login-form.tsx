@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
+import { textLinkClasses } from "@/components/ui/text-link";
 import { browserApi } from "@/lib/api/browser";
 import { ApiError } from "@/lib/api/errors";
 import { otpRequestResponseSchema, userSchema } from "@/lib/api/schemas";
@@ -125,7 +128,11 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   }
 
   const errorMessage = error ? (
-    <p id={errorId} role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+    <p
+      id={errorId}
+      role="alert"
+      className="rounded-why bg-coral-tint text-small text-coral-ink px-4 py-3 font-semibold"
+    >
       {error}
     </p>
   ) : null;
@@ -138,59 +145,54 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
 
       {step === "email" ? (
         <form noValidate onSubmit={onEmailSubmit} className="flex flex-col gap-5">
-          <h1 id={`${ids}-heading`} className="text-2xl font-bold text-slate-900">
+          <h1 id={`${ids}-heading`} className="text-h1">
             Sign in to {brand.name}
           </h1>
-          <p className="text-slate-600">
+          <p className="text-muted">
             We&apos;ll email you a 6-digit code. No password needed. New here? This creates your
             account.
           </p>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={`${ids}-email`} className="font-medium text-slate-800">
-              Email address
-            </label>
-            <input
-              ref={emailInput}
-              id={`${ids}-email`}
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              maxLength={EMAIL_MAX_LENGTH}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
-              className="rounded-md border border-slate-300 px-3 py-2 text-base focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-            />
-          </div>
+          <TextField
+            ref={emailInput}
+            id={`${ids}-email`}
+            label="Email address"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            maxLength={EMAIL_MAX_LENGTH}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
+          />
 
-          <fieldset className="flex flex-col gap-3">
+          <fieldset className="flex flex-col gap-1">
             <legend className="sr-only">Confirmations</legend>
-            <label className="flex items-start gap-3 text-slate-700">
+            <label className="flex min-h-11 items-center gap-3">
               <input
                 type="checkbox"
                 checked={ageConfirmed}
                 onChange={(event) => setAgeConfirmed(event.target.checked)}
-                className="mt-1 size-4"
+                className="accent-green-base size-4 shrink-0"
               />
               <span>I am 18 or older.</span>
             </label>
-            <label className="flex items-start gap-3 text-slate-700">
+            <label className="flex min-h-11 items-center gap-3">
               <input
                 type="checkbox"
                 checked={acceptTerms}
                 onChange={(event) => setAcceptTerms(event.target.checked)}
-                className="mt-1 size-4"
+                className="accent-green-base size-4 shrink-0"
               />
               <span>
                 I accept the{" "}
-                <Link href="/terms" className="text-indigo-700 underline">
+                <Link href="/terms" className={textLinkClasses()}>
                   Terms
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="text-indigo-700 underline">
+                <Link href="/privacy" className={textLinkClasses()}>
                   Privacy Policy
                 </Link>
                 .
@@ -200,65 +202,58 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
 
           {errorMessage}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-md bg-indigo-600 px-4 py-2.5 font-semibold text-white hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:outline-none disabled:opacity-60"
-          >
+          <Button type="submit" disabled={submitting} className="self-start">
             {submitting ? "Sending code…" : "Email me a code"}
-          </button>
+          </Button>
         </form>
       ) : (
         <form noValidate onSubmit={onCodeSubmit} className="flex flex-col gap-5">
-          <h1 id={`${ids}-heading`} className="text-2xl font-bold text-slate-900">
+          <h1 id={`${ids}-heading`} className="text-h1">
             Check your email
           </h1>
-          <p className="text-slate-600">
-            Enter the 6-digit code we sent to <strong className="break-all">{email.trim()}</strong>.
-            It expires in 10 minutes.
+          <p className="text-muted">
+            Enter the 6-digit code we sent to{" "}
+            <strong className="text-ink break-all">{email.trim()}</strong>. It expires in 10
+            minutes.
           </p>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={`${ids}-code`} className="font-medium text-slate-800">
-              Sign-in code
-            </label>
-            <input
-              ref={codeInput}
-              id={`${ids}-code`}
-              name="code"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
-              className="rounded-md border border-slate-300 px-3 py-2 font-mono text-xl tracking-[0.4em] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-            />
-          </div>
+          <TextField
+            ref={codeInput}
+            id={`${ids}-code`}
+            label="Sign-in code"
+            name="code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            value={code}
+            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
+            className="font-mono text-[20px] tracking-[0.4em]"
+          />
 
           {errorMessage}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-md bg-indigo-600 px-4 py-2.5 font-semibold text-white hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:outline-none disabled:opacity-60"
-          >
+          <Button type="submit" disabled={submitting} className="self-start">
             {submitting ? "Checking…" : "Sign in"}
-          </button>
+          </Button>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <div className="text-small flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
               onClick={onResend}
               disabled={submitting || secondsUntilResend > 0}
-              className="text-indigo-700 underline disabled:text-slate-500 disabled:no-underline"
+              className={`min-h-11 ${textLinkClasses()} disabled:text-muted disabled:cursor-not-allowed disabled:no-underline`}
             >
               {secondsUntilResend > 0 ? `Resend code in ${secondsUntilResend}s` : "Resend code"}
             </button>
-            <button type="button" onClick={useDifferentEmail} className="text-slate-700 underline">
+            <button
+              type="button"
+              onClick={useDifferentEmail}
+              className={`min-h-11 ${textLinkClasses("muted")}`}
+            >
               Use a different email
             </button>
           </div>

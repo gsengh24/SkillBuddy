@@ -43,6 +43,17 @@ test("sign up with an emailed code, reach home, sign out", async ({ page, reques
   await expect(page).toHaveURL(/\/home$/);
   await expect(page.getByText(`You're signed in as ${email}`)).toBeVisible();
 
+  // On a phone the app shell shows a bottom tab bar with 44px+ touch targets.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const tabs = page.getByRole("navigation", { name: "Main" }).getByRole("link");
+  await expect(tabs).toHaveText(["Discover", "Messages", "Saved", "You"]);
+  for (const tab of await tabs.all()) {
+    const box = await tab.boundingBox();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
+
   // The session cookie is httpOnly and SameSite=Lax; the CSRF cookie is readable.
   const cookies = await page.context().cookies();
   const session = cookies.find((cookie) => cookie.name === "session");

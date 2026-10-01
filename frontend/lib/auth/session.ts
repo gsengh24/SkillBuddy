@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 import { apiRequest } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
@@ -10,9 +11,10 @@ import { SESSION_COOKIE } from "./constants";
 
 /**
  * The signed-in user for the current request, checked with the API (not just the cookie's
- * presence), or null. Use in server components and route handlers.
+ * presence), or null. Use in server components and route handlers. Cached per request, so
+ * a layout and its page share one API call.
  */
-export async function getCurrentUser(): Promise<User | null> {
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   const cookieStore = await cookies();
   if (!cookieStore.has(SESSION_COOKIE)) return null;
   try {
@@ -23,4 +25,4 @@ export async function getCurrentUser(): Promise<User | null> {
     if (error instanceof ApiError && error.status === 401) return null;
     throw error;
   }
-}
+});
