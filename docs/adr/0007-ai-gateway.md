@@ -227,6 +227,9 @@ students or education.
      drift into hiring or admissions decisions.
 - **Residual risk:** the meaning of "consumer use" is undefined, and free services can be
   withdrawn ("for a limited time or based on usage limits").
+- **Owner decision (added 2026-10-01):** Owner has decided to allow under-18 users; the 18+
+  condition in Groq's terms may therefore not be satisfied. Question to be put to Groq
+  support; Cloudflare-only and template-only fallbacks stay ready.
 
 **Cloudflare**
 

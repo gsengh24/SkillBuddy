@@ -346,7 +346,25 @@ Each gets a row in storage-budget.md in its PR.
    - set the Render environment variables;
    - cap Neon autoscaling at 0.25 CU.
 8. **Deliverability test** with volunteer student addresses (steps above).
+   The blocking Gmail token check under "Pre-launch checks" must also pass.
 9. Then ADR 0007's AI build order from its step 2 onwards.
+
+## Pre-launch checks (blocking)
+
+*Added 2026-10-01.* Launch does not go ahead until every item passes.
+
+1. **The Google Cloud OAuth app is set to "In production", not "Testing".** Check this in
+   Google Cloud Console under Google Auth Platform, then Audience, then Publishing status.
+   In Testing mode, refresh tokens for the `gmail.send` scope expire after 7 days, which
+   would silently stop all login-code emails a week after launch.
+2. **The Gmail API refresh token still works more than 7 days after it was issued.**
+   - Note the date the refresh token was created. It must be created *after* the app was
+     switched to "In production"; a token issued while in Testing keeps its 7-day expiry.
+   - On day 8 or later, send a real login code on staging and confirm it arrives. The email
+     job's log must show a successful send, with no `invalid_grant` error.
+   - Record the date of the passing check in the launch checklist.
+   - If it fails: switch the app to "In production", issue a new refresh token, update
+     `GMAIL_REFRESH_TOKEN` in the hosting dashboard, and restart the 7-day wait.
 
 ## Not verified
 
