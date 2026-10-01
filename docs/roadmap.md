@@ -8,10 +8,10 @@ Tick items off in the PR that delivers them.
 ## Scheduling note
 
 Several items below are scheduled jobs (cron). Staging has no always-on worker
-([ADR 0003](adr/0003-hosting.md)), so the scheduling mechanism is chosen in the Phase 1
-AI-gateway/worker decision. Zero-cost fallback: a scheduled GitHub Actions workflow
-(free for this public repository) that runs a small management command against the
-database. Every job must be idempotent and safe to run late or twice.
+([ADR 0003](adr/0003-hosting.md)). [ADR 0008](adr/0008-free-runtime-jobs-and-email.md) settles it: a
+PostgreSQL job queue run inside the API, woken by a Cloudflare Worker cron. Scheduled
+GitHub Actions workflows were rejected (GitHub's terms forbid using Actions as part of a
+serverless application). Every job must be idempotent and safe to run late or twice.
 
 ## Authentication (auth module)
 

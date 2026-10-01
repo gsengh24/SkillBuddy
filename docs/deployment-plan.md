@@ -62,9 +62,12 @@ Catches:
   Free instance type is offered for the Docker runtime; if not, use the native Python runtime
   (build: `pip install uv && uv sync --frozen --no-dev`, start: `uv run uvicorn app.main:create_app --factory --host 0.0.0.0 --port $PORT`).
 - Cannot receive private-network traffic; everything reaches it over its public HTTPS URL.
+- **Outbound SMTP (ports 25, 465, 587) is blocked on free web services** (since September
+  2025). Email must use an HTTPS API; ADR 0008 chooses the Gmail API.
 - Free services may be suspended for unusually high outbound traffic.
 
-**Koyeb Free instance (fallback)**: one per organisation; 512 MB RAM, 0.1 vCPU, 2 GB SSD;
+**Koyeb Free instance (no longer a fallback):** since February 2026 new Koyeb accounts need
+a card, so it is excluded ([ADR 0008](adr/0008-free-runtime-jobs-and-email.md)). It offered one instance per organisation; 512 MB RAM, 0.1 vCPU, 2 GB SSD;
 scales to zero after **1 hour** without traffic; only in **Frankfurt or Washington, D.C.**
 (further from India than Render Singapore).
 
@@ -118,7 +121,9 @@ There is no free always-on background worker on any of these providers. Options:
    sleeping API pauses jobs.
 3. **Phase 1, proper:** pay for one small worker instance (about $7/month on Render).
 
-The choice is made in Phase 1 with its own ADR.
+**Decided in [ADR 0008](adr/0008-free-runtime-jobs-and-email.md):** a PostgreSQL job queue processed inside the API
+process (no Redis at all, so Upstash is not needed), woken on a schedule by a Cloudflare
+Worker cron. Setup steps are added here when it is built.
 
 ## Changes needed in the repo before setup
 

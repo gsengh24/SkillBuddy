@@ -52,6 +52,10 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
   - **API** (FastAPI): HTTP only. It never calls an LLM or embedding model. Slow work is
     persisted and enqueued, and the API returns immediately.
   - **Worker** (Arq on Valkey): runs background jobs, including every model call.
+  - *Planned* ([ADR 0008](docs/adr/0008-free-runtime-jobs-and-email.md)): Arq and Valkey are replaced by a
+    PostgreSQL job queue (`SKIP LOCKED`) that runs inside the API process on free hosting,
+    a Cloudflare Worker cron as the scheduler, and Gmail API email. Until that lands, the
+    lines here describe the current code.
 - **PostgreSQL 16 + pgvector** is the single source of truth, including embeddings.
   **Valkey** (Redis-compatible, ADR 0005) is the queue, cache and rate-limit store.
 - **Next.js** web app. Server components call the API through a typed client; the browser
