@@ -67,7 +67,9 @@ def test_production_rejects_unsafe_options(
 
 def test_production_accepts_safe_options(make_settings: SettingsFactory) -> None:
     settings = make_settings(
-        environment=Environment.PRODUCTION, cors_allow_origins=["https://app.example.com"]
+        environment=Environment.PRODUCTION,
+        cors_allow_origins=["https://app.example.com"],
+        email_backend="smtp",
     )
 
     assert settings.is_production
