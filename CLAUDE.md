@@ -38,6 +38,8 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
 2. Never try to run Docker, Postgres or Redis on the laptop. Run only the local checks below
    and rely on CI for everything else.
 3. A task is done only when its PR's CI is green. Say so with the job names that passed.
+   Required checks on `main` (GitHub ruleset "Protect main"): Backend, Frontend,
+   Docker images, Smoke, Secret scan.
 4. If CI fails, read the logs (`gh run view --log-failed`, or ask for them to be pasted), fix
    the cause and push again. Never disable, skip or weaken a check, test or threshold to get
    green.
