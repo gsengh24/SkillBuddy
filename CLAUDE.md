@@ -71,6 +71,7 @@ backend/
     services/            Business logic; endpoints and jobs call these
     worker/              Arq settings (settings.py) and job functions (jobs.py)
   migrations/            Alembic env + versions (one file per migration)
+  evals/                 Matcher evaluation set: synthetic profiles + draft-labelled pairs
   tests/unit/            No infrastructure needed
   tests/integration/     Real Postgres + Redis; each run uses a throwaway database
 frontend/

@@ -61,7 +61,7 @@ select = [
 "migrations/versions/**" = ["N999"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "tests"]
+known-first-party = ["app", "evals", "tests"]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI's dependency-injection idiom uses calls in argument defaults.
@@ -73,7 +73,7 @@ python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 warn_unreachable = true
-files = ["app", "tests", "migrations"]
+files = ["app", "evals", "tests", "migrations"]
 
 [[tool.mypy.overrides]]
 module = ["arq.*", "pgvector.*", "asgi_lifespan.*"]
