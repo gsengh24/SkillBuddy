@@ -49,7 +49,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     email_verified_at: Mapped[datetime | None]
     last_login_at: Mapped[datetime | None]
-    # Consent captured when the account is created (adults only; ARCHITECTURE.md §8).
+    # Consent captured when the account is created: 18+ by self-declaration (ADR 0009) and
+    # terms acceptance. An account without age_confirmed_at confirms on its next sign-in.
     age_confirmed_at: Mapped[datetime | None]
     terms_accepted_at: Mapped[datetime | None]
     terms_version: Mapped[str | None] = mapped_column(String(32))

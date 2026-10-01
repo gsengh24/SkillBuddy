@@ -67,7 +67,8 @@ async def verify_code(
     settings: SettingsDep,
 ) -> UserOut:
     """Verify the code and start a session (cookie). Creates the account on first use,
-    which requires ``age_confirmed`` and ``accept_terms``. Five wrong guesses lock a code."""
+    which requires ``age_confirmed`` and ``accept_terms``; an account without a recorded age
+    confirmation needs ``age_confirmed`` too. Five wrong guesses lock a code."""
     result = await service.verify_code(
         body.email,
         body.code,

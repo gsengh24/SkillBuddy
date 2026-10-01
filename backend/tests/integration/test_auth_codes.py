@@ -35,10 +35,24 @@ async def request_code(client: AsyncClient, email: str) -> Response:
     return await client.post(REQUEST, json={"email": email})
 
 
-async def verify(client: AsyncClient, email: str, code: str, *, consent: bool = True) -> Response:
+async def verify(
+    client: AsyncClient,
+    email: str,
+    code: str,
+    *,
+    consent: bool = True,
+    age_confirmed: bool | None = None,
+    accept_terms: bool | None = None,
+) -> Response:
+    """``consent`` sets both boxes; ``age_confirmed``/``accept_terms`` override one each."""
     return await client.post(
         VERIFY,
-        json={"email": email, "code": code, "age_confirmed": consent, "accept_terms": consent},
+        json={
+            "email": email,
+            "code": code,
+            "age_confirmed": consent if age_confirmed is None else age_confirmed,
+            "accept_terms": consent if accept_terms is None else accept_terms,
+        },
     )
 
 
@@ -151,6 +165,58 @@ async def test_new_account_requires_age_and_terms_and_keeps_code_usable(
     assert without_consent.status_code == 400
     assert error_code(without_consent) == "consent_required"
     assert with_consent.status_code == 200
+
+
+async def test_sign_up_fails_without_the_age_box_and_succeeds_with_it(
+    auth_settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    email = new_email()
+    async with auth_client(auth_settings, delivery) as client:
+        await request_code(client, email)
+        code = delivery.last_code(email)
+        terms_only = await verify(client, email, code, age_confirmed=False, accept_terms=True)
+        age_only = await verify(client, email, code, age_confirmed=True, accept_terms=False)
+        both = await verify(client, email, code, age_confirmed=True, accept_terms=True)
+
+    assert terms_only.status_code == age_only.status_code == 400
+    assert error_code(terms_only) == error_code(age_only) == "consent_required"
+    assert both.status_code == 200
+    rows = run_sql(
+        migrated_database_url,
+        "SELECT age_confirmed_at, terms_accepted_at FROM users WHERE id = :id",
+        id=both.json()["id"],
+    )
+    assert rows[0]["age_confirmed_at"] is not None
+    assert rows[0]["terms_accepted_at"] is not None
+
+
+async def test_account_without_age_confirmation_must_confirm_on_next_sign_in(
+    auth_settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    email = new_email()
+    async with auth_client(auth_settings, delivery) as client:
+        user_id = (await sign_in(client, delivery, email)).json()["id"]
+        run_sql(
+            migrated_database_url,
+            "UPDATE users SET age_confirmed_at = NULL WHERE id = :id",
+            id=user_id,
+        )
+        await request_code(client, email)
+        code = delivery.last_code(email)
+        refused = await verify(client, email, code, consent=False)
+        confirmed = await verify(client, email, code, age_confirmed=True, accept_terms=False)
+        await request_code(client, email)
+        later = await verify(client, email, delivery.last_code(email), consent=False)
+
+    assert refused.status_code == 400
+    assert error_code(refused) == "consent_required"
+    assert confirmed.status_code == 200  # the same code still works; terms are not re-asked
+    assert confirmed.json()["id"] == user_id
+    rows = run_sql(
+        migrated_database_url, "SELECT age_confirmed_at FROM users WHERE id = :id", id=user_id
+    )
+    assert rows[0]["age_confirmed_at"] is not None
+    assert later.status_code == 200  # confirmed once; not asked again
 
 
 async def test_wrong_code_is_rejected_and_five_attempts_lock_the_code(

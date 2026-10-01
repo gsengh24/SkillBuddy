@@ -230,6 +230,9 @@ students or education.
 - **Owner decision (added 2026-10-01):** Owner has decided to allow under-18 users; the 18+
   condition in Groq's terms may therefore not be satisfied. Question to be put to Groq
   support; Cloudflare-only and template-only fallbacks stay ready.
+- **Owner decision (added 2026-10-02):** Owner has decided the platform is 18+ by
+  self-declaration, which meets the Groq 18+ condition on paper; question to Groq support
+  still open. See [ADR 0009](0009-adults-only-self-declaration.md).
 
 **Cloudflare**
 

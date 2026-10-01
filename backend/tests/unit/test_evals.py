@@ -88,6 +88,7 @@ def test_every_profile_appears_in_a_pair() -> None:
     ("overrides", "message"),
     [
         ({"age": 17}, "greater than or equal to 18"),
+        ({"age": 101}, "less than or equal to 100"),
         ({"timezone": "Mars/Olympus_Mons"}, "unknown IANA timezone"),
         ({"about": "too short"}, "at least 100 characters"),
         ({"about": "x" * 2001}, "at most 2000 characters"),

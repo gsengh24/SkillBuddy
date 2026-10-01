@@ -42,7 +42,11 @@ class OtpVerifyIn(BaseModel):
     email: Email
     code: str = Field(pattern=r"^\d{6}$", description="The 6-digit code from the email.")
     age_confirmed: bool = Field(
-        default=False, description="Required when creating an account: the user is 18 or older."
+        default=False,
+        description=(
+            "Self-declaration that the user is 18 or older (ADR 0009). Must be true to create an "
+            "account, and to sign in to an account that has no recorded age confirmation."
+        ),
     )
     accept_terms: bool = Field(
         default=False, description="Required when creating an account: the user accepts the terms."

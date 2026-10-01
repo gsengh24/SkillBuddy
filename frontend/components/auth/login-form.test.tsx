@@ -63,6 +63,18 @@ describe("LoginForm", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("requires the 18+ box even when the terms are accepted", async () => {
+    const user = userEvent.setup();
+    render(<LoginForm nextPath="/home" />);
+
+    await user.type(screen.getByLabelText("Email address"), "ananya@example.com");
+    await user.click(screen.getByRole("checkbox", { name: /accept the/ }));
+    await user.click(screen.getByRole("button", { name: "Email me a code" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/18 or older and accept the terms/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("rejects an invalid email address without calling the API", async () => {
     const user = userEvent.setup();
     render(<LoginForm nextPath="/home" />);

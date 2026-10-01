@@ -140,7 +140,13 @@ class AuthService:
             raise CodeLockedError if locked else InvalidCodeError
 
         user = await self._db.scalar(select(User).where(User.email == email))
-        if user is None and not (age_confirmed and accept_terms):
+        # 18+ by self-declaration (ADR 0009): new accounts confirm age and accept the terms;
+        # an active account with no recorded age confirmation must confirm before signing in.
+        needs_terms = user is None
+        needs_age = user is None or (
+            user.status == UserStatus.ACTIVE and user.age_confirmed_at is None
+        )
+        if (needs_age and not age_confirmed) or (needs_terms and not accept_terms):
             # Keep the code usable so the person can tick the boxes and resubmit.
             await self._db.rollback()
             raise ConsentRequiredError
@@ -179,6 +185,8 @@ class AuthService:
             self._db.add(user)
             await self._db.flush()
             self._db.add(AuthIdentity(user_id=user.id, provider=AuthProvider.EMAIL, subject=email))
+        elif user.age_confirmed_at is None:
+            user.age_confirmed_at = now  # confirmed now (needs_age above)
         user.last_login_at = now
         new = await create_session(self._db, self._settings, user.id, client)
         event = AuthEventType.SIGNUP if created_account else AuthEventType.LOGIN
