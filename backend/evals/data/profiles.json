@@ -1,0 +1,622 @@
+[
+  {
+    "id": "p01",
+    "name": "Ananya Rao",
+    "age": 27,
+    "city": "Bengaluru",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "en",
+      "kn",
+      "hi"
+    ],
+    "about": "Backend engineer at a payments company by day (Go, Postgres, a bit of Kafka). For the last four months I've been hacking on a budgeting app for gig workers: delivery riders and drivers whose income changes every week. I've interviewed about 30 riders in Koramangala and the problem is real; nobody budgets on irregular income. I can build the backend and the bank-statement parsing, but my UI looks like a 2009 admin panel. I can give 12-15 hours a week and I'm happy to work async across timezones, with one weekly call at whatever hour works.",
+    "request": "Looking for a product/UX designer who cares about financial inclusion to build the first version with me over the next three months.",
+    "request_intent": "build_together"
+  },
+  {
+    "id": "p02",
+    "name": "Tomás Herrera",
+    "age": 34,
+    "city": "Mexico City",
+    "country": "Mexico",
+    "timezone": "America/Mexico_City",
+    "languages": [
+      "es",
+      "en"
+    ],
+    "about": "UX/UI designer, nine years, mostly fintech and banking apps here in CDMX. Figma, design systems, user interviews: that's my world. I'm tired of designing features nobody uses, so I want a side project where I also own the product thinking. Interested in anything around money, savings or social impact. I work evenings Mexico time and some weekends, and I'm fine with async collaboration. Not a coder (I can read HTML, that's it).",
+    "request": "I want to find a developer to co-build a small product, ideally in personal finance.",
+    "request_intent": "build_together"
+  },
+  {
+    "id": "p03",
+    "name": "Wanjiru Kamau",
+    "age": 29,
+    "city": "Nairobi",
+    "country": "Kenya",
+    "timezone": "Africa/Nairobi",
+    "languages": [
+      "en",
+      "sw"
+    ],
+    "about": "Flutter developer, five years. Grew up on my grandmother's farm in Nyeri, so agriculture is personal for me. My idea: an app that tells smallholder farmers when to sell their produce, based on local market prices collected by SMS. I already have a working prototype of the mobile side. I need someone strong on backend and data pipelines, and ideally someone who has actually worked with farmers or co-ops. Serious about this; I might apply to an accelerator next year.",
+    "request": "Co-founder-style partner: a backend/data engineer, bonus if you know agriculture.",
+    "request_intent": "build_together"
+  },
+  {
+    "id": "p04",
+    "name": "Rohan Mehta",
+    "age": 22,
+    "city": "Pune",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "en",
+      "mr",
+      "hi"
+    ],
+    "about": "final year CS at a pune college. into ML, did 3 hackathons (won one lol). mostly python, pytorch, some react. want to build something real before placements end, open to any domain honestly. can't promise more than weekends rn, and exams are in december so that month is gone",
+    "request": "anyone wanna build a small ML side project? weekends only",
+    "request_intent": "build_together"
+  },
+  {
+    "id": "p05",
+    "name": "Lena Fischer",
+    "age": 38,
+    "city": "Berlin",
+    "country": "Germany",
+    "timezone": "Europe/Berlin",
+    "languages": [
+      "de",
+      "en"
+    ],
+    "about": "Product manager in B2B SaaS for eleven years. At weekends I volunteer with a climate group and keep running into the same problem: good climate data is scattered across PDFs and government portals. I want to build a newsletter tool that pulls, cleans and summarises regional emissions data. I can do product, research, writing and some no-code. I'm committed: about 10 hours a week, mostly Saturdays and Sundays.",
+    "request": "A developer (Python/data preferred) to build an MVP of a climate-data newsletter with me.",
+    "request_intent": "build_together"
+  },
+  {
+    "id": "p06",
+    "name": "Arjun Nair",
+    "age": 31,
+    "city": "Kochi",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "ml",
+      "en",
+      "hi"
+    ],
+    "about": "Full-stack developer (Django and React), ex-startup, now freelancing. My mother taught in a Malayalam-medium government school for 30 years, and her students had almost no good digital material in their own language. I want to build free practice tests and short explainer videos for classes 8 to 10 in Malayalam. I can build the platform; I need a teacher or content person who knows the state syllabus and ideally speaks Malayalam.",
+    "request": "A teacher or education content creator to co-build a free Malayalam learning platform.",
+    "request_intent": "build_together"
+  },
+  {
+    "id": "p07",
+    "name": "Chloe Martin",
+    "age": 26,
+    "city": "Toronto",
+    "country": "Canada",
+    "timezone": "America/Toronto",
+    "languages": [
+      "en",
+      "fr"
+    ],
+    "about": "Illustrator and pixel artist!! I've made assets for two indie games that actually shipped on Steam. Dream project: a cozy farming-meets-bookshop game, think Stardew but you run a tiny village library. I have a design doc, 40+ sprites and a mood board. I need a programmer (Godot or Unity) who wants to make something small and actually finish it. Weekends plus some weeknights, Eastern time.",
+    "request": "Programmer for a small cozy game. Godot preferred, finish-it energy required.",
+    "request_intent": "build_together"
+  },
+  {
+    "id": "p08",
+    "name": "Priya Sharma",
+    "age": 35,
+    "city": "Delhi",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "hi",
+      "en",
+      "pa"
+    ],
+    "about": "Data analyst at a healthcare company in Gurugram, living in Delhi. Eight years of Python, SQL and dashboards (Power BI), mostly hospital operations data. I've mentored juniors and I genuinely enjoy teaching. I bought a guitar during lockdown and it has been gathering dust ever since. I'd love to trade: I teach you Python and SQL properly, you help me finally play the songs I like (old Bollywood and some Coldplay). Evenings IST, video calls are fine.",
+    "request": "Teach Python/SQL in exchange for guitar lessons.",
+    "request_intent": "skill_exchange"
+  },
+  {
+    "id": "p09",
+    "name": "Daniel Okafor",
+    "age": 30,
+    "city": "Lagos",
+    "country": "Nigeria",
+    "timezone": "Africa/Lagos",
+    "languages": [
+      "en",
+      "yo"
+    ],
+    "about": "Session guitarist and music teacher. I play for churches, weddings and a few Afrobeats artists, and I teach about fifteen students. I keep doing boring admin by hand: scheduling, invoices, tracking which student learned what. I want to learn Python so I can automate all of that and maybe analyse my practice data. I can teach guitar at any level, acoustic or electric, over video. Afternoons and evenings, Lagos time.",
+    "request": "I'll teach guitar if you teach me Python.",
+    "request_intent": "skill_exchange"
+  },
+  {
+    "id": "p10",
+    "name": "Mei Lin Tan",
+    "age": 45,
+    "city": "Singapore",
+    "country": "Singapore",
+    "timezone": "Asia/Singapore",
+    "languages": [
+      "en",
+      "zh",
+      "ms"
+    ],
+    "about": "Chartered accountant, now finance director at a logistics firm. I'm about to manage teams in Mumbai and Chennai and I'd like to speak at least basic Hindi so I'm not the outsider in every meeting (I know Tamil is more useful in Chennai, but the Mumbai team is bigger). I can teach Excel, financial modelling and how to read company accounts, the things nobody teaches engineers or founders.",
+    "request": "Learn conversational Hindi; I can teach Excel and financial modelling in return.",
+    "request_intent": "skill_exchange"
+  },
+  {
+    "id": "p11",
+    "name": "Kavya Iyer",
+    "age": 24,
+    "city": "Chennai",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "ta",
+      "en",
+      "hi"
+    ],
+    "about": "Trained in Carnatic vocal music since I was six, now working as a content writer. Planning a long trip to South America next year and want to reach conversational Spanish before then. I can teach Carnatic vocal basics, Tamil, or Hindi (I studied it all through school and speak it comfortably). I'm patient, I like structure, and I'm free early mornings IST before work.",
+    "request": "Spanish lessons in exchange for Carnatic music, Tamil or Hindi.",
+    "request_intent": "skill_exchange"
+  },
+  {
+    "id": "p12",
+    "name": "Isabel Costa",
+    "age": 58,
+    "city": "Lisbon",
+    "country": "Portugal",
+    "timezone": "Europe/Lisbon",
+    "languages": [
+      "pt",
+      "en",
+      "es"
+    ],
+    "about": "Retired chef. Thirty years in restaurant kitchens in Lisbon and Porto, Portuguese and Mediterranean food mostly, lots of fish. My grandchildren film everything on their phones and I want to make little cooking videos for them, and maybe for YouTube, but editing is a mystery to me. I can teach you to cook properly: knife skills, stocks, seasoning, simple healthy food.",
+    "request": "Learn phone video editing; I will teach cooking.",
+    "request_intent": "skill_exchange"
+  },
+  {
+    "id": "p13",
+    "name": "Hamza Siddiqui",
+    "age": 28,
+    "city": "Hyderabad",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "ur",
+      "hi",
+      "te",
+      "en"
+    ],
+    "about": "Freelance video editor (Premiere Pro, DaVinci Resolve), mostly YouTube channels and wedding films. I live alone and eat far too much biryani from delivery apps; my doctor is not happy. I want to learn to cook simple, healthy meals for myself. I can teach editing from zero: cutting, colour, captions, short-form formats for phones.",
+    "request": "Cooking lessons in exchange for video-editing lessons.",
+    "request_intent": "skill_exchange"
+  },
+  {
+    "id": "p14",
+    "name": "Gabriela Souza",
+    "age": 33,
+    "city": "São Paulo",
+    "country": "Brazil",
+    "timezone": "America/Sao_Paulo",
+    "languages": [
+      "pt",
+      "es",
+      "en"
+    ],
+    "about": "Language teacher: Portuguese and Spanish to adults for ten years, mostly online. I practise yoga every morning and I'm fascinated by its philosophy; I want to read the Yoga Sutras with someone who knows Hindi or Sanskrit, not just English translations. I'm organised and I prepare lessons properly. Evenings in Brazil work best.",
+    "request": "Teach Spanish or Portuguese; looking to learn Hindi or Sanskrit basics.",
+    "request_intent": "skill_exchange"
+  },
+  {
+    "id": "p15",
+    "name": "Meera Kulkarni",
+    "age": 39,
+    "city": "Mumbai",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "mr",
+      "hi",
+      "en"
+    ],
+    "about": "Architect by profession, history nerd by temperament. Currently obsessed with the medieval Deccan: Vijayanagara, the Bahmani sultanates, the horse trade across the Indian Ocean. I read slowly and make notes. I'd love someone to read one book a month with and argue about it over a call. Not looking for anything more than good conversation.",
+    "request": "A reading buddy for medieval history, one book a month.",
+    "request_intent": "interest_buddy"
+  },
+  {
+    "id": "p16",
+    "name": "James Whitaker",
+    "age": 61,
+    "city": "London",
+    "country": "United Kingdom",
+    "timezone": "Europe/London",
+    "languages": [
+      "en"
+    ],
+    "about": "Retired secondary-school history teacher. Forty years of teaching the Tudors made me want to read about literally anything else, so these days it's medieval trade networks: the Silk Road, Venice, the Indian Ocean. I run a small book club at my local library and I'm trying to finish a short local-history book about my borough. Always looking for people who read more widely than Europe.",
+    "request": "People to discuss medieval history books with, especially beyond Europe.",
+    "request_intent": "interest_buddy"
+  },
+  {
+    "id": "p17",
+    "name": "Ishaan Verma",
+    "age": 19,
+    "city": "Jaipur",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "hi",
+      "en"
+    ],
+    "about": "first year BSc physics. obsessed with astronomy since class 8. no telescope yet (saving up) so i do astrophotography on my phone from the terrace, got saturn's rings last month!!! want someone to talk sky stuff with, share photos, maybe plan a dark sky trip near jaisalmer",
+    "request": "astronomy buddy to share photos and talk about the night sky",
+    "request_intent": "interest_buddy"
+  },
+  {
+    "id": "p18",
+    "name": "Aiko Tanaka",
+    "age": 36,
+    "city": "Melbourne",
+    "country": "Australia",
+    "timezone": "Australia/Melbourne",
+    "languages": [
+      "en",
+      "ja"
+    ],
+    "about": "Software tester by day, amateur astronomer by night. I have an 8-inch Dobsonian and I write a small blog about observing from light-polluted suburbs. Southern-hemisphere skies, obviously. Happy to help beginners choose equipment and processing software, and I love seeing what people manage to capture with phones.",
+    "request": "Astronomy friends to share observations and photos with.",
+    "request_intent": "interest_buddy"
+  },
+  {
+    "id": "p19",
+    "name": "Nikhil Bose",
+    "age": 47,
+    "city": "Kolkata",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "bn",
+      "en",
+      "hi"
+    ],
+    "about": "I teach economics at a college. Outside work: films. Ray, Ghatak, Mrinal Sen, but also Kurosawa, Kiarostami and the Taiwanese new wave. I also read a fair amount of Bengal's history. I want someone to watch one film a week with (separately) and then talk about it properly, not just star ratings. My Bengali is better than my English, but both are fine.",
+    "request": "A film-discussion buddy for world and Bengali cinema.",
+    "request_intent": "interest_buddy"
+  },
+  {
+    "id": "p20",
+    "name": "Fatima Al-Sayed",
+    "age": 29,
+    "city": "Dubai",
+    "country": "United Arab Emirates",
+    "timezone": "Asia/Dubai",
+    "languages": [
+      "ar",
+      "en"
+    ],
+    "about": "Civil engineer. At weekends I'm out at Ras Al Khor or the mangroves with a long lens: birdwatching and nature photography. I've logged 212 species in the UAE so far. Looking for people to swap sightings, ID tips and photo critique with. It would be amazing to meet someone who knows Indian birds; I'm planning a trip to Bharatpur.",
+    "request": "A birding and nature-photography buddy.",
+    "request_intent": "interest_buddy"
+  },
+  {
+    "id": "p21",
+    "name": "Carlo Santos",
+    "age": 25,
+    "city": "Manila",
+    "country": "Philippines",
+    "timezone": "Asia/Manila",
+    "languages": [
+      "fil",
+      "en"
+    ],
+    "about": "Online chess, rated about 1850 rapid on Lichess. I want to break 2000 this year. I study openings (Caro-Kann as Black, the London as White) and do puzzles every night. Looking for a study partner around my level to review games together and maybe play training matches. Evenings, Philippine time.",
+    "request": "A chess study partner rated roughly 1700-2000.",
+    "request_intent": "interest_buddy"
+  },
+  {
+    "id": "p22",
+    "name": "Sneha Patil",
+    "age": 30,
+    "city": "Pune",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "mr",
+      "hi",
+      "en"
+    ],
+    "about": "Solo founder. I'm building appointment and billing software for small clinics in Tier-2 cities. Left my job five months ago, have three clinics piloting, zero revenue so far. The hardest part isn't the work, it's that nobody notices if I quietly avoid sales calls. I want a weekly 30-minute check-in with another early-stage founder: goals on Monday, review on Friday.",
+    "request": "A weekly accountability partner who is also a pre-revenue founder.",
+    "request_intent": "accountability"
+  },
+  {
+    "id": "p23",
+    "name": "Marcus Johnson",
+    "age": 37,
+    "city": "Austin",
+    "country": "United States",
+    "timezone": "America/Chicago",
+    "languages": [
+      "en"
+    ],
+    "about": "Indie hacker. Day job in IT support; on the side I'm building a Chrome extension for recruiters. Pre-revenue, about 40 users on the free version. I do best with daily check-ins: a quick message every morning with what I'll ship today, and a reply at night saying whether I did. Central time, early bird.",
+    "request": "A daily accountability buddy, ideally another indie hacker.",
+    "request_intent": "accountability"
+  },
+  {
+    "id": "p24",
+    "name": "Aditi Joshi",
+    "age": 26,
+    "city": "Bengaluru",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "en",
+      "kn",
+      "mr"
+    ],
+    "about": "QA engineer, preparing for the GRE in March for a master's in HCI. I keep making study plans and abandoning them by Wednesday. I want a study buddy for 6-7am IST check-ins on weekdays: what we'll each study that day, then a quick report at night.",
+    "request": "Morning study accountability for exam preparation.",
+    "request_intent": "accountability"
+  },
+  {
+    "id": "p25",
+    "name": "Camille Laurent",
+    "age": 32,
+    "city": "Lyon",
+    "country": "France",
+    "timezone": "Europe/Paris",
+    "languages": [
+      "fr",
+      "en"
+    ],
+    "about": "UX researcher who has been 'writing a novel' for three years: literary fiction about my grandmother's village in Brittany, 31,000 words in. I want a full draft by summer, so 500 words a day, five days a week. I need someone to report to who won't let me off the hook, ideally another writer. Otherwise I watch a film most nights, mostly French new wave and Iranian cinema.",
+    "request": "A writing accountability partner: 500 words a day.",
+    "request_intent": "accountability"
+  },
+  {
+    "id": "p26",
+    "name": "Harpreet Kaur",
+    "age": 28,
+    "city": "Ludhiana",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "pa",
+      "hi",
+      "en"
+    ],
+    "about": "Preparing for the UPSC civil services exam, second attempt. I study 8-9 hours a day from home. Disciplined in the morning, I lose it after lunch. Looking for a serious aspirant for daily targets and a short evening call to review them. Happy to talk in Hindi, Punjabi or English.",
+    "request": "A daily accountability partner for UPSC preparation.",
+    "request_intent": "accountability"
+  },
+  {
+    "id": "p27",
+    "name": "Oluwaseun Adeyemi",
+    "age": 35,
+    "city": "Lagos",
+    "country": "Nigeria",
+    "timezone": "Africa/Lagos",
+    "languages": [
+      "en",
+      "yo"
+    ],
+    "about": "Freelance graphic designer. For two years I've said I'll open an online shop selling my Lagos street-scene prints. I have twenty designs ready and haven't set up the store. I want a weekend accountability partner who is also launching a small creative or e-commerce side business.",
+    "request": "Weekend accountability for launching an online print shop.",
+    "request_intent": "accountability"
+  },
+  {
+    "id": "p28",
+    "name": "Ritika Agarwal",
+    "age": 42,
+    "city": "Ahmedabad",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "gu",
+      "hi",
+      "en"
+    ],
+    "about": "I run our family textile business: block-printed fabrics, exported to Europe for fifteen years. Now we're launching our own D2C website and Instagram shop, which is completely new for us; the launch target is January. I'm the only one in the family pushing for it. I want a weekly check-in with someone launching something at the same stage, so we keep each other honest.",
+    "request": "Weekly accountability with someone else who is pre-launch.",
+    "request_intent": "accountability"
+  },
+  {
+    "id": "p29",
+    "name": "Vikram Singh",
+    "age": 33,
+    "city": "Gurugram",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "hi",
+      "en",
+      "pa"
+    ],
+    "about": "Eight years in B2B SaaS sales, currently a regional sales manager. I sit in every product meeting saying 'customers want X and we built Y', so I want to move into product management. I've done an online PM course, but nobody hires a sales guy as a PM without a real story. Looking for a mentor who has made a similar switch or who hires PMs.",
+    "request": "A mentor to help me move from sales into product management.",
+    "request_intent": "mentor"
+  },
+  {
+    "id": "p30",
+    "name": "Siddharth Rao",
+    "age": 23,
+    "city": "Hyderabad",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "te",
+      "hi",
+      "en"
+    ],
+    "about": "Junior backend developer (Java, Spring Boot), one year in at a services company. I want to get better at system design and eventually move to a product company. I read blogs but I don't know what I don't know. Free time goes on chess (about 1700 on Lichess) and cricket.",
+    "request": "An experienced engineer who could review my system-design practice once or twice a month.",
+    "request_intent": "mentor"
+  },
+  {
+    "id": "p31",
+    "name": "Thandiwe Nkosi",
+    "age": 27,
+    "city": "Johannesburg",
+    "country": "South Africa",
+    "timezone": "Africa/Johannesburg",
+    "languages": [
+      "en",
+      "zu"
+    ],
+    "about": "Registered nurse, five years in a public hospital. I've been teaching myself Excel and a bit of SQL because I can see how much patient-flow data goes to waste. I want to move into health data analytics, but I don't know which skills matter or how to land a first role. A mentor who works with healthcare data would be a dream.",
+    "request": "A mentor who works in healthcare data or analytics.",
+    "request_intent": "mentor"
+  },
+  {
+    "id": "p32",
+    "name": "Farhan Ahmed",
+    "age": 20,
+    "city": "Dhaka",
+    "country": "Bangladesh",
+    "timezone": "Asia/Dhaka",
+    "languages": [
+      "bn",
+      "en"
+    ],
+    "about": "2nd year student, self-taught web dev (HTML, CSS, JS, learning React). I've built four websites for family and friends for free. I want to start freelancing for real money but I have no idea how to find clients or price my work. I need someone who has freelanced or runs a dev business.",
+    "request": "A mentor for starting a freelance web-development career.",
+    "request_intent": "mentor"
+  },
+  {
+    "id": "p33",
+    "name": "Pooja Menon",
+    "age": 36,
+    "city": "Kochi",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "ml",
+      "en",
+      "hi"
+    ],
+    "about": "I have a B.Ed and taught maths at a school in Ernakulam for two years, then worked as a manual QA engineer for six years. After that I took a five-year break to raise my kids. Now they're in school and I want to go back to tech, but testing has moved to automation (Selenium, Playwright, CI) and I'm relearning Python. I'd love a mentor who understands career breaks and modern testing.",
+    "request": "A mentor for returning to tech after a career break, in testing/QA.",
+    "request_intent": "mentor"
+  },
+  {
+    "id": "p34",
+    "name": "Kabir Malhotra",
+    "age": 18,
+    "city": "Chandigarh",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "hi",
+      "pa",
+      "en"
+    ],
+    "about": "first year engineering student. i want to make games for a living. made 2 small games in unity following tutorials (a flappy bird clone and a platformer). parents think its just a hobby lol. want a mentor who actually works in games to tell me honestly what the path looks like",
+    "request": "mentor in the games industry",
+    "request_intent": "mentor"
+  },
+  {
+    "id": "p35",
+    "name": "Elena Petrova",
+    "age": 52,
+    "city": "Amsterdam",
+    "country": "Netherlands",
+    "timezone": "Europe/Amsterdam",
+    "languages": [
+      "en",
+      "ru",
+      "nl"
+    ],
+    "about": "Product leader: twenty years, from engineer to Head of Product at two scale-ups. I've hired and coached many PMs, including several who came from sales and support. These days I'm interested in climate tech and in meeting people far outside my bubble. Happy to mentor a couple of people a month, and I also simply enjoy a good conversation.",
+    "request": "Show me interesting people, especially in climate or product.",
+    "request_intent": "explore"
+  },
+  {
+    "id": "p36",
+    "name": "Rajesh Gupta",
+    "age": 64,
+    "city": "Lucknow",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "hi",
+      "ur",
+      "en"
+    ],
+    "about": "Retired after 35 years with a public-sector bank; my last posting was branch manager. Now I have time. I enjoy explaining personal finance to young people: so many don't know how a loan or an SIP actually works. I love Urdu poetry, ghazals and old Hindi film music, and I've been a birdwatcher for decades; every morning I walk Kukrail forest with binoculars. I have always wanted to learn Spanish. Happy to talk to anybody curious.",
+    "request": "Just want to meet curious people of any age.",
+    "request_intent": "explore"
+  },
+  {
+    "id": "p37",
+    "name": "Ayesha Khan",
+    "age": 31,
+    "city": "Bengaluru",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "languages": [
+      "en",
+      "hi",
+      "ur"
+    ],
+    "about": "ML engineer at a healthtech startup (NLP on clinical notes). Bouldering three times a week, writing bad poetry in Urdu and English, re-reading Calvino. Lately I'm itching to build something outside work, maybe in climate or education. I like meeting people who are deep into something, anything.",
+    "request": "Open to meeting interesting people.",
+    "request_intent": "explore"
+  },
+  {
+    "id": "p38",
+    "name": "Kofi Asante",
+    "age": 40,
+    "city": "Accra",
+    "country": "Ghana",
+    "timezone": "Africa/Accra",
+    "languages": [
+      "en",
+      "tw"
+    ],
+    "about": "Founder of a coding bootcamp in Accra: six years, about 900 graduates. Before that I freelanced as a web developer for a decade, so I've made every pricing mistake there is. I'm interested in education, African tech ecosystems and football tactics. Open to mentoring, and to meeting builders anywhere.",
+    "request": "Meet builders and educators anywhere.",
+    "request_intent": "explore"
+  },
+  {
+    "id": "p39",
+    "name": "Grace Lin",
+    "age": 46,
+    "city": "Taipei",
+    "country": "Taiwan",
+    "timezone": "Asia/Taipei",
+    "languages": [
+      "zh",
+      "en"
+    ],
+    "about": "Staff engineer in distributed systems, twenty years. I started my career in QA and moved into backend, so I have a soft spot for people on non-traditional paths. I mentor engineers inside my company and want to do more outside it. Weekends: hiking and film photography.",
+    "request": "Open to mentoring and to meeting engineers outside my company.",
+    "request_intent": "explore"
+  },
+  {
+    "id": "p40",
+    "name": "Zoe Campbell",
+    "age": 23,
+    "city": "Glasgow",
+    "country": "United Kingdom",
+    "timezone": "Europe/London",
+    "languages": [
+      "en"
+    ],
+    "about": "Marine biology master's student researching kelp forests. Pottery on Sundays: terrible at it, love it. I want to meet people outside academia, especially anyone doing science communication or making things with their hands.",
+    "request": "Show me people who make things or explain science well.",
+    "request_intent": "explore"
+  }
+]

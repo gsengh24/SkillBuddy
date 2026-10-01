@@ -1,0 +1,902 @@
+[
+  {
+    "id": "pair-001",
+    "profile_a": "p01",
+    "profile_b": "p02",
+    "intent": "build_together",
+    "label": "good",
+    "rationale": "Complementary skills: Ananya builds the backend, Tomás is a fintech UX designer looking for a personal-finance side project. Both are happy to work async, which covers the large IST/Mexico City time gap.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-002",
+    "profile_a": "p01",
+    "profile_b": "p05",
+    "intent": "build_together",
+    "label": "acceptable",
+    "rationale": "Both want a building partner and Lena brings product skills, but she is a PM, not the designer Ananya needs, and each already has a different project idea.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-003",
+    "profile_a": "p01",
+    "profile_b": "p21",
+    "intent": "build_together",
+    "label": "poor",
+    "rationale": "Carlo is looking for a chess study partner; he has no design or product skills and no interest in building a product.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-004",
+    "profile_a": "p02",
+    "profile_b": "p03",
+    "intent": "build_together",
+    "label": "acceptable",
+    "rationale": "Wanjiru is a developer, which Tomás needs, but she is committed to her own agritech app rather than a personal-finance product.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-005",
+    "profile_a": "p02",
+    "profile_b": "p40",
+    "intent": "build_together",
+    "label": "poor",
+    "rationale": "Zoe is a marine-biology student who wants to meet makers; she cannot build software and is not looking to co-build.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-006",
+    "profile_a": "p03",
+    "profile_b": "p06",
+    "intent": "build_together",
+    "label": "acceptable",
+    "rationale": "Arjun can do backend work and cares about social impact, but he wants to build his own Malayalam education platform and has no agriculture background.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-007",
+    "profile_a": "p03",
+    "profile_b": "p01",
+    "intent": "build_together",
+    "label": "acceptable",
+    "rationale": "Ananya is a strong backend/data engineer who serves low-income users, but she is busy with her own budgeting app and knows nothing about farming.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-008",
+    "profile_a": "p03",
+    "profile_b": "p19",
+    "intent": "build_together",
+    "label": "poor",
+    "rationale": "Nikhil is an economics lecturer looking for a film-discussion buddy; no engineering skills and no wish to build.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-009",
+    "profile_a": "p04",
+    "profile_b": "p05",
+    "intent": "build_together",
+    "label": "good",
+    "rationale": "Lena needs a Python/data developer at weekends; Rohan writes Python, is only free at weekends and is open to any domain. His December exams are the only gap.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-010",
+    "profile_a": "p04",
+    "profile_b": "p26",
+    "intent": "build_together",
+    "label": "poor",
+    "rationale": "Harpreet is preparing full-time for the UPSC exam and wants a study partner, not a side project.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-011",
+    "profile_a": "p05",
+    "profile_b": "p37",
+    "intent": "build_together",
+    "label": "good",
+    "rationale": "Ayesha does NLP for a living, which fits summarising climate data, and says she is itching to build something in climate outside work.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-012",
+    "profile_a": "p05",
+    "profile_b": "p29",
+    "intent": "build_together",
+    "label": "poor",
+    "rationale": "Vikram is a sales manager seeking a PM mentor; he cannot build the data pipeline Lena needs.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-013",
+    "profile_a": "p06",
+    "profile_b": "p33",
+    "intent": "build_together",
+    "label": "good",
+    "rationale": "Pooja lives in Kochi, speaks Malayalam, has a B.Ed and taught school maths, which is exactly the teacher/content partner Arjun is looking for.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-014",
+    "profile_a": "p06",
+    "profile_b": "p16",
+    "intent": "build_together",
+    "label": "acceptable",
+    "rationale": "James is an experienced teacher who could advise on pedagogy, but he does not know Malayalam or the Kerala syllabus.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-015",
+    "profile_a": "p07",
+    "profile_b": "p04",
+    "intent": "build_together",
+    "label": "acceptable",
+    "rationale": "Rohan is a weekend programmer open to any domain, but his experience is ML and React, not Godot or Unity, and his exams interrupt December.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-016",
+    "profile_a": "p07",
+    "profile_b": "p34",
+    "intent": "build_together",
+    "label": "acceptable",
+    "rationale": "Kabir is motivated and has made two small Unity games, but he is an 18-year-old beginner seeking a mentor, so finishing a game together is uncertain.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-017",
+    "profile_a": "p07",
+    "profile_b": "p20",
+    "intent": "build_together",
+    "label": "poor",
+    "rationale": "Fatima is a civil engineer looking for birding friends; no game-development skills or interest.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-018",
+    "profile_a": "p08",
+    "profile_b": "p09",
+    "intent": "skill_exchange",
+    "label": "good",
+    "rationale": "Perfectly reciprocal: Priya teaches Python and SQL and wants guitar; Daniel teaches guitar and wants Python. The 3.5-hour time difference leaves easy evening overlap.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-019",
+    "profile_a": "p08",
+    "profile_b": "p36",
+    "intent": "skill_exchange",
+    "label": "poor",
+    "rationale": "Rajesh loves old Hindi film music but does not play guitar, and does not want to learn Python, so there is nothing to exchange.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-020",
+    "profile_a": "p09",
+    "profile_b": "p37",
+    "intent": "skill_exchange",
+    "label": "acceptable",
+    "rationale": "Ayesha could teach Python well, but nothing in her profile suggests she wants guitar lessons; reciprocity is uncertain.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-021",
+    "profile_a": "p09",
+    "profile_b": "p31",
+    "intent": "skill_exchange",
+    "label": "poor",
+    "rationale": "Thandiwe is only starting to learn SQL herself and is looking for a mentor; she cannot teach Python and does not want guitar.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-022",
+    "profile_a": "p10",
+    "profile_b": "p08",
+    "intent": "skill_exchange",
+    "label": "poor",
+    "rationale": "Priya speaks Hindi, but she wants guitar lessons and already knows data tools; Mei Lin's Excel and finance skills are not what she is asking for.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-023",
+    "profile_a": "p10",
+    "profile_b": "p26",
+    "intent": "skill_exchange",
+    "label": "acceptable",
+    "rationale": "Harpreet speaks Hindi and finance basics could help her UPSC economics paper, but she is studying 8-9 hours a day and has little time to teach.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-024",
+    "profile_a": "p10",
+    "profile_b": "p22",
+    "intent": "skill_exchange",
+    "label": "good",
+    "rationale": "Sneha speaks Hindi and, as a pre-revenue founder, would benefit directly from financial modelling; a fair two-way exchange in compatible time zones.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-025",
+    "profile_a": "p10",
+    "profile_b": "p36",
+    "intent": "skill_exchange",
+    "label": "acceptable",
+    "rationale": "Rajesh speaks Hindi and Urdu, has time and enjoys teaching, but as a retired banker he has little need for Excel or financial modelling.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-026",
+    "profile_a": "p11",
+    "profile_b": "p14",
+    "intent": "skill_exchange",
+    "label": "good",
+    "rationale": "Reciprocal: Gabriela teaches Spanish and wants Hindi; Kavya wants Spanish and can teach Hindi. Kavya's early IST mornings fall in Gabriela's Brazilian evenings.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-027",
+    "profile_a": "p11",
+    "profile_b": "p40",
+    "intent": "skill_exchange",
+    "label": "poor",
+    "rationale": "Zoe speaks only English and is not looking for a language or music exchange.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-028",
+    "profile_a": "p11",
+    "profile_b": "p02",
+    "intent": "skill_exchange",
+    "label": "acceptable",
+    "rationale": "Tomás is a native Spanish speaker, but his request is to build a product, not to exchange skills, and he wants nothing Kavya offers.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-029",
+    "profile_a": "p12",
+    "profile_b": "p13",
+    "intent": "skill_exchange",
+    "label": "good",
+    "rationale": "Exactly reciprocal: Isabel teaches cooking and wants video editing; Hamza edits video and wants to learn healthy cooking.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-030",
+    "profile_a": "p12",
+    "profile_b": "p20",
+    "intent": "skill_exchange",
+    "label": "acceptable",
+    "rationale": "Fatima has visual and photography skills that overlap with phone video, but she is not an editor and has not asked to learn cooking.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-031",
+    "profile_a": "p12",
+    "profile_b": "p29",
+    "intent": "skill_exchange",
+    "label": "poor",
+    "rationale": "Vikram is a sales manager seeking a PM mentor; he has no video-editing skills and no interest in cooking.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-032",
+    "profile_a": "p13",
+    "profile_b": "p32",
+    "intent": "skill_exchange",
+    "label": "poor",
+    "rationale": "Farhan is a student web developer looking for a freelancing mentor; he cannot teach cooking.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-033",
+    "profile_a": "p14",
+    "profile_b": "p36",
+    "intent": "skill_exchange",
+    "label": "good",
+    "rationale": "Reciprocal: Rajesh is a native Hindi/Urdu speaker who loves teaching and has always wanted to learn Spanish, which Gabriela teaches. Sanskrit is not covered, but Hindi is.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-034",
+    "profile_a": "p14",
+    "profile_b": "p23",
+    "intent": "skill_exchange",
+    "label": "poor",
+    "rationale": "Marcus speaks only English and wants a daily accountability buddy; no Hindi or Sanskrit and nothing to exchange.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-035",
+    "profile_a": "p15",
+    "profile_b": "p16",
+    "intent": "interest_buddy",
+    "label": "good",
+    "rationale": "Both read medieval history beyond Europe, specifically Indian Ocean trade, and both enjoy structured book discussion. A 4.5-5.5 hour time gap is manageable.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-036",
+    "profile_a": "p15",
+    "profile_b": "p19",
+    "intent": "interest_buddy",
+    "label": "acceptable",
+    "rationale": "Nikhil reads Bengal history and enjoys deep discussion, but his main interest is cinema rather than medieval history.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-037",
+    "profile_a": "p15",
+    "profile_b": "p21",
+    "intent": "interest_buddy",
+    "label": "poor",
+    "rationale": "Carlo wants a chess training partner; no shared interest in history or reading.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-038",
+    "profile_a": "p16",
+    "profile_b": "p36",
+    "intent": "interest_buddy",
+    "label": "acceptable",
+    "rationale": "Rajesh is curious and loves Urdu poetry, which touches on medieval cultural history, but he has not mentioned reading history books.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-039",
+    "profile_a": "p16",
+    "profile_b": "p34",
+    "intent": "interest_buddy",
+    "label": "poor",
+    "rationale": "Kabir is an 18-year-old engineering student focused on game development; no interest in history.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-040",
+    "profile_a": "p17",
+    "profile_b": "p18",
+    "intent": "interest_buddy",
+    "label": "good",
+    "rationale": "Shared passion for astronomy and astrophotography; Aiko explicitly enjoys helping beginners and seeing phone captures, which is what Ishaan does.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-041",
+    "profile_a": "p17",
+    "profile_b": "p40",
+    "intent": "interest_buddy",
+    "label": "acceptable",
+    "rationale": "Zoe is science-minded and likes science communication, but her field is marine biology, not astronomy.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-042",
+    "profile_a": "p17",
+    "profile_b": "p13",
+    "intent": "interest_buddy",
+    "label": "poor",
+    "rationale": "Hamza is a video editor looking for cooking lessons; no interest in astronomy.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-043",
+    "profile_a": "p18",
+    "profile_b": "p39",
+    "intent": "interest_buddy",
+    "label": "acceptable",
+    "rationale": "Grace does film photography and hiking, which overlap with astrophotography trips, but she has not mentioned astronomy.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-044",
+    "profile_a": "p18",
+    "profile_b": "p28",
+    "intent": "interest_buddy",
+    "label": "poor",
+    "rationale": "Ritika runs a textile business and wants launch accountability; no shared interest.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-045",
+    "profile_a": "p19",
+    "profile_b": "p25",
+    "intent": "interest_buddy",
+    "label": "good",
+    "rationale": "Camille watches a film most nights, mostly French new wave and Iranian cinema, which overlaps with Nikhil's world-cinema interests including Kiarostami.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-046",
+    "profile_a": "p19",
+    "profile_b": "p37",
+    "intent": "interest_buddy",
+    "label": "acceptable",
+    "rationale": "Ayesha is a deep reader (Calvino, poetry) who likes people deep into something, but films are not among her stated interests.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-047",
+    "profile_a": "p19",
+    "profile_b": "p23",
+    "intent": "interest_buddy",
+    "label": "poor",
+    "rationale": "Marcus is an indie hacker after daily accountability; no film or literary interests mentioned.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-048",
+    "profile_a": "p20",
+    "profile_b": "p17",
+    "intent": "interest_buddy",
+    "label": "acceptable",
+    "rationale": "Ishaan lives in Jaipur, near Bharatpur, and loves nature at night, but he is into astronomy, not birds.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-049",
+    "profile_a": "p20",
+    "profile_b": "p36",
+    "intent": "interest_buddy",
+    "label": "good",
+    "rationale": "Rajesh has birdwatched for decades and knows Indian birds; ideal for Fatima's Bharatpur trip and for swapping sightings.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-050",
+    "profile_a": "p21",
+    "profile_b": "p30",
+    "intent": "interest_buddy",
+    "label": "good",
+    "rationale": "Siddharth plays chess at about 1700 on Lichess, close to Carlo's level, and the time zones are only 2.5 hours apart.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-051",
+    "profile_a": "p21",
+    "profile_b": "p38",
+    "intent": "interest_buddy",
+    "label": "poor",
+    "rationale": "Kofi likes football tactics, not chess, and is looking to meet builders and educators.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-052",
+    "profile_a": "p22",
+    "profile_b": "p28",
+    "intent": "accountability",
+    "label": "good",
+    "rationale": "Same stage (pre-revenue / pre-launch), both want a weekly check-in, and both are in India so scheduling is easy.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-053",
+    "profile_a": "p22",
+    "profile_b": "p23",
+    "intent": "accountability",
+    "label": "acceptable",
+    "rationale": "Marcus is also a pre-revenue founder, but he wants daily check-ins while Sneha wants weekly, and the time gap is about 10.5-11.5 hours.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-054",
+    "profile_a": "p22",
+    "profile_b": "p17",
+    "intent": "accountability",
+    "label": "poor",
+    "rationale": "Ishaan is a 19-year-old physics student looking for an astronomy buddy; not a founder and not seeking accountability.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-055",
+    "profile_a": "p23",
+    "profile_b": "p27",
+    "intent": "accountability",
+    "label": "acceptable",
+    "rationale": "Oluwaseun is launching a side business too, but only works on it at weekends while Marcus wants daily check-ins.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-056",
+    "profile_a": "p23",
+    "profile_b": "p04",
+    "intent": "accountability",
+    "label": "poor",
+    "rationale": "Rohan is a student looking for a weekend ML project, not an accountability partner, and has exams coming.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-057",
+    "profile_a": "p24",
+    "profile_b": "p26",
+    "intent": "accountability",
+    "label": "acceptable",
+    "rationale": "Both are preparing for exams in IST, but for different exams with different routines: Aditi wants weekday 6-7am check-ins, Harpreet a full-day study partner.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-058",
+    "profile_a": "p24",
+    "profile_b": "p11",
+    "intent": "accountability",
+    "label": "acceptable",
+    "rationale": "Kavya is free early mornings IST and is studying Spanish, so a morning study check-in could work, but she is not preparing for an exam.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-059",
+    "profile_a": "p24",
+    "profile_b": "p35",
+    "intent": "accountability",
+    "label": "poor",
+    "rationale": "Elena is a senior product leader looking to meet people and mentor; not a study partner.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-060",
+    "profile_a": "p25",
+    "profile_b": "p16",
+    "intent": "accountability",
+    "label": "good",
+    "rationale": "James is also trying to finish a long-form book, so both are writers needing a deadline, and London-Lyon is only a one-hour difference.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-061",
+    "profile_a": "p25",
+    "profile_b": "p37",
+    "intent": "accountability",
+    "label": "acceptable",
+    "rationale": "Ayesha writes poetry, so she understands writing, but she has not asked for accountability or a daily writing routine.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-062",
+    "profile_a": "p25",
+    "profile_b": "p32",
+    "intent": "accountability",
+    "label": "poor",
+    "rationale": "Farhan is a student web developer looking for a freelancing mentor; not a writer and not seeking accountability.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-063",
+    "profile_a": "p26",
+    "profile_b": "p34",
+    "intent": "accountability",
+    "label": "poor",
+    "rationale": "Kabir is a first-year engineering student focused on games and looking for a mentor; not preparing for UPSC.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-064",
+    "profile_a": "p27",
+    "profile_b": "p07",
+    "intent": "accountability",
+    "label": "acceptable",
+    "rationale": "Chloe is a fellow illustrator with shipped work and weekend availability, but she is looking for a game programmer, not launching a shop.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-065",
+    "profile_a": "p27",
+    "profile_b": "p21",
+    "intent": "accountability",
+    "label": "poor",
+    "rationale": "Carlo wants a chess partner; no business launch and no accountability goal.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-066",
+    "profile_a": "p28",
+    "profile_b": "p27",
+    "intent": "accountability",
+    "label": "good",
+    "rationale": "Both are launching online shops for their own designs and want regular check-ins; weekly calls fit Oluwaseun's weekend schedule.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-067",
+    "profile_a": "p28",
+    "profile_b": "p23",
+    "intent": "accountability",
+    "label": "acceptable",
+    "rationale": "Marcus is also pre-launch-stage, but he wants daily check-ins and is about 10.5-11.5 hours behind India.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-068",
+    "profile_a": "p23",
+    "profile_b": "p25",
+    "intent": "accountability",
+    "label": "good",
+    "rationale": "Both want daily accountability (Marcus ships daily, Camille writes 500 words a day); Marcus's early mornings in Central time land in Camille's afternoon.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-069",
+    "profile_a": "p29",
+    "profile_b": "p35",
+    "intent": "mentor",
+    "label": "good",
+    "rationale": "Elena has twenty years in product and has coached several PMs who came from sales, exactly the switch Vikram wants to make, and she offers mentoring.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-070",
+    "profile_a": "p29",
+    "profile_b": "p05",
+    "intent": "mentor",
+    "label": "acceptable",
+    "rationale": "Lena is an experienced PM who could advise, but she has not offered to mentor and is busy with her own project.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-071",
+    "profile_a": "p29",
+    "profile_b": "p17",
+    "intent": "mentor",
+    "label": "poor",
+    "rationale": "Ishaan is a 19-year-old physics student with no product or sales experience.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-072",
+    "profile_a": "p30",
+    "profile_b": "p39",
+    "intent": "mentor",
+    "label": "good",
+    "rationale": "Grace is a staff engineer in distributed systems who mentors engineers and wants to do more outside her company; ideal for system-design review.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-073",
+    "profile_a": "p30",
+    "profile_b": "p04",
+    "intent": "mentor",
+    "label": "poor",
+    "rationale": "Rohan is a final-year student with less industry experience than Siddharth; the experience gap is in the wrong direction.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-074",
+    "profile_a": "p30",
+    "profile_b": "p06",
+    "intent": "mentor",
+    "label": "acceptable",
+    "rationale": "Arjun has startup and full-stack experience to share, but he works in Django rather than Java and has not offered mentoring.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-075",
+    "profile_a": "p31",
+    "profile_b": "p08",
+    "intent": "mentor",
+    "label": "good",
+    "rationale": "Priya is a data analyst working with hospital operations data who enjoys mentoring juniors; a direct match for a nurse moving into health analytics.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-076",
+    "profile_a": "p31",
+    "profile_b": "p37",
+    "intent": "mentor",
+    "label": "acceptable",
+    "rationale": "Ayesha works on healthcare data as an ML engineer, which is relevant, but her path is engineering rather than analytics roles.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-077",
+    "profile_a": "p31",
+    "profile_b": "p12",
+    "intent": "mentor",
+    "label": "poor",
+    "rationale": "Isabel is a retired chef learning video editing; no data or healthcare experience.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-078",
+    "profile_a": "p32",
+    "profile_b": "p38",
+    "intent": "mentor",
+    "label": "good",
+    "rationale": "Kofi freelanced as a web developer for a decade, knows the pricing mistakes, runs a bootcamp and is open to mentoring.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-079",
+    "profile_a": "p32",
+    "profile_b": "p06",
+    "intent": "mentor",
+    "label": "acceptable",
+    "rationale": "Arjun freelances as a full-stack developer now, so he knows client work, but he has not offered mentoring and is focused on his own platform.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-080",
+    "profile_a": "p32",
+    "profile_b": "p15",
+    "intent": "mentor",
+    "label": "poor",
+    "rationale": "Meera is an architect looking for a history reading buddy; no web or freelancing experience.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-081",
+    "profile_a": "p33",
+    "profile_b": "p39",
+    "intent": "mentor",
+    "label": "good",
+    "rationale": "Grace began her career in QA, moved into engineering and has a soft spot for non-traditional paths, a strong fit for a QA career return.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-082",
+    "profile_a": "p33",
+    "profile_b": "p24",
+    "intent": "mentor",
+    "label": "acceptable",
+    "rationale": "Aditi is a working QA engineer who knows current practice, but she is a peer rather than a senior mentor and is busy with GRE preparation.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-083",
+    "profile_a": "p34",
+    "profile_b": "p07",
+    "intent": "mentor",
+    "label": "acceptable",
+    "rationale": "Chloe works in indie games and has shipped on Steam, so she can describe the path, but as an artist rather than a programmer, and she has not offered to mentor.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-084",
+    "profile_a": "p34",
+    "profile_b": "p36",
+    "intent": "mentor",
+    "label": "poor",
+    "rationale": "Rajesh is a retired banker; he is happy to talk but has no games-industry experience.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-085",
+    "profile_a": "p35",
+    "profile_b": "p05",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Lena works in product and is building a climate-data tool, matching both of Elena's stated interests.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-086",
+    "profile_a": "p35",
+    "profile_b": "p38",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Kofi runs a bootcamp in Accra and is into education and African tech, far outside Elena's usual bubble, which is what she asked for.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-087",
+    "profile_a": "p35",
+    "profile_b": "p23",
+    "intent": "explore",
+    "label": "acceptable",
+    "rationale": "Marcus is a builder with product questions, but his profile is narrowly about daily accountability.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-088",
+    "profile_a": "p36",
+    "profile_b": "p17",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Ishaan is exactly the curious young person Rajesh wants to meet, and Rajesh's dawn birding pairs naturally with Ishaan's night-sky hobby.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-089",
+    "profile_a": "p36",
+    "profile_b": "p19",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Both love classic cinema and poetry from neighbouring traditions (Urdu ghazals, Bengali film) and enjoy long conversations.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-090",
+    "profile_a": "p36",
+    "profile_b": "p03",
+    "intent": "explore",
+    "label": "acceptable",
+    "rationale": "Wanjiru's app helps farmers decide when to sell produce, which touches personal finance, but there is little other common ground.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-091",
+    "profile_a": "p37",
+    "profile_b": "p25",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Both are deep readers and writers: Ayesha writes poetry and rereads Calvino; Camille is writing a literary novel.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-092",
+    "profile_a": "p37",
+    "profile_b": "p21",
+    "intent": "explore",
+    "label": "acceptable",
+    "rationale": "Carlo is deep into chess, which fits Ayesha's 'deep into anything' wish, but they share little else.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-093",
+    "profile_a": "p37",
+    "profile_b": "p26",
+    "intent": "explore",
+    "label": "poor",
+    "rationale": "Harpreet studies 8-9 hours a day for UPSC and only wants an exam accountability partner; no bandwidth for open-ended conversation.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-094",
+    "profile_a": "p38",
+    "profile_b": "p06",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Arjun is building a free education platform in a regional language, squarely in Kofi's interest in education and builders.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-095",
+    "profile_a": "p38",
+    "profile_b": "p40",
+    "intent": "explore",
+    "label": "acceptable",
+    "rationale": "Zoe is interesting and wants to meet people outside academia, but has no stated link to education or building.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-096",
+    "profile_a": "p38",
+    "profile_b": "p24",
+    "intent": "explore",
+    "label": "poor",
+    "rationale": "Aditi wants a strict morning study partner for the GRE and has no time for open-ended networking.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-097",
+    "profile_a": "p39",
+    "profile_b": "p31",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Thandiwe is moving from nursing into data, the kind of non-traditional path Grace wants to support.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-098",
+    "profile_a": "p39",
+    "profile_b": "p18",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Aiko is a tester, the path Grace herself started on, and both are photographers (film and astrophotography), giving both a career and a hobby in common.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-099",
+    "profile_a": "p40",
+    "profile_b": "p20",
+    "intent": "explore",
+    "label": "good",
+    "rationale": "Fatima is a nature photographer and birder, which overlaps with Zoe's love of nature and making things.",
+    "review_status": "draft"
+  },
+  {
+    "id": "pair-100",
+    "profile_a": "p40",
+    "profile_b": "p23",
+    "intent": "explore",
+    "label": "poor",
+    "rationale": "Marcus is focused on daily accountability for a recruiting Chrome extension; nothing in common with Zoe's interests.",
+    "review_status": "draft"
+  }
+]
