@@ -81,7 +81,7 @@ frontend/
   lib/api/               Typed API client + response schemas
 .devcontainer/           GitHub Codespaces config (Docker-in-Docker; stack via docker compose)
 infra/                   Deployment notes, production env template
-docs/                    ARCHITECTURE.md, adr/
+docs/                    ARCHITECTURE.md, adr/, deployment-plan.md, free-tier-limits.md
 ```
 
 ## Commands
@@ -129,6 +129,30 @@ a Codespace, with plain `docker compose` from the repo root (`make` is not assum
    SDK calls anywhere else. The gateway logs prompt version, latency, tokens and cost.
 5. **All model output is schema-validated** (Pydantic) before use. Invalid output gets one
    retry, then fails loudly. Treat all user-written text as untrusted input to prompts.
+
+## Zero-cost constraint
+
+No money is spent on this project for the foreseeable future (ADR 0004). Everything runs on
+free tiers or open-source software, with no credit card on any account.
+
+1. **No paid services, paid-only dependencies, or anything that needs a card.** Before
+   adding an external service or API, check its current free tier and record limits and
+   catches (sleeping, size caps, rate limits, data-use terms), dated, in
+   [docs/free-tier-limits.md](docs/free-tier-limits.md).
+2. **AI gateway modes.** All LLM and embedding calls go through the gateway, which supports
+   an open-source embedding model running locally on CPU, an optional free-tier LLM
+   provider, and a "no LLM" mode. Matching works end to end with no LLM call (rule-based
+   scoring, template explanations); an LLM only improves quality when available.
+3. **Embedding dimension is configurable**, not hard-coded, so a small model fits. The
+   current schema uses 768 (`EMBEDDING_DIMENSIONS`); this is revisited in the Phase 1
+   AI-gateway ADR, before any real data exists.
+4. **Real user data never goes to a free-tier API whose terms allow training on inputs.**
+   Use synthetic data for development and evaluation.
+5. **Every feature has a hard usage cap** and fails gracefully ("try again later") when a
+   free limit is hit, instead of running up cost or crashing.
+6. **Keep CI cheap:** cache dependencies, run the full pipeline only on pull requests and
+   `main`, keep the Dependabot open-PR limit low.
+7. **Stay small:** prefer slim Docker images and low memory use; free hosts have little RAM.
 
 ## API design (frontend-agnostic)
 
