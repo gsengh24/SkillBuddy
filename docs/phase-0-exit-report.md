@@ -3,7 +3,11 @@
 - **Date:** 2026-10-01
 - **Audited:** `main` at `d6464c3` (merge of PR #7), plus PR #10 (Smoke and Secret scan jobs,
   open at the time of writing)
-- **Verdict:** **Not ready for Phase 1.** See [Verdict](#verdict).
+- **Re-audited:** criteria 1, 2, 3 and 5 later the same day, against `main` at `975a1eb`
+  (merge of PR #10) and the open authentication PRs #12 (backend), #13 (email and jobs) and
+  #14 (frontend), which are stacked and merge in that order
+- **Verdict:** **Not ready for Phase 1** until the auth PRs are merged and the evaluation
+  labels are reviewed. See [Verdict](#verdict).
 
 Statuses: **Pass**, **Fail**, or **Not verified** (could not be confirmed with the evidence
 available). Every claim below cites the file, CI run or test it was checked against.
@@ -12,27 +16,22 @@ available). Every claim below cites the file, CI run or test it was checked agai
 
 | # | Exit criterion | Status |
 | --- | --- | --- |
-| 1 | `main` CI green (Backend, Frontend, Docker images, Smoke) | Not verified |
+| 1 | `main` CI green (Backend, Frontend, Docker images, Smoke) | Pass |
 | 2 | `main` protected by a ruleset (PR-only, required checks) | Pass |
-| 3 | Whole stack boots in CI (Smoke job) | Pass (on PR #10; not yet on `main`) |
+| 3 | Whole stack boots in CI (Smoke job) | Pass |
 | 4 | Migrations tested up and down against Postgres 16 | Pass |
-| 5 | Authentication requirements | **Fail** |
+| 5 | Authentication requirements | **Pass on PRs #12-#14; not yet on `main`** |
 | 6 | No secrets; debug off by default; `.env.example` complete | Pass |
 | 7 | Docs complete and consistent | Pass (after three trivial fixes in this PR) |
 | 8 | Evaluation-set skeleton validates; drafts clearly unreviewed | Pass |
 
-## 1. `main` CI green: Not verified
+## 1. `main` CI green: Pass
 
-- **Backend, Frontend, Docker images: green on `main`.** Run
-  [36855255931](https://github.com/gsengh24/SkillBuddy/actions/runs/36855255931) on
-  `d6464c3`: jobs
-  [Backend](https://github.com/gsengh24/SkillBuddy/actions/runs/36855255931/job/110346122377),
-  [Frontend](https://github.com/gsengh24/SkillBuddy/actions/runs/36855255931/job/110346122922)
-  and [Docker images](https://github.com/gsengh24/SkillBuddy/actions/runs/36855255931/job/110346122702)
-  all succeeded. Every earlier push run on `main` that was checked (`921ceff`, `67beaf5`,
-  `ef9573a`) was also green.
-- **Smoke is not on `main` yet.** It was added in PR #10 and has only run on that PR. Re-check
-  this criterion on the first `main` run after PR #10 merges.
+- Re-audit: `main` run
+  [36858444007](https://github.com/gsengh24/SkillBuddy/actions/runs/36858444007) on `975a1eb`
+  (merge of PR #10): **Backend, Frontend, Docker images, Smoke, Secret scan** all succeeded.
+- First audit: run 36855255931 on `d6464c3` had Backend, Frontend and Docker images green;
+  Smoke did not exist on `main` yet.
 
 ## 2. Ruleset on `main`: Pass
 
@@ -42,14 +41,13 @@ Read through the GitHub API (`GET /repos/gsengh24/SkillBuddy/rulesets/24301494`)
   actors**.
 - Rules: `pull_request` (PR required; 0 approvals, which suits a solo owner), `deletion`,
   `non_fast_forward` (no force pushes), `required_status_checks`: **Backend, Frontend,
-  Docker images** (GitHub Actions).
-- Gaps: **Smoke** and **Secret scan** are not required yet (owner to add after PR #10), and
-  "require branches to be up to date" is off. Classic branch protection is not used
-  (`/branches/main/protection` returns 404); the ruleset replaces it.
+  Docker images, Smoke, Secret scan** (re-audit; the first audit found only the first three).
+- Remaining gap: "require branches to be up to date" is off. Classic branch protection is
+  not used (`/branches/main/protection` returns 404); the ruleset replaces it.
 
-## 3. Whole stack boots in CI: Pass (on PR #10)
+## 3. Whole stack boots in CI: Pass
 
-PR #10 run [36856198984](https://github.com/gsengh24/SkillBuddy/actions/runs/36856198984),
+Also green on `main` (run 36858444007). PR #10 run [36856198984](https://github.com/gsengh24/SkillBuddy/actions/runs/36856198984),
 job **Smoke** (1m17s), script `.github/scripts/smoke.sh`:
 
 - `docker compose up --build --detach --wait`: db, redis, api, worker, web **Healthy**;
@@ -75,27 +73,48 @@ Not yet seen: the job failing correctly when a service is broken.
   defaults, case-insensitive email, cosine ordering, unique and check constraints, cascade
   delete). Overall: 79 passed, coverage 95.38% (threshold 85%).
 
-## 5. Authentication: Fail
+## 5. Authentication: Pass on PRs #12-#14 (not yet on `main`)
 
-**The authentication module has not been built.** The auth task's own text was never
-received in the working session, so this list uses the requirements named in the audit
-request. The only auth code is a fail-closed stub.
+Re-audit. Built in three stacked PRs, each green on all five CI jobs. Design and decisions:
+[ADR 0006](adr/0006-authentication-and-sessions.md) (auth, sessions, CSRF) and
+[ADR 0005](adr/0005-valkey-instead-of-redis.md) (Valkey); both ADRs are added by PR #12. The
+first audit's result was **Fail** (nothing built).
 
-| Requirement | Status | Evidence |
+| PR | CI run | Result |
 | --- | --- | --- |
-| OTP rules (expiry, single use, attempt limit, hashed at rest) | Missing | No OTP model, endpoint or service exists |
-| Session cookie flags (`HttpOnly`, `Secure`, `SameSite`) | Missing | No sessions |
-| CSRF protection | Missing | No cookie-authenticated endpoints yet |
-| Rate limits (OTP send, verify attempts) | Missing | No rate limiter |
-| Email enumeration safety | Missing | No auth endpoints |
-| Deletion grace period + scheduled hard delete | Missing | `users.deleted_at` column exists (`backend/app/models/user.py`); no deletion endpoint or job |
-| Retention jobs (OTP/session purge, `auth_events` prune) | Missing | Planned in `docs/roadmap.md` |
-| Text size limits on user input | Missing in the API | No user-text endpoints yet; the eval schema caps text at 2,000 chars (`test_profile_rejects_invalid_values`) |
-| Security headers (API) | Implemented and tested | `SecurityHeadersMiddleware` in `backend/app/core/security.py`; `test_liveness_sets_security_headers` checks `X-Content-Type-Options` and `X-Frame-Options` (`Referrer-Policy`, `Cross-Origin-Opener-Policy` set but untested) |
-| Security headers (web) | Implemented, untested | `frontend/next.config.ts` `headers()` |
-| Protected endpoints fail closed until auth exists | Implemented and tested | `require_authenticated_user`; `test_auth_stub_fails_closed` |
+| #12 backend | [36881647505](https://github.com/gsengh24/SkillBuddy/actions/runs/36881647505) | 5/5 jobs; 136 backend tests; auth modules 99% coverage (gate at least 90%) |
+| #13 email and jobs | [36883330720](https://github.com/gsengh24/SkillBuddy/actions/runs/36883330720) | 5/5 jobs; 165 backend tests; smoke signs in with a code emailed via Mailpit |
+| #14 frontend | [36887713990](https://github.com/gsengh24/SkillBuddy/actions/runs/36887713990) | 5/5 jobs; 27 component tests; Playwright sign-up and sign-out test passed |
 
-ARCHITECTURE.md §11 lists an "auth skeleton" as a Phase 0 deliverable.
+Test files: `backend/tests/integration/test_auth_codes.py`, `test_auth_sessions.py`,
+`test_retention.py`, `test_storage_guard.py`, `test_email_delivery.py`, `test_migrations.py`;
+`frontend/components/auth/*.test.tsx`; `frontend/e2e/tests/login.spec.ts`.
+
+| Requirement | Status | Evidence (tests) |
+| --- | --- | --- |
+| OTP: 6 digits, 10-minute expiry | Implemented and tested | `test_code_expires_after_ten_minutes`, `test_expired_code_is_rejected`, `test_code_must_be_six_digits` |
+| OTP: wrong code, 5-attempt lockout | Implemented and tested | `test_wrong_code_is_rejected_and_five_attempts_lock_the_code` |
+| OTP: single use; a new request invalidates the old code | Implemented and tested | `test_code_is_single_use`, `test_new_request_invalidates_the_previous_code` |
+| OTP: stored only as an HMAC; constant-time comparison | Storage tested; comparison by code review | `test_codes_are_stored_only_as_hmac`; `constant_time_equals` in `app/services/auth/service.py` |
+| Age 18+ and terms required for new accounts | Implemented and tested | `test_new_account_requires_age_and_terms_and_keeps_code_usable`; login-form component tests |
+| Session cookie flags (HttpOnly, Secure, SameSite=Lax, 90-day Max-Age) | Implemented and tested | `test_session_and_csrf_cookie_flags`, `test_cookie_is_not_secure_on_the_plain_http_dev_stack`; e2e cookie assertions |
+| Session expiry (30-day sliding, 90-day absolute) and revocation | Implemented and tested | `test_expired_session_is_rejected_and_removed`, `test_activity_slides_the_idle_expiry`, `test_sliding_never_passes_the_absolute_maximum`, `test_logout_revokes_the_session_and_clears_cookies`, `test_logout_all_revokes_every_session` |
+| CSRF (signed double-submit) | Implemented and tested | `test_cookie_authenticated_writes_require_the_csrf_token` (missing, empty, wrong), `test_csrf_token_from_another_session_is_rejected`, `test_bearer_clients_do_not_need_csrf`; `account-actions.test.tsx` sends the header; e2e signs out through it |
+| Rate limits per email and per IP, 429 with Retry-After | Implemented and tested | `test_code_requests_are_rate_limited_per_email`, `test_code_requests_are_rate_limited_per_ip`, `test_verification_is_rate_limited`, `test_rate_limiter_fails_closed_when_valkey_is_down` |
+| Email enumeration safety | Implemented and tested | `test_request_response_is_identical_for_known_and_unknown_addresses`; also for accounts pending deletion (`test_delete_account_starts_the_grace_period_and_refuses_sign_in`) |
+| Deletion: 30-day grace period, sign-in refused with a clear message | Implemented and tested | `test_delete_account_starts_the_grace_period_and_refuses_sign_in`; settings component test of the confirmation |
+| Hard-delete job after the grace period (cascade plus audit event) | Implemented and tested | `test_hard_delete_removes_due_accounts_with_all_their_rows`; schedule in `test_daily_retention_jobs_are_scheduled` |
+| Retention jobs (expired codes and sessions; auth_events after 90 days) | Implemented and tested | `test_purge_removes_expired_codes_sessions_and_old_events` |
+| Security headers (API) | Implemented and tested | `test_liveness_sets_security_headers`, `test_responses_are_not_cacheable`, `test_deployed_environments_send_hsts` |
+| Security headers (web) | Implemented, untested | `frontend/next.config.ts` `headers()` |
+| Text size limits | Implemented; mostly tested | email at most 254 characters and JSON-only bodies (`test_request_rejects_invalid_input`, `test_endpoints_require_a_json_body`); user-agent and IP truncation not tested directly |
+| Never log codes, tokens or full emails | Implemented and tested | `test_codes_tokens_and_addresses_are_never_logged`, `test_send_login_code_emails_the_code_but_never_logs_it` |
+| Append-only audit log | Implemented and tested | `test_auth_events_are_append_only` |
+| Migration up and down | Implemented and tested | `test_auth_migration_downgrades_to_0001_and_back`; the CI migration step |
+| Storage guard (warn at 70%, pause sign-ups at 90%) | Implemented and tested | `test_near_the_limit_new_signups_pause_but_existing_users_sign_in`, `test_optional_writes_are_refused_near_the_limit` |
+
+**Why not Pass outright:** none of #12-#14 is merged, so `main` has no auth yet. Re-check the
+first `main` run after #14 merges (all five jobs, including the Playwright test in Smoke).
 
 ## 6. Secrets, debug mode, env examples: Pass
 
@@ -177,9 +196,8 @@ itself is proprietary (`LICENSE`).
 
 ## Top 5 risks before Phase 1
 
-1. **No authentication or account lifecycle.** Phase 1 stores free-text profiles (personal
-   data). Without auth, consent, rate limits and deletion, nothing user-facing can ship
-   safely.
+1. **Auth is built but not merged.** PRs #12-#14 must merge in order; until then `main` has
+   no sign-in. Real email for staging (a free SMTP relay) is still to be chosen.
 2. **No ground truth for match quality.** All 100 labels are unreviewed drafts; tuning the
    matcher against them would optimise towards guesses.
 3. **Zero-cost AI may not fit free hosts.** Local CPU embeddings must run within 256-512 MB
@@ -188,35 +206,33 @@ itself is proprietary (`LICENSE`).
 4. **Staging is a plan, not a system.** Nothing has been deployed. Known prerequisites:
    API on `$PORT`, Neon URL scheme, a migration workflow. Open unknowns: Render Free with
    Docker, cold starts versus the 3-second status check.
-5. **Free-tier limits and terms.** Neon blocks writes at 0.5 GB; storage rules and the size
-   monitor do not exist yet. Vercel Hobby is non-commercial only. Actions minutes are free
-   only while the repo is public.
+5. **Free-tier limits and terms.** Neon blocks writes at 0.5 GB (the size monitor and the 90%
+   sign-up pause arrive with PR #13). Vercel Hobby is non-commercial only. Actions minutes are
+   free only while the repo is public.
 
 ## Prioritised issues (not fixed in this PR)
 
 **Blockers for Phase 1**
 
-1. Build the auth module to the requirements in §5 (or formally move it to Phase 1 with an
-   ADR and update ARCHITECTURE.md §11). Either way, it is a prerequisite for storing real
-   profiles.
+1. ~~Build the auth module~~: done in PRs #12-#14 (re-audit). **Merge them in order** and
+   confirm the first green `main` run.
 2. Review the 100 draft evaluation labels (`backend/evals/data/pairs.json`) and mark them
    `reviewed`; rebalance `explore`.
-3. Merge PR #10, add **Smoke** and **Secret scan** to the "Protect main" ruleset, and confirm
-   the first green `main` run with all five jobs (criterion 1).
+3. ~~Merge PR #10 and require Smoke and Secret scan~~: done (re-audit, criteria 1 and 2).
 
 **High**
 
 4. Phase 1 AI-gateway ADR: embedding model and dimension (make it a setting), no-LLM mode,
    memory budget on free hosts, how jobs run without a free worker.
-5. Implement the storage rules before the first growing table: text caps, retention jobs,
-   size monitor (`docs/roadmap.md`).
+5. ~~Storage rules for the auth tables~~: done in #12 and #13 (caps, retention jobs, size
+   monitor). Profile and request text caps follow in Phase 1.
 6. Staging prerequisites from `docs/deployment-plan.md`: API listens on `$PORT`, accept
    `postgresql://` URLs, "Migrate staging" workflow.
 7. Exercise the Codespace once end to end; `.devcontainer/` has never been run.
 
 **Medium**
 
-8. Replace the Redis image with Valkey (licence), or record the decision to keep it.
+8. ~~Replace the Redis image with Valkey~~: done in #12 (ADR 0005).
 9. Commit an exported OpenAPI spec (ARCHITECTURE.md lists "OpenAPI spec" for Phase 0);
    today it exists only at runtime (`/openapi.json`, health endpoints only).
 10. Prove the Smoke job fails correctly (e.g. a throwaway PR that breaks readiness).
@@ -233,17 +249,18 @@ itself is proprietary (`LICENSE`).
 
 ## Verdict
 
-**Not ready for Phase 1.** The engineering foundation is in good shape:
-- CI runs lint, strict typing, migrations and 79 tests (95% coverage) on real Postgres 16 +
-  pgvector and Redis.
-- The full stack boots and passes smoke checks in CI.
-- No secrets are in the history, and the docs are consistent.
+**Not ready for Phase 1 yet, but close.** Re-audit status:
+- CI on `main` is green on all five required jobs.
+- `main` is protected by a ruleset that requires them.
+- The whole stack boots and passes smoke checks.
+- Authentication is complete and tested on the PR stack: 165 backend tests (auth modules at
+  99% coverage), 27 component tests, and a Playwright end-to-end sign-in.
 
-What blocks Phase 1:
+What still blocks Phase 1:
 
-1. **Authentication is missing** (criterion 5 fails; ARCHITECTURE.md lists it for Phase 0).
-2. **The evaluation set is unreviewed**, so there is no ground truth yet.
-3. **Smoke is not yet on `main` or in the required checks** (criterion 1 not verified).
+1. **Merge the auth PRs #12, then #13, then #14**, and confirm the first `main` run is green
+   on all five jobs (criterion 5 then passes on `main`).
+2. **Review the 100 draft evaluation labels**, so the matcher has ground truth.
 
-Item 3 needs only a merge and a ruleset change. Items 1 and 2 need real work, or (for
-auth) an explicit decision to move it into Phase 1.
+The first audit's verdict (same day) listed authentication as missing; that is resolved,
+pending merge.
