@@ -155,13 +155,18 @@ free tiers or open-source software, with no credit card on any account.
    adding an external service or API, check its current free tier and record limits and
    catches (sleeping, size caps, rate limits, data-use terms), dated, in
    [docs/free-tier-limits.md](docs/free-tier-limits.md).
-2. **AI gateway modes.** All LLM and embedding calls go through the gateway, which supports
-   an open-source embedding model running locally on CPU, an optional free-tier LLM
-   provider, and a "no LLM" mode. Matching works end to end with no LLM call (rule-based
-   scoring, template explanations); an LLM only improves quality when available.
-3. **Embedding dimension is configurable**, not hard-coded, so a small model fits. The
-   current schema uses 768 (`EMBEDDING_DIMENSIONS`); this is revisited in the Phase 1
-   AI-gateway ADR, before any real data exists.
+2. **AI gateway, LLM-first** ([ADR 0007](docs/adr/0007-ai-gateway.md)). All LLM and
+   embedding calls go through the gateway, in background jobs. The LLM is a core stage
+   (profile understanding, final selection, explanations) used for every match request by
+   default, on free providers that forbid training on inputs (Groq, then Cloudflare Workers
+   AI). Embeddings come from an open-source model run locally on CPU (bge-small-en-v1.5).
+   The rule-based, template-explanation path is a **fallback only**, used when quotas run
+   out, providers fail or the `AI_LLM_ENABLED` kill switch is off; matching must still
+   work end to end on it. Respect the daily caps and timeout. Send only redacted free text
+   and alias-labelled summaries, never names, emails or contact handles.
+3. **Embedding dimension is a setting plus a migration**, never assumed in code. ADR 0007
+   chose 384 (migration 0003 changes the column from 768); the worker checks the setting
+   against the column at start-up.
 4. **Real user data never goes to a free-tier API whose terms allow training on inputs.**
    Use synthetic data for development and evaluation.
 5. **Every feature has a hard usage cap** and fails gracefully ("try again later") when a

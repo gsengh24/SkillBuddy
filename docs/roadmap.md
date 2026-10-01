@@ -33,8 +33,9 @@ CLAUDE.md:
 
 - [ ] Text caps enforced in request schemas: profile text and request text (2,000
       characters planned), with clear validation errors.
-- [ ] Embedding dimension made a setting and chosen in the AI-gateway ADR (384 planned);
-      migration adjusts `profile_embeddings` before any real data exists.
+- [ ] Embedding dimension made a setting; 384 chosen in
+      [ADR 0007](adr/0007-ai-gateway.md); migration 0003 adjusts `profile_embeddings` before
+      any real data exists. The full Phase 1 AI build order is at the end of ADR 0007.
 - [ ] AI gateway stores prompt version, tokens and latency only; raw prompts and responses
       kept at most for a short debug window (e.g. 7 days) and purged by a daily job.
 - [ ] `events` table partitioned by month (ARCHITECTURE.md §5); raw events kept for a set
