@@ -43,8 +43,9 @@ Docker-in-Docker. The setup lives in [.devcontainer/](.devcontainer/).
 1. On GitHub, open the repository, click **Code → Codespaces → Create codespace on main**.
    (The config requests a machine with at least 8 GB RAM.)
 2. Wait for the post-create step to finish. It installs the backend dependencies
-   (`uv sync`), the frontend dependencies (`npm ci`) and the git pre-commit hooks, and the
-   editor extensions (Python, Ruff, Mypy, ESLint, Prettier, Tailwind CSS).
+   (`uv sync`), the frontend dependencies (`npm ci`) and the git pre-commit hooks. The
+   editor extensions (Python, Ruff, Mypy, ESLint, Prettier, Tailwind CSS) install
+   automatically.
 3. In the Codespace terminal, start the stack and wait until every service is healthy
    (the first build takes a few minutes):
    ```bash
@@ -81,7 +82,10 @@ docker compose down                                     # stop (add -v to wipe d
 Stop the Codespace from GitHub when you are done; it does not need to keep running for
 your changes to be kept, but uncommitted work only lives in that Codespace until pushed.
 
-## Quick start
+## Quick start (any machine with Docker)
+
+Optional: the owner's laptop does not run Docker (see [How we work](#how-we-work)); CI and
+Codespaces run the stack there. On a machine that has Docker:
 
 **Requirements:** Docker (Desktop, or Engine with Compose v2.24+) and `make`.
 On Windows without `make`, see [Windows without make](#windows-without-make) for the
