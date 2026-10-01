@@ -25,6 +25,7 @@ from app.services.auth.events import ClientInfo
 from app.services.auth.rate_limit import RateLimiter
 from app.services.auth.service import AuthService
 from app.services.auth.sessions import csrf_token_for, resolve_session
+from app.services.storage import StorageMonitor
 
 CSRF_HEADER: Final = "X-CSRF-Token"
 SAFE_METHODS: Final = frozenset({"GET", "HEAD", "OPTIONS"})
@@ -107,13 +108,26 @@ def get_otp_delivery(request: Request, settings: SettingsDep) -> OtpDelivery:
     )
 
 
+def get_storage_monitor(request: Request, settings: SettingsDep) -> StorageMonitor:
+    return StorageMonitor(request.app.state.engine, request.app.state.redis, settings)
+
+
+StorageMonitorDep = Annotated[StorageMonitor, Depends(get_storage_monitor)]
+
+
+async def require_storage_capacity(monitor: StorageMonitorDep) -> None:
+    """Add to non-essential write endpoints: refuses with 503 near the storage limit."""
+    await monitor.ensure_capacity_for_optional_writes()
+
+
 def get_auth_service(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db_session)],
     settings: SettingsDep,
     delivery: Annotated[OtpDelivery, Depends(get_otp_delivery)],
+    storage: StorageMonitorDep,
 ) -> AuthService:
     limiter = RateLimiter(
         request.app.state.redis, window_seconds=settings.rate_limit_window_seconds
     )
-    return AuthService(db, settings, limiter, delivery)
+    return AuthService(db, settings, limiter, delivery, storage)

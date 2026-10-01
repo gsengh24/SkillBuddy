@@ -99,3 +99,29 @@ def test_auth_defaults_match_the_policy(make_settings: SettingsFactory) -> None:
     assert (settings.session_idle_days, settings.session_max_days) == (30, 90)
     assert (settings.otp_ttl_minutes, settings.otp_max_attempts) == (10, 5)
     assert settings.account_deletion_grace_days == 30
+
+
+@pytest.mark.parametrize("environment", [Environment.STAGING, Environment.PRODUCTION])
+def test_deployed_environments_must_send_real_email(
+    make_settings: SettingsFactory, environment: Environment
+) -> None:
+    with pytest.raises(ValidationError, match="EMAIL_BACKEND"):
+        make_settings(environment=environment, email_backend="console")
+
+
+def test_storage_warning_must_come_before_the_pause(make_settings: SettingsFactory) -> None:
+    with pytest.raises(ValidationError, match="STORAGE_WARN_PERCENT"):
+        make_settings(storage_warn_percent=90, storage_pause_percent=80)
+
+
+def test_empty_environment_values_count_as_unset(
+    make_settings: SettingsFactory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("ADMIN_API_TOKEN", "")
+
+    assert make_settings().admin_api_token is None
+
+
+def test_short_admin_token_is_rejected(make_settings: SettingsFactory) -> None:
+    with pytest.raises(ValidationError, match="admin_api_token"):
+        make_settings(admin_api_token="too-short")

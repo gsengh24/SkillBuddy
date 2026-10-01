@@ -38,6 +38,9 @@ jobs:
         options: >-
           --health-cmd "valkey-cli ping"
           --health-interval 5s --health-timeout 3s --health-retries 10
+      mailpit:
+        image: axllent/mailpit:v1.31.3
+        ports: ["1025:1025", "8025:8025"]
 
     env:
       ENVIRONMENT: test
@@ -45,6 +48,10 @@ jobs:
       SECRET_KEY: ci-only-secret-key-with-at-least-32-characters
       DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/app
       REDIS_URL: redis://localhost:6379/0
+      # Integration tests send real email to the Mailpit service and read it back.
+      SMTP_HOST: localhost
+      SMTP_PORT: "1025"
+      MAILPIT_API_URL: http://localhost:8025
 
     steps:
       - uses: actions/checkout@v7
@@ -144,6 +151,8 @@ jobs:
           POSTGRES_PASSWORD: p
           POSTGRES_DB: app
           REDIS_PASSWORD: p
+          EMAIL_FROM_ADDRESS: no-reply@example.com
+          SMTP_HOST: smtp.example.com
         run: |
           docker compose -f docker-compose.yml config --quiet
           docker compose -f docker-compose.prod.yml config --quiet
