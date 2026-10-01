@@ -51,9 +51,9 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
 - **Modular monolith + worker** (ADR 0002). One backend codebase, two processes:
   - **API** (FastAPI): HTTP only. It never calls an LLM or embedding model. Slow work is
     persisted and enqueued, and the API returns immediately.
-  - **Worker** (Arq on Redis): runs background jobs, including every model call.
+  - **Worker** (Arq on Valkey): runs background jobs, including every model call.
 - **PostgreSQL 16 + pgvector** is the single source of truth, including embeddings.
-  **Redis** is the queue and cache.
+  **Valkey** (Redis-compatible, ADR 0005) is the queue, cache and rate-limit store.
 - **Next.js** web app. Server components call the API through a typed client.
 - Migrations run as a **separate one-shot step** (`migrate` service), never at API startup.
 
@@ -62,7 +62,7 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
 ```
 backend/
   app/
-    main.py              App factory (create_app) + lifespan (DB engine, Redis pool)
+    main.py              App factory (create_app) + lifespan (DB engine, Valkey pool)
     core/                config (settings), logging (JSON), errors (envelope + handlers),
                          request_context (request-id middleware), security (stubs, headers)
     db/                  base (DeclarativeBase, naming convention, mixins), engine, session
@@ -75,7 +75,7 @@ backend/
   migrations/            Alembic env + versions (one file per migration)
   evals/                 Matcher evaluation set: synthetic profiles + draft-labelled pairs
   tests/unit/            No infrastructure needed
-  tests/integration/     Real Postgres + Redis; each run uses a throwaway database
+  tests/integration/     Real Postgres + Valkey; each run uses a throwaway database
 frontend/
   app/                   App Router pages and route handlers (app/api/health = web liveness)
   components/            React components

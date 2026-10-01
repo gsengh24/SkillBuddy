@@ -1,4 +1,4 @@
-"""Fixtures backed by real PostgreSQL and Redis.
+"""Fixtures backed by real PostgreSQL and Valkey (Redis protocol).
 
 ``DATABASE_URL`` must point at a server where the user may create databases (the
 local Compose and CI ``postgres`` users can). Tests never touch that database itself:
@@ -13,6 +13,8 @@ import uuid
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
+from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 import psycopg
 import pytest
@@ -22,8 +24,10 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from psycopg import sql
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
+from app.api.deps import get_otp_delivery
 from app.core.config import Settings
 from app.main import create_app
 from tests.conftest import SettingsFactory
@@ -88,3 +92,73 @@ async def live_client(settings: Settings) -> AsyncIterator[AsyncClient]:
         transport = ASGITransport(app=manager.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             yield client
+
+
+# --- Authentication fixtures --------------------------------------------------------------
+
+# Rate-limit counters live in a dedicated Valkey database that is flushed per client, so
+# tests never see each other's counts (production never flushes anything).
+AUTH_VALKEY_DB = 15
+
+
+def redis_url_with_db(database: int) -> str:
+    parts = urlsplit(os.environ["REDIS_URL"])
+    return urlunsplit(parts._replace(path=f"/{database}"))
+
+
+class CapturingDelivery:
+    """Stands in for email delivery: records the codes that would have been sent."""
+
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str]] = []
+
+    async def send_login_code(self, email: str, code: str) -> None:
+        self.sent.append((email, code))
+
+    def last_code(self, email: str) -> str:
+        return next(code for sent_to, code in reversed(self.sent) if sent_to == email)
+
+
+@pytest.fixture
+def auth_settings(make_settings: SettingsFactory, migrated_database_url: str) -> Settings:
+    return make_settings(
+        database_url=migrated_database_url, redis_url=redis_url_with_db(AUTH_VALKEY_DB)
+    )
+
+
+@pytest.fixture
+def delivery() -> CapturingDelivery:
+    return CapturingDelivery()
+
+
+@asynccontextmanager
+async def auth_client(
+    settings: Settings,
+    delivery: CapturingDelivery | None,
+    *,
+    client_ip: str = "198.51.100.10",
+    base_url: str = "https://testserver",
+) -> AsyncIterator[AsyncClient]:
+    """A client for a running app; HTTPS by default so Secure cookies behave as in prod.
+
+    With ``delivery=None`` the real queue-based delivery is used.
+    """
+    app: FastAPI = create_app(settings)
+    if delivery is not None:
+        app.dependency_overrides[get_otp_delivery] = lambda: delivery
+    async with LifespanManager(app) as manager:
+        await app.state.redis.flushdb()
+        transport = ASGITransport(app=manager.app, client=(client_ip, 40000))
+        async with AsyncClient(transport=transport, base_url=base_url) as client:
+            yield client
+
+
+def run_sql(database_url: str, statement: str, **params: Any) -> list[dict[str, Any]]:
+    """Run one SQL statement directly (for test setup and assertions)."""
+    engine = create_engine(database_url)
+    try:
+        with engine.begin() as connection:
+            result = connection.execute(text(statement), params)
+            return [dict(row) for row in result.mappings()] if result.returns_rows else []
+    finally:
+        engine.dispose()

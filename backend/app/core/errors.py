@@ -32,10 +32,15 @@ class AppError(Exception):
     default_message: ClassVar[str] = "The request could not be processed."
 
     def __init__(
-        self, message: str | None = None, *, details: list[dict[str, Any]] | None = None
+        self,
+        message: str | None = None,
+        *,
+        details: list[dict[str, Any]] | None = None,
+        headers: Mapping[str, str] | None = None,
     ) -> None:
         self.message = message or self.default_message
         self.details = details
+        self.headers = dict(headers or {})
         super().__init__(self.message)
 
 
@@ -61,6 +66,34 @@ class ConflictError(AppError):
     status_code = HTTPStatus.CONFLICT
     code = "conflict"
     default_message = "The request conflicts with the current state of the resource."
+
+
+class UnsupportedMediaTypeError(AppError):
+    status_code = HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+    code = "unsupported_media_type"
+    default_message = "Send the request body as JSON (Content-Type: application/json)."
+
+
+class CsrfError(AppError):
+    status_code = HTTPStatus.FORBIDDEN
+    code = "csrf_failed"
+    default_message = "The request is missing a valid CSRF token. Reload the page and try again."
+
+
+class RateLimitedError(AppError):
+    status_code = HTTPStatus.TOO_MANY_REQUESTS
+    code = "rate_limited"
+    default_message = "Too many attempts. Please wait a few minutes and try again."
+
+    def __init__(self, retry_after_seconds: int, message: str | None = None) -> None:
+        self.retry_after_seconds = max(1, retry_after_seconds)
+        super().__init__(message, headers={"Retry-After": str(self.retry_after_seconds)})
+
+
+class ServiceUnavailableError(AppError):
+    status_code = HTTPStatus.SERVICE_UNAVAILABLE
+    code = "service_unavailable"
+    default_message = "The service is temporarily unavailable. Please try again later."
 
 
 def _error_response(
@@ -101,6 +134,7 @@ async def _handle_app_error(request: Request, exc: Exception) -> JSONResponse:
         code=error.code,
         message=error.message,
         details=error.details,
+        headers=error.headers,
     )
 
 

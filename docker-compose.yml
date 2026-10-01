@@ -2,7 +2,7 @@
 #   docker compose up --build --detach --wait
 #
 #   db       PostgreSQL 16 + pgvector      localhost:5432
-#   redis    Redis 7 (queue, cache)        localhost:6379
+#   valkey   Valkey 9 (Redis-compatible)   localhost:6379
 #   migrate  one-shot `alembic upgrade head`, runs before api/worker start
 #   api      FastAPI, hot reload           http://localhost:8000  (docs at /docs)
 #   worker   Arq background worker, hot reload
@@ -24,8 +24,10 @@ x-backend-environment: &backend-environment
   # Local development only. Production requires a real secret (docker-compose.prod.yml).
   SECRET_KEY: ${SECRET_KEY:-local-development-only-secret-not-for-real-use}
   DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@db:5432/${POSTGRES_DB:-app}
-  REDIS_URL: redis://redis:6379/0
+  REDIS_URL: redis://valkey:6379/0
   CORS_ALLOW_ORIGINS: http://localhost:${WEB_PORT:-3000}
+  # The dev stack serves plain http on localhost, so the session cookie cannot be Secure.
+  SESSION_COOKIE_SECURE: "false"
   # Docker Desktop bind mounts do not deliver file events; poll for hot reload.
   WATCHFILES_FORCE_POLLING: "true"
 
@@ -55,15 +57,15 @@ services:
       retries: 10
       start_period: 10s
 
-  redis:
-    image: redis:7.4-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+  valkey:
+    image: valkey/valkey:9.1.2-alpine
+    command: ["valkey-server", "--appendonly", "yes"]
     ports:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
-      - redis-data:/data
+      - valkey-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "valkey-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -83,12 +85,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      # Readiness, not just liveness: "healthy" means the DB, pgvector and Redis are usable.
+      # Readiness, not just liveness: "healthy" means the DB, pgvector and Valkey are usable.
       test:
         - CMD
         - python
@@ -105,7 +107,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
@@ -149,4 +151,4 @@ services:
 
 volumes:
   postgres-data:
-  redis-data:
+  valkey-data:

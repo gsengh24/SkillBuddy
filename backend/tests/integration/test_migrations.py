@@ -14,6 +14,8 @@ from app.db.base import Base
 from tests.integration.conftest import alembic_config
 
 PHASE_ZERO_TABLES = {"users", "profiles", "profile_embeddings"}
+AUTH_TABLES = {"auth_identities", "otp_codes", "sessions", "auth_events"}
+ALL_TABLES = PHASE_ZERO_TABLES | AUTH_TABLES
 
 
 @pytest.fixture
@@ -47,7 +49,7 @@ def test_upgrade_downgrade_upgrade(empty_database_url: str, engine: Engine) -> N
     config = alembic_config(empty_database_url)
 
     command.upgrade(config, "head")
-    assert _tables(engine) == PHASE_ZERO_TABLES
+    assert _tables(engine) == ALL_TABLES
     assert {"vector", "citext"} <= _extensions(engine)
     index_definition = _hnsw_index_definition(engine)
     assert index_definition is not None
@@ -58,7 +60,40 @@ def test_upgrade_downgrade_upgrade(empty_database_url: str, engine: Engine) -> N
     assert not {"vector", "citext"} & _extensions(engine)
 
     command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
+
+
+def _user_columns(engine: Engine) -> set[str]:
+    return {column["name"] for column in inspect(engine).get_columns("users")}
+
+
+def test_auth_migration_downgrades_to_0001_and_back(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO users (email, status, deleted_at, deletion_scheduled_for) "
+                "VALUES ('leaving@example.com', 'pending_deletion', now(), now())"
+            )
+        )
+
+    command.downgrade(config, "0001")
     assert _tables(engine) == PHASE_ZERO_TABLES
+    columns = _user_columns(engine)
+    assert "auth_provider" in columns
+    assert not {"last_login_at", "terms_version", "deletion_scheduled_for"} & columns
+    with engine.connect() as connection:
+        status = connection.scalar(
+            text("SELECT status FROM users WHERE email = 'leaving@example.com'")
+        )
+    assert status == "deleted"
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
+    assert "auth_provider" not in _user_columns(engine)
 
 
 def test_models_and_migrations_are_in_sync(migrated_database_url: str) -> None:

@@ -71,3 +71,31 @@ def test_production_accepts_safe_options(make_settings: SettingsFactory) -> None
     )
 
     assert settings.is_production
+
+
+@pytest.mark.parametrize("environment", [Environment.STAGING, Environment.PRODUCTION])
+def test_deployed_environments_require_secure_session_cookie(
+    make_settings: SettingsFactory, environment: Environment
+) -> None:
+    with pytest.raises(ValidationError, match="SESSION_COOKIE_SECURE"):
+        make_settings(environment=environment, session_cookie_secure=False)
+
+
+def test_local_environment_may_disable_secure_cookie(make_settings: SettingsFactory) -> None:
+    assert make_settings(session_cookie_secure=False).session_cookie_secure is False
+
+
+def test_session_max_age_cannot_be_shorter_than_idle_timeout(
+    make_settings: SettingsFactory,
+) -> None:
+    with pytest.raises(ValidationError, match="SESSION_MAX_DAYS"):
+        make_settings(session_idle_days=30, session_max_days=7)
+
+
+def test_auth_defaults_match_the_policy(make_settings: SettingsFactory) -> None:
+    settings = make_settings()
+
+    assert settings.session_cookie_secure is True
+    assert (settings.session_idle_days, settings.session_max_days) == (30, 90)
+    assert (settings.otp_ttl_minutes, settings.otp_max_attempts) == (10, 5)
+    assert settings.account_deletion_grace_days == 30

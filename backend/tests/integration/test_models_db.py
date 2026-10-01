@@ -15,7 +15,6 @@ from app.db.engine import create_engine
 from app.db.session import create_session_factory
 from app.models import (
     EMBEDDING_DIMENSIONS,
-    AuthProvider,
     EmbeddingFacet,
     Profile,
     ProfileEmbedding,
@@ -41,7 +40,7 @@ def _unit_vector(index: int) -> list[float]:
 
 
 async def _create_user(session: AsyncSession) -> User:
-    user = User(email=f"Person.{uuid.uuid4().hex}@Example.com", auth_provider=AuthProvider.EMAIL)
+    user = User(email=f"Person.{uuid.uuid4().hex}@Example.com")
     session.add(user)
     await session.flush()
     return user
