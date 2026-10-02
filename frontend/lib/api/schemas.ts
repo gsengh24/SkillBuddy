@@ -63,3 +63,31 @@ export type DeletionScheduled = z.infer<typeof deletionScheduledSchema>;
 
 /** For endpoints that answer 204 No Content. */
 export const noContentSchema = z.undefined();
+
+export const understandingSchema = z.object({
+  summary: z.string(),
+  offers: z.array(z.string()),
+  seeks: z.array(z.string()),
+  interests: z.array(z.string()),
+  availability: z.string(),
+});
+export type Understanding = z.infer<typeof understandingSchema>;
+
+export const profileSchema = z.object({
+  user_id: z.string(),
+  display_name: z.string(),
+  about_text: z.string(),
+  links: z.array(z.string()),
+  timezone: z.string().nullable(),
+  languages: z.array(z.string()),
+  visibility: z.enum(["matchable", "paused"]),
+  parse_status: z.enum(["empty", "pending", "parsed"]),
+  parse_source: z.enum(["llm", "template", "user"]).nullable(),
+  understanding: understandingSchema.nullable(),
+  ai_consent_version: z.string().nullable(),
+  ai_consent_at: z.string().nullable(),
+  ai_consent_current: z.boolean(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export type Profile = z.infer<typeof profileSchema>;

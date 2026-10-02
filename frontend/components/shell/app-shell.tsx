@@ -20,7 +20,7 @@ type AppShellProps = {
   rightRail?: ReactNode;
   unreadMessages?: number;
   hasNotifications?: boolean;
-  /** Profile completeness, 0 to 100; null until profiles exist. */
+  /** Profile completeness, 0 to 100; null when the user has no profile yet. */
   profileComplete?: number | null;
 };
 
@@ -39,7 +39,10 @@ function BellLink({ hasNotifications }: { hasNotifications: boolean }) {
 
 function ProfileCard({ value }: { value: number | null }) {
   return (
-    <div className="rounded-card bg-amber-tint flex flex-col gap-2 p-4">
+    <Link
+      href={value === null ? "/onboarding" : "/profile"}
+      className="rounded-card bg-amber-tint hover:ring-amber-edge flex flex-col gap-2 p-4 hover:ring-1"
+    >
       <div className="text-small text-amber-ink flex items-baseline justify-between gap-2 font-bold">
         <span>Your profile</span>
         <span>{value === null ? "Not started" : `${value}%`}</span>
@@ -47,10 +50,12 @@ function ProfileCard({ value }: { value: number | null }) {
       <StrengthBar value={value ?? 0} hue="amber" label="Profile complete" />
       <p className="text-small text-amber-ink">
         {value === null
-          ? "Profiles open soon. You will say how you like to work, for sharper matches."
-          : "Say how you like to work to get sharper matches."}
+          ? "Describe yourself in a few lines to start getting matches."
+          : value < 100
+            ? "Add links and languages for sharper matches."
+            : "Keep it current: matches use what you write here."}
       </p>
-    </div>
+    </Link>
   );
 }
 

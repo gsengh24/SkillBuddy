@@ -13,6 +13,10 @@ const MESSAGES: Record<string, string> = {
   authentication_required: "Your session has ended. Please sign in again.",
   validation_error: "Please check what you entered and try again.",
   service_unavailable: "The service is temporarily unavailable. Please try again in a moment.",
+  ai_consent_required: "To save, agree to how AI is used to find your matches.",
+  profile_not_found: "You haven't created a profile yet.",
+  profile_text_required: "Add a description first, then correct what we understood.",
+  storage_full: "We can't save changes right now. Please try again later.",
   email_quota_exhausted:
     "We've sent as many sign-in emails as we can for now. Please try again in a few hours.",
 };
