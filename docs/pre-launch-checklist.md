@@ -36,8 +36,8 @@ short note).
 
 | # | Item | Done when | Owner | Blocks launch | Source |
 | --- | --- | --- | --- | --- | --- |
-| 10 | [ ] **ADR 0008 build steps 3–6** (step 1 tables and step 2 job runner are done: #18, #20; still to do: ported jobs and tick endpoint, Postgres rate limiter with Arq and Valkey removed, Gmail sender, docs) | All merged with green CI | Claude Code | Yes | ADR 0008 |
-| 11 | [ ] **Staging prerequisites**: API listens on `$PORT`, `postgresql://` URLs accepted, "Migrate staging" workflow | Merged; a manual migration run against Neon succeeds | Claude Code | Yes | deployment-plan.md; exit report, issue 6 |
+| 10 | [x] **ADR 0008 build steps 1–6** (job tables, runner, ported jobs and tick endpoint, PostgreSQL rate limits with Arq and Valkey removed, Gmail sender, docs: #18, #20, #23, #28, #30 and the staging-setup PR) | All merged with green CI | Claude Code | Yes | ADR 0008 |
+| 11 | [x] **Staging prerequisites**: API listens on `$PORT`, `postgresql://` URLs accepted, "Migrate staging" workflow | Merged; a manual migration run against Neon succeeds | Claude Code | Yes | deployment-plan.md; exit report, issue 6 |
 | 12 | [ ] **Render Free accepts our service** (Docker runtime, or the native Python fallback) | The API is deployed and `/api/v1/health` answers | Project owner (Claude Code gives the click-by-click steps) | Yes | deployment-plan.md; exit report, risk 4 |
 | 13 | [ ] **Neon storage: 1 GB or 0.5 GB?** The pricing page now says 1 GB per project, but the storage budget assumes 0.5 GB | The limit is re-checked in the Neon console. If it is 1 GB, `DATABASE_SIZE_LIMIT_MB` and storage-budget.md are updated; if not, nothing changes | Claude Code (owner confirms in the console) | No: the 0.5 GB budget is the safe side | ADR 0008, "Not verified" |
 | 14 | [ ] **Neon autoscaling capped at 0.25 CU** | Set in the Neon console | Project owner | Yes | ADR 0008, decision 6 |
@@ -80,7 +80,7 @@ short note).
 | 36 | [ ] **Remove the unused `NEXT_PUBLIC_API_URL`** from `docker-compose.yml` | Merged | Claude Code | No | Exit report, issue 13 |
 | 37 | [ ] **Business model** decision | Recorded in ARCHITECTURE.md §12 | Project owner | No | ARCHITECTURE.md §12 |
 | 38 | [ ] **Platform name and brand** (the email sender name, and a domain later) | Recorded; `lib/brand.ts` and the sender name updated | Project owner | No | ARCHITECTURE.md §12 |
-| 39 | [ ] **Owner dashboard steps**: Gmail account and OAuth client, Cloudflare Worker and `JOBS_TICK_TOKEN`, Render environment variables | Done, following the steps Claude Code writes into deployment-plan.md (ADR 0008 step 6) | Project owner | Yes | ADR 0008, build step 7 |
+| 39 | [ ] **Owner dashboard steps** (click-by-click in [deployment-plan.md](deployment-plan.md), steps 1–9): Gmail account and OAuth client, Cloudflare Worker and `JOBS_TICK_TOKEN`, Render environment variables | Done, following the steps Claude Code writes into deployment-plan.md (ADR 0008 step 6) | Project owner | Yes | ADR 0008, build step 7 |
 
 Already decided (ARCHITECTURE.md §12): the launch community is one college campus; the
 team is a solo build with Claude Code; hosting is the zero-cost free tiers (ADR 0003,

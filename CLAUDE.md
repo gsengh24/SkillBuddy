@@ -108,7 +108,8 @@ frontend/
   lib/auth/              Session check (server), cookie names, redirects, error messages
   e2e/                   Playwright end-to-end tests (run by the CI Smoke job)
 .devcontainer/           GitHub Codespaces config (Docker-in-Docker; stack via docker compose)
-infra/                   Deployment notes, production env template
+infra/                   Deployment notes, production env template, cloudflare-tick/ (the
+                         scheduler Worker script and its test)
 docs/                    ARCHITECTURE.md, adr/, deployment-plan.md, free-tier-limits.md,
                          storage-budget.md, roadmap.md, phase-0-exit-report.md,
                          pre-launch-checklist.md

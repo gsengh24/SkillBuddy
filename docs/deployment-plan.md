@@ -1,194 +1,272 @@
-# Zero-cost staging plan
+# Zero-cost staging: plan and click-by-click setup
 
-**Status:** plan only, not set up yet. Decision recorded in
-[ADR 0003](adr/0003-hosting.md). Free-tier limits below were checked on **2026-10-01**;
-providers change them, so re-check each pricing page before setting anything up.
+**Status:** ready to set up; nothing is deployed yet. Decisions: [ADR 0003](adr/0003-hosting.md)
+(hosting), [ADR 0007](adr/0007-ai-gateway.md) (AI), [ADR 0008](adr/0008-free-runtime-jobs-and-email.md)
+(jobs, scheduler, email). Free-tier limits were checked on **2026-10-01**; re-check each
+pricing page before you rely on it ([free-tier-limits.md](free-tier-limits.md)).
 
-Staging is where we look at the running app. CI (GitHub Actions) remains the test runner.
-Total cost of this plan: **$0/month**, no payment method needed.
+Total cost: **$0/month**. No step asks for a card; if a page does, stop and do not add one.
+**Nothing secret goes in the repository.** Every secret is pasted into a provider dashboard
+or a GitHub repository secret, and never into chat, email or a committed file.
 
 ## The setup at a glance
 
 ```
 Browser ──► Vercel (Next.js web app, free)
-               │  server-side calls over HTTPS
+               │  server-side calls over HTTPS (same-origin /api/v1 forwarder)
                ▼
-            Free API host (FastAPI, sleeps when idle)
-               └──► Neon (PostgreSQL 16 + pgvector, free): data, job queue, rate limits
+            Render Free (FastAPI API, sleeps after 15 min idle)
+               │  runs every background job in-process (JOBS_RUN_IN_API=true)
+               ├──► Neon Free (PostgreSQL 16 + pgvector): data, job queue, rate limits, AI caps
+               ├──► Gmail API (sign-in emails, 450/day cap)
+               └──► Groq, then Cloudflare Workers AI (LLM; optional, templates without them)
 
-GitHub Actions ──► runs `alembic upgrade head` against Neon (manual trigger)
-No background worker on staging (see "The worker" below).
+Cloudflare Worker (cron, 17x a day) ──► POST /api/v1/admin/jobs/tick on the API
+GitHub Actions "Migrate staging" (by hand) ──► alembic upgrade head on Neon
 ```
 
-Pick regions close to each other (and to India) to keep latency down: Singapore for Render,
-and Neon (AWS `ap-southeast-1`).
+Regions: Singapore for Render and Neon (AWS `ap-southeast-1`), close to India.
 
-## Free-tier limits and catches (as of 2026-10-01)
+## Before you start
 
-### Vercel Hobby (web app)
+- **Time:** about 1.5 hours in one sitting, plus a check on day 8 (step 9).
+- **Accounts:** GitHub (you have it), plus new free accounts at Neon, Render, Vercel,
+  Cloudflare, Google (a new Gmail address just for sending), and optionally Groq.
+- **A place to keep secrets while you work:** a password manager. You will copy about 10 values.
+- **Two random secrets.** On your laptop, in a terminal, run this twice:
+  ```
+  python -c "import secrets; print(secrets.token_urlsafe(48))"
+  ```
+  Save the first output as **JOBS_TICK_TOKEN** and the second as **SECRET_KEY** in your
+  password manager.
 
-| Limit | Free allowance |
-| --- | --- |
-| Function invocations | 1,000,000 / month |
-| Active CPU | 4 CPU-hours / month |
-| Fast Data Transfer | 100 GB / month |
-| Deployments | 100 / day |
-| Function max duration | 300 s |
-| Runtime logs | 1 hour retained |
+Do the steps in order: later ones need values from earlier ones.
 
-Catches:
-- **Non-commercial, personal use only** (Vercel fair-use guidelines). Fine for a private
-  staging site; not for a commercial launch.
-- Going over a limit pauses that feature, usually **for 30 days**.
-- Vercel builds Next.js its own way and does not use `frontend/Dockerfile`.
-- No password protection on Hobby; use Vercel Authentication (Deployment Protection) to keep
-  staging private.
+## Step 1. Neon (database)
 
-### API host: Render Free (default) or Koyeb Free (fallback)
+1. Go to **https://neon.com**, click **Sign up**, choose **Continue with GitHub**.
+2. Create a project: name `skill-buddy-staging`, Postgres version **16**, region
+   **AWS Asia Pacific 1 (Singapore)**. Click **Create project**.
+3. **Cap the compute at 0.25 CU** (ADR 0008: keeps you inside 100 CU-hours a month):
+   left menu **Branches** → click **main** → in the **Computes** section click **Edit** (the
+   pencil next to the primary compute) → drag both ends of the **autoscaling** range to
+   **0.25 CU** → **Save**. (Scale to zero after 5 minutes is fixed on Free; leave it.)
+4. Get the connection string: top of the project dashboard → **Connect** → Branch `main`,
+   Database `neondb`, Role `neondb_owner` → turn **Connection pooling off** → click the
+   **copy** icon. It starts with `postgresql://` and ends with `?sslmode=require`; the app
+   accepts it as is. Save it as **DATABASE_URL**.
+5. In GitHub: open **https://github.com/gsengh24/SkillBuddy** → **Settings** → **Secrets and
+   variables** → **Actions** → **New repository secret** → Name `STAGING_DATABASE_URL`,
+   Secret = the DATABASE_URL → **Add secret**.
+6. Create the tables: **Actions** tab → left list **Migrate staging** → **Run workflow** →
+   branch `main` → **Run workflow**. Wait for the green tick (about 1 minute). The last step
+   prints the current revision (the newest file in `backend/migrations/versions/`).
 
-**Render Free web service**
+## Step 2. Gmail account and OAuth app (sign-in emails)
 
-| Limit | Free allowance |
-| --- | --- |
-| Instance | 512 MB RAM, shared CPU |
-| Instance hours | 750 / month per workspace (all free services suspended when used up) |
-| Idle sleep | After 15 minutes without traffic; waking takes about 1 minute |
+Render Free blocks SMTP, so the API sends through the Gmail API (ADR 0008). You create a
+Gmail address only for sending, a Google Cloud project with an OAuth app, and a refresh
+token. **The OAuth app must be "In production", not "Testing", before you create the
+refresh token:** tokens from a Testing app stop working after 7 days.
 
-Catches:
-- **No pre-deploy command, shell or one-off jobs**, so migrations run from GitHub Actions.
-- Render's free-tier page lists free web services as "Node.js, Python, Rails, etc." and does
-  not say whether Docker-based services qualify. When creating the service, check whether the
-  Free instance type is offered for the Docker runtime; if not, use the native Python runtime
-  (build: `pip install uv && uv sync --frozen --no-dev`, start: `uv run uvicorn app.main:create_app --factory --host 0.0.0.0 --port $PORT`).
-- Cannot receive private-network traffic; everything reaches it over its public HTTPS URL.
-- **Outbound SMTP (ports 25, 465, 587) is blocked on free web services** (since September
-  2025). Email must use an HTTPS API; ADR 0008 chooses the Gmail API.
-- Free services may be suspended for unusually high outbound traffic.
+**2a. A Gmail address for sending**
 
-**Koyeb Free instance (no longer a fallback):** since February 2026 new Koyeb accounts need
-a card, so it is excluded ([ADR 0008](adr/0008-free-runtime-jobs-and-email.md)). It offered one instance per organisation; 512 MB RAM, 0.1 vCPU, 2 GB SSD;
-scales to zero after **1 hour** without traffic; only in **Frankfurt or Washington, D.C.**
-(further from India than Render Singapore).
+1. In a private browser window go to **https://accounts.google.com/signup** and create an
+   account, e.g. `skillbuddy.tiet@gmail.com` (any free name). Save it as **GMAIL_SENDER**.
+2. Stay signed in to this account for the rest of step 2.
 
-### Neon Free (PostgreSQL + pgvector)
+**2b. Google Cloud project and Gmail API (no billing)**
 
-| Limit | Free allowance |
-| --- | --- |
-| Storage | 0.5 GB per project |
-| Compute | 100 CU-hours per project per month, up to 2 CU |
-| Idle suspend | After 5 minutes |
-| Egress | 5 GB / month |
-| Branches | 10 per project |
-| Point-in-time restore | 6 hours (1 GB limit) |
-| Extensions | `pgvector` (with HNSW) and `citext` available on every plan |
+1. Go to **https://console.cloud.google.com** and accept the terms. If asked to start a
+   free trial or add billing, **close it**: nothing here needs billing.
+2. Top bar project picker → **New project** → name `skill-buddy-mail` → **Create** → select it.
+3. Top search bar: type **Gmail API** → open it → **Enable**.
 
-Catches:
-- Running out of compute hours or egress **suspends the database until next month**;
-  exceeding 0.5 GB **blocks writes**. Data is not deleted.
-- Anything that queries the database keeps it awake and burns compute hours. The host's
-  health check must use the liveness endpoint `/api/v1/health` (no database), not
-  `/api/v1/health/ready`. Do not add an uptime pinger that hits the readiness endpoint.
-- First query after a suspend is slower while compute starts.
-- 0.5 GB is ample for staging, but embeddings (384 floats ≈ 1.5 KB each, ×4 facets per user,
-  plus the HNSW index; see storage-budget.md) take a large share as seeded profiles grow.
+**2c. OAuth app (consent screen), then publish it**
 
-### The worker
+1. Left menu (≡) → **APIs & Services** → **OAuth consent screen** (also shown as **Google
+   Auth Platform**) → **Get started**.
+2. App name `Skill Buddy mail`, User support email = your GMAIL_SENDER → **Next** →
+   Audience **External** → **Next** → Contact email = your GMAIL_SENDER → **Next** → tick
+   the agreement → **Continue** → **Create**.
+3. Left: **Data Access** → **Add or remove scopes** → in the filter type `gmail.send` →
+   tick **`.../auth/gmail.send`** → **Update** → **Save**.
+4. Left: **Audience** → under Publishing status click **Publish app** → **Confirm**. The
+   status must now read **In production**. (Google may mention verification; you do not
+   need it, because only you will authorise this app.)
 
-There is no free always-on background worker on any of these providers. Options:
+**2d. OAuth client**
 
-1. **Phase 0 (now): no worker on staging.** The only job is `ping`, so nothing is lost.
-2. **Phase 1, staging only:** run jobs in-process inside the API (for example with an
-   `asyncio` task queue), accepting that this bends ADR 0002 on staging only and that a
-   sleeping API pauses jobs.
-3. **Phase 1, proper:** pay for one small worker instance (about $7/month on Render).
+1. Left: **Clients** → **Create client** → Application type **Web application** → Name
+   `oauth-playground`.
+2. Under **Authorized redirect URIs** click **Add URI** and paste exactly:
+   `https://developers.google.com/oauthplayground`
+3. **Create**. Copy the **Client ID** (save as **GMAIL_CLIENT_ID**) and the **Client secret**
+   (save as **GMAIL_CLIENT_SECRET**).
 
-**Decided in [ADR 0008](adr/0008-free-runtime-jobs-and-email.md):** a PostgreSQL job queue processed inside the API
-process (no Redis at all, so Upstash is not needed), woken on a schedule by a Cloudflare
-Worker cron. Setup steps are added here when it is built.
+**2e. Refresh token (OAuth Playground)**
 
-## Changes needed in the repo before setup
+1. Open **https://developers.google.com/oauthplayground**.
+2. Click the **gear icon** (top right) → tick **Use your own OAuth credentials** → paste
+   GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET → close the panel.
+3. Left side, in **Input your own scopes**, paste `https://www.googleapis.com/auth/gmail.send`
+   → **Authorize APIs**.
+4. Choose your GMAIL_SENDER account. On "Google hasn't verified this app": **Advanced** →
+   **Go to Skill Buddy mail (unsafe)** → **Continue** / **Allow**.
+5. Back in the Playground: **Exchange authorization code for tokens**. Copy the
+   **Refresh token** (starts with `1//`) and save it as **GMAIL_REFRESH_TOKEN**.
+6. Write down today's date next to it: the **day-8 check** (step 9) counts from here.
 
-These are not done yet; each goes in its own PR when staging is set up.
+## Step 3. Groq and Cloudflare AI keys (optional; matching works without them)
 
-1. **API listens on `$PORT`.** The production command in `backend/Dockerfile` hard-codes
-   port 8000; hosts set `PORT` (Render defaults to 10000). Change the `CMD` to use `$PORT`
-   with 8000 as the default. The image already runs as a non-root user.
-2. **Database URL scheme.** Neon gives `postgresql://...?sslmode=require`, but our settings
-   require `postgresql+psycopg://`. Either paste it with the scheme changed, or teach
-   `app/core/config.py` to normalise `postgresql://` (with a unit test).
-3. **Migration workflow.** Add a manually triggered GitHub Actions workflow ("Migrate
-   staging") that runs `uv run alembic upgrade head` using a `STAGING_DATABASE_URL`
-   repository secret.
-4. **Status check on cold start.** The web page's API check times out after 3 seconds, so
-   it shows "API unreachable" while the API wakes. Acceptable for staging; optionally
-   lengthen the timeout or retry.
+Without these the gateway uses template explanations. You can add them later.
 
-## Setup steps (for later)
+1. **Groq:** **https://console.groq.com** → sign in → **Settings → Data Controls** → turn on
+   **Zero Data Retention** → left **API Keys** → **Create API Key** → name
+   `skill-buddy-staging` → **Submit** → copy (starts with `gsk_`) → save as **GROQ_API_KEY**.
+2. **Cloudflare account** (needed for step 5 anyway): **https://dash.cloudflare.com/sign-up**
+   → free plan, no card. On the account home, copy **Account ID** (right side, 32
+   characters) → save as **CLOUDFLARE_ACCOUNT_ID**.
+3. **Cloudflare AI token:** profile icon (top right) → **My Profile** → **API Tokens** →
+   **Create Token** → template **Workers AI** → **Use template** → Account Resources:
+   **Include → your account** → **Continue to summary** → **Create Token** → copy → save as
+   **CLOUDFLARE_API_TOKEN**.
+4. **Check the backup model is free:** left **AI → Workers AI → Models** → search
+   `gpt-oss-20b`. If it is marked as needing **Workers Paid**, you will set
+   `CLOUDFLARE_MODEL` to `@cf/meta/llama-3.1-8b-instruct-fp8-fast` in step 4.
 
-Do these in order. Nothing secret goes in the repository: every secret is pasted into a
-provider dashboard or a GitHub repository secret.
+## Step 4. API on Render Free
 
-### 1. Neon (database)
-
-1. Sign up at neon.com (GitHub login works; no card).
-2. Create a project: Postgres **16**, region **AWS Asia Pacific (Singapore)**.
-3. On the project dashboard, open **Connect**, turn **off** "Connection pooling", and copy
-   the connection string.
-4. Change its start from `postgresql://` to `postgresql+psycopg://` (unless repo change 2 is
-   done). Keep `?sslmode=require` at the end. This is your `DATABASE_URL`.
-5. In GitHub: repo **Settings → Secrets and variables → Actions → New repository secret**,
-   name `STAGING_DATABASE_URL`, value = the URL from step 4.
-6. Run the "Migrate staging" workflow (repo change 3) from the **Actions** tab. It creates
-   the tables and enables `vector` and `citext`.
-
-### 3. API (Render Free)
-
-1. Sign up at render.com with GitHub; do not add a payment method.
-2. **New → Web Service**, connect the `SkillBuddy` repository, branch `main`.
-3. Runtime **Docker**, Dockerfile path `backend/Dockerfile`, Docker context `backend`
-   (the last stage, `runtime`, is the production image and is built by default). Use the
-   native Python runtime instead if Free is not offered for Docker (see the catches above).
-   Region **Singapore**, instance type **Free**.
-4. **Health check path:** `/api/v1/health`.
-5. Environment variables:
+1. Go to **https://render.com** → **Get Started** → **GitHub**. Do **not** add a payment
+   method.
+2. **+ New** → **Web Service** → connect GitHub → pick **gsengh24/SkillBuddy**.
+3. Fill in:
+   - Name `skillbuddy-api`, Region **Singapore**, Branch `main`.
+   - Language/Runtime **Docker**, Root Directory `backend`, Dockerfile Path
+     `./Dockerfile`. (The image's last stage is the production image, with the embedding
+     model built in. It listens on Render's `$PORT`.)
+   - Instance type **Free**. If Free is not offered for Docker, choose runtime **Python 3**
+     instead: Build Command `pip install uv && uv sync --frozen --no-dev`, Start Command
+     `uv run uvicorn app.main:create_app --factory --host 0.0.0.0 --port $PORT`, and add
+     the variable `EMBEDDING_CACHE_DIR` = `/opt/render/project/models` (the model then
+     downloads on first use).
+4. **Advanced** → **Health Check Path** `/api/v1/health` (never `/health/ready`: it would
+   keep Neon awake).
+5. **Environment Variables** → add each (Key = Value). Secrets are the values you saved:
 
    | Key | Value |
    | --- | --- |
    | `ENVIRONMENT` | `staging` |
-   | `SECRET_KEY` | a random string of 32+ characters (Render's "Generate" button) |
-   | `DATABASE_URL` | from Neon step 4 |
-   | `CORS_ALLOW_ORIGINS` | the Vercel URL from step 4 below (fill in after it exists) |
-   | `API_DOCS_ENABLED` | `true` (staging only) |
+   | `SECRET_KEY` | your SECRET_KEY |
+   | `DATABASE_URL` | your DATABASE_URL |
+   | `CORS_ALLOW_ORIGINS` | `https://example.invalid` for now (step 6 replaces it) |
+   | `API_DOCS_ENABLED` | `true` |
+   | `FORWARDED_ALLOW_IPS` | `*` (Render's proxy addresses are not fixed) |
+   | `JOBS_RUN_IN_API` | `true` |
+   | `JOBS_TICK_TOKEN` | your JOBS_TICK_TOKEN |
+   | `EMAIL_BACKEND` | `gmail_api` |
+   | `GMAIL_SENDER` | your GMAIL_SENDER |
+   | `GMAIL_CLIENT_ID` | your GMAIL_CLIENT_ID |
+   | `GMAIL_CLIENT_SECRET` | your GMAIL_CLIENT_SECRET |
+   | `GMAIL_REFRESH_TOKEN` | your GMAIL_REFRESH_TOKEN |
+   | `GROQ_API_KEY` | your GROQ_API_KEY (optional) |
+   | `CLOUDFLARE_ACCOUNT_ID` | your CLOUDFLARE_ACCOUNT_ID (optional) |
+   | `CLOUDFLARE_API_TOKEN` | your CLOUDFLARE_API_TOKEN (optional) |
+   | `CLOUDFLARE_MODEL` | only if step 3.4 said Workers Paid: `@cf/meta/llama-3.1-8b-instruct-fp8-fast` |
 
-6. **Settings → Build & Deploy → Auto-Deploy → "After CI Checks Pass"**, so nothing deploys
-   unless GitHub Actions is green on `main`.
-7. Note the public URL, e.g. `https://skillbuddy-api.onrender.com`.
+6. **Create Web Service**. The first build takes several minutes. When the log says
+   "Your service is live", copy the URL at the top (e.g.
+   `https://skillbuddy-api.onrender.com`); save it as **API_URL**.
+7. Check it: open `API_URL/api/v1/health` in a browser. It should show `"status":"ok"`.
+8. **Settings** → **Build & Deploy** → **Auto-Deploy** → **After CI Checks Pass** → **Save**.
 
-### 4. Web app (Vercel Hobby)
+## Step 5. Scheduler: Cloudflare Worker with cron triggers
 
-1. Sign up at vercel.com with GitHub (Hobby, no card).
-2. **Add New → Project**, import `SkillBuddy`, set **Root Directory** to `frontend`.
-   Vercel detects Next.js.
-3. Environment variable: `API_INTERNAL_URL` = the API's public URL from step 3.7.
-4. Deploy. Copy the production URL (e.g. `https://skillbuddy.vercel.app`) into the API's
-   `CORS_ALLOW_ORIGINS` and redeploy the API.
-5. Optional: **Settings → Deployment Protection → Vercel Authentication** to keep staging
-   private.
-6. Vercel deploys every push to `main`. To deploy only after CI passes, set up a GitHub
-   ruleset requiring the CI checks before merging into `main` (all changes arrive by PR).
+The API has no cron; this Worker calls `POST /api/v1/admin/jobs/tick` 17 times a day (hourly
+08:00–23:00 IST, and 06:00 IST). The script is `infra/cloudflare-tick/worker.js`.
+
+1. **https://dash.cloudflare.com** → left **Workers & Pages** (under Compute) → **Create** →
+   **Create Worker** (Start with **Hello World**) → Name `skill-buddy-tick` → **Deploy**.
+2. **Edit code** → select all the code in the editor and delete it → open
+   **https://github.com/gsengh24/SkillBuddy/blob/main/infra/cloudflare-tick/worker.js** →
+   **Copy raw file** (the copy icon) → paste into the editor → **Deploy**.
+3. Back on the Worker → **Settings** → **Variables and Secrets** → **+ Add**:
+   - Type **Text**, Name `API_URL`, Value = your API_URL (no trailing slash) → **Deploy**.
+   - **+ Add** again: Type **Secret**, Name `JOBS_TICK_TOKEN`, Value = your JOBS_TICK_TOKEN
+     (exactly the value given to Render) → **Deploy**.
+4. **Settings** → **Trigger Events** → **+ Add** → **Cron Triggers** → enter the expression
+   `30 2-17 * * *` → **Add**. Add a second one: `30 0 * * *` → **Add**.
+5. **Settings** → **Observability** → turn **Workers Logs** on (free).
+6. Check it: wait for the next half past the hour (UTC), then Worker → **Logs**. You
+   should see `tick ok: enqueued=...`. A line with `HTTP 403` means the two
+   JOBS_TICK_TOKEN values differ; `HTTP 404` means `JOBS_TICK_TOKEN` is missing on Render.
+
+## Step 6. Web app on Vercel Hobby
+
+1. **https://vercel.com/signup** → **Hobby** → **Continue with GitHub** (no card).
+2. **Add New…** → **Project** → import **gsengh24/SkillBuddy** → **Root Directory** → **Edit**
+   → `frontend` → **Continue**. Framework: Next.js (detected).
+3. **Environment Variables**: Key `API_INTERNAL_URL`, Value = your API_URL → **Add**.
+4. **Deploy**. When done, copy the domain shown (e.g. `https://skillbuddy.vercel.app`).
+5. Back in Render → your API → **Environment** → edit `CORS_ALLOW_ORIGINS` → the Vercel
+   domain (no trailing slash) → **Save, rebuild and deploy**.
+6. Optional: Vercel project → **Settings** → **Deployment Protection** → **Vercel
+   Authentication** on, to keep staging private.
+
+## Step 7. First sign-in
+
+1. Open the Vercel domain → **Sign in or create an account** → your own email → tick both
+   boxes → **Email me a code**. The first request after an idle period waits about a
+   minute while Render wakes.
+2. The email comes from GMAIL_SENDER. If it does not arrive within 2 minutes: Render →
+   **Logs**, search `gmail_token_failed` (wrong client id, secret or token) or
+   `email_send_failed`.
+3. Enter the code. You land on the home page.
+
+## Step 8. Deliverability to @thapar.edu (pre-launch checklist item 8)
+
+1. Ask 3–5 volunteer students (with their consent) to sign in with their @thapar.edu
+   address. Each tells you: inbox, spam/junk, or nothing.
+2. On one received message: Gmail → **⋮** → **Show original** (Outlook: **…** → **View** →
+   **View message details**). Confirm `spf=pass`, `dkim=pass`, `dmarc=pass`.
+3. If messages go to quarantine or junk, ask college IT to allow-list GMAIL_SENDER.
+
+## Step 9. Day-8 check (blocking, ADR 0008)
+
+Eight or more days after the refresh token was created (step 2e.6), sign in again on
+staging with any address. The code must arrive. If it does not and Render's logs show
+`gmail_token_failed` with `invalid_grant`, the OAuth app was still in Testing: publish it
+(step 2c.4), create a new refresh token (step 2e), update `GMAIL_REFRESH_TOKEN` in Render,
+and wait another 8 days. Record the date of the passing check in the pre-launch checklist.
+
+## Free-tier limits and catches (as of 2026-10-01)
+
+| Service | Free allowance | Catches |
+| --- | --- | --- |
+| Vercel Hobby | 1M function calls, 4 active CPU-hours, 100 GB transfer a month | Non-commercial use only; over a limit pauses the feature for 30 days; 1 hour of logs |
+| Render Free | 512 MB RAM, shared CPU, 750 instance-hours a month per workspace | Sleeps after 15 min without traffic (about 1 min to wake); **no outbound SMTP**; no shell or pre-deploy step (migrations run from GitHub Actions) |
+| Neon Free | 100 CU-hours/month; storage 0.5 GB (the pricing page now says 1 GB; re-check); suspends after 5 min idle | Out of CU-hours or egress suspends the DB until next month; at 0.25 CU that is about 13 active hours a day; health checks must not hit `/health/ready` |
+| Cloudflare Workers Free | 100,000 requests/day, 5 cron triggers per account | If the Worker stops, scheduled jobs stop (watch its Logs) |
+| Gmail (personal) | 500 recipients per rolling 24 h; we cap at 450 | OAuth app must be In production; Google may limit accounts that look like bulk mail |
+| Groq / Cloudflare Workers AI | See [free-tier-limits.md](free-tier-limits.md) | Optional; templates are used when absent or exhausted |
+
+Koyeb Free is no longer an option (new accounts need a card since February 2026).
 
 ## Day-to-day
 
-- **Logs:** Render service → **Logs** tab (API). Vercel project → **Logs** (1 hour kept on
-  Hobby). The Neon dashboard shows usage against the free limits.
-- **Rollback:** Render service → **Events** → pick an earlier deploy → **Rollback**. Vercel
-  project → **Deployments** → earlier deployment → **Instant Rollback** (on Hobby this may be
-  limited to the previous production deployment). Rollbacks do not undo database
-  migrations; revert a migration with a new PR instead.
-- **Watch the meters** monthly: Neon compute hours and Render instance hours.
-  If one is near its limit, staging will stop until the month resets.
+- **Logs:** Render → **Logs** (API and jobs). Vercel → **Logs** (1 hour on Hobby).
+  Cloudflare Worker → **Logs** (ticks).
+- **Migrations:** when a merged PR adds a file under `backend/migrations/versions/`, run
+  **Actions → Migrate staging** before or right after Render deploys it.
+- **Rollback:** Render → **Events** → earlier deploy → **Rollback**; Vercel → **Deployments**
+  → earlier deployment → **Instant Rollback**. Rollbacks do not undo migrations; revert a
+  migration with a new PR.
+- **Watch the meters weekly:** Neon → **Monitoring** → compute hours (act if over 70% before
+  day 21 of the month, ADR 0008); Render instance hours; `GET API_URL/api/v1/admin/storage`.
+- **Optional admin token:** add `ADMIN_API_TOKEN` (32+ random characters, made like
+  JOBS_TICK_TOKEN) in Render to enable `/api/v1/admin/storage`; send it as `X-Admin-Token`.
 
 ## When to move off this plan
 
-Move to paid hosting (new ADR) before any commercial use (Vercel Hobby terms), when staging
-needs an always-on worker, or when cold starts get in the way of testing.
+Move to paid hosting (new ADR) before any commercial use (Vercel Hobby terms), when the
+campus outgrows Neon's 100 CU-hours, or when cold starts get in the way.

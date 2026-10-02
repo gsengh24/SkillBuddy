@@ -1,0 +1,6 @@
+{
+  "name": "skill-buddy-tick",
+  "private": true,
+  "description": "Cloudflare Worker that calls the API tick endpoint on a schedule (ADR 0008).",
+  "type": "module"
+}
