@@ -59,10 +59,43 @@ uv run python -m evals.run      # prints counts per intent and label, exits 1 if
 uv run pytest tests/unit/test_evals.py
 ```
 
+## Quality check
+
+`evals/quality.py` is the first quality check of the matcher's no-AI path (the template
+that runs when the AI is off). It needs no model and no network by default:
+
+```bash
+cd backend
+uv run python -m evals.quality                       # word-overlap scorer; CI runs this
+uv run python -m evals.quality --embedder fastembed  # also bge-small cosine (downloads the model; local only)
+```
+
+It reports intent accuracy of the template on the 40 requests; for each scorer, the mean
+score per label, AUC (how often a good pair outscores a poor one; 0.5 is chance), how
+often two candidates of the same requester with different labels are ordered correctly,
+and how often the top-scored candidate is labelled good; and how often the template's
+reason for a good pair is specific rather than generic.
+
+**Baseline, 2 October 2026, on 100 draft (unreviewed) pairs.** These are a baseline for
+comparing changes, not a measure of quality, until the labels are reviewed.
+
+| Metric | Word overlap | bge-small cosine |
+| --- | --- | --- |
+| Mean score: good / acceptable / poor | 0.077 / 0.044 / 0.006 | 0.614 / 0.581 / 0.518 |
+| AUC good vs poor | 0.82 | 0.83 |
+| AUC good or acceptable vs poor | 0.76 | 0.80 |
+| Pairs ordered correctly (76 comparable) | 0.63 | 0.76 |
+| Top-scored candidate is good (38 requesters) | 0.61 | 0.55 |
+
+Template intent accuracy: 0.65 (26 of 40; it misses most `interest_buddy` and `explore`
+requests, which use no fixed keywords). Template reasons that are specific for good pairs:
+0.28. The LLM path is not measured yet: that needs reviewed labels and a provider key
+(checklist item 24).
+
 ## Next steps
 
 - Review all 100 drafts.
 - Grow towards the 200-500 pairs ARCHITECTURE.md calls for, adding new profiles where
   the set is thin.
-- In Phase 1, add the scorer that runs the matcher over the reviewed pairs and reports
-  precision at 5 per intent.
+- Once labels are reviewed and the matching endpoints exist, run the full matcher over
+  the pairs and report precision at 5 per intent, for the LLM path and the template path.
