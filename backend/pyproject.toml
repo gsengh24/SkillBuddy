@@ -17,6 +17,7 @@ dependencies = [
     # arq 0.28 requires redis<6; lift the cap when arq supports newer redis.
     "redis>=5.2,<6",
     "fastembed>=0.7",
+    "httpx>=0.28",
 ]
 
 [dependency-groups]
