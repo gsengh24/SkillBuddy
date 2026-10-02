@@ -27,9 +27,9 @@ test("create a profile, see what was understood, correct it, pause matching", as
   await expect(page.getByRole("heading", { name: "Tell us about you" })).toBeVisible();
   await expectNoViolations(page);
 
-  await page.getByLabel("Your name").fill("Asha");
+  await page.getByLabel("Your name", { exact: true }).fill("Asha");
   await page
-    .getByLabel("About you")
+    .getByLabel("About you", { exact: true })
     .fill(
       "I can build React apps and write Python. Looking for a designer, a backend dev. " +
         "I love hiking and chess. Free 4-6 hours a week, mostly weekends.",
@@ -50,7 +50,7 @@ test("create a profile, see what was understood, correct it, pause matching", as
   await expectNoViolations(page);
 
   await page.getByRole("button", { name: "Correct this" }).click();
-  await page.getByLabel("Interests").fill("chess, trekking");
+  await page.getByLabel("Interests", { exact: true }).fill("chess, trekking");
   await page.getByRole("button", { name: "Save corrections" }).click();
   await expect(page.getByText("Edited by you.")).toBeVisible();
   await expect(page.getByText("trekking", { exact: true })).toBeVisible();
