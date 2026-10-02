@@ -82,3 +82,39 @@ class DeletionScheduledOut(BaseModel):
         "Your account is scheduled for permanent deletion and you have been signed out "
         "everywhere. Your data is removed on the scheduled date."
     )
+
+
+class AuthMethodsOut(BaseModel):
+    """Which sign-in methods this server offers, so clients show only what works."""
+
+    email_code: bool = True
+    google: bool
+    google_domains: list[str] = Field(
+        description="Email domains Google sign-in accepts (empty when Google is off)."
+    )
+
+
+# A path on this site, never another origin: "/profile" yes, "//evil.example" or "https://..." no.
+NEXT_PATH_PATTERN: Final = (
+    r"^/([A-Za-z0-9\-._~!$&'()*+,;=:@%?][A-Za-z0-9\-._~!$&'()*+,;=:@%/?]{0,198})?$"
+)
+
+
+class GoogleStartIn(BaseModel):
+    model_config = _REQUEST
+
+    age_confirmed: bool = Field(
+        default=False,
+        description="As for /otp/verify: required for a new account or one without a recorded "
+        "age confirmation (ADR 0009). Checked when Google sends the person back.",
+    )
+    accept_terms: bool = Field(default=False, description="Required when creating an account.")
+    next: str | None = Field(
+        default=None,
+        pattern=NEXT_PATH_PATTERN,
+        description="Path on this site to return to after signing in (default /home).",
+    )
+
+
+class GoogleStartOut(BaseModel):
+    authorization_url: str = Field(description="Send the browser here (Google's sign-in page).")

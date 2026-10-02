@@ -63,9 +63,10 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
   needed: there is no Redis (ADR 0008).
 - **Next.js** web app. Server components call the API through a typed client; the browser
   calls the web app's own `/api/v1/*`, which forwards to the API (same-origin cookies).
-- **Authentication** (ADR 0006): passwordless email codes, server-side sessions in an
-  httpOnly cookie, signed double-submit CSRF, PostgreSQL rate limits, 30-day deletion grace
-  period. Email is sent only by background jobs (Mailpit catches it in dev and CI). 18+ only, by
+- **Authentication** (ADR 0006, ADR 0011): passwordless email codes, plus optional
+  "Sign in with Google" (OpenID Connect with PKCE, `@thapar.edu` only); an email allow-list,
+  exceptions and block list for both; server-side sessions in an httpOnly cookie, signed
+  double-submit CSRF, PostgreSQL rate limits, 30-day deletion grace period. Email is sent only by background jobs (Mailpit catches it in dev and CI). 18+ only, by
   a required self-declaration tick box; no verification (ADR 0009).
 - Migrations run as a **separate one-shot step** (`migrate` service), never at API startup.
 
@@ -83,7 +84,8 @@ backend/
     api/deps.py          Shared FastAPI dependencies
     api/v1/              Routers; router.py aggregates them under /api/v1
     services/            Business logic; endpoints and jobs call these
-      auth/              Sign-in codes, sessions, rate limits, audit log, retention jobs
+      auth/              Sign-in codes, Google sign-in (google.py), who may sign in
+                         (policy.py), sessions, rate limits, audit log, retention jobs
       email/             EmailSender (console/SMTP) and templates
       storage.py         Database size monitor and the 90% write pause
     jobs/                Job queue: registry, enqueue, runner, tasks (every job kind),
@@ -92,6 +94,7 @@ backend/
   evals/                 Matcher evaluation set: synthetic profiles + draft-labelled pairs
   tests/unit/            No infrastructure needed
   tests/integration/     Real Postgres (+ Mailpit); each run uses a throwaway database
+  tests/fake_oidc.py     Fake Google OpenID Connect provider (tests; `fake-oidc` compose service)
 frontend/
   app/                   App Router pages: /login, /terms, /privacy; signed-in pages in app/(app)/
                          (/home, /messages, /saved, /notifications, /settings/account) share

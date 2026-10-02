@@ -22,6 +22,7 @@ from app.db.session import get_db_session
 from app.models import User, UserSession
 from app.services.auth.delivery import OtpDelivery, QueuedOtpDelivery
 from app.services.auth.events import ClientInfo
+from app.services.auth.google import GoogleOidcClient
 from app.services.auth.rate_limit import RateLimiter
 from app.services.auth.service import AuthService
 from app.services.auth.sessions import csrf_token_for, resolve_session
@@ -118,16 +119,22 @@ async def require_storage_capacity(monitor: StorageMonitorDep) -> None:
     await monitor.ensure_capacity_for_optional_writes()
 
 
+def get_google_oidc(settings: SettingsDep) -> GoogleOidcClient:
+    """Google's OpenID Connect endpoints (tests override this with a fake provider)."""
+    return GoogleOidcClient(settings)
+
+
 def get_auth_service(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db_session)],
     settings: SettingsDep,
     delivery: Annotated[OtpDelivery, Depends(get_otp_delivery)],
     storage: StorageMonitorDep,
+    google: Annotated[GoogleOidcClient, Depends(get_google_oidc)],
 ) -> AuthService:
     limiter = RateLimiter(
         request.app.state.session_factory,
         settings.secret_key,
         window_seconds=settings.rate_limit_window_seconds,
     )
-    return AuthService(db, settings, limiter, delivery, storage)
+    return AuthService(db, settings, limiter, delivery, storage, google)

@@ -19,7 +19,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.security import keyed_hash
-from app.models import AuthEvent, AuthEventType, OtpCode, User, UserSession, UserStatus
+from app.models import (
+    AuthEvent,
+    AuthEventType,
+    OAuthState,
+    OtpCode,
+    User,
+    UserSession,
+    UserStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +39,7 @@ class PurgeResult:
     otp_codes: int
     sessions: int
     auth_events: int
+    oauth_states: int = 0
 
 
 def _rowcount(result: object) -> int:
@@ -79,9 +88,14 @@ async def purge_expired_auth_data(
     sessions = await db.execute(delete(UserSession).where(UserSession.expires_at < now))
     cutoff = now - timedelta(days=settings.auth_event_retention_days)
     events = await db.execute(delete(AuthEvent).where(AuthEvent.created_at < cutoff))
+    # Unfinished Google sign-in attempts (ADR 0011); finished ones are deleted on use.
+    states = await db.execute(delete(OAuthState).where(OAuthState.expires_at < now))
     await db.commit()
     result = PurgeResult(
-        otp_codes=_rowcount(codes), sessions=_rowcount(sessions), auth_events=_rowcount(events)
+        otp_codes=_rowcount(codes),
+        sessions=_rowcount(sessions),
+        auth_events=_rowcount(events),
+        oauth_states=_rowcount(states),
     )
     logger.info(
         "auth_data_purged",
@@ -89,6 +103,7 @@ async def purge_expired_auth_data(
             "otp_codes": result.otp_codes,
             "sessions": result.sessions,
             "auth_events": result.auth_events,
+            "oauth_states": result.oauth_states,
         },
     )
     return result

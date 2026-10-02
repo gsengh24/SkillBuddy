@@ -15,6 +15,8 @@ dependencies = [
     "pgvector>=0.4",
     "fastembed>=0.7",
     "httpx>=0.28",
+    # Google sign-in: ID token signature and claim checks (ADR 0011).
+    "pyjwt[crypto]>=2.10",
 ]
 
 [dependency-groups]

@@ -9,22 +9,34 @@ import { TextField } from "@/components/ui/text-field";
 import { textLinkClasses } from "@/components/ui/text-link";
 import { browserApi } from "@/lib/api/browser";
 import { ApiError } from "@/lib/api/errors";
-import { otpRequestResponseSchema, userSchema } from "@/lib/api/schemas";
+import { googleStartSchema, otpRequestResponseSchema, userSchema } from "@/lib/api/schemas";
 import { RESEND_COOLDOWN_SECONDS } from "@/lib/auth/constants";
 import { describeError } from "@/lib/auth/messages";
 import { brand } from "@/lib/brand";
 
+import { GoogleButton } from "./google-button";
+
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const EMAIL_MAX_LENGTH = 254;
+const CONSENT_MESSAGE = "To continue, confirm that you are 18 or older and accept the terms.";
 
 type Step = "email" | "code";
 
+type LoginFormProps = {
+  nextPath: string;
+  /** Set when the API offers Google sign-in (ADR 0011): the domains it accepts. */
+  google?: { domains: string[] };
+  /** A message to show at once, e.g. after Google sign-in sent the person back. */
+  initialError?: string | null;
+};
+
 /**
  * Two-step passwordless sign-in: (1) email plus age and terms confirmation, (2) the 6-digit
- * code from the email. Uses native form controls, labelled fields, and announces errors
- * (role="alert") and progress (role="status") to assistive technology.
+ * code from the email. With Google enabled, "Continue with Google" comes first and the email
+ * code stays below it as the fallback. Uses native form controls, labelled fields, and
+ * announces errors (role="alert") and progress (role="status") to assistive technology.
  */
-export function LoginForm({ nextPath }: { nextPath: string }) {
+export function LoginForm({ nextPath, google, initialError = null }: LoginFormProps) {
   const router = useRouter();
   const ids = useId();
   const [step, setStep] = useState<Step>("email");
@@ -32,7 +44,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resendAt, setResendAt] = useState(0);
@@ -82,13 +94,33 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       return;
     }
     if (!ageConfirmed || !acceptTerms) {
-      setError("To continue, confirm that you are 18 or older and accept the terms.");
+      setError(CONSENT_MESSAGE);
       return;
     }
     if (await sendCode()) {
       setCode("");
       setStep("code");
       setStatus(`We sent a 6-digit code to ${trimmed}. It expires in 10 minutes.`);
+    }
+  }
+
+  async function onGoogle() {
+    if (!ageConfirmed || !acceptTerms) {
+      setError(CONSENT_MESSAGE);
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { authorization_url } = await browserApi("/auth/google/start", googleStartSchema, {
+        method: "POST",
+        body: { age_confirmed: ageConfirmed, accept_terms: acceptTerms, next: nextPath },
+      });
+      setStatus("Taking you to Google…");
+      window.location.assign(authorization_url);
+    } catch (caught) {
+      setError(describeError(caught));
+      setSubmitting(false);
     }
   }
 
@@ -148,63 +180,140 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           <h1 id={`${ids}-heading`} className="text-h1">
             Sign in to {brand.name}
           </h1>
-          <p className="text-muted">
-            We&apos;ll email you a 6-digit code. No password needed. New here? This creates your
-            account.
-          </p>
+          {google ? (
+            <>
+              <p className="text-muted">
+                Use your college Google account, or get a 6-digit code by email. New here? This
+                creates your account.
+              </p>
 
-          <TextField
-            ref={emailInput}
-            id={`${ids}-email`}
-            label="Email address"
-            name="email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            maxLength={EMAIL_MAX_LENGTH}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? errorId : undefined}
-          />
+              <fieldset className="flex flex-col gap-1">
+                <legend className="sr-only">Confirmations</legend>
+                <label className="flex min-h-11 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={ageConfirmed}
+                    onChange={(event) => setAgeConfirmed(event.target.checked)}
+                    className="accent-green-base size-4 shrink-0"
+                  />
+                  <span>I am 18 or older.</span>
+                </label>
+                <label className="flex min-h-11 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(event) => setAcceptTerms(event.target.checked)}
+                    className="accent-green-base size-4 shrink-0"
+                  />
+                  <span>
+                    I accept the{" "}
+                    <Link href="/terms" className={textLinkClasses()}>
+                      Terms
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className={textLinkClasses()}>
+                      Privacy Policy
+                    </Link>
+                    .
+                  </span>
+                </label>
+              </fieldset>
 
-          <fieldset className="flex flex-col gap-1">
-            <legend className="sr-only">Confirmations</legend>
-            <label className="flex min-h-11 items-center gap-3">
-              <input
-                type="checkbox"
-                checked={ageConfirmed}
-                onChange={(event) => setAgeConfirmed(event.target.checked)}
-                className="accent-green-base size-4 shrink-0"
+              <div className="flex flex-col gap-2">
+                <GoogleButton onClick={onGoogle} disabled={submitting} className="self-start" />
+                <p className="text-small text-muted">
+                  Only {google.domains.map((domain) => `@${domain}`).join(" or ")} Google accounts.
+                </p>
+              </div>
+
+              {errorMessage}
+
+              <div className="flex items-center gap-3">
+                <span aria-hidden="true" className="bg-line h-px flex-1" />
+                <span className="text-small text-muted">or use an email code</span>
+                <span aria-hidden="true" className="bg-line h-px flex-1" />
+              </div>
+
+              <TextField
+                ref={emailInput}
+                id={`${ids}-email`}
+                label="Email address"
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                maxLength={EMAIL_MAX_LENGTH}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? errorId : undefined}
               />
-              <span>I am 18 or older.</span>
-            </label>
-            <label className="flex min-h-11 items-center gap-3">
-              <input
-                type="checkbox"
-                checked={acceptTerms}
-                onChange={(event) => setAcceptTerms(event.target.checked)}
-                className="accent-green-base size-4 shrink-0"
+
+              <Button type="submit" disabled={submitting} className="self-start">
+                {submitting ? "Sending code…" : "Email me a code"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-muted">
+                We&apos;ll email you a 6-digit code. No password needed. New here? This creates your
+                account.
+              </p>
+
+              <TextField
+                ref={emailInput}
+                id={`${ids}-email`}
+                label="Email address"
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                maxLength={EMAIL_MAX_LENGTH}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? errorId : undefined}
               />
-              <span>
-                I accept the{" "}
-                <Link href="/terms" className={textLinkClasses()}>
-                  Terms
-                </Link>{" "}
-                and{" "}
-                <Link href="/privacy" className={textLinkClasses()}>
-                  Privacy Policy
-                </Link>
-                .
-              </span>
-            </label>
-          </fieldset>
 
-          {errorMessage}
+              <fieldset className="flex flex-col gap-1">
+                <legend className="sr-only">Confirmations</legend>
+                <label className="flex min-h-11 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={ageConfirmed}
+                    onChange={(event) => setAgeConfirmed(event.target.checked)}
+                    className="accent-green-base size-4 shrink-0"
+                  />
+                  <span>I am 18 or older.</span>
+                </label>
+                <label className="flex min-h-11 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(event) => setAcceptTerms(event.target.checked)}
+                    className="accent-green-base size-4 shrink-0"
+                  />
+                  <span>
+                    I accept the{" "}
+                    <Link href="/terms" className={textLinkClasses()}>
+                      Terms
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className={textLinkClasses()}>
+                      Privacy Policy
+                    </Link>
+                    .
+                  </span>
+                </label>
+              </fieldset>
 
-          <Button type="submit" disabled={submitting} className="self-start">
-            {submitting ? "Sending code…" : "Email me a code"}
-          </Button>
+              {errorMessage}
+
+              <Button type="submit" disabled={submitting} className="self-start">
+                {submitting ? "Sending code…" : "Email me a code"}
+              </Button>
+            </>
+          )}
         </form>
       ) : (
         <form noValidate onSubmit={onCodeSubmit} className="flex flex-col gap-5">

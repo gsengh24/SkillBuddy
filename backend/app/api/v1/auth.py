@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from http import HTTPStatus
 from typing import Annotated, Any
+from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi.responses import RedirectResponse
 
 from app.api.deps import (
     AuthContext,
@@ -15,11 +17,27 @@ from app.api.deps import (
     get_client_info,
     require_json,
 )
-from app.api.session_cookies import clear_session_cookies, set_csrf_cookie, set_session_cookies
-from app.schemas.auth import OtpRequestIn, OtpRequestOut, OtpVerifyIn, UserOut
+from app.api.session_cookies import (
+    GOOGLE_STATE_COOKIE,
+    clear_google_state_cookie,
+    clear_session_cookies,
+    set_csrf_cookie,
+    set_google_state_cookie,
+    set_session_cookies,
+)
+from app.core.errors import AppError
+from app.schemas.auth import (
+    AuthMethodsOut,
+    GoogleStartIn,
+    GoogleStartOut,
+    OtpRequestIn,
+    OtpRequestOut,
+    OtpVerifyIn,
+    UserOut,
+)
 from app.schemas.errors import ErrorResponse
 from app.services.auth.events import ClientInfo
-from app.services.auth.service import AuthService
+from app.services.auth.service import OAUTH_STATE_TTL, AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -110,3 +128,84 @@ async def logout_all(
 ) -> None:
     await service.logout_all(auth.user, client)
     clear_session_cookies(response, settings)
+
+
+# --- Methods and Google sign-in (ADR 0011) --------------------------------------------------
+
+# Where the browser lands after Google sign-in fails: the web app's sign-in page, which shows
+# a message for the error code.
+LOGIN_PATH = "/login"
+
+
+@router.get("/methods", summary="Available sign-in methods")
+async def methods(settings: SettingsDep) -> AuthMethodsOut:
+    available = settings.google_signin_available
+    return AuthMethodsOut(
+        google=available,
+        google_domains=list(settings.allowed_email_domains) if available else [],
+    )
+
+
+@router.post(
+    "/google/start",
+    summary="Start Google sign-in",
+    dependencies=[Depends(require_json)],
+    responses={**_ERRORS, HTTPStatus.NOT_FOUND.value: {"model": ErrorResponse}},
+)
+async def google_start(
+    body: GoogleStartIn,
+    response: Response,
+    service: AuthServiceDep,
+    client: ClientDep,
+    settings: SettingsDep,
+) -> GoogleStartOut:
+    """Returns Google's sign-in URL and sets a short-lived httpOnly cookie that ties the
+    attempt to this browser. 404 ``google_signin_unavailable`` when Google is off."""
+    start = await service.start_google(
+        age_confirmed=body.age_confirmed,
+        accept_terms=body.accept_terms,
+        next_path=body.next,
+        client=client,
+    )
+    set_google_state_cookie(response, settings, start.state, int(OAUTH_STATE_TTL.total_seconds()))
+    return GoogleStartOut(authorization_url=start.authorization_url)
+
+
+@router.get(
+    "/google/callback",
+    summary="Google sends the browser back here",
+    status_code=HTTPStatus.SEE_OTHER,
+    response_class=RedirectResponse,
+    responses={HTTPStatus.SEE_OTHER.value: {"description": "To `next`, or to /login?error=<code>"}},
+)
+async def google_callback(
+    request: Request,
+    service: AuthServiceDep,
+    client: ClientDep,
+    settings: SettingsDep,
+    state: Annotated[str | None, Query(max_length=200)] = None,
+    code: Annotated[str | None, Query(max_length=2048)] = None,
+    error: Annotated[str | None, Query(max_length=200)] = None,
+) -> RedirectResponse:
+    """Verifies the attempt and Google's ID token, then signs in (session cookie) and
+    redirects to ``next``. Any failure redirects to ``/login?error=<code>`` with a stable
+    code (``google_state_invalid``, ``google_cancelled``, ``google_failed``,
+    ``email_not_allowed``, ``consent_required``, ...); details go to the audit log only."""
+    try:
+        result = await service.finish_google(
+            state=state,
+            bound_state=request.cookies.get(GOOGLE_STATE_COOKIE),
+            code=code,
+            error=error,
+            client=client,
+        )
+    except AppError as refused:
+        redirect = RedirectResponse(
+            f"{LOGIN_PATH}?{urlencode({'error': refused.code})}",
+            status_code=HTTPStatus.SEE_OTHER,
+        )
+    else:
+        redirect = RedirectResponse(result.next_path, status_code=HTTPStatus.SEE_OTHER)
+        set_session_cookies(redirect, settings, result.sign_in.token, result.sign_in.session)
+    clear_google_state_cookie(redirect, settings)
+    return redirect

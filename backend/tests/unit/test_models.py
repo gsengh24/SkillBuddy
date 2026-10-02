@@ -21,6 +21,7 @@ def test_metadata_contains_all_tables() -> None:
         "profile_embeddings",
         "auth_identities",
         "otp_codes",
+        "oauth_states",
         "sessions",
         "auth_events",
         "jobs",

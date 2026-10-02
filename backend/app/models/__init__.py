@@ -1,6 +1,13 @@
 """ORM models. Import every model here so ``Base.metadata`` is complete for Alembic."""
 
-from app.models.auth import AuthEvent, AuthEventType, AuthIdentity, OtpCode, UserSession
+from app.models.auth import (
+    AuthEvent,
+    AuthEventType,
+    AuthIdentity,
+    OAuthState,
+    OtpCode,
+    UserSession,
+)
 from app.models.jobs import EmailLog, EmailPurpose, Job, JobStatus, RateLimitCounter
 from app.models.profile import (
     ABOUT_TEXT_MAX_LENGTH,
@@ -33,6 +40,7 @@ __all__ = [
     "EmbeddingFacet",
     "Job",
     "JobStatus",
+    "OAuthState",
     "OtpCode",
     "ParseSource",
     "ParseStatus",
