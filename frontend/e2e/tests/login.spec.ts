@@ -1,24 +1,6 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://localhost:8025";
-
-async function codeFromMailpit(request: APIRequestContext, email: string): Promise<string> {
-  let code: string | undefined;
-  await expect
-    .poll(
-      async () => {
-        const response = await request.get(`${MAILPIT_URL}/api/v1/search`, {
-          params: { query: `to:"${email}"` },
-        });
-        const body = (await response.json()) as { messages?: { Snippet?: string }[] };
-        code = body.messages?.[0]?.Snippet?.match(/\b(\d{6})\b/)?.[1];
-        return code;
-      },
-      { message: `waiting for the sign-in email to ${email}`, timeout: 60_000 },
-    )
-    .toBeDefined();
-  return code as string;
-}
+import { codeFromMailpit } from "./helpers";
 
 test("sign up with an emailed code, reach home, sign out", async ({ page, request }) => {
   const email = `e2e-${Date.now()}@example.com`;

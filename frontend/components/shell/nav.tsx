@@ -23,7 +23,7 @@ const MESSAGES: NavItem = {
   showsUnread: true,
 };
 const SAVED: NavItem = { label: "Saved", href: "/saved", icon: BookmarkIcon };
-const YOU: NavItem = { label: "You", href: "/settings/account", icon: PersonIcon };
+const YOU: NavItem = { label: "You", href: "/profile", icon: PersonIcon };
 
 export const SIDEBAR_ITEMS = [DISCOVER, MESSAGES, SAVED];
 export const TAB_ITEMS = [DISCOVER, MESSAGES, SAVED, YOU];

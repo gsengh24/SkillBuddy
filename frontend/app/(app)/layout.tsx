@@ -1,5 +1,7 @@
 import { AppShell } from "@/components/shell/app-shell";
 import { getCurrentUser } from "@/lib/auth/session";
+import { profileCompleteness } from "@/lib/profile/limits";
+import { getMyProfile } from "@/lib/profile/server";
 
 /**
  * Signed-in pages share the app shell. Each page redirects signed-out visitors to the
@@ -9,5 +11,13 @@ import { getCurrentUser } from "@/lib/auth/session";
 export default async function SignedInLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) return children;
-  return <AppShell user={{ id: user.id, email: user.email }}>{children}</AppShell>;
+  const profile = await getMyProfile();
+  return (
+    <AppShell
+      user={{ id: user.id, email: user.email }}
+      profileComplete={profileCompleteness(profile)}
+    >
+      {children}
+    </AppShell>
+  );
 }

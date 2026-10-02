@@ -79,6 +79,17 @@ describe("AppShell", () => {
       "/settings/account",
     );
     expect(screen.getByText(USER.email)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Your profile/ })).toHaveAttribute("href", "/profile");
+    expect(screen.getByRole("link", { name: "You" })).toHaveAttribute("href", "/profile");
+  });
+
+  it("sends people without a profile to onboarding", () => {
+    renderShell({ profileComplete: null });
+    expect(screen.getByRole("link", { name: /Your profile/ })).toHaveAttribute(
+      "href",
+      "/onboarding",
+    );
+    expect(screen.getByText("Not started")).toBeInTheDocument();
   });
 
   it("shows the right rail only when given one", () => {
