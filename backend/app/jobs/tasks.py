@@ -24,6 +24,8 @@ from app.services.email.budget import may_send, record_sent
 from app.services.email.templates import login_code_email
 from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
+from app.services.matching.engine import run_match_request
+from app.services.matching.housekeeping import expire_and_purge_requests
 from app.services.profile_parsing import BACKFILL_BATCH_SIZE, parse_profile, pending_profiles
 
 logger = logging.getLogger(__name__)
@@ -144,6 +146,27 @@ async def _parse_pending_profiles(ctx: JobContext) -> None:
         await db.commit()
 
 
+async def _match_request(ctx: JobContext) -> None:
+    """Understand, retrieve, rank and explain one match request (ARCHITECTURE.md §3)."""
+    embedder = get_embedder(ctx.settings)
+    async with ctx.session_factory() as db:
+        await ensure_dimensions_match(db, embedder)
+    async with open_gateway(ctx.settings, ctx.session_factory) as gateway:
+        await run_match_request(
+            ctx.session_factory,
+            gateway,
+            embedder,
+            ctx.settings,
+            uuid.UUID(ctx.payload["request_id"]),
+        )
+
+
+async def _match_housekeeping(ctx: JobContext) -> None:
+    """Daily: expire open requests past their date; delete old ones with their matches."""
+    async with ctx.session_factory() as db:
+        await expire_and_purge_requests(db, ctx.settings, datetime.now(UTC))
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -196,6 +219,19 @@ PARSE_PENDING_PROFILES = JobSpec(
     timeout_seconds=60,
 )
 
+# Someone is waiting for these: ahead of re-embedding and backfills, after login codes.
+MATCH_REQUEST = JobSpec(
+    kind="match_request",
+    handler=_match_request,
+    group=JobGroup.AI,
+    priority=120,
+    max_attempts=3,
+    timeout_seconds=180,
+)
+MATCH_HOUSEKEEPING = JobSpec(
+    kind="match_housekeeping", handler=_match_housekeeping, priority=200, timeout_seconds=240
+)
+
 ALL_JOBS = (
     PING,
     SEND_LOGIN_CODE,
@@ -206,6 +242,8 @@ ALL_JOBS = (
     REEMBED_PROFILES,
     PARSE_PROFILE,
     PARSE_PENDING_PROFILES,
+    MATCH_REQUEST,
+    MATCH_HOUSEKEEPING,
 )
 
 

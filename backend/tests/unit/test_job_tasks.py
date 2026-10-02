@@ -11,6 +11,7 @@ from app.jobs import JobPayloadError, enqueue
 from app.jobs.schedule import SCHEDULE, Period, enqueue_due_jobs
 from app.jobs.tasks import (
     HARD_DELETE_ACCOUNTS,
+    MATCH_HOUSEKEEPING,
     PING,
     PURGE_AUTH_DATA,
     PURGE_JOB_TABLES,
@@ -49,6 +50,7 @@ def test_schedule_runs_retention_daily_and_job_table_purge_hourly() -> None:
     assert periods == {
         HARD_DELETE_ACCOUNTS.kind: Period.DAY,
         PURGE_AUTH_DATA.kind: Period.DAY,
+        MATCH_HOUSEKEEPING.kind: Period.DAY,
         PURGE_JOB_TABLES.kind: Period.HOUR,
     }
 

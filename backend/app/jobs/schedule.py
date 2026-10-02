@@ -16,7 +16,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.jobs.queue import enqueue
 from app.jobs.registry import JobSpec
-from app.jobs.tasks import HARD_DELETE_ACCOUNTS, PURGE_AUTH_DATA, PURGE_JOB_TABLES
+from app.jobs.tasks import (
+    HARD_DELETE_ACCOUNTS,
+    MATCH_HOUSEKEEPING,
+    PURGE_AUTH_DATA,
+    PURGE_JOB_TABLES,
+)
 
 
 class Period(StrEnum):
@@ -38,6 +43,7 @@ class ScheduledJob:
 SCHEDULE: tuple[ScheduledJob, ...] = (
     ScheduledJob(HARD_DELETE_ACCOUNTS, Period.DAY),
     ScheduledJob(PURGE_AUTH_DATA, Period.DAY),
+    ScheduledJob(MATCH_HOUSEKEEPING, Period.DAY),
     ScheduledJob(PURGE_JOB_TABLES, Period.HOUR),
 )
 

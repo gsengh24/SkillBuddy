@@ -9,6 +9,15 @@ from app.models.auth import (
     UserSession,
 )
 from app.models.jobs import EmailLog, EmailPurpose, Job, JobStatus, RateLimitCounter
+from app.models.matching import (
+    INTENTS,
+    REQUEST_TEXT_MAX_LENGTH,
+    REQUEST_TEXT_MIN_LENGTH,
+    Match,
+    MatchRequest,
+    MatchStatus,
+    RequestStatus,
+)
 from app.models.profile import (
     ABOUT_TEXT_MAX_LENGTH,
     DISPLAY_NAME_MAX_LENGTH,
@@ -28,9 +37,12 @@ __all__ = [
     "DISPLAY_NAME_MAX_LENGTH",
     "EMAIL_MAX_LENGTH",
     "EMBEDDING_DIMENSIONS",
+    "INTENTS",
     "LINK_MAX_LENGTH",
     "MAX_LANGUAGES",
     "MAX_LINKS",
+    "REQUEST_TEXT_MAX_LENGTH",
+    "REQUEST_TEXT_MIN_LENGTH",
     "AuthEvent",
     "AuthEventType",
     "AuthIdentity",
@@ -40,6 +52,9 @@ __all__ = [
     "EmbeddingFacet",
     "Job",
     "JobStatus",
+    "Match",
+    "MatchRequest",
+    "MatchStatus",
     "OAuthState",
     "OtpCode",
     "ParseSource",
@@ -48,6 +63,7 @@ __all__ = [
     "ProfileEmbedding",
     "ProfileVisibility",
     "RateLimitCounter",
+    "RequestStatus",
     "User",
     "UserSession",
     "UserStatus",
