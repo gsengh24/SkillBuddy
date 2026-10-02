@@ -17,6 +17,9 @@ const MESSAGES: Record<string, string> = {
   profile_not_found: "You haven't created a profile yet.",
   profile_text_required: "Add a description first, then correct what we understood.",
   storage_full: "We can't save changes right now. Please try again later.",
+  profile_required: "Create your profile first, so we know who to introduce you to.",
+  too_many_open_requests: "You have the most open requests allowed. Close one to start another.",
+  match_request_not_found: "That request no longer exists.",
   email_not_allowed: "This email address can't be used to sign in here.",
   account_pending_deletion:
     "This account is scheduled for permanent deletion and can no longer sign in. Contact support if this is a mistake.",

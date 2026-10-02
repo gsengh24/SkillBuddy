@@ -41,7 +41,8 @@ CLAUDE.md:
       template, hash-cached) that queues the embedding; backfill for older profiles.
 - [x] Match requests and the matcher (understand, retrieve by intent facet, rank in code,
       explain), `/api/v1/requests` endpoints, daily caps and retention (migration 0007).
-- [ ] Discover screen: intent chips, request box, match cards.
+- [x] Discover screen: intent chips, request box, request cards that wait for matches,
+      match cards with the reason (no name before an intro).
 - [x] Profile onboarding and "About you" screens, with the ADR 0007 consent line, a
       review-and-correct step and a "show me in new matches" switch.
 - [x] Embedding dimension made a setting; 384 chosen in
