@@ -93,10 +93,15 @@ backend/
   tests/unit/            No infrastructure needed
   tests/integration/     Real Postgres + Valkey; each run uses a throwaway database
 frontend/
-  app/                   App Router pages: /login, /home, /settings/account, /terms, /privacy
+  app/                   App Router pages: /login, /terms, /privacy; signed-in pages in app/(app)/
+                         (/home, /messages, /saved, /notifications, /settings/account) share
+                         the app shell; /design is the style guide (development only)
   app/api/v1/[...path]/  Same-origin forwarder to the API (app/api/health = web liveness)
   proxy.ts               Next.js Proxy: sends signed-out visitors of protected pages to /login
-  components/            React components
+  components/ui/         Design-system components (Button, Card, IntentChip, ...; ADR 0010)
+  components/shell/      App shell: desktop sidebar, phone top row and tab bar
+  components/            Other React components (auth, legal)
+  lib/design/            Design tokens (source of truth), colour helpers, contrast pairs
   lib/brand.ts           Product name and copy (the only place the name is defined)
   lib/env.ts             Server env validation (zod)
   lib/api/               Typed API clients (client.ts server, browser.ts browser) + schemas
@@ -255,6 +260,11 @@ mobile app were calling it tomorrow.
   null; `proxy.ts` is only a fast first check.
 - Read env only through `lib/env.ts`. Never import server-only modules into client components.
 - Use the brand name only from `lib/brand.ts`.
+- **Design system** ([docs/design/design-system.md](docs/design/design-system.md), ADR 0010):
+  build screens from `components/ui` and the shell. Only token colours (Tailwind's default
+  palette is removed); never a hue's base colour for text; no animations or transitions;
+  outline buttons only; 44px touch targets on phones. A person's colour comes only from
+  `personHue(userId)`. Add colours to `lib/design/tokens.ts` and `app/globals.css` together.
 - ESLint (`--max-warnings=0`) and Prettier must pass.
 
 **General**

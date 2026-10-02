@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { textLinkClasses } from "@/components/ui/text-link";
 import { browserApi } from "@/lib/api/browser";
 import { deletionScheduledSchema, noContentSchema } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
@@ -56,110 +59,87 @@ export function AccountActions() {
 
   if (deletedUntil) {
     return (
-      <div
-        role="status"
-        className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-5"
-      >
-        <h2 className="text-lg font-semibold text-slate-900">
-          Your account is scheduled for deletion
-        </h2>
-        <p className="text-slate-700">
+      <Card role="status" className="flex flex-col gap-3">
+        <h2 className="text-section">Your account is scheduled for deletion</h2>
+        <p>
           You have been signed out everywhere. Your account and all its data will be permanently
           deleted on <strong>{deletedUntil}</strong>. Until then, signing in is disabled.
         </p>
-        <Link href="/" className="text-indigo-700 underline">
+        <Link href="/" className={textLinkClasses()}>
           Go to the home page
         </Link>
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className="flex flex-col gap-8">
       {error ? (
-        <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p
+          role="alert"
+          className="rounded-why bg-coral-tint text-coral-ink px-4 py-3 font-semibold"
+        >
           {error}
         </p>
       ) : null}
 
       <section aria-labelledby={`${ids}-sessions`} className="flex flex-col gap-3">
-        <h2 id={`${ids}-sessions`} className="text-lg font-semibold text-slate-900">
+        <h2 id={`${ids}-sessions`} className="text-section">
           Sign out
         </h2>
         <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => signOut(false)}
-            disabled={busy !== null}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-60"
-          >
+          <Button onClick={() => signOut(false)} disabled={busy !== null}>
             {busy === "logout" ? "Signing out…" : "Sign out"}
-          </button>
-          <button
-            type="button"
-            onClick={() => signOut(true)}
-            disabled={busy !== null}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-60"
-          >
+          </Button>
+          <Button onClick={() => signOut(true)} disabled={busy !== null}>
             {busy === "logout-all" ? "Signing out…" : "Sign out of all devices"}
-          </button>
+          </Button>
         </div>
       </section>
 
       <section aria-labelledby={`${ids}-delete`} className="flex flex-col gap-3">
-        <h2 id={`${ids}-delete`} className="text-lg font-semibold text-slate-900">
+        <h2 id={`${ids}-delete`} className="text-section">
           Delete account
         </h2>
         {!confirmingDelete ? (
           <div>
-            <button
-              type="button"
-              onClick={() => setConfirmingDelete(true)}
-              className="rounded-md border border-rose-300 bg-white px-4 py-2 font-medium text-rose-700 hover:bg-rose-50"
-            >
+            <Button tone="danger" onClick={() => setConfirmingDelete(true)}>
               Delete my account…
-            </button>
+            </Button>
           </div>
         ) : (
           <div
             role="group"
             aria-label="Confirm account deletion"
-            className="flex flex-col gap-4 rounded-lg border border-rose-200 bg-rose-50 p-5"
+            className="rounded-card border-coral-edge bg-coral-tint flex flex-col gap-4 border p-5"
           >
-            <p className="text-slate-800">
+            <p>
               Your account will be scheduled for permanent deletion in{" "}
               <strong>{GRACE_DAYS} days</strong>. You will be signed out on every device right away
               and won&apos;t be able to sign in during those {GRACE_DAYS} days. After that, your
               account and everything in it are deleted for good and cannot be recovered.
             </p>
-            <label className="flex items-start gap-3 text-slate-800">
+            <label className="flex min-h-11 items-start gap-3">
               <input
                 type="checkbox"
                 checked={understood}
                 onChange={(event) => setUnderstood(event.target.checked)}
-                className="mt-1 size-4"
+                className="accent-green-base mt-1 size-4 shrink-0"
               />
               <span>I understand that my account will be permanently deleted.</span>
             </label>
             <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={deleteAccount}
-                disabled={!understood || busy !== null}
-                className="rounded-md bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
-              >
+              <Button tone="danger" onClick={deleteAccount} disabled={!understood || busy !== null}>
                 {busy === "delete" ? "Deleting…" : "Delete my account"}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 onClick={() => {
                   setConfirmingDelete(false);
                   setUnderstood(false);
                 }}
-                className="rounded-md border border-slate-300 bg-white px-4 py-2 font-medium text-slate-800"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}
