@@ -141,6 +141,6 @@ describe("MatchCard", () => {
     expect(screen.getByText("Why this match")).toBeInTheDocument();
     expect(screen.getByText(MATCH.reason)).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Send intro" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Send intro" })).toBeEnabled();
   });
 });

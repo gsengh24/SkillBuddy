@@ -20,6 +20,14 @@ const MESSAGES: Record<string, string> = {
   profile_required: "Create your profile first, so we know who to introduce you to.",
   too_many_open_requests: "You have the most open requests allowed. Close one to start another.",
   match_request_not_found: "That request no longer exists.",
+  match_not_found: "That match no longer exists.",
+  candidate_unavailable: "This person isn't taking new intros right now.",
+  already_connected: "You're already connected with this person.",
+  intro_exists: "There's already an intro between you two.",
+  too_many_pending_intros:
+    "You have many intros waiting for an answer. Wait for some replies first.",
+  intro_not_found: "That intro no longer exists.",
+  intro_not_pending: "This intro has already been answered or has expired.",
   email_not_allowed: "This email address can't be used to sign in here.",
   account_pending_deletion:
     "This account is scheduled for permanent deletion and can no longer sign in. Contact support if this is a mistake.",
