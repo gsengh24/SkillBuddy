@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     account_deletion_grace_days: int = Field(default=30, ge=1, le=90)
     # Recorded on each account when the user accepts the terms.
     terms_version: str = Field(default="2026-10-01-draft", min_length=1, max_length=32)
+    # Version of the AI-processing consent line shown next to the "About you" box
+    # (ADR 0007, section 5). Bump it when the wording changes; profiles then ask again.
+    ai_consent_version: str = Field(default="2026-10-01", min_length=1, max_length=32)
+    # Profile saves per user per rate-limit window (each text change queues a parse).
+    profile_update_limit_per_user: int = Field(default=20, ge=1, le=1000)
     # Audit-log retention; the daily purge job deletes older auth_events.
     auth_event_retention_days: int = Field(default=90, ge=7, le=730)
 

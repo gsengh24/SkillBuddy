@@ -34,7 +34,7 @@ data; events kept raw for 30 days.
 | --- | --- | --- | --- | --- |
 | `users` | 1 row + primary key and unique email index (+ consent and deletion columns, migration 0002) | ~200 B row | ~0.3 KB | ~0.3 KB |
 | `auth_identities` | 1 email identity (Google later) + unique (provider, subject) index | ~150 B | ~0.3 KB | ~0.3 KB |
-| `profiles` | About text, structured JSON, timezone, languages | ~2 KB text + ~1.5 KB JSON | ~4 KB | ~4 KB |
+| `profiles` | About text (capped at 2,000 characters), structured JSON, timezone, languages; display name, up to 3 links, parse state and AI-consent columns (migration 0005, ~0.2 KB) | ~2 KB text + ~1.5 KB JSON + ~0.2 KB | ~4 KB | ~4 KB |
 | `profile_embeddings` | 4 vectors + HNSW index + unique index | 4 × (vector + ~120 B row) × 2.2 | ~14 KB | ~28 KB |
 | `events` | Behavioural log, raw 30 days | 5 events/day × 30 days × ~200 B | ~30 KB | ~30 KB |
 | `messages` | Chat messages sent | 100 retained messages × ~300 B | ~30 KB | ~30 KB |

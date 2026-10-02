@@ -10,8 +10,10 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.embeddings import get_embedder
+from app.ai.gateway import open_gateway
 from app.core.security import mask_email
 from app.jobs.queue import enqueue
 from app.jobs.registry import JobContext, JobGroup, JobRegistry, JobSpec
@@ -22,6 +24,7 @@ from app.services.email.budget import may_send, record_sent
 from app.services.email.templates import login_code_email
 from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
+from app.services.profile_parsing import BACKFILL_BATCH_SIZE, parse_profile, pending_profiles
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +105,45 @@ async def _reembed_profiles(ctx: JobContext) -> None:
             await db.commit()
 
 
+async def _queue_embedding(db: AsyncSession, user_id: uuid.UUID) -> None:
+    await enqueue(db, EMBED_PROFILE, {"user_id": str(user_id)})
+
+
+async def _parse_profile(ctx: JobContext) -> None:
+    """Parse one profile's about text (AI, or the template when it is off), then embed it."""
+    async with open_gateway(ctx.settings, ctx.session_factory) as gateway:
+        await parse_profile(
+            ctx.session_factory,
+            gateway,
+            uuid.UUID(ctx.payload["user_id"]),
+            after_parse=_queue_embedding,
+        )
+
+
+async def _parse_pending_profiles(ctx: JobContext) -> None:
+    """Backfill: queue a parse for every pending profile, a batch at a time.
+
+    Queued by migration 0005 for profiles written before parsing existed. The cursor in
+    the payload makes each run continue after the last profile the previous one queued.
+    """
+    after = ctx.payload.get("after")
+    async with ctx.session_factory() as db:
+        due = await pending_profiles(
+            db, after=uuid.UUID(after) if after else None, limit=BACKFILL_BATCH_SIZE + 1
+        )
+        batch = due[:BACKFILL_BATCH_SIZE]
+        for user_id in batch:
+            await enqueue(
+                db,
+                PARSE_PROFILE,
+                {"user_id": str(user_id)},
+                dedupe_key=f"parse_profile:{user_id}:backfill",
+            )
+        if len(due) > BACKFILL_BATCH_SIZE:
+            await enqueue(db, PARSE_PENDING_PROFILES, {"after": str(batch[-1])})
+        await db.commit()
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -139,6 +181,21 @@ REEMBED_PROFILES = JobSpec(
     timeout_seconds=240,
 )
 
+# One model call per job; the gateway's own timeout (20 s per provider) fits inside.
+PARSE_PROFILE = JobSpec(
+    kind="parse_profile",
+    handler=_parse_profile,
+    group=JobGroup.AI,
+    priority=140,
+    timeout_seconds=90,
+)
+PARSE_PENDING_PROFILES = JobSpec(
+    kind="parse_pending_profiles",
+    handler=_parse_pending_profiles,
+    priority=300,
+    timeout_seconds=60,
+)
+
 ALL_JOBS = (
     PING,
     SEND_LOGIN_CODE,
@@ -147,6 +204,8 @@ ALL_JOBS = (
     PURGE_JOB_TABLES,
     EMBED_PROFILE,
     REEMBED_PROFILES,
+    PARSE_PROFILE,
+    PARSE_PENDING_PROFILES,
 )
 
 
