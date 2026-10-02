@@ -100,3 +100,49 @@ export const authMethodsSchema = z.object({
 export type AuthMethods = z.infer<typeof authMethodsSchema>;
 
 export const googleStartSchema = z.object({ authorization_url: z.string().url() });
+
+export const intentSchema = z.enum([
+  "build_together",
+  "skill_exchange",
+  "interest_buddy",
+  "accountability",
+  "mentor",
+  "explore",
+]);
+
+export const matchRequestSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  requested_intent: intentSchema.nullable(),
+  intent: intentSchema.nullable(),
+  status: z.enum(["pending", "ready", "closed", "expired"]),
+  match_count: z.number(),
+  created_at: z.string(),
+  matched_at: z.string().nullable(),
+  expires_at: z.string(),
+});
+export type MatchRequest = z.infer<typeof matchRequestSchema>;
+
+export const matchRequestPageSchema = z.object({
+  items: z.array(matchRequestSchema),
+  next_cursor: z.string().nullable(),
+});
+
+export const matchSchema = z.object({
+  id: z.string(),
+  rank: z.number(),
+  reason: z.string(),
+  status: z.enum(["shown", "viewed", "intro_sent", "accepted", "declined", "expired"]),
+  candidate: z.object({
+    user_id: z.string(),
+    summary: z.string(),
+    offers: z.array(z.string()),
+    seeks: z.array(z.string()),
+    interests: z.array(z.string()),
+    availability: z.string(),
+    languages: z.array(z.string()),
+  }),
+});
+export type Match = z.infer<typeof matchSchema>;
+
+export const matchListSchema = z.object({ items: z.array(matchSchema) });
