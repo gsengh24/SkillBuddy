@@ -81,7 +81,7 @@ The weights start hand-set per intent. Once there are a few thousand rated match
 
 ## 4. System architecture
 
-The web app talks to one API; the API never calls a model itself. It writes to PostgreSQL and drops a job on the Redis queue, and a separate worker does the slow AI work through a single gateway.
+The web app talks to one API; the API never calls a model itself. It writes to PostgreSQL and adds a job to the job queue, a table in the same PostgreSQL database ([ADR 0008](adr/0008-free-runtime-jobs-and-email.md)), and a job runner does the slow AI work through a single gateway. The runner is a separate worker process in development and CI, and runs inside the API process on free hosting.
 
 &#91;embedded content: system architecture · 9 components\]
 
@@ -96,7 +96,7 @@ The web app talks to one API; the API never calls a model itself. It writes to P
 
 ## 5. Data model
 
-PostgreSQL is the single source of truth, with the pgvector extension holding embeddings next to the rows they describe. Redis handles queues, caching and rate limits. A dedicated vector database is deferred until roughly 5 to 10 million profiles.
+PostgreSQL is the single source of truth, with the pgvector extension holding embeddings next to the rows they describe. PostgreSQL also holds the job queue and the rate-limit counters; there is no Redis ([ADR 0008](adr/0008-free-runtime-jobs-and-email.md)). A dedicated vector database is deferred until roughly 5 to 10 million profiles.
 
 | Entity | Key fields | Notes |
 | --- | --- | --- |
@@ -220,7 +220,7 @@ Everything runs in containers, described as code, so the same system can move fr
 
 | Stage | Users | Setup | Approximate monthly infra cost |
 | --- | --- | --- | --- |
-| Launch | up to 5,000 | One app container, one worker, managed Postgres with pgvector, managed Redis | USD 100 to 300, plus model usage |
+| Launch | up to 5,000 | One app container, one worker, managed Postgres with pgvector (also the job queue and rate limits) | USD 100 to 300, plus model usage |
 | Growth | up to 100,000 | Autoscaled app and workers, read replica, CDN, separate matcher service | USD 1,000 to 3,000, plus model usage |
 | Scale | 1 million or more | Kubernetes, dedicated vector store, streaming event pipeline, data warehouse | Sized from measured load |
 
@@ -235,9 +235,9 @@ The stack favours one language for most of the system and boring, well-supported
 | Frontend web | Next.js (React, TypeScript) and Tailwind | Fast to build, SSR for landing pages, large talent pool | Remix, SvelteKit |
 | Mobile | Responsive web first, then React Native | Validate the idea before paying for two apps | Flutter |
 | Backend API | Python with FastAPI | Async, typed, automatic OpenAPI docs, same language as the AI code | NestJS |
-| Background jobs | Celery or Arq on Redis | Mature queues, retries, scheduling | Temporal for complex workflows later |
+| Background jobs | PostgreSQL job queue (`SKIP LOCKED` with leases), ticked by a scheduler ([ADR 0008](adr/0008-free-runtime-jobs-and-email.md)) | No extra service; jobs are transactional with their data | Arq or Celery on Redis or Valkey, or Temporal, when hosting is paid |
 | Database | PostgreSQL with pgvector | One store for relational data and vectors; fewer moving parts | Qdrant or Pinecone at scale |
-| Cache and queue | Redis | Rate limits, sessions, job broker | Valkey |
+| Rate limits and sessions | PostgreSQL ([ADR 0008](adr/0008-free-runtime-jobs-and-email.md)) | One store; free hosts have no always-on Redis | Redis or Valkey when hosting is paid |
 | Chat | REST and adaptive client polling, PostgreSQL only ([ADR 0012](adr/0012-chat-delivery-by-polling.md)) | Works on sleeping free hosts with no pub/sub service | WebSockets or SSE, or a managed service such as Ably, once hosting is always-on |
 | Auth | Email OTP plus Google sign-in, using a managed auth provider or a vetted library | Do not hand-roll auth | Auth0, Clerk, Keycloak |
 | LLM and embeddings | Provider-agnostic gateway, hosted models first | Fastest route to quality; swap later | Self-hosted open models for cost |
