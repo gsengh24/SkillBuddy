@@ -70,6 +70,26 @@ CLAUDE.md:
 - [ ] Replace the estimates in `docs/storage-budget.md` with measured per-user sizes from
       staging (synthetic data).
 
+## Phase 3: chat and safety
+
+- [x] **Chat** ([ADR 0012](adr/0012-chat-delivery-by-polling.md), migration 0009): messages only
+      inside an accepted connection; only the two people can read them; read tracking and
+      unread counts; adaptive polling with per-person and daily caps; messages deleted after
+      90 days (`MESSAGE_RETENTION_DAYS`), with a note in the chat.
+- [ ] **Reports** (owner review before merge): a report endpoint with a per-person limit,
+      a frozen copy of the reported message and the 10 before it, an admin reports endpoint,
+      and an hourly alert email with no message text; copies deleted 180 days after resolve.
+- [ ] **Blocking (item 7) must close chat both ways.** Chat already asks
+      `app/services/blocks.py` (`blocked_with`) before every send, history page, mark-read and
+      poll; it returns nobody today. When blocking is added, fill in that function from the
+      blocks table, so a block in either direction stops sending and reading for both people
+      (they get "conversation not found", which does not reveal the block). Also hide the
+      connection from `GET /connections` and add the block as a hard filter in retrieval
+      (ARCHITECTURE.md §8). `test_a_block_stops_sending_and_reading_both_ways` already
+      checks chat's side through the hook.
+- [ ] Automated screening of messages: not in chat v1; decide in item 7 (it would send
+      message text to an AI provider, which needs consent and privacy wording).
+
 ## Hardening
 
 - [ ] **Staging migration drift check**: a check that fails or warns when the staging

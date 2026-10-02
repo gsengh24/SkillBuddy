@@ -115,6 +115,17 @@ class Settings(BaseSettings):
     # The web app's public address, for links in notification emails (no link if unset).
     web_app_url: str | None = Field(default=None, max_length=200)
 
+    # --- Chat (ADR 0012) -------------------------------------------------------------
+    # Messages are deleted this many days after they were sent.
+    message_retention_days: int = Field(default=90, ge=7, le=730)
+    # Messages a person may send per UTC day.
+    messages_per_day: int = Field(default=300, ge=1, le=5000)
+    # Polls of /messages/updates per person per minute (the client's fastest cadence is 20).
+    chat_polls_per_minute: int = Field(default=40, ge=5, le=600)
+    # Polls for everyone per UTC day: half of Vercel Hobby's monthly requests / 30. Past it,
+    # each person is limited to one poll a minute until the next UTC day.
+    chat_polls_per_day: int = Field(default=16_000, ge=1, le=1_000_000)
+
     # --- Google sign-in (ADR 0011) -------------------------------------------------
     # Off, or any key missing: the button is hidden and the endpoints answer 404.
     google_signin_enabled: bool = False

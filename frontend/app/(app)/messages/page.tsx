@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 import { TextLink } from "@/components/ui/text-link";
@@ -11,7 +13,7 @@ import { getConnections } from "@/lib/social/server";
 export const metadata: Metadata = { title: "Messages" };
 export const dynamic = "force-dynamic";
 
-/** People you're connected with. Chat comes in the next step. */
+/** People you're connected with, each with a link to your chat. */
 export default async function MessagesPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/messages");
@@ -22,17 +24,20 @@ export default async function MessagesPage() {
       <header className="flex flex-col gap-1">
         <h1 className="text-h1">Messages</h1>
         <p className="text-muted">
-          People you&apos;re connected with. Chat opens soon; for now, use the links they shared.
+          People you&apos;re connected with. Only the two of you can read your chat.
         </p>
       </header>
       {connections.items.length ? (
         <ul className="flex flex-col gap-4">
-          {connections.items.map(({ id, person }) => (
+          {connections.items.map(({ id, person, unread_messages }) => (
             <li key={id}>
               <Card className="flex flex-col gap-3">
-                <h2 className="text-body text-ink font-bold">
-                  {person.display_name ?? "Your connection"}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-body text-ink font-bold break-words">
+                    {person.display_name ?? "Your connection"}
+                  </h2>
+                  <Badge count={unread_messages} label="unread messages" />
+                </div>
                 {person.summary ? <p>{person.summary}</p> : null}
                 {person.offers.length ? (
                   <ul className="flex flex-wrap gap-2" aria-label="Offers">
@@ -52,6 +57,9 @@ export default async function MessagesPage() {
                     ))}
                   </ul>
                 ) : null}
+                <ButtonLink href={`/messages/${id}`} className="self-start">
+                  Open chat
+                </ButtonLink>
               </Card>
             </li>
           ))}

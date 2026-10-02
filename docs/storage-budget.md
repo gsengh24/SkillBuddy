@@ -37,12 +37,12 @@ data; events kept raw for 30 days.
 | `profiles` | About text (capped at 2,000 characters), structured JSON, timezone, languages; display name, up to 3 links, parse state and AI-consent columns (migration 0005, ~0.2 KB) | ~2 KB text + ~1.5 KB JSON + ~0.2 KB | ~4 KB | ~4 KB |
 | `profile_embeddings` | 4 vectors + HNSW index + unique index | 4 × (vector + ~120 B row) × 2.2 | ~14 KB | ~28 KB |
 | `events` | Behavioural log, raw 30 days | 5 events/day × 30 days × ~200 B | ~30 KB | ~30 KB |
-| `messages` | Chat messages sent | 100 retained messages × ~300 B | ~30 KB | ~30 KB |
+| `messages` | Chat messages (body up to 2,000 characters; sender stored as one flag, not a user id), plus two read times on each connection (migration 0009, [ADR 0012](adr/0012-chat-delivery-by-polling.md)) | Deleted `MESSAGE_RETENTION_DAYS` (90) after sending; about 100 kept per user at a time × ~300 B, plus ~60 B of index each | ~36 KB | ~36 KB |
 | `sessions` + `otp_codes` | Active sessions (max 90 days); codes purged once expired | 2 sessions × ~300 B | ~0.6 KB | ~0.6 KB |
 | `auth_events` | Logins, failures | 20 in the retention window × ~200 B | ~4 KB | ~4 KB |
 | `match_requests` + `matches` | Match requests (text up to 1,000 characters, parsed JSON) and up to 5 matches each, with reasons (migration 0007) | About 1 request a week kept for 90 days (`MATCH_REQUEST_RETENTION_DAYS`): 13 × (1.2 KB + 5 × 0.4 KB) | ~42 KB | ~42 KB |
 | `intros` + `connections` + `notifications` | Intros (note up to 500 characters), connections, in-app notifications (migration 0008) | A few intros and about 20 notifications per 90 days; notifications purged after `NOTIFICATION_RETENTION_DAYS` (90) | ~6 KB | ~6 KB |
-| **Total** | | | **~132 KB** | **~145 KB** |
+| **Total** | | | **~138 KB** | **~151 KB** |
 
 Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runtime-jobs-and-email.md)):
 
@@ -62,10 +62,10 @@ Allowing ~20 MB for PostgreSQL's own catalog and empty-table overhead:
 
 | Embedding dimension | Budget (350 MB) | Protect threshold (450 MB) |
 | --- | --- | --- |
-| 384 | about **2,500 users** | about 3,300 users |
-| 768 | about 2,300 users | about 3,000 users |
+| 384 | about **2,400 users** | about 3,100 users |
+| 768 | about 2,200 users | about 2,800 users |
 
-Updated 2026-10-03 for match requests (migration 0007) and intros and notifications (0008); before them the budget fitted about
+Updated 2026-10-03 for match requests (migration 0007), intros and notifications (0008) and chat (0009); before them the budget fitted about
 4,000 users. Match history, events and messages dominate, not embeddings. Shorter
 `MATCH_REQUEST_RETENTION_DAYS` (for example 45 days halves the match share), shorter event
 retention and a message history cap are the biggest levers if space gets tight. Shorter event retention (or aggregating

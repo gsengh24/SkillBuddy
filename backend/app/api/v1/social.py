@@ -26,7 +26,7 @@ from app.schemas.social import (
     NotificationPage,
     UnreadCount,
 )
-from app.services import notifications
+from app.services import chat, notifications
 from app.services.auth.rate_limit import RateLimiter
 from app.services.intros import Box, IntroService
 from app.services.matching.requests import DAY_SECONDS
@@ -117,11 +117,13 @@ async def withdraw_intro(intro_id: uuid.UUID, auth: AuthDep, service: ServiceDep
 
 
 @router.get("/connections", summary="People you're connected with", responses={401: _401})
-async def list_connections(auth: AuthDep, service: ServiceDep) -> ConnectionList:
+async def list_connections(auth: AuthDep, service: ServiceDep, db: DbDep) -> ConnectionList:
     rows = await service.connections(auth.user)
+    chats = await chat.summaries(db, auth.user.id)
     return ConnectionList(
         items=[
-            ConnectionOut.build(connection, other, profile) for connection, other, profile in rows
+            ConnectionOut.build(connection, other, profile, chats.get(connection.id))
+            for connection, other, profile in rows
         ]
     )
 

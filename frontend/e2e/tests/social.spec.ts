@@ -28,3 +28,12 @@ test("notifications and messages pages are accessible on a phone", async ({ page
     .analyze();
   expect(results.violations.map((v) => v.id)).toEqual([]);
 });
+
+test("a conversation you're not part of is not found", async ({ page, request }) => {
+  await signUp(page, request, "/messages");
+  // signUp returns once "Sign in" is clicked: wait until the session is set.
+  await expect(page.getByRole("heading", { name: "Messages", level: 1 })).toBeVisible();
+  await page.goto("/messages/00000000-0000-4000-8000-000000000000");
+  await expect(page.getByText("This page could not be found.")).toBeVisible();
+  await expect(page.getByRole("textbox")).toHaveCount(0);
+});

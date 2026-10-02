@@ -19,6 +19,7 @@ from app.jobs.queue import enqueue
 from app.jobs.registry import JobContext, JobGroup, JobRegistry, JobSpec
 from app.models import EmailPurpose, OtpCode
 from app.services.auth.retention import hard_delete_due_accounts, purge_expired_auth_data
+from app.services.chat import purge_old_messages
 from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
 from app.services.email.templates import login_code_email
@@ -178,6 +179,12 @@ async def _send_notification_email(ctx: JobContext) -> None:
         await send_notification_email(db, ctx.settings, uuid.UUID(ctx.payload["notification_id"]))
 
 
+async def _purge_messages(ctx: JobContext) -> None:
+    """Daily: delete chat messages older than MESSAGE_RETENTION_DAYS (ADR 0012)."""
+    async with ctx.session_factory() as db:
+        await purge_old_messages(db, ctx.settings, datetime.now(UTC))
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -243,6 +250,10 @@ MATCH_HOUSEKEEPING = JobSpec(
     kind="match_housekeeping", handler=_match_housekeeping, priority=200, timeout_seconds=240
 )
 
+PURGE_MESSAGES = JobSpec(
+    kind="purge_messages", handler=_purge_messages, priority=200, timeout_seconds=240
+)
+
 SEND_NOTIFICATION_EMAIL = JobSpec(
     kind="send_notification_email",
     handler=_send_notification_email,
@@ -263,6 +274,7 @@ ALL_JOBS = (
     PARSE_PENDING_PROFILES,
     MATCH_REQUEST,
     MATCH_HOUSEKEEPING,
+    PURGE_MESSAGES,
     SEND_NOTIFICATION_EMAIL,
 )
 

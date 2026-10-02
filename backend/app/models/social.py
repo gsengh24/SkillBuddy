@@ -2,8 +2,9 @@
 
 Retention (storage rules, CLAUDE.md): an intro lives as long as the match it was sent
 from (deleted with the match request after its retention period); a connection lives
-until either account is deleted; notifications are purged after
-``NOTIFICATION_RETENTION_DAYS``. Account deletion removes everything (ON DELETE CASCADE).
+until either account is deleted (its messages, in ``app/models/chat.py``, go with it);
+notifications are purged after ``NOTIFICATION_RETENTION_DAYS``. Account deletion removes
+everything (ON DELETE CASCADE).
 """
 
 from __future__ import annotations
@@ -84,6 +85,9 @@ class Connection(UUIDPrimaryKeyMixin, Base):
     )
     intro_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("intros.id", ondelete="SET NULL"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    # Chat read state (ADR 0012): each person has read every message up to this time.
+    user_a_read_at: Mapped[datetime | None]
+    user_b_read_at: Mapped[datetime | None]
 
 
 class NotificationKind(StrEnum):

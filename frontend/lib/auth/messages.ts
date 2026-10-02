@@ -28,6 +28,8 @@ const MESSAGES: Record<string, string> = {
     "You have many intros waiting for an answer. Wait for some replies first.",
   intro_not_found: "That intro no longer exists.",
   intro_not_pending: "This intro has already been answered or has expired.",
+  conversation_not_found: "This conversation isn't available.",
+  conversation_closed: "This person can't receive messages right now.",
   email_not_allowed: "This email address can't be used to sign in here.",
   account_pending_deletion:
     "This account is scheduled for permanent deletion and can no longer sign in. Contact support if this is a mistake.",
