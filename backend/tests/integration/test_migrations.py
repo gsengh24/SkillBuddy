@@ -16,7 +16,8 @@ from tests.integration.conftest import alembic_config
 PHASE_ZERO_TABLES = {"users", "profiles", "profile_embeddings"}
 AUTH_TABLES = {"auth_identities", "otp_codes", "sessions", "auth_events"}
 JOB_TABLES = {"jobs", "rate_limit_counters", "email_log"}
-ALL_TABLES = PHASE_ZERO_TABLES | AUTH_TABLES | JOB_TABLES
+GOOGLE_TABLES = {"oauth_states"}  # migration 0006 (ADR 0011)
+ALL_TABLES = PHASE_ZERO_TABLES | AUTH_TABLES | JOB_TABLES | GOOGLE_TABLES
 
 
 @pytest.fixture
@@ -107,6 +108,26 @@ def test_job_tables_migration_downgrades_to_0002_and_back(
 
     command.downgrade(config, "0002")
     assert _tables(engine) == PHASE_ZERO_TABLES | AUTH_TABLES
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
+
+
+def test_oauth_states_migration_downgrades_to_0005_and_back(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO oauth_states (state_hash, next_path, age_confirmed, accept_terms, "
+                "expires_at) VALUES ('h', '/home', true, true, now())"
+            )
+        )
+
+    command.downgrade(config, "0005")
+    assert _tables(engine) == PHASE_ZERO_TABLES | AUTH_TABLES | JOB_TABLES
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES

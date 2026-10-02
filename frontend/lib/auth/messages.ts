@@ -17,6 +17,15 @@ const MESSAGES: Record<string, string> = {
   profile_not_found: "You haven't created a profile yet.",
   profile_text_required: "Add a description first, then correct what we understood.",
   storage_full: "We can't save changes right now. Please try again later.",
+  email_not_allowed: "This email address can't be used to sign in here.",
+  account_pending_deletion:
+    "This account is scheduled for permanent deletion and can no longer sign in. Contact support if this is a mistake.",
+  rate_limited: "Too many attempts. Please wait a few minutes and try again.",
+  google_failed: "We couldn't sign you in with Google. Please try again, or use an email code.",
+  google_cancelled: "Google sign-in was cancelled.",
+  google_state_invalid:
+    "That sign-in attempt expired or was already used. Please try Continue with Google again.",
+  google_signin_unavailable: "Sign in with Google isn't available right now. Use an email code.",
   email_quota_exhausted:
     "We've sent as many sign-in emails as we can for now. Please try again in a few hours.",
 };
@@ -39,4 +48,10 @@ export function describeError(error: unknown): string {
     return "Something went wrong. Please try again.";
   }
   return "We couldn't reach the server. Check your connection and try again.";
+}
+
+/** The message for an error code passed back in a URL (e.g. /login?error=...), if known. */
+export function messageForCode(code: string | undefined): string | null {
+  if (!code || !Object.hasOwn(MESSAGES, code)) return null;
+  return MESSAGES[code] ?? null;
 }

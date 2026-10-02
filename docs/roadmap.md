@@ -31,6 +31,8 @@ CLAUDE.md:
 
 ## Phase 1: profiles, requests and the AI gateway
 
+- [x] Sign in with Google for `@thapar.edu` (ADR 0011), email codes kept as the fallback;
+      allow-list, exceptions and block list for both methods.
 - [ ] Text caps enforced in request schemas: profile text and request text (2,000
       characters planned), with clear validation errors. Profile text: done (schema and
       CHECK, migration 0005); request text comes with the matching endpoints.

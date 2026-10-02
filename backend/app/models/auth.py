@@ -106,3 +106,26 @@ class AuthEvent(UUIDPrimaryKeyMixin, Base):
     user_agent: Mapped[str | None] = mapped_column(String(USER_AGENT_MAX_LENGTH))
     detail: Mapped[dict[str, Any]] = mapped_column(default=dict, server_default=text("'{}'::jsonb"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+
+
+# Short paths only: the page to return to after Google sign-in, e.g. "/profile".
+NEXT_PATH_MAX_LENGTH = 200
+
+
+class OAuthState(UUIDPrimaryKeyMixin, Base):
+    """One Google sign-in attempt (ADR 0011): single use, expires after a few minutes.
+
+    Only an HMAC of the ``state`` value is stored. The nonce and PKCE verifier are derived
+    from the state with the server's secret key, so neither is stored at all. The tick-box
+    answers from the sign-in page travel here, so a first sign-in can create the account.
+    """
+
+    __tablename__ = "oauth_states"
+
+    state_hash: Mapped[str] = mapped_column(String(DIGEST_LENGTH), unique=True)
+    next_path: Mapped[str] = mapped_column(String(NEXT_PATH_MAX_LENGTH))
+    age_confirmed: Mapped[bool]
+    accept_terms: Mapped[bool]
+    created_ip: Mapped[str | None] = mapped_column(String(IP_MAX_LENGTH))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(index=True)

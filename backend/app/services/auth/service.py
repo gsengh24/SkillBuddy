@@ -1,8 +1,9 @@
-"""Sign-in flows: request a code, verify it, sign out, request account deletion."""
+"""Sign-in flows: email codes and Google (ADR 0006, ADR 0011), sign out, account deletion."""
 
 from __future__ import annotations
 
 import logging
+import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -16,27 +17,45 @@ from app.models import (
     AuthEventType,
     AuthIdentity,
     AuthProvider,
+    OAuthState,
     OtpCode,
     User,
     UserSession,
     UserStatus,
 )
-from app.services.auth.codes import OTP_DIGITS, email_hash, normalise_email, otp_hash
+from app.services.auth.codes import (
+    OTP_DIGITS,
+    email_hash,
+    normalise_email,
+    oauth_state_hash,
+    otp_hash,
+)
 from app.services.auth.delivery import OtpDelivery
 from app.services.auth.errors import (
     AccountPendingDeletionError,
     AccountSuspendedError,
     CodeLockedError,
     ConsentRequiredError,
+    EmailNotAllowedError,
+    GoogleSignInCancelledError,
+    GoogleSignInFailedError,
+    GoogleSignInUnavailableError,
     InvalidCodeError,
+    OAuthStateInvalidError,
 )
 from app.services.auth.events import ClientInfo, record_event
+from app.services.auth.google import GoogleOidcClient, GoogleSignInError
+from app.services.auth.policy import SignInMethod, is_email_allowed
 from app.services.auth.rate_limit import RateLimiter
 from app.services.auth.sessions import create_session, revoke_all_sessions, revoke_session
 from app.services.email.budget import ensure_login_code_can_be_sent
 from app.services.storage import SignupsPausedError, StorageMonitor
 
 logger = logging.getLogger(__name__)
+
+# How long a "Continue with Google" attempt may take before its state expires.
+OAUTH_STATE_TTL = timedelta(minutes=10)
+DEFAULT_NEXT_PATH = "/home"
 
 
 @dataclass(frozen=True)
@@ -47,6 +66,18 @@ class SignInResult:
     created_account: bool
 
 
+@dataclass(frozen=True)
+class GoogleStart:
+    state: str
+    authorization_url: str
+
+
+@dataclass(frozen=True)
+class GoogleSignInResult:
+    sign_in: SignInResult
+    next_path: str
+
+
 class AuthService:
     def __init__(
         self,
@@ -55,12 +86,40 @@ class AuthService:
         limiter: RateLimiter,
         delivery: OtpDelivery,
         storage: StorageMonitor,
+        google: GoogleOidcClient | None = None,
     ) -> None:
         self._db = db
         self._settings = settings
         self._limiter = limiter
         self._delivery = delivery
         self._storage = storage
+        self._google = google
+
+    async def _refuse(
+        self,
+        client: ClientInfo,
+        reason: str,
+        *,
+        method: SignInMethod,
+        email: str | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> None:
+        """Record a refused sign-in in the audit log (reason codes only, never secrets)."""
+        record_event(
+            self._db,
+            self._settings,
+            AuthEventType.LOGIN_REFUSED,
+            client=client,
+            email=email,
+            user_id=user_id,
+            detail={"reason": reason, "method": method.value},
+        )
+        await self._db.commit()
+
+    async def _ensure_allowed(self, email: str, method: SignInMethod, client: ClientInfo) -> None:
+        if not is_email_allowed(self._settings, email, method):
+            await self._refuse(client, "email_not_allowed", method=method, email=email)
+            raise EmailNotAllowedError
 
     async def _limit(
         self, action: str, email: str, client: ClientInfo, *, per_email: int, per_ip: int
@@ -81,6 +140,7 @@ class AuthService:
             per_email=self._settings.otp_request_limit_per_email,
             per_ip=self._settings.otp_request_limit_per_ip,
         )
+        await self._ensure_allowed(email, SignInMethod.EMAIL_CODE, client)
         # Gmail's daily cap: refuse now (503) rather than accept a code that cannot be sent.
         await ensure_login_code_can_be_sent(self._db, self._settings)
         # Only the newest code is ever valid.
@@ -124,6 +184,7 @@ class AuthService:
             per_email=self._settings.otp_verify_limit_per_email,
             per_ip=self._settings.otp_verify_limit_per_ip,
         )
+        await self._ensure_allowed(email, SignInMethod.EMAIL_CODE, client)
         now = datetime.now(UTC)
         otp = await self._db.scalar(
             select(OtpCode)
@@ -147,6 +208,22 @@ class AuthService:
             raise CodeLockedError if locked else InvalidCodeError
 
         user = await self._db.scalar(select(User).where(User.email == email))
+        try:
+            await self._check_consent_and_capacity(
+                user, age_confirmed=age_confirmed, accept_terms=accept_terms
+            )
+        except (ConsentRequiredError, SignupsPausedError):
+            # Keep the code usable so the person can tick the boxes and resubmit.
+            await self._db.rollback()
+            raise
+        otp.consumed_at = now
+        return await self._finish_sign_in(
+            user, email, now, client, provider=AuthProvider.EMAIL, subject=email
+        )
+
+    async def _check_consent_and_capacity(
+        self, user: User | None, *, age_confirmed: bool, accept_terms: bool
+    ) -> None:
         # 18+ by self-declaration (ADR 0009): new accounts confirm age and accept the terms;
         # an active account with no recorded age confirmation must confirm before signing in.
         needs_terms = user is None
@@ -154,18 +231,24 @@ class AuthService:
             user.status == UserStatus.ACTIVE and user.age_confirmed_at is None
         )
         if (needs_age and not age_confirmed) or (needs_terms and not accept_terms):
-            # Keep the code usable so the person can tick the boxes and resubmit.
-            await self._db.rollback()
             raise ConsentRequiredError
         if user is None:
             # Near the free storage limit, refuse new accounts (existing users still sign in).
-            try:
-                await self._storage.ensure_signups_allowed()
-            except SignupsPausedError:
-                await self._db.rollback()
-                raise
+            await self._storage.ensure_signups_allowed()
 
-        otp.consumed_at = now
+    async def _finish_sign_in(
+        self,
+        user: User | None,
+        email: str,
+        now: datetime,
+        client: ClientInfo,
+        *,
+        provider: AuthProvider,
+        subject: str,
+    ) -> SignInResult:
+        """Refuse inactive accounts, create or link the account, and start a session."""
+        google = provider is AuthProvider.GOOGLE
+        detail = {"method": SignInMethod.GOOGLE.value} if google else None
         if user is not None and user.status != UserStatus.ACTIVE:
             record_event(
                 self._db,
@@ -173,7 +256,7 @@ class AuthService:
                 AuthEventType.LOGIN_REFUSED,
                 client=client,
                 user_id=user.id,
-                detail={"reason": user.status},
+                detail={"reason": user.status, **(detail or {})},
             )
             await self._db.commit()
             if user.status == UserStatus.PENDING_DELETION:
@@ -191,20 +274,144 @@ class AuthService:
             )
             self._db.add(user)
             await self._db.flush()
-            self._db.add(AuthIdentity(user_id=user.id, provider=AuthProvider.EMAIL, subject=email))
-        elif user.age_confirmed_at is None:
-            user.age_confirmed_at = now  # confirmed now (needs_age above)
+            self._db.add(AuthIdentity(user_id=user.id, provider=provider, subject=subject))
+        else:
+            if google and not await self._has_identity(user.id, provider, subject):
+                # An account made with email codes: Google has verified this address too.
+                self._db.add(AuthIdentity(user_id=user.id, provider=provider, subject=subject))
+            if user.age_confirmed_at is None:
+                user.age_confirmed_at = now  # confirmed now (checked by the caller)
         user.last_login_at = now
         new = await create_session(self._db, self._settings, user.id, client)
         event = AuthEventType.SIGNUP if created_account else AuthEventType.LOGIN
-        record_event(self._db, self._settings, event, client=client, user_id=user.id)
+        record_event(self._db, self._settings, event, client=client, user_id=user.id, detail=detail)
         await self._db.commit()
         logger.info(
-            "signed_in", extra={"user_id": str(user.id), "created_account": created_account}
+            "signed_in",
+            extra={
+                "user_id": str(user.id),
+                "created_account": created_account,
+                "method": SignInMethod.GOOGLE.value if google else SignInMethod.EMAIL_CODE.value,
+            },
         )
         return SignInResult(
             user=user, session=new.session, token=new.token, created_account=created_account
         )
+
+    async def _has_identity(self, user_id: uuid.UUID, provider: AuthProvider, subject: str) -> bool:
+        found = await self._db.scalar(
+            select(AuthIdentity.id).where(
+                AuthIdentity.user_id == user_id,
+                AuthIdentity.provider == provider,
+                AuthIdentity.subject == subject,
+            )
+        )
+        return found is not None
+
+    # --- Google (ADR 0011) ----------------------------------------------------------------
+
+    def _google_client(self) -> GoogleOidcClient:
+        if self._google is None or not self._settings.google_signin_available:
+            raise GoogleSignInUnavailableError
+        return self._google
+
+    async def _limit_google(self, action: str, client: ClientInfo) -> None:
+        if client.ip:
+            await self._limiter.hit(
+                f"google-{action}:ip:{client.ip}", limit=self._settings.google_signin_limit_per_ip
+            )
+
+    async def start_google(
+        self, *, age_confirmed: bool, accept_terms: bool, next_path: str | None, client: ClientInfo
+    ) -> GoogleStart:
+        """Record a single-use attempt and return Google's URL to send the browser to."""
+        google = self._google_client()
+        await self._limit_google("start", client)
+        state = secrets.token_urlsafe(32)
+        self._db.add(
+            OAuthState(
+                state_hash=oauth_state_hash(self._settings, state),
+                next_path=next_path or DEFAULT_NEXT_PATH,
+                age_confirmed=age_confirmed,
+                accept_terms=accept_terms,
+                created_ip=client.ip,
+                expires_at=datetime.now(UTC) + OAUTH_STATE_TTL,
+            )
+        )
+        await self._db.commit()
+        return GoogleStart(state=state, authorization_url=google.authorization_url(state))
+
+    async def finish_google(
+        self,
+        *,
+        state: str | None,
+        bound_state: str | None,
+        code: str | None,
+        error: str | None,
+        client: ClientInfo,
+    ) -> GoogleSignInResult:
+        """Handle Google's redirect back: check the state, then the ID token, then sign in.
+
+        ``bound_state`` is the value of the httpOnly cookie set at the start, so a callback
+        only works in the browser that began the attempt (no login CSRF).
+        """
+        google = self._google_client()
+        method = SignInMethod.GOOGLE
+        await self._limit_google("callback", client)
+        if not state or not bound_state or not constant_time_equals(state, bound_state):
+            await self._refuse(client, "state_mismatch", method=method)
+            raise OAuthStateInvalidError
+        now = datetime.now(UTC)
+        attempt = await self._db.scalar(
+            delete(OAuthState)
+            .where(
+                OAuthState.state_hash == oauth_state_hash(self._settings, state),
+                OAuthState.expires_at > now,
+            )
+            .returning(OAuthState)
+        )
+        # Used up whatever happens next: a state works once.
+        await self._db.commit()
+        if attempt is None:
+            await self._refuse(client, "state_unknown_or_used", method=method)
+            raise OAuthStateInvalidError
+        if error or not code:
+            await self._refuse(client, "cancelled" if error else "no_code", method=method)
+            if error:
+                raise GoogleSignInCancelledError
+            raise GoogleSignInFailedError
+
+        try:
+            identity = await google.sign_in(code, state)
+        except GoogleSignInError as rejected:
+            logger.warning("google_sign_in_rejected", extra={"reason": rejected.reason})
+            await self._refuse(client, rejected.reason, method=method)
+            raise GoogleSignInFailedError from None
+
+        email = normalise_email(identity.email)
+        await self._ensure_allowed(email, method, client)
+        user = await self._db.scalar(
+            select(User)
+            .join(AuthIdentity, AuthIdentity.user_id == User.id)
+            .where(
+                AuthIdentity.provider == AuthProvider.GOOGLE,
+                AuthIdentity.subject == identity.subject,
+            )
+        )
+        if user is None:
+            user = await self._db.scalar(select(User).where(User.email == email))
+        await self._check_consent_and_capacity(
+            user, age_confirmed=attempt.age_confirmed, accept_terms=attempt.accept_terms
+        )
+        result = await self._finish_sign_in(
+            user,
+            user.email if user is not None else email,
+            now,
+            client,
+            provider=AuthProvider.GOOGLE,
+            subject=identity.subject,
+        )
+        return GoogleSignInResult(sign_in=result, next_path=attempt.next_path)
 
     async def logout(self, user: User, session: UserSession, client: ClientInfo) -> None:
         await revoke_session(self._db, session.id)

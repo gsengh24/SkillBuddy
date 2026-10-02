@@ -56,3 +56,31 @@ def clear_session_cookies(response: Response, settings: Settings) -> None:
         response.delete_cookie(
             name, path="/", secure=settings.session_cookie_secure, httponly=httponly, samesite="lax"
         )
+
+
+# Google sign-in (ADR 0011): ties a callback to the browser that started the attempt.
+GOOGLE_STATE_COOKIE = "google_oauth_state"
+GOOGLE_STATE_COOKIE_PATH = "/api/v1/auth/google"
+
+
+def set_google_state_cookie(response: Response, settings: Settings, state: str, ttl: int) -> None:
+    response.set_cookie(
+        GOOGLE_STATE_COOKIE,
+        state,
+        max_age=ttl,
+        path=GOOGLE_STATE_COOKIE_PATH,
+        secure=settings.session_cookie_secure,
+        httponly=True,
+        # Lax still sends it on Google's top-level redirect back to the callback.
+        samesite="lax",
+    )
+
+
+def clear_google_state_cookie(response: Response, settings: Settings) -> None:
+    response.delete_cookie(
+        GOOGLE_STATE_COOKIE,
+        path=GOOGLE_STATE_COOKIE_PATH,
+        secure=settings.session_cookie_secure,
+        httponly=True,
+        samesite="lax",
+    )

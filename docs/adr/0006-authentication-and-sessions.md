@@ -1,6 +1,7 @@
 # 6. Passwordless email codes, server-side sessions, CSRF protection
 
 - **Status:** Accepted
+- **Amended by:** [ADR 0011](0011-google-sign-in.md) (2026-10-02): Google sign-in as a second method, and an email allow-list and block list for both methods.
 - **Date:** 2026-10-01
 
 ## Context

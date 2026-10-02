@@ -91,3 +91,12 @@ export const profileSchema = z.object({
   updated_at: z.string(),
 });
 export type Profile = z.infer<typeof profileSchema>;
+
+export const authMethodsSchema = z.object({
+  email_code: z.boolean(),
+  google: z.boolean(),
+  google_domains: z.array(z.string()),
+});
+export type AuthMethods = z.infer<typeof authMethodsSchema>;
+
+export const googleStartSchema = z.object({ authorization_url: z.string().url() });

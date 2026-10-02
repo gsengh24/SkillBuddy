@@ -49,6 +49,7 @@ Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runti
 | `jobs` | One row per background job (IDs only, no personal data), about 300 B | Succeeded: 7 days; dead: 30 days; queued/running: until done | Under 1 MB at campus scale (a few thousand jobs a day) |
 | `rate_limit_counters` | One row per key and window, about 150 B | Deleted hourly once the window has expired | A few KB |
 | `email_log` | One row per email recipient: purpose, keyed hash, provider, time; about 150 B | 30 days | Under 2 MB (at most 450 emails a day) |
+| `oauth_states` | One row per unfinished "Continue with Google" attempt: a keyed hash, the tick-box answers and the return path; about 200 B (migration 0006, [ADR 0011](adr/0011-google-sign-in.md)) | Deleted when used; unused rows purged daily after their 10-minute expiry | Under 1 MB |
 
 Chosen dimension: **384** (`BAAI/bge-small-en-v1.5`, [ADR 0007](adr/0007-ai-gateway.md)).
 Migration 0004 changed the column from 768 to 384 (2026-10-02).

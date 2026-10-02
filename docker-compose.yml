@@ -3,6 +3,7 @@
 #
 #   db       PostgreSQL 16 + pgvector      localhost:5432
 #   mailpit  catches all outgoing email    http://localhost:8025 (web UI)
+#   fake-oidc  fake Google sign-in (dev/CI) http://localhost:9000
 #   migrate  one-shot `alembic upgrade head`, runs before api/worker start
 #   api      FastAPI, hot reload           http://localhost:8000  (docs at /docs)
 #   worker   background jobs from the PostgreSQL queue (ADR 0008), hot reload;
@@ -38,6 +39,18 @@ x-backend-environment: &backend-environment
   SMTP_SECURITY: none
   # Docker Desktop bind mounts do not deliver file events; poll for hot reload.
   WATCHFILES_FORCE_POLLING: "true"
+  # Who may sign in (ADR 0011). example.com keeps the email-code smoke and e2e tests working.
+  ALLOWED_EMAIL_DOMAINS: thapar.edu,example.com
+  # Google sign-in against the fake provider below (dev and CI only; never real Google).
+  GOOGLE_SIGNIN_ENABLED: "true"
+  GOOGLE_OAUTH_CLIENT_ID: fake-client-id
+  GOOGLE_OAUTH_CLIENT_SECRET: dev-only-fake-provider-value
+  GOOGLE_OAUTH_REDIRECT_URI: http://localhost:${WEB_PORT:-3000}/api/v1/auth/google/callback
+  # The browser goes to localhost:9000; the API talks to the service by its compose name.
+  GOOGLE_OIDC_AUTHORIZATION_URL: http://localhost:${FAKE_OIDC_PORT:-9000}/authorize
+  GOOGLE_OIDC_TOKEN_URL: http://fake-oidc:9000/token
+  GOOGLE_OIDC_JWKS_URL: http://fake-oidc:9000/jwks
+  GOOGLE_OIDC_ISSUERS: http://fake-oidc:9000
 
 x-backend-service: &backend-service
   build: *backend-build
@@ -75,6 +88,29 @@ services:
       timeout: 3s
       retries: 10
 
+  # A fake Google OpenID Connect provider (backend/tests/fake_oidc.py) for "Continue with
+  # Google" in dev and the CI e2e test. Type any email on its page to sign in as it.
+  fake-oidc:
+    <<: *backend-service
+    command: ["uvicorn", "tests.fake_oidc:app", "--host", "0.0.0.0", "--port", "9000"]
+    environment:
+      FAKE_OIDC_ISSUER: http://fake-oidc:9000
+      FAKE_OIDC_CLIENT_ID: fake-client-id
+      FAKE_OIDC_CLIENT_SECRET: dev-only-fake-provider-value
+      FAKE_OIDC_WORKSPACE_DOMAINS: thapar.edu,evilthapar.edu
+    ports:
+      - "127.0.0.1:${FAKE_OIDC_PORT:-9000}:9000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health', timeout=4)"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   migrate:
     <<: *backend-service
     command: ["alembic", "upgrade", "head"]
@@ -92,6 +128,8 @@ services:
         condition: service_healthy
       # The API sends login-code emails itself (its in-process job runner; ADR 0008).
       mailpit:
+        condition: service_healthy
+      fake-oidc:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully

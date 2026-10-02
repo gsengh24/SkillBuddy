@@ -19,6 +19,7 @@ Browser ──► Vercel (Next.js web app, free)
                │  runs every background job in-process (JOBS_RUN_IN_API=true)
                ├──► Neon Free (PostgreSQL 16 + pgvector): data, job queue, rate limits, AI caps
                ├──► Gmail API (sign-in emails, 450/day cap)
+               ├──► Google sign-in (OpenID Connect, optional; @thapar.edu only)
                └──► Groq, then Cloudflare Workers AI (LLM; optional, templates without them)
 
 Cloudflare Worker (cron, 17x a day) ──► POST /api/v1/admin/jobs/tick on the API
@@ -207,11 +208,90 @@ The API has no cron; this Worker calls `POST /api/v1/admin/jobs/tick` 17 times a
 2. **Add New…** → **Project** → import **gsengh24/SkillBuddy** → **Root Directory** → **Edit**
    → `frontend` → **Continue**. Framework: Next.js (detected).
 3. **Environment Variables**: Key `API_INTERNAL_URL`, Value = your API_URL → **Add**.
-4. **Deploy**. When done, copy the domain shown (e.g. `https://skillbuddy.vercel.app`).
+4. **Deploy**. When done, copy the domain shown (e.g. `https://skillbuddy.vercel.app`);
+   save it as **WEB_URL**.
 5. Back in Render → your API → **Environment** → edit `CORS_ALLOW_ORIGINS` → the Vercel
    domain (no trailing slash) → **Save, rebuild and deploy**.
 6. Optional: Vercel project → **Settings** → **Deployment Protection** → **Vercel
    Authentication** on, to keep staging private.
+
+## Step 6b. Google sign-in (OAuth client)
+
+Optional. Without it, the sign-in page shows email codes only. "Continue with Google" accepts
+only accounts on `ALLOWED_EMAIL_DOMAINS` (ADR 0011). Use a **separate** Google Cloud project
+from the Gmail sender in step 2: the consent screen people see then names the app and asks for
+nothing beyond their basic profile.
+
+**Is Google's verification needed?** As of 2026-10-02, Google's documentation says no for an
+app asking only for `openid`, `email` and `profile`: these are non-sensitive scopes. Google's
+review is required for sensitive or restricted scopes, and brand verification only if you
+upload a logo or want the app's branding shown. So:
+- don't upload a logo;
+- keep to these three scopes;
+- re-check the Google Auth Platform's **Verification Center** page when you do this step.
+
+1. **Project.**
+   - Open **https://console.cloud.google.com**, signed in with your own Google account (not
+     the sending Gmail).
+   - Click the project picker at the top → **New Project** → name `skillbuddy-signin` →
+     **Create** → select it.
+   - Never add billing or a card; nothing here needs it.
+2. **Consent screen.**
+   - Menu ☰ → **Google Auth Platform** → **Get started**.
+   - App name: the platform name (today `Skill Buddy`). User support email: yours → **Next**.
+   - **Audience: External** → **Next**. (Internal is only possible for a Workspace you
+     administer; Thapar's isn't yours.)
+   - Contact email: yours → **Next** → tick the policy agreement → **Continue** → **Create**.
+3. **Branding.**
+   - Left menu **Branding**. Leave **App logo** empty.
+   - Application home page: `WEB_URL` (from step 6).
+   - Privacy policy link: `WEB_URL/privacy`. Terms of service link: `WEB_URL/terms`.
+   - Under **Authorized domains** add the host of `WEB_URL` without `https://` (for example
+     `skillbuddy.vercel.app`) → **Save**.
+4. **Scopes.**
+   - Left menu **Data Access** → **Add or remove scopes**.
+   - Tick only `openid`, `.../auth/userinfo.email` and `.../auth/userinfo.profile` →
+     **Update** → **Save**.
+   - Add nothing else.
+5. **Publish.** Left menu **Audience** → **Publish app** → **Confirm**. **Publishing status**
+   must read **In production**. In "Testing" only listed test users can sign in.
+6. **Client.**
+   - Left menu **Clients** → **Create client** → Application type **Web application** →
+     name `skillbuddy-web`.
+   - Under **Authorized JavaScript origins** add nothing.
+   - Under **Authorized redirect URIs**, **Add URI**, exactly:
+     - staging: `WEB_URL/api/v1/auth/google/callback` (for example
+       `https://skillbuddy.vercel.app/api/v1/auth/google/callback`);
+     - production, when it exists: `https://<production domain>/api/v1/auth/google/callback`.
+       You can add it later on the same client.
+   - Click **Create**. Copy the **Client ID** and save it as **GOOGLE_OAUTH_CLIENT_ID**.
+   - Copy the **Client secret** and save it as **GOOGLE_OAUTH_CLIENT_SECRET** in your
+     password manager. It is shown in full only now; never paste it anywhere but Render.
+7. **Render.** Open your API service → **Environment** → add:
+
+   | Key | Value |
+   | --- | --- |
+   | `ALLOWED_EMAIL_DOMAINS` | `thapar.edu` |
+   | `ALLOWED_EMAILS` | your own address(es), comma-separated, if you sign in with email codes from outside thapar.edu (optional) |
+   | `BLOCKED_EMAILS` | leave empty for now |
+   | `GOOGLE_SIGNIN_ENABLED` | `true` |
+   | `GOOGLE_OAUTH_CLIENT_ID` | your GOOGLE_OAUTH_CLIENT_ID |
+   | `GOOGLE_OAUTH_CLIENT_SECRET` | your GOOGLE_OAUTH_CLIENT_SECRET |
+   | `GOOGLE_OAUTH_REDIRECT_URI` | `WEB_URL/api/v1/auth/google/callback` (identical to the client's redirect URI) |
+
+   Then **Save, rebuild, and deploy**.
+
+   > **Note:** `ALLOWED_EMAIL_DOMAINS` applies to email codes too. After this, only
+   > `@thapar.edu` addresses and the ones on `ALLOWED_EMAILS` can sign in at all.
+8. **Test with a real @thapar.edu account early** (pre-launch checklist).
+   - Open `WEB_URL/login`, tick both boxes, choose **Continue with Google**, and pick a
+     college account. You should land signed in.
+   - If Google says **"Access blocked: … has not been approved by your administrator"**,
+     Thapar's Workspace restricts third-party apps. Ask college IT to allow the client ID
+     from step 6, or to allow apps that "only request basic info needed for Sign in with
+     Google". Meanwhile email codes still work.
+   - If you land on `/login?error=google_failed`, check the API logs for
+     `google_sign_in_rejected` and its `reason`.
 
 ## Step 7. First sign-in
 

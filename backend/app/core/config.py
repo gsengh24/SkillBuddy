@@ -7,6 +7,7 @@ pydantic validation error instead of surfacing later as a runtime bug.
 
 from __future__ import annotations
 
+import re
 from enum import StrEnum
 from functools import lru_cache
 from typing import Annotated, Literal, Self
@@ -17,6 +18,14 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from app.models.profile_embedding import EMBEDDING_DIMENSIONS
 
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+# Google's real OpenID Connect endpoints (ADR 0011). Overriding them is for the fake
+# provider in tests and the dev stack only; staging and production refuse other values.
+GOOGLE_AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"  # noqa: S105  # a URL, not a secret
+GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
+GOOGLE_ISSUERS = ("https://accounts.google.com", "accounts.google.com")
+_DOMAIN_PATTERN = r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
 
 
 class Environment(StrEnum):
@@ -77,6 +86,32 @@ class Settings(BaseSettings):
     ai_consent_version: str = Field(default="2026-10-01", min_length=1, max_length=32)
     # Profile saves per user per rate-limit window (each text change queues a parse).
     profile_update_limit_per_user: int = Field(default=20, ge=1, le=1000)
+    # Who may sign in (ADR 0011). Empty lists mean no restriction. Exact, case-insensitive
+    # matches only: "thapar.edu" does not admit "evilthapar.edu" or "x.thapar.edu".
+    # Email codes: an address on ALLOWED_EMAILS, or with a domain on ALLOWED_EMAIL_DOMAINS.
+    # Google: a domain on ALLOWED_EMAIL_DOMAINS only. BLOCKED_EMAILS is refused by both.
+    allowed_email_domains: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    allowed_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    blocked_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
+
+    # --- Google sign-in (ADR 0011) -------------------------------------------------
+    # Off, or any key missing: the button is hidden and the endpoints answer 404.
+    google_signin_enabled: bool = False
+    google_oauth_client_id: str | None = Field(default=None, max_length=200)
+    google_oauth_client_secret: SecretStr | None = Field(default=None, min_length=10)
+    # The web app's callback, e.g. https://<site>/api/v1/auth/google/callback. Must match an
+    # "Authorized redirect URI" on the Google OAuth client exactly.
+    google_oauth_redirect_uri: str | None = Field(default=None, max_length=300)
+    google_oidc_authorization_url: str = GOOGLE_AUTHORIZATION_URL
+    google_oidc_token_url: str = GOOGLE_TOKEN_URL
+    google_oidc_jwks_url: str = GOOGLE_JWKS_URL
+    google_oidc_issuers: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: list(GOOGLE_ISSUERS)
+    )
+    google_oidc_timeout_seconds: float = Field(default=10.0, gt=0, le=30)
+    # Starts and callbacks per IP per RATE_LIMIT_WINDOW_SECONDS.
+    google_signin_limit_per_ip: int = Field(default=20, ge=1, le=1000)
+
     # Audit-log retention; the daily purge job deletes older auth_events.
     auth_event_retention_days: int = Field(default=90, ge=7, le=730)
 
@@ -209,6 +244,42 @@ class Settings(BaseSettings):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
+    @field_validator("allowed_email_domains", "allowed_emails", "blocked_emails", mode="before")
+    @classmethod
+    def _split_lower(cls, value: object) -> object:
+        """Comma-separated, trimmed and lower-cased (matching is case-insensitive)."""
+        if isinstance(value, str):
+            value = value.split(",")
+        if isinstance(value, list | tuple):
+            return [str(item).strip().lower() for item in value if str(item).strip()]
+        return value
+
+    @field_validator("allowed_email_domains")
+    @classmethod
+    def _check_domains(cls, value: list[str]) -> list[str]:
+        for domain in value:
+            if not re.fullmatch(_DOMAIN_PATTERN, domain):
+                raise ValueError(
+                    f"ALLOWED_EMAIL_DOMAINS takes plain domains like thapar.edu, not {domain!r}"
+                )
+        return value
+
+    @field_validator("allowed_emails", "blocked_emails")
+    @classmethod
+    def _check_addresses(cls, value: list[str]) -> list[str]:
+        for address in value:
+            local, at, domain = address.rpartition("@")
+            if not at or not local or "." not in domain:
+                raise ValueError(f"not an email address: {address!r}")
+        return value
+
+    @field_validator("google_oidc_issuers", mode="before")
+    @classmethod
+    def _split_issuers(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value
+
     @field_validator("database_url", mode="before")
     @classmethod
     def _normalise_database_scheme(cls, value: object) -> object:
@@ -265,9 +336,33 @@ class Settings(BaseSettings):
             raise ValueError("EMBEDDING_BACKEND=fake is for tests only")
         if self.jobs_retry_base_seconds > self.jobs_retry_max_seconds:
             raise ValueError("JOBS_RETRY_BASE_SECONDS must not exceed JOBS_RETRY_MAX_SECONDS")
+        if deployed and (
+            self.google_oidc_authorization_url != GOOGLE_AUTHORIZATION_URL
+            or self.google_oidc_token_url != GOOGLE_TOKEN_URL
+            or self.google_oidc_jwks_url != GOOGLE_JWKS_URL
+            or tuple(self.google_oidc_issuers) != GOOGLE_ISSUERS
+        ):
+            raise ValueError("GOOGLE_OIDC_* overrides are for tests and the dev stack only")
+        if (
+            deployed
+            and self.google_oauth_redirect_uri
+            and not self.google_oauth_redirect_uri.startswith("https://")
+        ):
+            raise ValueError("GOOGLE_OAUTH_REDIRECT_URI must be https in staging and production")
         if self.storage_warn_percent >= self.storage_pause_percent:
             raise ValueError("STORAGE_WARN_PERCENT must be below STORAGE_PAUSE_PERCENT")
         return self
+
+    @property
+    def google_signin_available(self) -> bool:
+        """Enabled and fully configured, with at least one allowed domain."""
+        return bool(
+            self.google_signin_enabled
+            and self.google_oauth_client_id
+            and self.google_oauth_client_secret
+            and self.google_oauth_redirect_uri
+            and self.allowed_email_domains
+        )
 
     @property
     def is_production(self) -> bool:

@@ -23,3 +23,8 @@ def otp_hash(settings: Settings, email: str, code: str) -> str:
 def email_hash(settings: Settings, email: str) -> str:
     """HMAC of an email address, for rate-limit keys and the audit log."""
     return keyed_hash(settings.secret_key, "email", email)
+
+
+def oauth_state_hash(settings: Settings, state: str) -> str:
+    """HMAC of a Google sign-in ``state`` value: the only form in which it is stored."""
+    return keyed_hash(settings.secret_key, "oauth-state", state)
