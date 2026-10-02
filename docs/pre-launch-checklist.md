@@ -22,6 +22,7 @@ short note).
 | 3 | [ ] **Onboarding consent line and final privacy wording on AI processing** shipped in the app | The text from ADR 0007 §5 is live (adjusted after item 1). Consent line: on the profile form (recorded with `AI_CONSENT_VERSION`), awaiting owner review. Policy wording and the `/privacy#ai` section: not yet | Claude Code | Yes | ADR 0007 §5 and build step 9 |
 | 4 | [ ] **Vercel Hobby is for non-commercial use only**: confirm the launch is non-commercial | Owner confirms; otherwise a new hosting ADR | Project owner | No | ADR 0003 |
 | 5 | [ ] **Third-party notices** for LGPL components (psycopg, sharp-libvips) | A notices file exists, if images are ever distributed | Claude Code | No | Exit report, issue 15 |
+| 42 | [ ] **Owner review before any production migration that touches consent**: migration 0008 adds `profiles.email_notifications` with a default of **on** for every existing profile (intro emails). Before running migrations on production, stop and show the owner that default and the wording of the email toggle in settings | Owner has approved the default and the toggle wording, in writing, before the production migration runs | Project owner (Claude Code prepares the review) | Yes | Migration 0008; PR #39 |
 
 ## Email (Gmail API)
 

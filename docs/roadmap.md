@@ -69,3 +69,12 @@ CLAUDE.md:
   - [ ] Thresholds and the plan limit come from settings, not constants.
 - [ ] Replace the estimates in `docs/storage-budget.md` with measured per-user sizes from
       staging (synthetic data).
+
+## Hardening
+
+- [ ] **Staging migration drift check**: a check that fails or warns when the staging
+      database is behind the migrations in `main` (for example, `alembic current` against
+      Neon compared with the newest file in `backend/migrations/versions/`, run after every
+      merge to `main`). Migrations on staging are applied by hand ("Migrate staging"), and
+      on 2026-10-02 0007 and 0008 were missed: the API read a column that did not exist and
+      every signed-in page returned 500 until the workflow was run.
