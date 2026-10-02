@@ -137,6 +137,37 @@ class Settings(BaseSettings):
     # (measured 2026-10-02: batch 8 peaked about 80 MB higher than 2), so keep it small.
     embedding_batch_size: int = Field(default=2, ge=1, le=16)
 
+    # --- AI gateway (ADR 0007) ---------------------------------------------------
+    # Kill switch: false sends no request to any provider; matching uses templates.
+    ai_llm_enabled: bool = True
+    # Fallback order. Each provider is used only if its keys are set.
+    ai_llm_providers: Annotated[list[Literal["groq", "cloudflare"]], NoDecode] = Field(
+        default=["groq", "cloudflare"]
+    )
+    ai_llm_timeout_seconds: float = Field(default=20.0, gt=0, le=120)
+    # Overall LLM calls per UTC day, across providers (counted in PostgreSQL).
+    ai_llm_daily_call_cap: int = Field(default=400, ge=0)
+    # Per user per UTC day: fresh match selections, and profile/request understanding calls.
+    ai_user_daily_match_requests: int = Field(default=3, ge=0)
+    ai_user_daily_understand_calls: int = Field(default=5, ge=0)
+
+    # Groq (primary). Key from the Groq console; never in the repo.
+    groq_api_key: SecretStr | None = Field(default=None, min_length=20)
+    groq_models: Annotated[list[str], NoDecode] = Field(
+        default=["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
+    )
+    # Per model per UTC day, kept under Groq's free 200K tokens/day.
+    groq_daily_token_budget: int = Field(default=190_000, ge=0)
+
+    # Cloudflare Workers AI (backup). Token needs only the "Workers AI" permission.
+    cloudflare_account_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")
+    cloudflare_api_token: SecretStr | None = Field(default=None, min_length=20)
+    cloudflare_model: str = "@cf/openai/gpt-oss-20b"
+    # Kept under the free 10,000 neurons/day; prices per million tokens for the model above.
+    cloudflare_daily_neuron_budget: int = Field(default=9_000, ge=0)
+    cloudflare_neurons_per_m_input: float = Field(default=18_182, gt=0)
+    cloudflare_neurons_per_m_output: float = Field(default=27_273, gt=0)
+
     # --- Data stores -----------------------------------------------------------
     database_url: PostgresDsn
     db_pool_size: int = Field(default=5, ge=1, le=100)
@@ -155,6 +186,14 @@ class Settings(BaseSettings):
         """Accept a comma-separated string, which is how it arrives from env files."""
         if isinstance(value, str):
             return [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()]
+        return value
+
+    @field_validator("ai_llm_providers", "groq_models", mode="before")
+    @classmethod
+    def _split_list(cls, value: object) -> object:
+        """Accept a comma-separated string, which is how it arrives from env files."""
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
     @field_validator("database_url")

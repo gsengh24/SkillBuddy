@@ -346,6 +346,10 @@ state, plus 20% headroom for retries and cache misses):
 
 Counters live in Valkey and are keyed by UTC date, which costs a few commands per call.
 
+*Note (2026-10-02): the counters live in PostgreSQL, not Valkey, per ADR 0008 (decision 3, "No
+Valkey/Redis anywhere"). They use the `rate_limit_counters` table (one row per key per UTC
+day), confirmed by the owner when the gateway was built.*
+
 ### 5. Privacy design
 
 What leaves our servers, and only to Groq or Cloudflare:
