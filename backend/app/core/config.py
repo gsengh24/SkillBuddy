@@ -204,6 +204,16 @@ class Settings(BaseSettings):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _normalise_database_scheme(cls, value: object) -> object:
+        """Accept the plain URLs hosts hand out (Neon: ``postgresql://...``)."""
+        if isinstance(value, str):
+            for plain in ("postgresql://", "postgres://"):
+                if value.startswith(plain):
+                    return "postgresql+psycopg://" + value[len(plain) :]
+        return value
+
     @field_validator("database_url")
     @classmethod
     def _require_psycopg_driver(cls, value: PostgresDsn) -> PostgresDsn:

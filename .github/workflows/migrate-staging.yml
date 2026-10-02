@@ -1,0 +1,56 @@
+name: Migrate staging
+
+# Applies database migrations to the staging database (Neon). Free API hosts have no
+# pre-deploy hook, so this runs by hand from the Actions tab before or after a deploy that
+# adds a migration (ADR 0003, docs/deployment-plan.md). Never runs automatically.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-staging
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: alembic upgrade head (staging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # The staging connection string, stored only as a repository secret.
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      # Settings need a secret key to load; migrations never use it. Not a real secret.
+      SECRET_KEY: migration-only-placeholder-not-used-for-anything
+    steps:
+      - name: Check the secret is set
+        working-directory: .
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Add the STAGING_DATABASE_URL repository secret first (docs/deployment-plan.md)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --no-dev
+
+      - name: Current revision
+        run: uv run alembic current
+
+      - name: Upgrade to head
+        run: uv run alembic upgrade head
+
+      - name: Revision after upgrade
+        run: uv run alembic current

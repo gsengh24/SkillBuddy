@@ -124,6 +124,9 @@ jobs:
       - name: Unit and component tests
         run: npm test
 
+      - name: Scheduler Worker script test (infra/cloudflare-tick)
+        run: node --test ../infra/cloudflare-tick/worker.test.mjs
+
       - name: Build
         run: npm run build
         env:

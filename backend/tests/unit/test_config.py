@@ -38,7 +38,20 @@ def test_secret_key_is_not_rendered(make_settings: SettingsFactory) -> None:
 
 def test_database_url_requires_psycopg_driver(make_settings: SettingsFactory) -> None:
     with pytest.raises(ValidationError, match="postgresql\\+psycopg"):
-        make_settings(database_url="postgresql://app:app@db:5432/app")
+        make_settings(database_url="postgresql+asyncpg://app:app@db:5432/app")
+
+
+@pytest.mark.parametrize("scheme", ["postgresql", "postgres"])
+def test_plain_postgres_urls_from_hosts_are_accepted(
+    make_settings: SettingsFactory, scheme: str
+) -> None:
+    url = f"{scheme}://user:pw@ep-cool-name-123.ap-southeast-1.aws.neon.tech/app?sslmode=require"
+    settings = make_settings(database_url=url)
+
+    assert settings.database_url.unicode_string() == (
+        "postgresql+psycopg://user:pw@ep-cool-name-123.ap-southeast-1.aws.neon.tech/app"
+        "?sslmode=require"
+    )
 
 
 def test_missing_required_setting_fails_fast(
