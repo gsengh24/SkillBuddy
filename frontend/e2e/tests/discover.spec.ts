@@ -32,7 +32,10 @@ test("ask for matches from Discover and see the request finish", async ({ page, 
   await page.getByRole("button", { name: "Save and continue" }).click();
   await expect(page).toHaveURL(/\/profile/);
 
-  await page.getByRole("link", { name: "Discover" }).click();
+  // Navigate directly: in the dev-mode CI stack, Next.js's dev indicator sits over the
+  // bottom-left of the screen, on top of the phone tab bar.
+  await expect(page.getByRole("link", { name: "Discover" })).toHaveAttribute("href", "/home");
+  await page.goto("/home");
   await expect(page.getByRole("heading", { name: "Discover", level: 1 })).toBeVisible();
   await expectNoViolations(page);
 
