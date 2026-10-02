@@ -8,6 +8,9 @@
   overwrite the result of a later attempt.
 - **A failed attempt** is retried with exponential backoff, then marked ``dead``. Only the
   exception's type name is stored, never its message, which could hold personal data.
+- **Jobs with a secret** (a login code) run only in the process that enqueued them, the only
+  one holding the secret. One whose process is gone is marked dead once its secret would
+  have expired anyway.
 - **No idle polling** by default: while there is nothing to do, the runner queries the
   database only when a job is enqueued in this process, when the next known due time
   arrives, or when woken (a tick). ``JOBS_IDLE_POLL_SECONDS`` adds polling for a separate
@@ -26,14 +29,19 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any, Final
 
-from sqlalchemy import case, func, null, select, update
+from sqlalchemy import ColumnElement, and_, case, false, func, null, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import aliased
 
 from app.core.config import Settings
-from app.jobs.queue import add_wake_listener, remove_wake_listener
+from app.jobs.queue import (
+    DEFAULT_SECRET_TTL_SECONDS,
+    RUNNER_KEY,
+    add_wake_listener,
+    remove_wake_listener,
+)
 from app.jobs.registry import JobContext, JobGroup, JobRegistry, JobSpec
-from app.jobs.secrets import EphemeralSecrets, secret_store
+from app.jobs.secrets import PROCESS_ID, EphemeralSecrets, secret_store
 from app.models.jobs import Job, JobStatus
 
 logger = logging.getLogger(__name__)
@@ -47,6 +55,8 @@ ERROR_BACKOFF_SECONDS: Final = 5.0
 
 SECRET_UNAVAILABLE: Final = "SecretUnavailable"  # noqa: S105  # an error label, not a secret
 LEASE_EXPIRED: Final = "LeaseExpired"
+# A secret job still waiting this long after it was enqueued by another process is an orphan.
+ORPHAN_AFTER: Final = timedelta(seconds=DEFAULT_SECRET_TTL_SECONDS)
 
 
 @dataclass(frozen=True)
@@ -145,6 +155,7 @@ class JobRunner:
         started = 0
         async with self._session_factory() as db, db.begin():
             await self._requeue_expired_leases(db, kinds)
+            await self._bury_orphaned_secret_jobs(db)
             claimed: list[ClaimedJob] = []
             for group in JobGroup:
                 free = self._limits[group] - len(self._running[group])
@@ -170,7 +181,7 @@ class JobRunner:
             .where(
                 Job.status == JobStatus.RUNNING,
                 Job.locked_until < func.now(),
-                Job.kind.in_(kinds),
+                self._claimable(Job, kinds),
             )
             .values(
                 status=case((exhausted, JobStatus.DEAD.value), else_=JobStatus.QUEUED.value),
@@ -188,6 +199,43 @@ class JobRunner:
             if status == JobStatus.DEAD:
                 self._secrets.discard(job_id)
 
+    def _claimable(self, model: Any, kinds: list[str]) -> ColumnElement[bool]:
+        """Jobs of these kinds that this runner may take: secret jobs only if ours."""
+        local = [k for k in kinds if (spec := self._registry.get(k)) and spec.needs_secret]
+        shared = [k for k in kinds if k not in local]
+        conditions: list[ColumnElement[bool]] = []
+        if shared:
+            conditions.append(model.kind.in_(shared))
+        if local:
+            conditions.append(
+                and_(model.kind.in_(local), model.payload[RUNNER_KEY].astext == PROCESS_ID)
+            )
+        return or_(*conditions) if conditions else false()
+
+    async def _bury_orphaned_secret_jobs(self, db: AsyncSession) -> None:
+        local = [s.kind for s in self._registry if s.needs_secret]
+        if not local:
+            return
+        result = await db.execute(
+            update(Job)
+            .where(
+                Job.kind.in_(local),
+                Job.status.in_([JobStatus.QUEUED, JobStatus.RUNNING]),
+                Job.payload[RUNNER_KEY].astext.is_distinct_from(PROCESS_ID),
+                Job.created_at < func.now() - ORPHAN_AFTER,
+            )
+            .values(
+                status=JobStatus.DEAD,
+                finished_at=func.now(),
+                locked_until=None,
+                last_error=SECRET_UNAVAILABLE,
+            )
+            .returning(Job.id, Job.kind)
+            .execution_options(synchronize_session=False)
+        )
+        for job_id, kind in result.all():
+            logger.warning("job_orphaned", extra={"job_id": str(job_id), "kind": kind})
+
     async def _claim(self, db: AsyncSession, kinds: list[str], limit: int) -> list[ClaimedJob]:
         candidate = aliased(Job, name="candidate")
         due = (
@@ -195,7 +243,7 @@ class JobRunner:
             .where(
                 candidate.status == JobStatus.QUEUED,
                 candidate.run_at <= func.now(),
-                candidate.kind.in_(kinds),
+                self._claimable(candidate, kinds),
             )
             .order_by(candidate.priority, candidate.run_at)
             .limit(limit)
@@ -213,7 +261,13 @@ class JobRunner:
             .execution_options(synchronize_session=False)
         )
         return [
-            ClaimedJob(id=row[0], kind=row[1], payload=row[2], attempt=row[3], max_attempts=row[4])
+            ClaimedJob(
+                id=row[0],
+                kind=row[1],
+                payload={k: v for k, v in row[2].items() if k != RUNNER_KEY},
+                attempt=row[3],
+                max_attempts=row[4],
+            )
             for row in result.all()
         ]
 
@@ -224,12 +278,12 @@ class JobRunner:
             return None
         next_run = (
             select(func.min(Job.run_at))
-            .where(Job.status == JobStatus.QUEUED, Job.kind.in_(kinds))
+            .where(Job.status == JobStatus.QUEUED, self._claimable(Job, kinds))
             .scalar_subquery()
         )
         next_expiry = (
             select(func.min(Job.locked_until))
-            .where(Job.status == JobStatus.RUNNING, Job.kind.in_(kinds))
+            .where(Job.status == JobStatus.RUNNING, self._claimable(Job, kinds))
             .scalar_subquery()
         )
         async with self._session_factory() as db:

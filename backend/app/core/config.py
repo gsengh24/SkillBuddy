@@ -94,6 +94,13 @@ class Settings(BaseSettings):
     # AI jobs run one at a time to protect the 512 MB host.
     jobs_ai_concurrency: int = Field(default=1, ge=1, le=4)
     jobs_shutdown_grace_seconds: float = Field(default=10, ge=0, le=300)
+    # true (free hosting): the API process runs every job kind. false: the API runs only jobs
+    # with a secret (login codes), and a separate worker process runs the rest.
+    jobs_run_in_api: bool = False
+    # Enables POST /api/v1/admin/jobs/tick when set (send it as X-Jobs-Tick-Token).
+    jobs_tick_token: SecretStr | None = Field(default=None, min_length=32)
+    # Stand-alone worker only: a file touched every few seconds, for a container healthcheck.
+    jobs_heartbeat_file: str | None = None
 
     # --- Email -----------------------------------------------------------------
     # "console" prints messages to stdout (local development and tests only);

@@ -26,6 +26,7 @@ from httpx import ASGITransport, AsyncClient
 from psycopg import sql
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_otp_delivery
 from app.core.config import Settings
@@ -112,7 +113,9 @@ class CapturingDelivery:
     def __init__(self) -> None:
         self.sent: list[tuple[str, str]] = []
 
-    async def send_login_code(self, email: str, code: str) -> None:
+    async def send_login_code(
+        self, db: AsyncSession, otp_id: uuid.UUID, email: str, code: str
+    ) -> None:
         self.sent.append((email, code))
 
     def last_code(self, email: str) -> str:

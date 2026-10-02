@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
-from typing import Any
 
 import pytest
 from sqlalchemy import func, select
@@ -16,8 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
+from app.jobs.registry import JobContext
+from app.jobs.tasks import PURGE_JOB_TABLES
 from app.models import EmailLog, EmailPurpose, Job, JobStatus, RateLimitCounter
-from app.worker.jobs import purge_job_tables
+from app.services.housekeeping import JobTablesPurgeResult, purge_job_tables
 from tests.integration.conftest import run_sql
 
 
@@ -30,15 +31,6 @@ async def session(integration_settings: Settings) -> AsyncIterator[AsyncSession]
             await session.rollback()
     finally:
         await engine.dispose()
-
-
-def _job_context(settings: Settings) -> dict[str, Any]:
-    engine = create_engine(settings)
-    return {
-        "settings": settings,
-        "engine": engine,
-        "session_factory": create_session_factory(engine),
-    }
 
 
 def _key() -> str:
@@ -162,17 +154,31 @@ async def test_purge_removes_only_expired_rows(
         p=provider,
     )
 
-    ctx = _job_context(integration_settings)
+    engine = create_engine(integration_settings)
+    session_factory = create_session_factory(engine)
     try:
-        result = await purge_job_tables(ctx)
-        again = await purge_job_tables(ctx)
+        async with session_factory() as db:
+            result = await purge_job_tables(db, integration_settings, datetime.now(UTC))
+            again = await purge_job_tables(db, integration_settings, datetime.now(UTC))
+        # The hourly job kind runs the same service.
+        await PURGE_JOB_TABLES.handler(
+            JobContext(
+                job_id=uuid.uuid4(),
+                kind=PURGE_JOB_TABLES.kind,
+                attempt=1,
+                payload={},
+                secret=None,
+                settings=integration_settings,
+                session_factory=session_factory,
+            )
+        )
     finally:
-        await ctx["engine"].dispose()
+        await engine.dispose()
 
-    assert result["jobs"] >= 2
-    assert result["rate_limit_counters"] >= 1
-    assert result["email_log"] >= 1
-    assert again == {"jobs": 0, "rate_limit_counters": 0, "email_log": 0}  # idempotent
+    assert result.jobs >= 2
+    assert result.rate_limit_counters >= 1
+    assert result.email_log >= 1
+    assert again == JobTablesPurgeResult(jobs=0, rate_limit_counters=0, email_log=0)
     kept_jobs = run_sql(
         migrated_database_url,
         "SELECT (payload->>'n')::int AS n FROM jobs WHERE kind = :k ORDER BY 1",

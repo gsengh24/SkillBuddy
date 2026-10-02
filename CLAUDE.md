@@ -51,18 +51,21 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
 - **Modular monolith + worker** (ADR 0002). One backend codebase, two processes:
   - **API** (FastAPI): HTTP only. It never calls an LLM or embedding model. Slow work is
     persisted and enqueued, and the API returns immediately.
-  - **Worker** (Arq on Valkey): runs background jobs, including every model call.
-  - *Planned* ([ADR 0008](docs/adr/0008-free-runtime-jobs-and-email.md)): Arq and Valkey are replaced by a
-    PostgreSQL job queue (`SKIP LOCKED`) that runs inside the API process on free hosting,
-    a Cloudflare Worker cron as the scheduler, and Gmail API email. Until that lands, the
-    lines here describe the current code.
-- **PostgreSQL 16 + pgvector** is the single source of truth, including embeddings.
-  **Valkey** (Redis-compatible, ADR 0005) is the queue, cache and rate-limit store.
+  - **Jobs** ([ADR 0008](docs/adr/0008-free-runtime-jobs-and-email.md)): a PostgreSQL job
+    queue (`app/jobs/`, `SKIP LOCKED` with leases). Every model call runs in a job.
+    `python -m app.jobs.worker` runs jobs as a separate process (dev stack, CI); on free
+    hosting `JOBS_RUN_IN_API=true` runs them all inside the API process. Login-code emails
+    always run in the API process that enqueued them (the code is never stored).
+  - **Scheduling:** no cron process. The scheduler (a Cloudflare Worker cron) calls
+    `POST /api/v1/admin/jobs/tick`, which enqueues due daily and hourly jobs once per period.
+- **PostgreSQL 16 + pgvector** is the single source of truth, including embeddings and jobs.
+  **Valkey** (Redis-compatible, ADR 0005) holds rate limits and a cache until ADR 0008
+  step 4 moves them to PostgreSQL.
 - **Next.js** web app. Server components call the API through a typed client; the browser
   calls the web app's own `/api/v1/*`, which forwards to the API (same-origin cookies).
 - **Authentication** (ADR 0006): passwordless email codes, server-side sessions in an
   httpOnly cookie, signed double-submit CSRF, Valkey rate limits, 30-day deletion grace
-  period. Email is sent only by the worker (Mailpit catches it in dev and CI). 18+ only, by
+  period. Email is sent only by background jobs (Mailpit catches it in dev and CI). 18+ only, by
   a required self-declaration tick box; no verification (ADR 0009).
 - Migrations run as a **separate one-shot step** (`migrate` service), never at API startup.
 
@@ -83,7 +86,8 @@ backend/
       auth/              Sign-in codes, sessions, rate limits, audit log, retention jobs
       email/             EmailSender (console/SMTP) and templates
       storage.py         Database size monitor and the 90% write pause
-    worker/              Arq settings (settings.py) and job functions (jobs.py)
+    jobs/                Job queue: registry, enqueue, runner, tasks (every job kind),
+                         schedule (tick), worker (stand-alone process entry point)
   migrations/            Alembic env + versions (one file per migration)
   evals/                 Matcher evaluation set: synthetic profiles + draft-labelled pairs
   tests/unit/            No infrastructure needed
@@ -232,7 +236,7 @@ mobile app were calling it tomorrow.
   Never log secrets, tokens or raw profile text.
 - Models: UUID primary keys, `timestamptz` columns, constraint names from the naming
   convention, `CHECK` constraints instead of Postgres enums (cheaper to migrate).
-- Jobs must be idempotent (Arq retries).
+- Jobs must be idempotent (the runner retries, and an expired lease runs a job again).
 - Protect endpoints with `Depends(get_current_user)` (or `get_optional_user`). Cookie-
   authenticated writes are CSRF-checked automatically; never bypass that dependency.
 - Send email only from worker jobs through `EmailSender`; never log codes, tokens or full

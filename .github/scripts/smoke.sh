@@ -31,26 +31,36 @@ grep -q 'data-state="connected"' <<<"$page" \
   || fail "web page loaded but does not show the API as connected"
 echo "web page: API connected"
 
-echo "== 3/5 Arq worker runs the ping job"
+echo "== 3/5 Job worker runs a ping job from the PostgreSQL queue"
 docker compose exec -T api python - <<'PY' || fail "worker did not complete the ping job"
 import asyncio
 
-from arq import create_pool
-from arq.connections import RedisSettings
+from sqlalchemy import select
 
 from app.core.config import get_settings
+from app.db.engine import create_engine
+from app.db.session import create_session_factory
+from app.jobs import enqueue
+from app.jobs.tasks import PING
+from app.models import Job
 
 
 async def main() -> None:
-    redis = await create_pool(RedisSettings.from_dsn(get_settings().redis_url.unicode_string()))
+    engine = create_engine(get_settings())
     try:
-        job = await redis.enqueue_job("ping")
-        assert job is not None, "job was not enqueued"
-        result = await job.result(timeout=60)
+        async with create_session_factory(engine)() as db:
+            job_id = await enqueue(db, PING)
+            await db.commit()
+            for _ in range(120):
+                status = await db.scalar(select(Job.status).where(Job.id == job_id))
+                if status in {"succeeded", "dead"}:
+                    break
+                await db.rollback()  # end the snapshot so the next read sees new data
+                await asyncio.sleep(0.5)
     finally:
-        await redis.aclose()
-    assert result == "pong", result
-    print("worker: ping job returned", result)
+        await engine.dispose()
+    assert status == "succeeded", status
+    print("worker: ping job", status)
 
 
 asyncio.run(main())
@@ -70,7 +80,7 @@ SQL
   || fail "expected the 3 Phase 0 tables, found: $tables"
 echo "migration: at head, Phase 0 tables present"
 
-echo "== 5/5 Sign-in code is emailed by the worker (via Mailpit) and accepted"
+echo "== 5/5 Sign-in code is emailed by the API's background job (via Mailpit) and accepted"
 email="smoke-$(date +%s)@example.com"
 curl -fsS --max-time 15 -X POST "$API/api/v1/auth/otp/request" \
   -H "Content-Type: application/json" -d "{\"email\": \"$email\"}" >/dev/null \
@@ -96,6 +106,6 @@ body="{\"email\": \"$email\", \"code\": \"$code\", \"age_confirmed\": true, \"ac
 status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -X POST \
   "$API/api/v1/auth/otp/verify" -H "Content-Type: application/json" -d "$body")
 [ "$status" = "200" ] || fail "verifying the emailed code returned HTTP $status"
-echo "sign-in: code emailed by the worker and accepted by the API"
+echo "sign-in: code emailed in the background and accepted by the API"
 
 echo "All smoke checks passed."

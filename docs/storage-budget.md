@@ -76,9 +76,10 @@ tight.
   `require_storage_capacity` dependency and refuse with `503 storage_full`.
 - The limit and thresholds are settings: `DATABASE_SIZE_LIMIT_MB` (500),
   `STORAGE_WARN_PERCENT` (70), `STORAGE_PAUSE_PERCENT` (90).
-- The worker runs the retention jobs daily (03:00 and 03:30 UTC): hard-deleting accounts past
-  the 30-day grace period, purging expired codes and sessions, and pruning `auth_events`
-  older than `AUTH_EVENT_RETENTION_DAYS` (90).
+- Retention jobs are enqueued by the scheduler's tick (`POST /api/v1/admin/jobs/tick`, ADR 0008):
+  daily on the first tick of each UTC day, hard-deleting accounts past the 30-day grace
+  period, purging expired codes and sessions, and pruning `auth_events` older than
+  `AUTH_EVENT_RETENTION_DAYS` (90); hourly, purging the job-queue tables.
 
 ## Keeping it current
 

@@ -12,7 +12,7 @@ interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-
 | Layer | Technology |
 | --- | --- |
 | API | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 (async), Alembic, psycopg 3 |
-| Background jobs | Arq on Valkey (Redis-compatible) |
+| Background jobs | PostgreSQL job queue (ADR 0008); Valkey for rate limits until step 4 |
 | Database | PostgreSQL 16 + pgvector |
 | Web | Next.js (App Router), TypeScript (strict), Tailwind CSS |
 | Local dev | Docker Compose |
@@ -113,11 +113,11 @@ No configuration is needed for local development. To change ports or credentials
 | Service | What it is | Local address |
 | --- | --- | --- |
 | `db` | PostgreSQL 16 with pgvector | `localhost:5432` (user/password/db `app`) |
-| `valkey` | Valkey 9 (Redis-compatible): job queue, cache, rate limits | `localhost:6379` |
+| `valkey` | Valkey 9 (Redis-compatible): rate limits and cache | `localhost:6379` |
 | `mailpit` | Catches all outgoing email (sign-in codes) | <http://localhost:8025> |
 | `migrate` | One-shot `alembic upgrade head`; exits when done | n/a |
 | `api` | FastAPI with hot reload | <http://localhost:8000> |
-| `worker` | Arq worker with hot reload | n/a |
+| `worker` | Job worker (`python -m app.jobs.worker`) with hot reload; login-code emails are sent by `api` | n/a |
 | `web` | Next.js dev server | <http://localhost:3000> |
 
 `api` and `worker` wait for `migrate` to complete, and `web` waits for `api` to be healthy.
@@ -169,7 +169,7 @@ uv sync
 cp .env.example .env            # set SECRET_KEY, DATABASE_URL, REDIS_URL
 uv run alembic upgrade head
 uv run uvicorn app.main:create_app --factory --reload
-uv run arq app.worker.settings.WorkerSettings        # in another terminal
+uv run python -m app.jobs.worker                      # in another terminal
 uv run pytest tests/unit                               # no infrastructure needed
 ```
 
@@ -185,7 +185,7 @@ npm run dev
 ## Repository layout
 
 ```
-backend/    FastAPI app, Arq worker, Alembic migrations, tests
+backend/    FastAPI app, job queue and worker, Alembic migrations, tests
 frontend/   Next.js web app
 infra/      Deployment notes and production environment template
 docs/       ARCHITECTURE.md (source of truth) and ADRs (docs/adr)

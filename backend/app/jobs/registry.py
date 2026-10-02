@@ -79,6 +79,9 @@ class JobRegistry:
         self._specs[spec.kind] = spec
         return spec
 
+    def subset(self, include: Callable[[JobSpec], bool]) -> JobRegistry:
+        return JobRegistry([spec for spec in self._specs.values() if include(spec)])
+
     def get(self, kind: str) -> JobSpec | None:
         return self._specs.get(kind)
 

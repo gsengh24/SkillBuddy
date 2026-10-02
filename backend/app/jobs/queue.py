@@ -19,12 +19,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.jobs.registry import JobSpec
-from app.jobs.secrets import EphemeralSecrets, secret_store
+from app.jobs.secrets import PROCESS_ID, EphemeralSecrets, secret_store
 from app.models.jobs import JOB_DEDUPE_KEY_MAX_LENGTH, Job
 
 # Payloads carry IDs and small parameters only, never personal text.
 PAYLOAD_MAX_BYTES: Final = 2048
 DEFAULT_SECRET_TTL_SECONDS: Final = 15 * 60
+# Payload key naming the process that holds a job's secret (set by enqueue, not callers).
+RUNNER_KEY: Final = "_runner"
 
 _wake_listeners: set[Callable[[], None]] = set()
 
@@ -61,7 +63,11 @@ async def enqueue(
 
     Returns the job id, or ``None`` when a job with the same ``dedupe_key`` already exists.
     """
-    payload = payload or {}
+    payload = dict(payload or {})
+    if RUNNER_KEY in payload:
+        raise JobPayloadError(f"{RUNNER_KEY!r} is reserved")
+    if spec.needs_secret:
+        payload[RUNNER_KEY] = PROCESS_ID
     try:
         encoded = json.dumps(payload, separators=(",", ":"))
     except (TypeError, ValueError) as exc:

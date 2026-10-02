@@ -8,6 +8,14 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class TickOut(BaseModel):
+    enqueued: list[str] = Field(description="Job kinds enqueued by this tick.")
+    already_enqueued: list[str] = Field(
+        description="Job kinds already enqueued for the current period by an earlier tick."
+    )
+    ticked_at: datetime
+
+
 class TableSize(BaseModel):
     name: str
     bytes: int

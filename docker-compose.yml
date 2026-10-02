@@ -6,7 +6,8 @@
 #   mailpit  catches all outgoing email    http://localhost:8025 (web UI)
 #   migrate  one-shot `alembic upgrade head`, runs before api/worker start
 #   api      FastAPI, hot reload           http://localhost:8000  (docs at /docs)
-#   worker   Arq background worker, hot reload
+#   worker   background jobs from the PostgreSQL queue (ADR 0008), hot reload;
+#            login-code emails are sent by the api process itself
 #   web      Next.js dev server            http://localhost:3000
 #
 # Every value below has a local-only default; override any of them in a root .env file
@@ -106,6 +107,9 @@ services:
         condition: service_healthy
       valkey:
         condition: service_healthy
+      # The API sends login-code emails itself (its in-process job runner; ADR 0008).
+      mailpit:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     healthcheck:
@@ -122,7 +126,13 @@ services:
 
   worker:
     <<: *backend-service
-    command: ["arq", "app.worker.settings.WorkerSettings", "--watch", "app"]
+    # watchfiles (installed with uvicorn[standard]) restarts the worker on code changes.
+    command: ["watchfiles", "--filter", "python", "python -m app.jobs.worker", "app"]
+    environment:
+      <<: *backend-environment
+      # A separate process does not see the API's in-process wake-ups, so it polls.
+      JOBS_IDLE_POLL_SECONDS: "1"
+      JOBS_HEARTBEAT_FILE: /tmp/jobs-worker.heartbeat
     depends_on:
       db:
         condition: service_healthy
@@ -133,7 +143,12 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "arq", "--check", "app.worker.settings.WorkerSettings"]
+      # Healthy while the worker's event loop keeps touching its heartbeat file.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import os, sys, time; sys.exit(time.time() - os.path.getmtime('/tmp/jobs-worker.heartbeat') > 45)"
       interval: 15s
       timeout: 10s
       retries: 4
