@@ -163,7 +163,7 @@ class ChatService:
         """
         slow = await self._admit_poll(user.id)
         poll_after = SLOW_POLL_SECONDS if slow else None
-        db_now: datetime = await self._db.scalar(select(func.now()))
+        db_now = (await self._db.execute(select(func.now()))).scalar_one()
         horizon = (db_now - VISIBILITY_LAG, _NO_ID)
         if after is None:
             return Updates([], encode(*horizon), has_more=False, poll_after_seconds=poll_after)
