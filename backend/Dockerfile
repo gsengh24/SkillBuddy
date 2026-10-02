@@ -4,7 +4,7 @@
 #   dev      - all dependencies (incl. test/lint tools), code bind-mounted, hot reload
 #   runtime  - production image: runtime dependencies only, non-root, no build tools
 #
-# The same runtime image runs the API, the Arq worker and the one-shot migration job;
+# The same runtime image runs the API, the job worker and the one-shot migration job;
 # only the command differs (see docker-compose*.yml).
 
 ARG PYTHON_VERSION=3.12
@@ -69,6 +69,11 @@ COPY --from=builder /opt/venv /opt/venv
 COPY --chown=root:root alembic.ini ./
 COPY --chown=root:root migrations ./migrations
 COPY --chown=root:root app ./app
+
+# The embedding model (bge-small-en-v1.5, about 67 MB; ADR 0007) is baked into the image so
+# nothing is downloaded at runtime. Files are root-owned and read-only to the process user.
+ENV EMBEDDING_CACHE_DIR=/opt/models     HF_HUB_OFFLINE=1
+RUN HF_HUB_OFFLINE=0 python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5', cache_dir='/opt/models')"     && chmod -R a+rX /opt/models
 
 # Source is owned by root and read-only to the process user.
 USER app

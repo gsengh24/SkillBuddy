@@ -90,8 +90,8 @@ Catches:
   health check must use the liveness endpoint `/api/v1/health` (no database), not
   `/api/v1/health/ready`. Do not add an uptime pinger that hits the readiness endpoint.
 - First query after a suspend is slower while compute starts.
-- 0.5 GB is ample for staging, but embeddings (768 floats ≈ 3 KB each, ×4 facets per user,
-  plus the HNSW index) fill it at very roughly 20,000 seeded profiles.
+- 0.5 GB is ample for staging, but embeddings (384 floats ≈ 1.5 KB each, ×4 facets per user,
+  plus the HNSW index; see storage-budget.md) take a large share as seeded profiles grow.
 
 ### Upstash Free (Redis)
 

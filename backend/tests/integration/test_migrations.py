@@ -112,6 +112,50 @@ def test_job_tables_migration_downgrades_to_0002_and_back(
     assert _tables(engine) == ALL_TABLES
 
 
+def _embedding_type(engine: Engine) -> str:
+    with engine.connect() as connection:
+        return str(
+            connection.scalar(
+                text(
+                    "SELECT format_type(atttypid, atttypmod) FROM pg_attribute "
+                    "WHERE attrelid = 'profile_embeddings'::regclass AND attname = 'embedding'"
+                )
+            )
+        )
+
+
+def _reembed_jobs(engine: Engine) -> int:
+    with engine.connect() as connection:
+        return int(
+            connection.scalar(
+                text(
+                    "SELECT count(*) FROM jobs WHERE dedupe_key = 'reembed_profiles:migration-0004'"
+                )
+            )
+        )
+
+
+def test_embedding_migration_resizes_to_384_and_back(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    assert _embedding_type(engine) == "vector(384)"
+    assert _reembed_jobs(engine) == 1  # the re-embed is queued for the job runner
+
+    command.downgrade(config, "0003")
+    assert _embedding_type(engine) == "vector(768)"
+    assert _reembed_jobs(engine) == 0
+    index_definition = _hnsw_index_definition(engine)
+    assert index_definition is not None
+    assert "USING hnsw (embedding vector_cosine_ops)" in index_definition
+
+    command.upgrade(config, "head")
+    assert _embedding_type(engine) == "vector(384)"
+    assert _reembed_jobs(engine) == 1
+    assert "vector_cosine_ops" in (_hnsw_index_definition(engine) or "")
+
+
 def test_models_and_migrations_are_in_sync(migrated_database_url: str) -> None:
     """Fails if a model changed without a migration (or vice versa)."""
     engine = create_engine(migrated_database_url)

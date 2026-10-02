@@ -179,8 +179,9 @@ free tiers or open-source software, with no credit card on any account.
    work end to end on it. Respect the daily caps and timeout. Send only redacted free text
    and alias-labelled summaries, never names, emails or contact handles.
 3. **Embedding dimension is a setting plus a migration**, never assumed in code. ADR 0007
-   chose 384 (migration 0003 changes the column from 768); the worker checks the setting
-   against the column at start-up.
+   chose 384 (migration 0004 changed the column from 768). Settings refuse any other
+   `EMBEDDING_DIMENSIONS`, and embedding jobs check the column before writing. The CI memory
+   check keeps the API process plus the model under 400 MB.
 4. **Real user data never goes to a free-tier API whose terms allow training on inputs.**
    Use synthetic data for development and evaluation.
 5. **Every feature has a hard usage cap** and fails gracefully ("try again later") when a

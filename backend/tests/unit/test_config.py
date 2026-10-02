@@ -70,6 +70,7 @@ def test_production_accepts_safe_options(make_settings: SettingsFactory) -> None
         environment=Environment.PRODUCTION,
         cors_allow_origins=["https://app.example.com"],
         email_backend="smtp",
+        embedding_backend="fastembed",
     )
 
     assert settings.is_production

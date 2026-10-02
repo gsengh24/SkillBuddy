@@ -51,7 +51,7 @@ Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runti
 | `email_log` | One row per email recipient: purpose, keyed hash, provider, time; about 150 B | 30 days | Under 2 MB (at most 450 emails a day) |
 
 Chosen dimension: **384** (`BAAI/bge-small-en-v1.5`, [ADR 0007](adr/0007-ai-gateway.md)).
-The current schema still uses 768 until migration 0003 changes it.
+Migration 0004 changed the column from 768 to 384 (2026-10-02).
 
 ## What fits
 

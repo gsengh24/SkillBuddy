@@ -18,7 +18,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
-EMBEDDING_DIMENSIONS: Final = 768
+# bge-small-en-v1.5 (ADR 0007). The column's size is fixed by migration 0004; changing the
+# model to another size needs a new migration and a re-embed.
+EMBEDDING_DIMENSIONS: Final = 384
 
 
 class EmbeddingFacet(StrEnum):

@@ -16,6 +16,7 @@ dependencies = [
     "arq>=0.28",
     # arq 0.28 requires redis<6; lift the cap when arq supports newer redis.
     "redis>=5.2,<6",
+    "fastembed>=0.7",
 ]
 
 [dependency-groups]
@@ -70,13 +71,15 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]
 # --- Mypy ---------------------------------------------------------------------------
 [tool.mypy]
 python_version = "3.12"
+# Production and CI are Linux (e.g. app/ai/memory_check.py uses the POSIX resource module).
+platform = "linux"
 strict = true
 plugins = ["pydantic.mypy"]
 warn_unreachable = true
 files = ["app", "evals", "tests", "migrations"]
 
 [[tool.mypy.overrides]]
-module = ["arq.*", "pgvector.*", "asgi_lifespan.*"]
+module = ["arq.*", "pgvector.*", "asgi_lifespan.*", "fastembed.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]

@@ -14,6 +14,8 @@ from typing import Annotated, Literal, Self
 from pydantic import Field, PostgresDsn, RedisDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
+from app.models.profile_embedding import EMBEDDING_DIMENSIONS
+
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
@@ -121,6 +123,20 @@ class Settings(BaseSettings):
     # Enables GET /api/v1/admin/storage when set (send it as X-Admin-Token).
     admin_api_token: SecretStr | None = Field(default=None, min_length=32)
 
+    # --- Embeddings (ADR 0007) ---------------------------------------------------
+    # fastembed: BAAI/bge-small-en-v1.5 on CPU in this process. fake: deterministic vectors
+    # without a model, for tests only (refused in staging and production).
+    embedding_backend: Literal["fastembed", "fake"] = "fastembed"
+    embedding_model: Literal["BAAI/bge-small-en-v1.5"] = "BAAI/bge-small-en-v1.5"
+    # Must equal the migrated column size (384); a different size needs a migration.
+    embedding_dimensions: int = 384
+    # Where the model files live; the production image bakes them into /opt/models.
+    embedding_cache_dir: str | None = None
+    embedding_threads: int = Field(default=1, ge=1, le=8)
+    # Texts per inference call. Peak memory grows with it while one thread's speed does not
+    # (measured 2026-10-02: batch 8 peaked about 80 MB higher than 2), so keep it small.
+    embedding_batch_size: int = Field(default=2, ge=1, le=16)
+
     # --- Data stores -----------------------------------------------------------
     database_url: PostgresDsn
     db_pool_size: int = Field(default=5, ge=1, le=100)
@@ -164,6 +180,13 @@ class Settings(BaseSettings):
             raise ValueError("EMAIL_BACKEND must be 'smtp' in staging and production")
         if self.session_max_days < self.session_idle_days:
             raise ValueError("SESSION_MAX_DAYS must be at least SESSION_IDLE_DAYS")
+        if self.embedding_dimensions != EMBEDDING_DIMENSIONS:
+            raise ValueError(
+                f"EMBEDDING_DIMENSIONS must be {EMBEDDING_DIMENSIONS} (the migrated column); "
+                "another size needs a migration"
+            )
+        if deployed and self.embedding_backend == "fake":
+            raise ValueError("EMBEDDING_BACKEND=fake is for tests only")
         if self.jobs_retry_base_seconds > self.jobs_retry_max_seconds:
             raise ValueError("JOBS_RETRY_BASE_SECONDS must not exceed JOBS_RETRY_MAX_SECONDS")
         if self.storage_warn_percent >= self.storage_pause_percent:
