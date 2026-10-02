@@ -6,8 +6,6 @@ The API never runs the matcher itself: a new request is saved as ``pending`` and
 
 from __future__ import annotations
 
-import base64
-import binascii
 import logging
 import uuid
 from dataclasses import dataclass
@@ -29,6 +27,7 @@ from app.models import (
     User,
 )
 from app.services.auth.rate_limit import RateLimiter
+from app.services.cursors import InvalidCursorError, decode_cursor, encode
 
 logger = logging.getLogger(__name__)
 
@@ -53,12 +52,6 @@ class TooManyOpenRequestsError(AppError):
     default_message = "You have the most open requests allowed. Close one to start another."
 
 
-class InvalidCursorError(AppError):
-    status_code = HTTPStatus.BAD_REQUEST
-    code = "invalid_cursor"
-    default_message = "The cursor is not valid."
-
-
 @dataclass(frozen=True)
 class RequestPage:
     items: list[tuple[MatchRequest, int]]
@@ -66,17 +59,7 @@ class RequestPage:
 
 
 def encode_cursor(request: MatchRequest) -> str:
-    raw = f"{request.created_at.isoformat()}|{request.id}"
-    return base64.urlsafe_b64encode(raw.encode()).decode().rstrip("=")
-
-
-def decode_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
-    try:
-        padded = cursor + "=" * (-len(cursor) % 4)
-        stamp, _, identifier = base64.urlsafe_b64decode(padded).decode().partition("|")
-        return datetime.fromisoformat(stamp), uuid.UUID(identifier)
-    except (ValueError, binascii.Error, UnicodeDecodeError):
-        raise InvalidCursorError from None
+    return encode(request.created_at, request.id)
 
 
 class MatchRequestService:
@@ -186,3 +169,14 @@ class MatchRequestService:
             await self._db.commit()
             await self._db.refresh(request)
         return request, await self._match_count(request.id)
+
+
+__all__ = [
+    "InvalidCursorError",
+    "MatchRequestNotFoundError",
+    "MatchRequestService",
+    "ProfileRequiredError",
+    "TooManyOpenRequestsError",
+    "decode_cursor",
+    "encode_cursor",
+]

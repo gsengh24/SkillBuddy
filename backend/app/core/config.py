@@ -105,6 +105,16 @@ class Settings(BaseSettings):
     match_request_ttl_days: int = Field(default=30, ge=1, le=365)
     match_request_retention_days: int = Field(default=90, ge=7, le=730)
 
+    # --- Intros and notifications (ARCHITECTURE.md §6) ---------------------------------
+    # Intros a person may send per UTC day, and have waiting for an answer at once.
+    intros_per_day: int = Field(default=10, ge=1, le=100)
+    max_pending_intros: int = Field(default=20, ge=1, le=200)
+    # An unanswered intro expires after this many days.
+    intro_ttl_days: int = Field(default=14, ge=1, le=90)
+    notification_retention_days: int = Field(default=90, ge=7, le=730)
+    # The web app's public address, for links in notification emails (no link if unset).
+    web_app_url: str | None = Field(default=None, max_length=200)
+
     # --- Google sign-in (ADR 0011) -------------------------------------------------
     # Off, or any key missing: the button is hidden and the endpoints answer 404.
     google_signin_enabled: bool = False
@@ -362,6 +372,10 @@ class Settings(BaseSettings):
             raise ValueError("GOOGLE_OAUTH_REDIRECT_URI must be https in staging and production")
         if self.match_request_retention_days < self.match_request_ttl_days:
             raise ValueError("MATCH_REQUEST_RETENTION_DAYS must be at least MATCH_REQUEST_TTL_DAYS")
+        if self.web_app_url and not self.web_app_url.startswith(("https://", "http://")):
+            raise ValueError("WEB_APP_URL must start with https:// (or http:// locally)")
+        if deployed and self.web_app_url and not self.web_app_url.startswith("https://"):
+            raise ValueError("WEB_APP_URL must be https in staging and production")
         if self.storage_warn_percent >= self.storage_pause_percent:
             raise ValueError("STORAGE_WARN_PERCENT must be below STORAGE_PAUSE_PERCENT")
         return self

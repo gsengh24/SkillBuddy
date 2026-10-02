@@ -194,6 +194,7 @@ Without these the gateway uses template explanations. You can add them later.
    | `CLOUDFLARE_ACCOUNT_ID` | your CLOUDFLARE_ACCOUNT_ID (optional) |
    | `CLOUDFLARE_API_TOKEN` | your CLOUDFLARE_API_TOKEN (optional) |
    | `CLOUDFLARE_MODEL` | only if step 3.4 said Workers Paid: `@cf/meta/llama-3.1-8b-instruct-fp8-fast` |
+   | `WEB_APP_URL` | your WEB_URL from step 6 (links in intro emails; add it after step 6) |
 
 6. **Create Web Service**. The first build takes several minutes. When the log says
    "Your service is live", copy the URL at the top (e.g.

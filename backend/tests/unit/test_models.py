@@ -29,6 +29,9 @@ def test_metadata_contains_all_tables() -> None:
         "email_log",
         "match_requests",
         "matches",
+        "intros",
+        "connections",
+        "notifications",
     }
 
 

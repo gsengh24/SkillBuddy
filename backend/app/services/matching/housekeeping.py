@@ -10,7 +10,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.models import Match, MatchRequest, MatchStatus, RequestStatus
+from app.models import Intro, IntroStatus, Match, MatchRequest, MatchStatus, RequestStatus
 
 logger = logging.getLogger(__name__)
 
@@ -52,3 +52,17 @@ async def expire_and_purge_requests(
         "match_requests_housekept", extra={"expired": result.expired, "deleted": result.deleted}
     )
     return result
+
+
+async def expire_intros(db: AsyncSession, now: datetime) -> int:
+    """Daily: unanswered intros past their date become ``expired`` (declined ones too)."""
+    result = await db.execute(
+        update(Intro)
+        .where(
+            Intro.status.in_((IntroStatus.PENDING, IntroStatus.DECLINED)),
+            Intro.expires_at < now,
+        )
+        .values(status=IntroStatus.EXPIRED)
+    )
+    await db.commit()
+    return int(getattr(result, "rowcount", 0) or 0)

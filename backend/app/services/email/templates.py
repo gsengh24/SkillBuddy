@@ -42,3 +42,68 @@ def login_code_email(settings: Settings, to: str, code: str) -> EmailMessage:
         text=_TEXT.format(app=settings.app_name, code=code, minutes=minutes),
         html=_HTML.format(app=escape(settings.app_name), code=escape(code), minutes=minutes),
     )
+
+
+# --- notifications -------------------------------------------------------------------------
+
+_NOTICE_HTML = """<!doctype html>
+<html lang="en">
+  <body
+    style="margin:0;padding:24px;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a"
+  >
+    <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:8px;padding:24px">
+      <p style="margin:0 0 16px;font-size:18px;font-weight:700">{headline}</p>
+      <p style="margin:0 0 16px">{body}</p>
+      {link}
+      <p style="margin:16px 0 0;color:#475569;font-size:14px">
+        You can turn these emails off in {app} under About you.
+      </p>
+    </div>
+  </body>
+</html>
+"""
+
+_NOTICE_TEXT = """{headline}
+
+{body}
+{link}
+You can turn these emails off in {app} under About you.
+"""
+
+_NOTICES = {
+    "intro_received": (
+        "Someone would like to meet you",
+        "You have a new intro on {app}. Open it to see why you were matched, then accept or "
+        "decline.",
+    ),
+    "intro_accepted": (
+        "Your intro was accepted",
+        "Someone accepted your intro on {app}. Open it to get in touch.",
+    ),
+}
+
+
+def notification_email(settings: Settings, to: str, kind: str) -> EmailMessage:
+    """A short notice with a link to the app; it never names the other person."""
+    headline, body = _NOTICES[kind]
+    body = body.format(app=settings.app_name)
+    url = f"{settings.web_app_url.rstrip('/')}/notifications" if settings.web_app_url else None
+    html_link = (
+        f'<p style="margin:0"><a href="{escape(url)}" style="color:#166534">'
+        f"Open {escape(settings.app_name)}</a></p>"
+        if url
+        else ""
+    )
+    return EmailMessage(
+        to=to,
+        subject=f"{headline} on {settings.app_name}",
+        text=_NOTICE_TEXT.format(
+            headline=headline, body=body, link=f"\n{url}\n" if url else "", app=settings.app_name
+        ),
+        html=_NOTICE_HTML.format(
+            headline=escape(headline),
+            body=escape(body),
+            link=html_link,
+            app=escape(settings.app_name),
+        ),
+    )
