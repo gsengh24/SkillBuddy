@@ -108,7 +108,7 @@ PostgreSQL is the single source of truth, with the pgvector extension holding em
 | requests | id, user\_id, intent, raw\_text, structured\_json, status, expires\_at | A user can hold several active requests |
 | matches | id, request\_id, candidate\_id, score, reason, rank, status | Status: shown, viewed, intro\_sent, accepted, declined, expired |
 | connections | id, user\_a, user\_b, origin\_match\_id, created\_at | Created only after mutual accept |
-| conversations / messages | id, connection\_id, sender, body, sent\_at | Real-time chat; retained per privacy policy |
+| conversations / messages | id, connection\_id, sender, body, sent\_at | Chat, delivered by polling ([ADR 0012](adr/0012-chat-delivery-by-polling.md)); retained per privacy policy |
 | events | id, user\_id, type, payload, ts | Append-only behavioural log; training data for the ranker |
 | feedback | match\_id, rater, rating, tags, comment | Post-conversation signal |
 | spaces / goals / skill\_logs | id, connection\_id, title, progress | Pair space for project and skill tracking (Phase 4) |
@@ -132,7 +132,7 @@ Start as a **modular monolith** (one deployable, strict internal module boundari
 | Request | Create, clarify, expire and close match requests |
 | Matching | Retrieval, ranking, explanation; runs in the worker |
 | Connection | Intro send, accept, decline, block, report |
-| Messaging | Real-time chat over WebSocket, read state, history |
+| Messaging | Chat over REST with adaptive client polling ([ADR 0012](adr/0012-chat-delivery-by-polling.md)), read state, history |
 | Notification | Email, push and in-app; preference centre and digests |
 | Spaces | Shared goals and skill tracking (Phase 4) |
 | Admin / Trust | Moderation queue, bans, audit log, metrics |
@@ -147,7 +147,7 @@ Start as a **modular monolith** (one deployable, strict internal module boundari
 | GET /requests/{id}/matches | Ranked matches with reasons; polls until the async job is done |
 | POST /matches/{id}/intro | Send an intro note |
 | POST /intros/{id}/respond | Accept or decline |
-| GET /connections, WS /chat | Connections list and real-time chat |
+| GET /connections, GET/POST conversation messages | Connections list and chat, polled (ADR 0012) |
 | POST /feedback, POST /reports, POST /blocks | Feedback and safety |
 
 **Sync versus async.** Anything that calls an LLM or embedding model is asynchronous: the API enqueues a job and returns immediately; the client polls or receives a server-sent event. Nothing user-facing should block on a model call. Profile parsing target: under 10 seconds. First matches target: under 30 seconds, then cached.
@@ -238,7 +238,7 @@ The stack favours one language for most of the system and boring, well-supported
 | Background jobs | Celery or Arq on Redis | Mature queues, retries, scheduling | Temporal for complex workflows later |
 | Database | PostgreSQL with pgvector | One store for relational data and vectors; fewer moving parts | Qdrant or Pinecone at scale |
 | Cache and queue | Redis | Rate limits, sessions, job broker | Valkey |
-| Real-time chat | WebSockets in FastAPI, Redis pub/sub | Enough for early scale | Managed service such as Ably |
+| Chat | REST and adaptive client polling, PostgreSQL only ([ADR 0012](adr/0012-chat-delivery-by-polling.md)) | Works on sleeping free hosts with no pub/sub service | WebSockets or SSE, or a managed service such as Ably, once hosting is always-on |
 | Auth | Email OTP plus Google sign-in, using a managed auth provider or a vetted library | Do not hand-roll auth | Auth0, Clerk, Keycloak |
 | LLM and embeddings | Provider-agnostic gateway, hosted models first | Fastest route to quality; swap later | Self-hosted open models for cost |
 | Infra as code | Docker, Terraform | Reproducible environments | Pulumi |
@@ -259,7 +259,7 @@ The build runs in seven phases, and no phase starts until the previous gate is p
 | 0 Foundations | 1 to 2 | Repository layout, Docker Compose for local work, CI, staging environment, auth skeleton, OpenAPI spec, first 100 labelled match pairs |
 | 1 Profiles and requests | 3 to 6 | Onboarding screens, profile and request parsing, embeddings for four facets, confirm-your-profile screen, AI gateway with cost logging |
 | 2 Matching MVP | 7 to 11 | Retrieval with hard filters, ranker v1 with per-intent weights, LLM selection and reasons, intro send and accept, email notifications, evaluation run in CI |
-| 3 Chat, safety, closed beta | 12 to 16 | Real-time chat, block and report, moderation queue, automated screening, rate limits, privacy pages, 100 to 300 invited users |
+| 3 Chat, safety, closed beta | 12 to 16 | Chat (polled, ADR 0012), block and report, moderation queue, automated screening, rate limits, privacy pages, 100 to 300 invited users |
 | 4 Public launch | 17 to 22 | Waitlist and invites, onboarding polish, analytics dashboards, feedback capture, performance tuning, launch in the first community |
 | 5 Pair spaces and skills | 23 to 30 | Shared goals, skill logs and check-ins, reminders, conversation starters, project templates |
 | 6 Ranker, mobile, scale | 31 onward | Learned ranker trained on feedback, mobile app, dedicated vector store if needed, autoscaling, multilingual interface |
