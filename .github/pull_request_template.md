@@ -19,6 +19,7 @@
       disabled or weakened.
 - [ ] New or changed endpoints have tests (success and failure paths).
 - [ ] Database changes have an Alembic migration that downgrades cleanly.
+- [ ] If this PR adds a migration, run Actions → Migrate staging after merging.
 - [ ] New growing tables: retention policy and estimated growth stated above, row added to
       `docs/storage-budget.md`.
 - [ ] New settings are documented in `.env.example` and validated; secrets live only in the

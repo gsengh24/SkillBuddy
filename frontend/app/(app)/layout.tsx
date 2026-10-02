@@ -12,7 +12,9 @@ import { getUnreadCount } from "@/lib/social/server";
 export default async function SignedInLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) return children;
-  const [profile, unread] = await Promise.all([getMyProfile(), getUnreadCount()]);
+  // A failed profile call must not take down the shell: pages that need the profile call
+  // it again (cached, so the same failure) and show error.tsx inside the shell instead.
+  const [profile, unread] = await Promise.all([getMyProfile().catch(() => null), getUnreadCount()]);
   return (
     <AppShell
       user={{ id: user.id, email: user.email }}
