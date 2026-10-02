@@ -17,7 +17,8 @@ PHASE_ZERO_TABLES = {"users", "profiles", "profile_embeddings"}
 AUTH_TABLES = {"auth_identities", "otp_codes", "sessions", "auth_events"}
 JOB_TABLES = {"jobs", "rate_limit_counters", "email_log"}
 GOOGLE_TABLES = {"oauth_states"}  # migration 0006 (ADR 0011)
-ALL_TABLES = PHASE_ZERO_TABLES | AUTH_TABLES | JOB_TABLES | GOOGLE_TABLES
+MATCH_TABLES = {"match_requests", "matches"}  # migration 0007
+ALL_TABLES = PHASE_ZERO_TABLES | AUTH_TABLES | JOB_TABLES | GOOGLE_TABLES | MATCH_TABLES
 
 
 @pytest.fixture

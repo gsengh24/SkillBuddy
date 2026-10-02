@@ -94,6 +94,17 @@ class Settings(BaseSettings):
     allowed_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
     blocked_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
 
+    # --- Matching (ARCHITECTURE.md §3; ADR 0007) -------------------------------------
+    # New match requests per user per UTC day, and open (pending or ready) at once.
+    match_requests_per_day: int = Field(default=10, ge=1, le=100)
+    max_open_match_requests: int = Field(default=5, ge=1, le=50)
+    # People shown per request (the explain stage picks at most this many).
+    matches_per_request: int = Field(default=5, ge=1, le=10)
+    # A request stops being "open" after this many days; it is deleted, with its
+    # matches, after the retention period (storage rules).
+    match_request_ttl_days: int = Field(default=30, ge=1, le=365)
+    match_request_retention_days: int = Field(default=90, ge=7, le=730)
+
     # --- Google sign-in (ADR 0011) -------------------------------------------------
     # Off, or any key missing: the button is hidden and the endpoints answer 404.
     google_signin_enabled: bool = False
@@ -349,6 +360,8 @@ class Settings(BaseSettings):
             and not self.google_oauth_redirect_uri.startswith("https://")
         ):
             raise ValueError("GOOGLE_OAUTH_REDIRECT_URI must be https in staging and production")
+        if self.match_request_retention_days < self.match_request_ttl_days:
+            raise ValueError("MATCH_REQUEST_RETENTION_DAYS must be at least MATCH_REQUEST_TTL_DAYS")
         if self.storage_warn_percent >= self.storage_pause_percent:
             raise ValueError("STORAGE_WARN_PERCENT must be below STORAGE_PAUSE_PERCENT")
         return self

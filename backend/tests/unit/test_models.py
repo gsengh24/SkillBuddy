@@ -27,6 +27,8 @@ def test_metadata_contains_all_tables() -> None:
         "jobs",
         "rate_limit_counters",
         "email_log",
+        "match_requests",
+        "matches",
     }
 
 
