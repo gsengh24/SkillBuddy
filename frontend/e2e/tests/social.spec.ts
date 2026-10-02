@@ -31,6 +31,8 @@ test("notifications and messages pages are accessible on a phone", async ({ page
 
 test("a conversation you're not part of is not found", async ({ page, request }) => {
   await signUp(page, request, "/messages");
-  const response = await page.goto("/messages/00000000-0000-4000-8000-000000000000");
-  expect(response?.status()).toBe(404);
+  await page.goto("/messages/00000000-0000-4000-8000-000000000000");
+  // The app shell streams first, so the status is 200; the page itself is the 404 page.
+  await expect(page.getByText("This page could not be found.")).toBeVisible();
+  await expect(page.getByRole("textbox")).toHaveCount(0);
 });
