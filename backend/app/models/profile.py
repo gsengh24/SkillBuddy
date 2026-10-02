@@ -111,6 +111,9 @@ class Profile(TimestampMixin, Base):
     parsed_text_hash: Mapped[str | None] = mapped_column(String(64))
     parsed_at: Mapped[datetime | None]
 
+    # Email me about intros (in-app notifications are always kept).
+    email_notifications: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
+
     # --- consent to AI processing of the about text (ADR 0007, section 5) ---------------
     # The wording lives in the client; the API records when and which version was agreed.
     ai_consent_at: Mapped[datetime | None]

@@ -25,7 +25,9 @@ from app.services.email.templates import login_code_email
 from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
 from app.services.matching.engine import run_match_request
-from app.services.matching.housekeeping import expire_and_purge_requests
+from app.services.matching.housekeeping import expire_and_purge_requests, expire_intros
+from app.services.notification_email import send_notification_email
+from app.services.notifications import purge_old_notifications
 from app.services.profile_parsing import BACKFILL_BATCH_SIZE, parse_profile, pending_profiles
 
 logger = logging.getLogger(__name__)
@@ -162,9 +164,18 @@ async def _match_request(ctx: JobContext) -> None:
 
 
 async def _match_housekeeping(ctx: JobContext) -> None:
-    """Daily: expire open requests past their date; delete old ones with their matches."""
+    """Daily: expire old requests and intros; delete old requests and notifications."""
+    now = datetime.now(UTC)
     async with ctx.session_factory() as db:
-        await expire_and_purge_requests(db, ctx.settings, datetime.now(UTC))
+        await expire_and_purge_requests(db, ctx.settings, now)
+        await expire_intros(db, now)
+        await purge_old_notifications(db, ctx.settings, now)
+
+
+async def _send_notification_email(ctx: JobContext) -> None:
+    """Email someone about an intro (skipped if they opted out or only the reserve is left)."""
+    async with ctx.session_factory() as db:
+        await send_notification_email(db, ctx.settings, uuid.UUID(ctx.payload["notification_id"]))
 
 
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
@@ -232,6 +243,14 @@ MATCH_HOUSEKEEPING = JobSpec(
     kind="match_housekeeping", handler=_match_housekeeping, priority=200, timeout_seconds=240
 )
 
+SEND_NOTIFICATION_EMAIL = JobSpec(
+    kind="send_notification_email",
+    handler=_send_notification_email,
+    priority=50,
+    max_attempts=3,
+    timeout_seconds=30,
+)
+
 ALL_JOBS = (
     PING,
     SEND_LOGIN_CODE,
@@ -244,6 +263,7 @@ ALL_JOBS = (
     PARSE_PENDING_PROFILES,
     MATCH_REQUEST,
     MATCH_HOUSEKEEPING,
+    SEND_NOTIFICATION_EMAIL,
 )
 
 

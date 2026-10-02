@@ -41,7 +41,8 @@ data; events kept raw for 30 days.
 | `sessions` + `otp_codes` | Active sessions (max 90 days); codes purged once expired | 2 sessions × ~300 B | ~0.6 KB | ~0.6 KB |
 | `auth_events` | Logins, failures | 20 in the retention window × ~200 B | ~4 KB | ~4 KB |
 | `match_requests` + `matches` | Match requests (text up to 1,000 characters, parsed JSON) and up to 5 matches each, with reasons (migration 0007) | About 1 request a week kept for 90 days (`MATCH_REQUEST_RETENTION_DAYS`): 13 × (1.2 KB + 5 × 0.4 KB) | ~42 KB | ~42 KB |
-| **Total** | | | **~126 KB** | **~139 KB** |
+| `intros` + `connections` + `notifications` | Intros (note up to 500 characters), connections, in-app notifications (migration 0008) | A few intros and about 20 notifications per 90 days; notifications purged after `NOTIFICATION_RETENTION_DAYS` (90) | ~6 KB | ~6 KB |
+| **Total** | | | **~132 KB** | **~145 KB** |
 
 Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runtime-jobs-and-email.md)):
 
@@ -61,10 +62,10 @@ Allowing ~20 MB for PostgreSQL's own catalog and empty-table overhead:
 
 | Embedding dimension | Budget (350 MB) | Protect threshold (450 MB) |
 | --- | --- | --- |
-| 384 | about **2,600 users** | about 3,400 users |
-| 768 | about 2,400 users | about 3,100 users |
+| 384 | about **2,500 users** | about 3,300 users |
+| 768 | about 2,300 users | about 3,000 users |
 
-Updated 2026-10-03 for match requests (migration 0007); before them the budget fitted about
+Updated 2026-10-03 for match requests (migration 0007) and intros and notifications (0008); before them the budget fitted about
 4,000 users. Match history, events and messages dominate, not embeddings. Shorter
 `MATCH_REQUEST_RETENTION_DAYS` (for example 45 days halves the match share), shorter event
 retention and a message history cap are the biggest levers if space gets tight. Shorter event retention (or aggregating

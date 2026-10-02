@@ -85,6 +85,9 @@ class ProfileSettingsIn(BaseModel):
     timezone: Timezone | None = None
     languages: Languages | None = None
     visibility: ProfileVisibility | None = None
+    email_notifications: bool | None = Field(
+        default=None, description="Email me when I get an intro or one is accepted."
+    )
 
 
 class UnderstandingIn(BaseModel):
@@ -115,6 +118,7 @@ class ProfileOut(BaseModel):
     timezone: str | None
     languages: list[str]
     visibility: ProfileVisibility
+    email_notifications: bool
     parse_status: ParseStatus = Field(
         description="`pending` while the about text is being read; poll until `parsed`."
     )
@@ -148,6 +152,7 @@ class ProfileOut(BaseModel):
             timezone=profile.timezone,
             languages=list(profile.languages),
             visibility=ProfileVisibility(profile.visibility),
+            email_notifications=profile.email_notifications,
             parse_status=ParseStatus(profile.parse_status),
             parse_source=ParseSource(profile.parse_source) if profile.parse_source else None,
             understanding=understanding,

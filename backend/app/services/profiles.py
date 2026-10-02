@@ -102,7 +102,7 @@ class ProfileService:
         if profile is None:
             raise ProfileNotFoundError
         changes = data.model_dump(exclude_unset=True)
-        for field in ("display_name", "visibility", "links", "languages"):
+        for field in ("display_name", "visibility", "links", "languages", "email_notifications"):
             if changes.get(field) is not None:
                 setattr(profile, field, changes[field])
         if "timezone" in changes:

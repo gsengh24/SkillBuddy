@@ -30,6 +30,14 @@ from app.models.profile import (
     ProfileVisibility,
 )
 from app.models.profile_embedding import EMBEDDING_DIMENSIONS, EmbeddingFacet, ProfileEmbedding
+from app.models.social import (
+    INTRO_NOTE_MAX_LENGTH,
+    Connection,
+    Intro,
+    IntroStatus,
+    Notification,
+    NotificationKind,
+)
 from app.models.user import EMAIL_MAX_LENGTH, AuthProvider, User, UserStatus
 
 __all__ = [
@@ -38,6 +46,7 @@ __all__ = [
     "EMAIL_MAX_LENGTH",
     "EMBEDDING_DIMENSIONS",
     "INTENTS",
+    "INTRO_NOTE_MAX_LENGTH",
     "LINK_MAX_LENGTH",
     "MAX_LANGUAGES",
     "MAX_LINKS",
@@ -47,14 +56,19 @@ __all__ = [
     "AuthEventType",
     "AuthIdentity",
     "AuthProvider",
+    "Connection",
     "EmailLog",
     "EmailPurpose",
     "EmbeddingFacet",
+    "Intro",
+    "IntroStatus",
     "Job",
     "JobStatus",
     "Match",
     "MatchRequest",
     "MatchStatus",
+    "Notification",
+    "NotificationKind",
     "OAuthState",
     "OtpCode",
     "ParseSource",

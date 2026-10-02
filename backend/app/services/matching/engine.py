@@ -39,9 +39,11 @@ from app.models import (
     Match,
     MatchRequest,
     MatchStatus,
+    NotificationKind,
     Profile,
     RequestStatus,
 )
+from app.services.notifications import add_notification
 
 logger = logging.getLogger(__name__)
 
@@ -395,6 +397,10 @@ async def run_match_request(
         request.prompt_version = explanation.prompt_version
         request.matched_at = datetime.now(UTC)
         request.status = RequestStatus.READY
+        if explanation.picks:
+            add_notification(
+                db, request.user_id, NotificationKind.MATCHES_READY, request_id=request_id
+            )
         await db.commit()
     logger.info(
         "matches_made",
