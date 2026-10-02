@@ -19,8 +19,15 @@ JOB_TABLES = {"jobs", "rate_limit_counters", "email_log"}
 GOOGLE_TABLES = {"oauth_states"}  # migration 0006 (ADR 0011)
 MATCH_TABLES = {"match_requests", "matches"}  # migration 0007
 SOCIAL_TABLES = {"intros", "connections", "notifications"}  # migration 0008
+CHAT_TABLES = {"messages"}  # migration 0009 (ADR 0012)
 ALL_TABLES = (
-    PHASE_ZERO_TABLES | AUTH_TABLES | JOB_TABLES | GOOGLE_TABLES | MATCH_TABLES | SOCIAL_TABLES
+    PHASE_ZERO_TABLES
+    | AUTH_TABLES
+    | JOB_TABLES
+    | GOOGLE_TABLES
+    | MATCH_TABLES
+    | SOCIAL_TABLES
+    | CHAT_TABLES
 )
 
 
@@ -132,6 +139,52 @@ def test_oauth_states_migration_downgrades_to_0005_and_back(
 
     command.downgrade(config, "0005")
     assert _tables(engine) == PHASE_ZERO_TABLES | AUTH_TABLES | JOB_TABLES
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
+
+
+def _connection_columns(engine: Engine) -> set[str]:
+    return {column["name"] for column in inspect(engine).get_columns("connections")}
+
+
+def test_chat_migration_keeps_connections_and_downgrades_to_0008(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "0008")
+    with engine.begin() as connection:
+        ids = sorted(
+            connection.scalars(
+                text(
+                    "INSERT INTO users (email) "
+                    "VALUES ('a@example.com'), ('b@example.com') RETURNING id"
+                )
+            )
+        )
+        pair = connection.scalar(
+            text("INSERT INTO connections (user_a, user_b) VALUES (:a, :b) RETURNING id"),
+            {"a": ids[0], "b": ids[1]},
+        )
+
+    command.upgrade(config, "0009")
+    with engine.begin() as connection:
+        # Existing connections are kept, with nothing read yet.
+        row = connection.execute(
+            text("SELECT user_a_read_at, user_b_read_at FROM connections WHERE id = :id"),
+            {"id": pair},
+        ).one()
+        assert tuple(row) == (None, None)
+        connection.execute(
+            text("INSERT INTO messages (connection_id, from_a, body) VALUES (:c, true, 'hi')"),
+            {"c": pair},
+        )
+
+    command.downgrade(config, "0008")
+    assert _tables(engine) == ALL_TABLES - CHAT_TABLES
+    assert not {"user_a_read_at", "user_b_read_at"} & _connection_columns(engine)
+    with engine.connect() as connection:
+        assert connection.scalar(text("SELECT count(*) FROM connections")) == 1
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES

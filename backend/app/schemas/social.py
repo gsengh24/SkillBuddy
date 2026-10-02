@@ -9,6 +9,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models import INTRO_NOTE_MAX_LENGTH, Connection, Notification, Profile
+from app.services.chat import ConversationSummary
 from app.services.intros import IntroView
 
 
@@ -105,15 +106,23 @@ class ConnectionOut(BaseModel):
     id: uuid.UUID
     created_at: datetime
     person: PersonOut
+    unread_messages: int = Field(description="Messages from them you haven't read.")
+    last_message_at: datetime | None
 
     @classmethod
     def build(
-        cls, connection: Connection, other: uuid.UUID, profile: Profile | None
+        cls,
+        connection: Connection,
+        other: uuid.UUID,
+        profile: Profile | None,
+        summary: ConversationSummary | None,
     ) -> ConnectionOut:
         return cls(
             id=connection.id,
             created_at=connection.created_at,
             person=PersonOut.build(other, profile, connected=True),
+            unread_messages=summary.unread if summary else 0,
+            last_message_at=summary.last_message_at if summary else None,
         )
 
 

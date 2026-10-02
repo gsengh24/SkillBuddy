@@ -179,10 +179,43 @@ export const introPageSchema = z.object({
   next_cursor: z.string().nullable(),
 });
 
-export const connectionListSchema = z.object({
-  items: z.array(z.object({ id: z.string(), created_at: z.string(), person: personSchema })),
+export const connectionSchema = z.object({
+  id: z.string(),
+  created_at: z.string(),
+  person: personSchema,
+  unread_messages: z.number(),
+  last_message_at: z.string().nullable(),
 });
+export type Connection = z.infer<typeof connectionSchema>;
+
+export const connectionListSchema = z.object({ items: z.array(connectionSchema) });
 export type ConnectionList = z.infer<typeof connectionListSchema>;
+
+export const messageSchema = z.object({
+  id: z.string(),
+  connection_id: z.string(),
+  sender_id: z.string(),
+  body: z.string(),
+  created_at: z.string(),
+});
+export type Message = z.infer<typeof messageSchema>;
+
+/** One conversation, newest first (ADR 0012). */
+export const messagePageSchema = z.object({
+  items: z.array(messageSchema),
+  next_cursor: z.string().nullable(),
+  retention_days: z.number(),
+});
+export type MessagePage = z.infer<typeof messagePageSchema>;
+
+/** New messages in all conversations since a cursor, oldest first; may repeat recent ones. */
+export const messageUpdatesSchema = z.object({
+  items: z.array(messageSchema),
+  cursor: z.string(),
+  has_more: z.boolean(),
+  poll_after_seconds: z.number().nullable(),
+});
+export type MessageUpdates = z.infer<typeof messageUpdatesSchema>;
 
 export const notificationSchema = z.object({
   id: z.string(),

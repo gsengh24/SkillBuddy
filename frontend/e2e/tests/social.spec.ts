@@ -28,3 +28,9 @@ test("notifications and messages pages are accessible on a phone", async ({ page
     .analyze();
   expect(results.violations.map((v) => v.id)).toEqual([]);
 });
+
+test("a conversation you're not part of is not found", async ({ page, request }) => {
+  await signUp(page, request, "/messages");
+  const response = await page.goto("/messages/00000000-0000-4000-8000-000000000000");
+  expect(response?.status()).toBe(404);
+});

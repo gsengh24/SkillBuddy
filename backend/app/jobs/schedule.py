@@ -21,6 +21,7 @@ from app.jobs.tasks import (
     MATCH_HOUSEKEEPING,
     PURGE_AUTH_DATA,
     PURGE_JOB_TABLES,
+    PURGE_MESSAGES,
 )
 
 
@@ -44,6 +45,7 @@ SCHEDULE: tuple[ScheduledJob, ...] = (
     ScheduledJob(HARD_DELETE_ACCOUNTS, Period.DAY),
     ScheduledJob(PURGE_AUTH_DATA, Period.DAY),
     ScheduledJob(MATCH_HOUSEKEEPING, Period.DAY),
+    ScheduledJob(PURGE_MESSAGES, Period.DAY),
     ScheduledJob(PURGE_JOB_TABLES, Period.HOUR),
 )
 

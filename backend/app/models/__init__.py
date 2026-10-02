@@ -8,6 +8,7 @@ from app.models.auth import (
     OtpCode,
     UserSession,
 )
+from app.models.chat import MESSAGE_MAX_LENGTH, Message
 from app.models.jobs import EmailLog, EmailPurpose, Job, JobStatus, RateLimitCounter
 from app.models.matching import (
     INTENTS,
@@ -50,6 +51,7 @@ __all__ = [
     "LINK_MAX_LENGTH",
     "MAX_LANGUAGES",
     "MAX_LINKS",
+    "MESSAGE_MAX_LENGTH",
     "REQUEST_TEXT_MAX_LENGTH",
     "REQUEST_TEXT_MIN_LENGTH",
     "AuthEvent",
@@ -67,6 +69,7 @@ __all__ = [
     "Match",
     "MatchRequest",
     "MatchStatus",
+    "Message",
     "Notification",
     "NotificationKind",
     "OAuthState",
