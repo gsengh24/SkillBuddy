@@ -233,6 +233,10 @@ students or education.
 - **Owner decision (added 2026-10-02):** Owner has decided the platform is 18+ by
   self-declaration, which meets the Groq 18+ condition on paper; question to Groq support
   still open. See [ADR 0009](0009-adults-only-self-declaration.md).
+- **Owner decision (added 2026-10-02):** No question about under-18 users is needed for
+  Groq, because the platform is 18+ by self-declaration (ADR 0009). The only remaining
+  question for Groq support is "consumer use", and it is optional: the Cloudflare-only and
+  template-only fallbacks cover a withdrawal.
 
 **Cloudflare**
 
