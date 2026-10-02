@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 import { WhyBox } from "@/components/ui/why-box";
+import { SendIntro } from "@/components/social/send-intro";
 import type { Match } from "@/lib/api/schemas";
 import { hueStyle, personHue } from "@/lib/design/color";
 
@@ -60,12 +60,7 @@ export function MatchCard({ match }: { match: Match }) {
       <WhyBox hue={hue} title="Why this match">
         {match.reason}
       </WhyBox>
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" disabled hue={hue}>
-          Send intro
-        </Button>
-        <span className="text-small text-muted">Intros open soon.</span>
-      </div>
+      <SendIntro match={match} hue={hue} />
     </Card>
   );
 }

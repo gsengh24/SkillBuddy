@@ -146,3 +146,59 @@ export const matchSchema = z.object({
 export type Match = z.infer<typeof matchSchema>;
 
 export const matchListSchema = z.object({ items: z.array(matchSchema) });
+
+export const personSchema = z.object({
+  user_id: z.string(),
+  display_name: z.string().nullable(),
+  links: z.array(z.string()).nullable(),
+  summary: z.string(),
+  offers: z.array(z.string()),
+  seeks: z.array(z.string()),
+  interests: z.array(z.string()),
+  availability: z.string(),
+  languages: z.array(z.string()),
+});
+export type Person = z.infer<typeof personSchema>;
+
+export const introSchema = z.object({
+  id: z.string(),
+  direction: z.enum(["received", "sent"]),
+  status: z.enum(["pending", "accepted", "declined", "withdrawn", "expired"]),
+  note: z.string(),
+  request_text: z.string(),
+  reason: z.string(),
+  person: personSchema,
+  created_at: z.string(),
+  expires_at: z.string(),
+  responded_at: z.string().nullable(),
+});
+export type Intro = z.infer<typeof introSchema>;
+
+export const introPageSchema = z.object({
+  items: z.array(introSchema),
+  next_cursor: z.string().nullable(),
+});
+
+export const connectionListSchema = z.object({
+  items: z.array(z.object({ id: z.string(), created_at: z.string(), person: personSchema })),
+});
+export type ConnectionList = z.infer<typeof connectionListSchema>;
+
+export const notificationSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["intro_received", "intro_accepted", "matches_ready"]),
+  intro_id: z.string().nullable(),
+  request_id: z.string().nullable(),
+  read_at: z.string().nullable(),
+  created_at: z.string(),
+});
+export type AppNotification = z.infer<typeof notificationSchema>;
+
+export const notificationPageSchema = z.object({
+  items: z.array(notificationSchema),
+  next_cursor: z.string().nullable(),
+  unread: z.number(),
+});
+
+export const unreadCountSchema = z.object({ unread: z.number() });
+export const markedReadSchema = z.object({ marked: z.number() });

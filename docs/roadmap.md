@@ -45,7 +45,8 @@ CLAUDE.md:
       match cards with the reason (no name before an intro).
 - [x] Intros, connections and notifications API (migration 0008): two-sided consent,
       silent declines, names shared only on accept; intro emails within the Gmail quota.
-- [ ] Intro, connection and notification screens.
+- [x] Intro, connection and notification screens: send an intro from a match card,
+      accept or decline on Notifications, connections on Messages, unread dot on the bell.
 - [x] Profile onboarding and "About you" screens, with the ADR 0007 consent line, a
       review-and-correct step and a "show me in new matches" switch.
 - [x] Embedding dimension made a setting; 384 chosen in
