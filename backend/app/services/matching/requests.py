@@ -158,7 +158,9 @@ class MatchRequestService:
                     .where(Match.request_id.in_([r.id for r in page]))
                     .group_by(Match.request_id)
                 )
-            ).tuples()
+            )
+            .tuples()
+            .all()
         )
         return RequestPage(
             items=[(r, int(counts.get(r.id, 0))) for r in page],

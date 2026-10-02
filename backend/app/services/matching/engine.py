@@ -257,15 +257,18 @@ async def _history(
         )
     )
     since = func.now() - text(f"interval '{OVEREXPOSURE_DAYS} days'")
-    counts = dict(
-        (
+    counts: dict[uuid.UUID, int] = {
+        key: int(value)
+        for key, value in (
             await db.execute(
                 select(Match.candidate_id, func.count())
                 .where(Match.candidate_id.in_(ids), Match.created_at > since)
                 .group_by(Match.candidate_id)
             )
-        ).tuples()
-    )
+        )
+        .tuples()
+        .all()
+    }
     return seen, counts
 
 
