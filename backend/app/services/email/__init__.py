@@ -5,6 +5,7 @@ from app.services.email.senders import (
     EmailDeliveryError,
     EmailMessage,
     EmailSender,
+    GmailApiEmailSender,
     SmtpEmailSender,
     build_email_sender,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "EmailDeliveryError",
     "EmailMessage",
     "EmailSender",
+    "GmailApiEmailSender",
     "SmtpEmailSender",
     "build_email_sender",
 ]

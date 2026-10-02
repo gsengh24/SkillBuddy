@@ -33,6 +33,7 @@ from app.services.auth.errors import (
 from app.services.auth.events import ClientInfo, record_event
 from app.services.auth.rate_limit import RateLimiter
 from app.services.auth.sessions import create_session, revoke_all_sessions, revoke_session
+from app.services.email.budget import ensure_login_code_can_be_sent
 from app.services.storage import SignupsPausedError, StorageMonitor
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,8 @@ class AuthService:
             per_email=self._settings.otp_request_limit_per_email,
             per_ip=self._settings.otp_request_limit_per_ip,
         )
+        # Gmail's daily cap: refuse now (503) rather than accept a code that cannot be sent.
+        await ensure_login_code_can_be_sent(self._db, self._settings)
         # Only the newest code is ever valid.
         await self._db.execute(
             delete(OtpCode).where(OtpCode.email == email, OtpCode.consumed_at.is_(None))

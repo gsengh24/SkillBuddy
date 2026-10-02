@@ -13,6 +13,8 @@ const MESSAGES: Record<string, string> = {
   authentication_required: "Your session has ended. Please sign in again.",
   validation_error: "Please check what you entered and try again.",
   service_unavailable: "The service is temporarily unavailable. Please try again in a moment.",
+  email_quota_exhausted:
+    "We've sent as many sign-in emails as we can for now. Please try again in a few hours.",
 };
 
 export function describeError(error: unknown): string {

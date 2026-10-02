@@ -30,7 +30,7 @@ short note).
 | 6 | [ ] **Google Cloud OAuth app set to "In production"**, not "Testing" (Testing-mode refresh tokens for `gmail.send` expire after 7 days) | Screenshot or note of Google Auth Platform → Audience → Publishing status; the refresh token was created *after* the switch | Project owner | Yes | ADR 0008, "Pre-launch checks" |
 | 7 | [ ] **Day-8 login-code check**: a real login code still arrives 8 or more days after the refresh token was issued, with no `invalid_grant` in the email job's log | The date of the passing check is recorded here | Project owner (Claude Code reads the logs) | Yes | ADR 0008, "Pre-launch checks" |
 | 8 | [ ] **Delivery to `@thapar.edu`**: <ul><li>look up the MX host;</li><li>send codes to 3–5 volunteer student addresses, with their consent;</li><li>record inbox, junk or quarantine for each;</li><li>check the headers show `spf=pass`, `dkim=pass`, `dmarc=pass`;</li><li>ask college IT to allow-list the sender if mail lands in quarantine.</li></ul> | Every volunteer address receives the code in the inbox | Project owner (Claude Code writes the steps) | Yes | ADR 0008, "Testing deliverability" |
-| 9 | [ ] **Email cap and reserve built**: `EMAIL_DAILY_CAP=450`, a reserve for login codes, and `503 email_quota_exhausted` | ADR 0008 step 5 merged | Claude Code | Yes | ADR 0008 |
+| 9 | [x] **Email cap and reserve built** (Gmail API sender, ADR 0008 step 5): `EMAIL_DAILY_CAP=450`, a reserve for login codes, and `503 email_quota_exhausted` | ADR 0008 step 5 merged | Claude Code | Yes | ADR 0008 |
 
 ## Hosting, database and scheduling
 

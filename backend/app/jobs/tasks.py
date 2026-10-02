@@ -15,9 +15,10 @@ from app.ai.embeddings import get_embedder
 from app.core.security import mask_email
 from app.jobs.queue import enqueue
 from app.jobs.registry import JobContext, JobGroup, JobRegistry, JobSpec
-from app.models import OtpCode
+from app.models import EmailPurpose, OtpCode
 from app.services.auth.retention import hard_delete_due_accounts, purge_expired_auth_data
 from app.services.email import build_email_sender
+from app.services.email.budget import may_send, record_sent
 from app.services.email.templates import login_code_email
 from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
@@ -43,9 +44,21 @@ async def _send_login_code(ctx: JobContext) -> None:
     if otp is None or otp.consumed_at is not None or otp.expires_at <= datetime.now(UTC):
         logger.info("login_code_not_sent", extra={"job_id": str(ctx.job_id), "reason": "stale"})
         return
-    await build_email_sender(ctx.settings).send(
-        login_code_email(ctx.settings, otp.email, ctx.secret)
-    )
+    async with ctx.session_factory() as db:
+        if not await may_send(db, ctx.settings, EmailPurpose.LOGIN_CODE):
+            # The API checked before creating the code; this is a race at the cap.
+            logger.error("login_code_not_sent", extra={"reason": "email_quota_exhausted"})
+            return
+        sender = build_email_sender(ctx.settings)
+        message_id = await sender.send(login_code_email(ctx.settings, otp.email, ctx.secret))
+        await record_sent(
+            db,
+            ctx.settings,
+            purpose=EmailPurpose.LOGIN_CODE,
+            recipient=otp.email,
+            provider=sender.provider,
+            message_id=message_id,
+        )
     logger.info("login_code_sent", extra={"email": mask_email(otp.email)})
 
 
