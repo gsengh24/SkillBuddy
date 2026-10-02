@@ -55,7 +55,7 @@ short note).
 | 21 | [ ] **Groq and Cloudflare accounts** created without a card; Groq Zero Data Retention on; keys only in the hosting dashboard | Owner confirms each point | Project owner | Yes | ADR 0007, build step 11 |
 | 22 | [ ] **ADR 0007 AI build steps 2–9** (384-dimension migration 0004, embedder, gateway, providers, stages 1–4, onboarding text) | All merged with green CI | Claude Code | Yes | ADR 0007 |
 | 23 | [ ] **Review the 100 draft evaluation labels** and mark them `reviewed` | `review_status` is `reviewed` for every pair; `explore` rebalanced | Project owner | Yes | Exit report, blocker 2 |
-| 24 | [ ] **Eval run**: precision@5 for the LLM path and the fallback path | Numbers recorded in the evals README | Claude Code | No | ADR 0007, build step 10 |
+| 24 | [ ] **Eval run**: precision@5 for the LLM path and the fallback path | Numbers recorded in the evals README. Template-path baseline recorded 2 Oct 2026 (`evals/quality.py`); LLM path waits on item 23 and a provider key | Claude Code | No | ADR 0007, build step 10 |
 | 25 | [ ] **Invite plan**: waves of about 300 students per day, matched to LLM and email capacity | Owner agrees the wave sizes and dates | Project owner | Yes | ADR 0007 §4; ADR 0008 |
 
 ## Safety, security and accessibility

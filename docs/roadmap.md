@@ -36,6 +36,9 @@ CLAUDE.md:
 - [x] Embedding dimension made a setting; 384 chosen in
       [ADR 0007](adr/0007-ai-gateway.md); migration 0004 adjusts `profile_embeddings` before
       any real data exists. The full Phase 1 AI build order is at the end of ADR 0007.
+- [x] Understand and Explain stages on the AI gateway, each with a template fallback
+      that needs no AI (`app/ai/stages/`, prompts versioned in `app/ai/prompts/`); first
+      quality check against the eval pairs (`evals/quality.py`).
 - [ ] AI gateway stores prompt version, tokens and latency only; raw prompts and responses
       kept at most for a short debug window (e.g. 7 days) and purged by a daily job.
 - [ ] `events` table partitioned by month (ARCHITECTURE.md §5); raw events kept for a set
