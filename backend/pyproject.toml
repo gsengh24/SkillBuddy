@@ -13,9 +13,6 @@ dependencies = [
     "alembic>=1.18",
     "psycopg[binary,pool]>=3.3",
     "pgvector>=0.4",
-    "arq>=0.28",
-    # arq 0.28 requires redis<6; lift the cap when arq supports newer redis.
-    "redis>=5.2,<6",
     "fastembed>=0.7",
     "httpx>=0.28",
 ]
@@ -80,7 +77,7 @@ warn_unreachable = true
 files = ["app", "evals", "tests", "migrations"]
 
 [[tool.mypy.overrides]]
-module = ["arq.*", "pgvector.*", "asgi_lifespan.*", "fastembed.*"]
+module = ["pgvector.*", "asgi_lifespan.*", "fastembed.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
@@ -95,7 +92,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = ["--strict-markers", "--strict-config", "-ra"]
 markers = [
-    "integration: needs real PostgreSQL (with pgvector) and Redis; run inside the compose stack (see README).",
+    "integration: needs real PostgreSQL (with pgvector) and Mailpit; runs in CI or the compose stack (see README).",
 ]
 
 # --- Coverage -----------------------------------------------------------------------

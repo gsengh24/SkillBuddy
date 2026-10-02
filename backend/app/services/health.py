@@ -11,7 +11,6 @@ import logging
 import time
 from collections.abc import Awaitable, Callable
 
-from redis.asyncio import Redis
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -38,11 +37,6 @@ async def _check_pgvector(engine: AsyncEngine) -> None:
         raise DependencyUnavailableError("pgvector extension is not installed")
 
 
-async def _check_redis(redis: Redis) -> None:
-    if not await redis.ping():
-        raise DependencyUnavailableError("unexpected PING reply")
-
-
 async def _timed(
     name: str, check: Callable[[], Awaitable[None]], timeout_seconds: float
 ) -> tuple[str, DependencyCheck]:
@@ -64,13 +58,10 @@ async def _timed(
     return name, DependencyCheck(status=status, latency_ms=latency_ms, detail=detail)
 
 
-async def check_readiness(
-    engine: AsyncEngine, redis: Redis, *, timeout_seconds: float
-) -> ReadinessResponse:
+async def check_readiness(engine: AsyncEngine, *, timeout_seconds: float) -> ReadinessResponse:
     results = await asyncio.gather(
         _timed("database", lambda: _check_database(engine), timeout_seconds),
         _timed("pgvector", lambda: _check_pgvector(engine), timeout_seconds),
-        _timed("redis", lambda: _check_redis(redis), timeout_seconds),
     )
     checks = dict(results)
     healthy = all(check.status == "ok" for check in checks.values())

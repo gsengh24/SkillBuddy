@@ -36,15 +36,15 @@ cp infra/production.env.example infra/production.env   # fill in every value
 docker compose -f docker-compose.prod.yml --env-file infra/production.env up -d --build
 ```
 
-On a managed cloud, drop the `db` and `redis` services and point `DATABASE_URL` and
-`REDIS_URL` at managed PostgreSQL 16 (with the `vector` extension allowed) and managed Redis.
+On a managed cloud, drop the `db` service and point `DATABASE_URL` at managed PostgreSQL 16
+(with the `vector` extension allowed). No Redis is needed (ADR 0008).
 
 ## Health endpoints
 
 | Endpoint | Use for |
 | --- | --- |
 | `GET /api/v1/health` | Liveness: the process is up. No dependency checks. |
-| `GET /api/v1/health/ready` | Readiness / load-balancer gating: PostgreSQL, pgvector, Redis. Returns 503 with per-check detail on failure. |
+| `GET /api/v1/health/ready` | Readiness / load-balancer gating: PostgreSQL and pgvector. Returns 503 with per-check detail on failure. |
 | `GET /api/health` (web) | Web server liveness. |
 | `JOBS_HEARTBEAT_FILE` age | Worker liveness: the worker touches the file every 10 s; the compose healthcheck fails if it is over 45 s old. |
 | `POST /api/v1/admin/jobs/tick` | Scheduler entry point (`X-Jobs-Tick-Token`): enqueues due daily and hourly jobs. |

@@ -26,7 +26,7 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
 
 | Where | What runs there |
 | --- | --- |
-| Laptop | Editing, git, and checks that need no Docker, Postgres or Redis |
+| Laptop | Editing, git, and checks that need no Docker or Postgres |
 | GitHub Actions CI | The test runner: lint, types, migrations, unit + integration tests, image builds |
 | Staging site | The running app, for seeing changes (hosting not set up yet) |
 | GitHub Codespaces | Optional: the full stack via `docker compose` (`.devcontainer/`) |
@@ -35,7 +35,7 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
 
 1. Work on a short-lived feature branch (`<type>/<short-description>`). Never push directly
    to `main`; every change goes through a pull request.
-2. Never try to run Docker, Postgres or Redis on the laptop. Run only the local checks below
+2. Never try to run Docker or Postgres on the laptop. Run only the local checks below
    and rely on CI for everything else.
 3. A task is done only when its PR's CI is green. Say so with the job names that passed.
    Required checks on `main` (GitHub ruleset "Protect main"): Backend, Frontend,
@@ -59,12 +59,12 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
   - **Scheduling:** no cron process. The scheduler (a Cloudflare Worker cron) calls
     `POST /api/v1/admin/jobs/tick`, which enqueues due daily and hourly jobs once per period.
 - **PostgreSQL 16 + pgvector** is the single source of truth, including embeddings and jobs.
-  **Valkey** (Redis-compatible, ADR 0005) holds rate limits and a cache until ADR 0008
-  step 4 moves them to PostgreSQL.
+  It also holds the job queue, the rate-limit and AI-cap counters, and nothing else is
+  needed: there is no Redis (ADR 0008).
 - **Next.js** web app. Server components call the API through a typed client; the browser
   calls the web app's own `/api/v1/*`, which forwards to the API (same-origin cookies).
 - **Authentication** (ADR 0006): passwordless email codes, server-side sessions in an
-  httpOnly cookie, signed double-submit CSRF, Valkey rate limits, 30-day deletion grace
+  httpOnly cookie, signed double-submit CSRF, PostgreSQL rate limits, 30-day deletion grace
   period. Email is sent only by background jobs (Mailpit catches it in dev and CI). 18+ only, by
   a required self-declaration tick box; no verification (ADR 0009).
 - Migrations run as a **separate one-shot step** (`migrate` service), never at API startup.
@@ -74,7 +74,7 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
 ```
 backend/
   app/
-    main.py              App factory (create_app) + lifespan (DB engine, Valkey pool)
+    main.py              App factory (create_app) + lifespan (DB engine, in-process job runner)
     core/                config (settings), logging (JSON), errors (envelope + handlers),
                          request_context (request-id middleware), security (stubs, headers)
     db/                  base (DeclarativeBase, naming convention, mixins), engine, session
@@ -91,7 +91,7 @@ backend/
   migrations/            Alembic env + versions (one file per migration)
   evals/                 Matcher evaluation set: synthetic profiles + draft-labelled pairs
   tests/unit/            No infrastructure needed
-  tests/integration/     Real Postgres + Valkey; each run uses a throwaway database
+  tests/integration/     Real Postgres (+ Mailpit); each run uses a throwaway database
 frontend/
   app/                   App Router pages: /login, /terms, /privacy; signed-in pages in app/(app)/
                          (/home, /messages, /saved, /notifications, /settings/account) share
@@ -154,7 +154,7 @@ a Codespace, with plain `docker compose` from the repo root (`make` is not assum
    `alembic revision --autogenerate` (see Commands), review and edit it, and make sure
    `downgrade()` works. CI runs upgrade → downgrade → upgrade and `alembic check`.
 3. **Every endpoint needs tests**, covering at least the success path and the main failure
-   paths (validation, not found, unauthorised). Use real Postgres/Redis in integration tests,
+   paths (validation, not found, unauthorised). Use real Postgres in integration tests,
    not mocks of our own infrastructure.
 4. **LLM calls only through the AI gateway module** (added in Phase 1). No direct provider
    SDK calls anywhere else. The gateway logs prompt version, latency, tokens and cost.
@@ -234,7 +234,7 @@ mobile app were calling it tomorrow.
 - Types everywhere; `mypy --strict` must pass. No bare `# type: ignore`; always give the
   error code and a reason.
 - Ruff for lint and formatting (line length 100). Don't disable rules inline without a reason.
-- Async all the way: async SQLAlchemy sessions, `redis.asyncio`, no blocking I/O in handlers.
+- Async all the way: async SQLAlchemy sessions, `httpx.AsyncClient`, no blocking I/O in handlers.
 - Endpoints stay thin: validate input (schemas), call a service, return a schema. Business
   logic lives in `services/`. Modules interact only through each other's service functions.
 - Raise `AppError` subclasses (`app/core/errors.py`) for expected failures; never return

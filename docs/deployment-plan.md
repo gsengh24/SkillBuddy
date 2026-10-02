@@ -14,15 +14,14 @@ Browser ──► Vercel (Next.js web app, free)
                │  server-side calls over HTTPS
                ▼
             Free API host (FastAPI, sleeps when idle)
-               ├──► Neon (PostgreSQL 16 + pgvector, free)
-               └──► Upstash (Redis, free)
+               └──► Neon (PostgreSQL 16 + pgvector, free): data, job queue, rate limits
 
 GitHub Actions ──► runs `alembic upgrade head` against Neon (manual trigger)
 No background worker on staging (see "The worker" below).
 ```
 
 Pick regions close to each other (and to India) to keep latency down: Singapore for Render,
-Neon (AWS `ap-southeast-1`) and Upstash where offered.
+and Neon (AWS `ap-southeast-1`).
 
 ## Free-tier limits and catches (as of 2026-10-01)
 
@@ -93,24 +92,6 @@ Catches:
 - 0.5 GB is ample for staging, but embeddings (384 floats ≈ 1.5 KB each, ×4 facets per user,
   plus the HNSW index; see storage-budget.md) take a large share as seeded profiles grow.
 
-### Upstash Free (Redis)
-
-| Limit | Free allowance |
-| --- | --- |
-| Databases | 1 |
-| Data size | 256 MB |
-| Commands | 500,000 / month |
-| Bandwidth | 10 GB / month |
-| Max request size | 10 MB |
-
-Catches:
-- Over the command limit, every command fails with `ERR max requests limit exceeded` until
-  you upgrade or the month resets. Operational commands such as `PING` are not counted, so
-  the readiness check is free.
-- **An Arq worker would exhaust the quota in about 3 days**: it polls Redis about twice a
-  second (~5 million commands/month). This is the main reason staging has no worker.
-- Connections use TLS; Upstash gives a `rediss://` URL.
-
 ### The worker
 
 There is no free always-on background worker on any of these providers. Options:
@@ -160,12 +141,6 @@ provider dashboard or a GitHub repository secret.
 6. Run the "Migrate staging" workflow (repo change 3) from the **Actions** tab. It creates
    the tables and enables `vector` and `citext`.
 
-### 2. Upstash (Redis)
-
-1. Sign up at upstash.com (no card).
-2. **Create Database** → Redis, region **ap-southeast-1 (Singapore)**, free plan.
-3. Copy the `rediss://` connection URL from the database page. This is your `REDIS_URL`.
-
 ### 3. API (Render Free)
 
 1. Sign up at render.com with GitHub; do not add a payment method.
@@ -182,7 +157,6 @@ provider dashboard or a GitHub repository secret.
    | `ENVIRONMENT` | `staging` |
    | `SECRET_KEY` | a random string of 32+ characters (Render's "Generate" button) |
    | `DATABASE_URL` | from Neon step 4 |
-   | `REDIS_URL` | from Upstash step 3 |
    | `CORS_ALLOW_ORIGINS` | the Vercel URL from step 4 below (fill in after it exists) |
    | `API_DOCS_ENABLED` | `true` (staging only) |
 
@@ -206,12 +180,12 @@ provider dashboard or a GitHub repository secret.
 ## Day-to-day
 
 - **Logs:** Render service → **Logs** tab (API). Vercel project → **Logs** (1 hour kept on
-  Hobby). Neon and Upstash dashboards show usage against the free limits.
+  Hobby). The Neon dashboard shows usage against the free limits.
 - **Rollback:** Render service → **Events** → pick an earlier deploy → **Rollback**. Vercel
   project → **Deployments** → earlier deployment → **Instant Rollback** (on Hobby this may be
   limited to the previous production deployment). Rollbacks do not undo database
   migrations; revert a migration with a new PR instead.
-- **Watch the meters** monthly: Neon compute hours, Upstash commands, Render instance hours.
+- **Watch the meters** monthly: Neon compute hours and Render instance hours.
   If one is near its limit, staging will stop until the month resets.
 
 ## When to move off this plan

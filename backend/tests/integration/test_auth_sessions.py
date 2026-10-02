@@ -1,4 +1,4 @@
-"""Sessions, cookies, CSRF and account deletion, against real PostgreSQL and Valkey."""
+"""Sessions, cookies, CSRF and account deletion, against real PostgreSQL."""
 
 from __future__ import annotations
 
@@ -12,10 +12,8 @@ from httpx import AsyncClient, Response
 from app.core.config import Settings
 from tests.conftest import SettingsFactory
 from tests.integration.conftest import (
-    AUTH_VALKEY_DB,
     CapturingDelivery,
     auth_client,
-    redis_url_with_db,
     run_sql,
 )
 from tests.integration.test_auth_codes import error_code, new_email, request_code, sign_in, verify
@@ -71,7 +69,6 @@ async def test_cookie_is_not_secure_on_the_plain_http_dev_stack(
 ) -> None:
     settings = make_settings(
         database_url=migrated_database_url,
-        redis_url=redis_url_with_db(AUTH_VALKEY_DB),
         session_cookie_secure=False,
     )
     async with auth_client(settings, delivery, base_url="http://testserver") as client:

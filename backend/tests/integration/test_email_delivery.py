@@ -9,7 +9,7 @@ from app.core.config import Settings
 from app.services.email import EmailMessage, SmtpEmailSender, build_email_sender
 from app.services.email.templates import login_code_email
 from tests.conftest import SettingsFactory
-from tests.integration.conftest import AUTH_VALKEY_DB, auth_client, redis_url_with_db, run_sql
+from tests.integration.conftest import auth_client, run_sql
 from tests.integration.mailpit import code_from, wait_for_message
 
 
@@ -65,7 +65,6 @@ async def test_api_emails_the_code_in_the_background_and_it_signs_the_user_in(
     settings = smtp_settings(
         make_settings,
         database_url=migrated_database_url,
-        redis_url=redis_url_with_db(AUTH_VALKEY_DB),
     )
     email = new_email()
     async with auth_client(settings, delivery=None) as client:

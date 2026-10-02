@@ -1,8 +1,8 @@
 """Shared fixtures.
 
 Unit tests (``tests/unit``) need no infrastructure. Integration tests
-(``tests/integration``) run against the real PostgreSQL and Redis given by
-``DATABASE_URL`` and ``REDIS_URL``; each run works in its own throwaway database.
+(``tests/integration``) run against the real PostgreSQL given by ``DATABASE_URL``
+(and Mailpit for email); each run works in its own throwaway database.
 """
 
 from __future__ import annotations
@@ -19,7 +19,6 @@ from httpx import ASGITransport, AsyncClient
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-at-least-32-characters")
 os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://app:app@localhost:5432/app")
-os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("LOG_JSON", "true")
 # Tests never download or run the real embedding model (the CI memory check does that).
 os.environ.setdefault("EMBEDDING_BACKEND", "fake")
@@ -55,7 +54,7 @@ def settings(make_settings: SettingsFactory) -> Settings:
 
 @pytest.fixture
 async def client(settings: Settings) -> AsyncIterator[AsyncClient]:
-    """HTTP client for an app whose lifespan (DB and Redis pools) is not started."""
+    """HTTP client for an app whose lifespan (DB pool, job runner) is not started."""
     app = create_app(settings)
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as http_client:

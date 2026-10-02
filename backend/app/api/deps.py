@@ -107,7 +107,7 @@ def get_otp_delivery(settings: SettingsDep) -> OtpDelivery:
 
 
 def get_storage_monitor(request: Request, settings: SettingsDep) -> StorageMonitor:
-    return StorageMonitor(request.app.state.engine, request.app.state.redis, settings)
+    return StorageMonitor(request.app.state.engine, settings)
 
 
 StorageMonitorDep = Annotated[StorageMonitor, Depends(get_storage_monitor)]
@@ -126,6 +126,8 @@ def get_auth_service(
     storage: StorageMonitorDep,
 ) -> AuthService:
     limiter = RateLimiter(
-        request.app.state.redis, window_seconds=settings.rate_limit_window_seconds
+        request.app.state.session_factory,
+        settings.secret_key,
+        window_seconds=settings.rate_limit_window_seconds,
     )
     return AuthService(db, settings, limiter, delivery, storage)

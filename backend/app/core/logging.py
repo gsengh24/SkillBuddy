@@ -59,7 +59,7 @@ _TEXT_FORMAT: Final = "%(asctime)s %(levelname)-8s %(name)s [%(request_id)s] %(m
 
 
 def configure_logging(level: LogLevel, *, json_output: bool) -> None:
-    """Route all logging (ours, uvicorn's, arq's) through one stdout handler."""
+    """Route all logging (ours and uvicorn's) through one stdout handler."""
     handler = logging.StreamHandler(sys.stdout)
     handler.addFilter(RequestIdFilter())
     handler.setFormatter(JsonFormatter() if json_output else logging.Formatter(_TEXT_FORMAT))
@@ -70,7 +70,7 @@ def configure_logging(level: LogLevel, *, json_output: bool) -> None:
     root.setLevel(level)
 
     # Let library loggers propagate to the root handler instead of using their own.
-    for name in ("uvicorn", "uvicorn.error", "uvicorn.access", "arq"):
+    for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
         library_logger = logging.getLogger(name)
         library_logger.handlers.clear()
         library_logger.propagate = True
