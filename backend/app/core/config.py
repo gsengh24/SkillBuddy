@@ -107,7 +107,8 @@ class Settings(BaseSettings):
     # --- Email -----------------------------------------------------------------
     # "console" prints messages to stdout (local development and tests only);
     # "smtp" sends through any SMTP server (Mailpit locally, a free relay on staging).
-    email_backend: Literal["console", "smtp"] = "console"
+    # "gmail_api" sends as a Gmail account over HTTPS (staging/production; ADR 0008).
+    email_backend: Literal["console", "smtp", "gmail_api"] = "console"
     email_from_address: str = Field(default="no-reply@localhost", pattern=r"^[^@\s]+@[^@\s]+$")
     smtp_host: str = "localhost"
     smtp_port: int = Field(default=587, ge=1, le=65_535)
@@ -115,6 +116,15 @@ class Settings(BaseSettings):
     smtp_username: str | None = None
     smtp_password: SecretStr | None = None
     smtp_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+    # Gmail API (EMAIL_BACKEND=gmail_api). Client id/secret of a Google Cloud OAuth client and
+    # a refresh token with the gmail.send scope; secrets live only in the hosting dashboard.
+    gmail_client_id: str | None = None
+    gmail_client_secret: SecretStr | None = None
+    gmail_refresh_token: SecretStr | None = None
+    gmail_sender: str | None = Field(default=None, pattern=r"^[^@\s]+@[^@\s]+$")
+    # Rolling 24-hour cap (Gmail allows 500 recipients) and the part kept for login codes.
+    email_daily_cap: int = Field(default=450, ge=1, le=2000)
+    email_reserve_for_codes: int = Field(default=150, ge=0)
 
     # --- Storage guard (docs/storage-budget.md) --------------------------------
     database_size_limit_mb: int = Field(default=500, ge=1)
@@ -213,8 +223,22 @@ class Settings(BaseSettings):
         deployed = self.environment in {Environment.STAGING, Environment.PRODUCTION}
         if deployed and not self.session_cookie_secure:
             raise ValueError("SESSION_COOKIE_SECURE must be true in staging and production")
-        if deployed and self.email_backend != "smtp":
-            raise ValueError("EMAIL_BACKEND must be 'smtp' in staging and production")
+        if deployed and self.email_backend == "console":
+            raise ValueError(
+                "EMAIL_BACKEND must be 'gmail_api' or 'smtp' in staging and production"
+            )
+        if self.email_backend == "gmail_api" and not (
+            self.gmail_client_id
+            and self.gmail_client_secret
+            and self.gmail_refresh_token
+            and self.gmail_sender
+        ):
+            raise ValueError(
+                "EMAIL_BACKEND=gmail_api needs GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, "
+                "GMAIL_REFRESH_TOKEN and GMAIL_SENDER"
+            )
+        if self.email_reserve_for_codes >= self.email_daily_cap:
+            raise ValueError("EMAIL_RESERVE_FOR_CODES must be below EMAIL_DAILY_CAP")
         if self.session_max_days < self.session_idle_days:
             raise ValueError("SESSION_MAX_DAYS must be at least SESSION_IDLE_DAYS")
         if self.embedding_dimensions != EMBEDDING_DIMENSIONS:
