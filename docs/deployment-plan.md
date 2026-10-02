@@ -1,6 +1,6 @@
 # Zero-cost staging: plan and click-by-click setup
 
-**Status:** ready to set up; nothing is deployed yet. Decisions: [ADR 0003](adr/0003-hosting.md)
+**Status:** staging is live (2026-10-02); see the status table below. Decisions: [ADR 0003](adr/0003-hosting.md)
 (hosting), [ADR 0007](adr/0007-ai-gateway.md) (AI), [ADR 0008](adr/0008-free-runtime-jobs-and-email.md)
 (jobs, scheduler, email). Free-tier limits were checked on **2026-10-01**; re-check each
 pricing page before you rely on it ([free-tier-limits.md](free-tier-limits.md)).
@@ -8,6 +8,26 @@ pricing page before you rely on it ([free-tier-limits.md](free-tier-limits.md)).
 Total cost: **$0/month**. No step asks for a card; if a page does, stop and do not add one.
 **Nothing secret goes in the repository.** Every secret is pasted into a provider dashboard
 or a GitHub repository secret, and never into chat, email or a committed file.
+
+## Staging status (2026-10-02)
+
+| Step | What | Status |
+| --- | --- | --- |
+| 1 | Neon: PostgreSQL 16, Singapore, autoscaling capped at 0.25 CU | Done |
+| 1 | "Migrate staging" workflow run after #35 (head is migration 0006) | Done |
+| 2 | Gmail sending account and OAuth client; refresh token created 2026-10-02 | Done; day-8 check due on or after **2026-10-10** (step 9) |
+| 3 | Groq and Cloudflare Workers AI keys | **Pending**: matching uses the template fallback until then |
+| 4 | API on Render Free (Docker, Singapore); `/api/v1/health` passes | Done |
+| 5 | Cloudflare cron Worker `skill-buddy-tick` deployed; its log shows `tick ok` | Done; the 2-day timing check is still open (checklist item 17) |
+| 6 | Web app on Vercel Hobby, using `API_INTERNAL_URL` | Done |
+| 6b | Google sign-in OAuth client | **Pending** |
+| 7 | First sign-in: a real code sent by the Gmail API sender and accepted (2026-10-02) | **Passed** |
+| 8 | Delivery to `@thapar.edu` | **Pending** |
+| 9 | Day-8 check | **Due on or after 2026-10-10** |
+
+`ALLOWED_EMAIL_DOMAINS`, `ALLOWED_EMAILS` and `BLOCKED_EMAILS` are **intentionally empty**
+on staging until the `@thapar.edu` delivery test (step 8) is finished. Until then anyone
+who can receive a code can sign in to staging.
 
 ## The setup at a glance
 
@@ -73,7 +93,7 @@ refresh token:** tokens from a Testing app stop working after 7 days.
 **2a. A Gmail address for sending**
 
 1. In a private browser window go to **https://accounts.google.com/signup** and create an
-   account, e.g. `skillbuddy.tiet@gmail.com` (any free name). Save it as **GMAIL_SENDER**.
+   account with any free name (for example `<project-name>.mail@gmail.com`). Save the address as **GMAIL_SENDER**.
 2. Stay signed in to this account for the rest of step 2.
 
 **2b. Google Cloud project and Gmail API (no billing)**
