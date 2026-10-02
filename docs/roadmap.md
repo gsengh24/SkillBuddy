@@ -32,7 +32,12 @@ CLAUDE.md:
 ## Phase 1: profiles, requests and the AI gateway
 
 - [ ] Text caps enforced in request schemas: profile text and request text (2,000
-      characters planned), with clear validation errors.
+      characters planned), with clear validation errors. Profile text: done (schema and
+      CHECK, migration 0005); request text comes with the matching endpoints.
+- [x] Profile API (`/api/v1/me/profile`): save with AI-consent version recorded, settings
+      and visibility, user corrections of the parsed result; `parse_profile` job (AI or
+      template, hash-cached) that queues the embedding; backfill for older profiles.
+- [ ] Profile onboarding and "About you" screens, with the ADR 0007 consent line.
 - [x] Embedding dimension made a setting; 384 chosen in
       [ADR 0007](adr/0007-ai-gateway.md); migration 0004 adjusts `profile_embeddings` before
       any real data exists. The full Phase 1 AI build order is at the end of ADR 0007.
