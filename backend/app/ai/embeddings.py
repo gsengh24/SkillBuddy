@@ -3,7 +3,7 @@
 The model runs with fastembed (ONNX Runtime) inside the process that runs jobs: the API
 process on free hosting (ADR 0008). No text leaves the server to be embedded. The model is
 loaded lazily on first use, kept for the life of the process, and limited to one ONNX
-thread and small batches so it fits a 512 MB host (the CI memory check enforces 400 MB).
+thread and batches of 2 so it fits a 512 MB host (the CI memory check enforces 400 MB).
 
 Tests and CI use ``FakeEmbedder``, which needs no model download.
 """

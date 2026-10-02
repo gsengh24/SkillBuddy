@@ -165,7 +165,7 @@ def test_embedding_settings(make_settings: SettingsFactory) -> None:
     settings = make_settings(embedding_backend="fastembed")
     assert settings.embedding_model == "BAAI/bge-small-en-v1.5"
     assert settings.embedding_dimensions == 384
-    assert (settings.embedding_threads, settings.embedding_batch_size) == (1, 8)
+    assert (settings.embedding_threads, settings.embedding_batch_size) == (1, 2)
 
     with pytest.raises(ValidationError, match="EMBEDDING_DIMENSIONS must be 384"):
         make_settings(embedding_dimensions=768)

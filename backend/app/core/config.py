@@ -133,7 +133,9 @@ class Settings(BaseSettings):
     # Where the model files live; the production image bakes them into /opt/models.
     embedding_cache_dir: str | None = None
     embedding_threads: int = Field(default=1, ge=1, le=8)
-    embedding_batch_size: int = Field(default=8, ge=1, le=64)
+    # Texts per inference call. Peak memory grows with it while one thread's speed does not
+    # (measured 2026-10-02: batch 8 peaked about 80 MB higher than 2), so keep it small.
+    embedding_batch_size: int = Field(default=2, ge=1, le=16)
 
     # --- Data stores -----------------------------------------------------------
     database_url: PostgresDsn
