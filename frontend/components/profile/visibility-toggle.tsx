@@ -13,7 +13,11 @@ export function VisibilityToggle({ initial }: { initial: Profile["visibility"] }
   const [error, setError] = useState<string | null>(null);
 
   async function onChange(checked: boolean) {
+    if (saving) return;
     const next = checked ? "matchable" : "paused";
+    const previous = visibility;
+    // Show the change at once; put it back if the save fails.
+    setVisibility(next);
     setSaving(true);
     setError(null);
     try {
@@ -23,6 +27,7 @@ export function VisibilityToggle({ initial }: { initial: Profile["visibility"] }
       });
       setVisibility(saved.visibility);
     } catch (caught) {
+      setVisibility(previous);
       setError(describeError(caught));
     } finally {
       setSaving(false);
@@ -36,7 +41,7 @@ export function VisibilityToggle({ initial }: { initial: Profile["visibility"] }
           type="checkbox"
           role="switch"
           checked={visibility === "matchable"}
-          disabled={saving}
+          aria-busy={saving}
           onChange={(event) => onChange(event.target.checked)}
           className="accent-green-base mt-1 size-4 shrink-0"
         />

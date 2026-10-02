@@ -200,6 +200,20 @@ describe("VisibilityToggle", () => {
   });
 });
 
+describe("VisibilityToggle errors", () => {
+  it("puts the switch back when the save fails", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(apiError(503, "service_unavailable"));
+    render(<VisibilityToggle initial="matchable" />);
+
+    const toggle = screen.getByRole("switch", { name: /Show me in new matches/ });
+    await user.click(toggle);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/temporarily unavailable/);
+    expect(toggle).toBeChecked();
+  });
+});
+
 describe("profileCompleteness", () => {
   it("scores what is filled in", () => {
     expect(profileCompleteness(null)).toBeNull();
