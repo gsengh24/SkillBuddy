@@ -1,4 +1,4 @@
-"""Sign-in with one-time email codes, against real PostgreSQL and Valkey."""
+"""Sign-in with one-time email codes, against real PostgreSQL."""
 
 from __future__ import annotations
 
@@ -9,15 +9,14 @@ from typing import Any
 import pytest
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient, Response
+from sqlalchemy import make_url
 
 from app.core.config import Settings
 from app.main import create_app
 from tests.conftest import SettingsFactory
 from tests.integration.conftest import (
-    AUTH_VALKEY_DB,
     CapturingDelivery,
     auth_client,
-    redis_url_with_db,
     run_sql,
 )
 
@@ -360,7 +359,6 @@ async def test_code_requests_are_rate_limited_per_email(
 ) -> None:
     settings = make_settings(
         database_url=migrated_database_url,
-        redis_url=redis_url_with_db(AUTH_VALKEY_DB),
         otp_request_limit_per_email=2,
     )
     email = new_email()
@@ -381,7 +379,6 @@ async def test_code_requests_are_rate_limited_per_ip(
 ) -> None:
     settings = make_settings(
         database_url=migrated_database_url,
-        redis_url=redis_url_with_db(AUTH_VALKEY_DB),
         otp_request_limit_per_ip=3,
     )
     async with auth_client(settings, delivery, client_ip="203.0.113.7") as client:
@@ -398,7 +395,6 @@ async def test_verification_is_rate_limited(
 ) -> None:
     settings = make_settings(
         database_url=migrated_database_url,
-        redis_url=redis_url_with_db(AUTH_VALKEY_DB),
         otp_verify_limit_per_email=3,
     )
     email = new_email()
@@ -413,12 +409,13 @@ async def test_verification_is_rate_limited(
     assert error_code(limited) == "rate_limited"
 
 
-async def test_rate_limiter_fails_closed_when_valkey_is_down(
+async def test_rate_limiter_fails_closed_when_the_database_is_down(
     make_settings: SettingsFactory, migrated_database_url: str
 ) -> None:
+    unreachable = make_url(migrated_database_url).set(port=1)  # nothing listens on port 1
     settings = make_settings(
-        database_url=migrated_database_url,
-        redis_url="redis://127.0.0.1:1/0",  # nothing listens on port 1
+        database_url=unreachable.render_as_string(hide_password=False),
+        db_pool_timeout_seconds=1,
     )
     app = create_app(settings)
     async with LifespanManager(app) as manager:
@@ -428,6 +425,27 @@ async def test_rate_limiter_fails_closed_when_valkey_is_down(
 
     assert response.status_code == 503
     assert error_code(response) == "service_unavailable"
+
+
+async def test_rate_limit_counters_hold_no_raw_email_or_ip(
+    auth_settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    email = new_email()
+    async with auth_client(auth_settings, delivery, client_ip="203.0.113.99") as client:
+        assert (await request_code(client, email)).status_code == 202
+
+    rows = run_sql(
+        migrated_database_url,
+        "SELECT key, count, expires_at > now() AS live FROM rate_limit_counters "
+        "WHERE key LIKE 'rl:%'",
+    )
+    assert len(rows) == 2  # one per email, one per IP
+    for row in rows:
+        assert row["key"].startswith("rl:")
+        assert len(row["key"]) == 3 + 64
+        assert email not in row["key"]
+        assert "203.0.113.99" not in row["key"]
+        assert (row["count"], row["live"]) == (1, True)
 
 
 # --- delivery and logging ---------------------------------------------------------------

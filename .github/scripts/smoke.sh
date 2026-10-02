@@ -12,7 +12,7 @@ fail() {
   exit 1
 }
 
-echo "== 1/5 API readiness: database, pgvector and Redis"
+echo "== 1/5 API readiness: database and pgvector"
 ready=$(curl -fsS --max-time 15 "$API/api/v1/health/ready") \
   || fail "GET /api/v1/health/ready did not return 2xx"
 echo "$ready"
@@ -20,7 +20,7 @@ python3 - "$ready" <<'PY' || fail "readiness response is not all ok"
 import json, sys
 body = json.loads(sys.argv[1])
 assert body["status"] == "ok", body
-for name in ("database", "pgvector", "redis"):
+for name in ("database", "pgvector"):
     assert body["checks"][name]["status"] == "ok", (name, body["checks"][name])
 PY
 

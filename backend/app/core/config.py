@@ -11,7 +11,7 @@ from enum import StrEnum
 from functools import lru_cache
 from typing import Annotated, Literal, Self
 
-from pydantic import Field, PostgresDsn, RedisDsn, SecretStr, field_validator, model_validator
+from pydantic import Field, PostgresDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from app.models.profile_embedding import EMBEDDING_DIMENSIONS
@@ -174,8 +174,6 @@ class Settings(BaseSettings):
     db_max_overflow: int = Field(default=10, ge=0, le=100)
     db_pool_timeout_seconds: float = Field(default=10.0, gt=0)
     db_echo: bool = False
-
-    redis_url: RedisDsn
 
     # --- Health checks ---------------------------------------------------------
     readiness_timeout_seconds: float = Field(default=2.0, gt=0, le=30)

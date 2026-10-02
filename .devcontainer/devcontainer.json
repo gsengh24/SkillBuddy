@@ -2,7 +2,7 @@
 //
 // The editor runs here with the backend venv and frontend node_modules installed for
 // IntelliSense, linting and unit tests. The application stack itself (db with pgvector,
-// redis, migrate, api, worker, web) runs in Docker via Docker-in-Docker, using the same
+// mailpit, migrate, api, worker, web) runs in Docker via Docker-in-Docker, using the same
 // docker-compose.yml as any other machine:
 //
 //   docker compose up --build --detach --wait
@@ -12,7 +12,7 @@
   "name": "Skill Buddy",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
 
-  // Building the images and running Postgres, Redis, the API, the worker and Next.js
+  // Building the images and running Postgres, the API, the worker and Next.js
   // together needs more than the smallest machine type.
   "hostRequirements": {
     "memory": "8gb"

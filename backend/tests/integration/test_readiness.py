@@ -14,27 +14,8 @@ async def test_ready_when_all_dependencies_are_up(integration_settings: Settings
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
-    assert set(body["checks"]) == {"database", "pgvector", "redis"}
+    assert set(body["checks"]) == {"database", "pgvector"}
     assert all(check["status"] == "ok" for check in body["checks"].values())
-
-
-async def test_unavailable_when_redis_is_unreachable(
-    make_settings: SettingsFactory, migrated_database_url: str
-) -> None:
-    settings = make_settings(
-        database_url=migrated_database_url,
-        redis_url="redis://127.0.0.1:1/0",  # nothing listens on port 1
-        readiness_timeout_seconds=1.0,
-    )
-
-    async with live_client(settings) as client:
-        response = await client.get("/api/v1/health/ready")
-
-    assert response.status_code == 503
-    checks = response.json()["checks"]
-    assert checks["redis"]["status"] == "fail"
-    assert checks["redis"]["detail"]
-    assert checks["database"]["status"] == "ok"
 
 
 async def test_unavailable_when_pgvector_is_missing(

@@ -2,7 +2,6 @@
 #   docker compose up --build --detach --wait
 #
 #   db       PostgreSQL 16 + pgvector      localhost:5432
-#   valkey   Valkey 9 (Redis-compatible)   localhost:6379
 #   mailpit  catches all outgoing email    http://localhost:8025 (web UI)
 #   migrate  one-shot `alembic upgrade head`, runs before api/worker start
 #   api      FastAPI, hot reload           http://localhost:8000  (docs at /docs)
@@ -26,7 +25,6 @@ x-backend-environment: &backend-environment
   # Local development only. Production requires a real secret (docker-compose.prod.yml).
   SECRET_KEY: ${SECRET_KEY:-local-development-only-secret-not-for-real-use}
   DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@db:5432/${POSTGRES_DB:-app}
-  REDIS_URL: redis://valkey:6379/0
   CORS_ALLOW_ORIGINS: http://localhost:${WEB_PORT:-3000}
   # The dev stack serves plain http on localhost, so the session cookie cannot be Secure.
   SESSION_COOKIE_SECURE: "false"
@@ -67,19 +65,6 @@ services:
       retries: 10
       start_period: 10s
 
-  valkey:
-    image: valkey/valkey:9.1.2-alpine
-    command: ["valkey-server", "--appendonly", "yes"]
-    ports:
-      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
-    volumes:
-      - valkey-data:/data
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   mailpit:
     image: axllent/mailpit:v1.31.3
     ports:
@@ -105,15 +90,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      valkey:
-        condition: service_healthy
       # The API sends login-code emails itself (its in-process job runner; ADR 0008).
       mailpit:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      # Readiness, not just liveness: "healthy" means the DB, pgvector and Valkey are usable.
+      # Readiness, not just liveness: "healthy" means the database and pgvector are usable.
       test:
         - CMD
         - python
@@ -135,8 +118,6 @@ services:
       JOBS_HEARTBEAT_FILE: /tmp/jobs-worker.heartbeat
     depends_on:
       db:
-        condition: service_healthy
-      valkey:
         condition: service_healthy
       mailpit:
         condition: service_healthy
@@ -187,4 +168,3 @@ services:
 
 volumes:
   postgres-data:
-  valkey-data:

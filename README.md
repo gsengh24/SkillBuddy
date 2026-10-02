@@ -12,7 +12,7 @@ interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-
 | Layer | Technology |
 | --- | --- |
 | API | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 (async), Alembic, psycopg 3 |
-| Background jobs | PostgreSQL job queue (ADR 0008); Valkey for rate limits until step 4 |
+| Background jobs | PostgreSQL job queue (ADR 0008); no Redis |
 | Database | PostgreSQL 16 + pgvector |
 | Web | Next.js (App Router), TypeScript (strict), Tailwind CSS |
 | Local dev | Docker Compose |
@@ -23,7 +23,7 @@ interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-
 - **No local app.** Docker is not used on the development laptop. GitHub Actions CI is the
   test runner, and a staging site (not set up yet) is where the running app is checked.
   A Codespace can run the full stack when needed (see below).
-- **Locally, run only checks that need no Docker, Postgres or Redis:** Ruff, mypy, backend
+- **Locally, run only checks that need no Docker or Postgres:** Ruff, mypy, backend
   unit tests, and frontend lint, typecheck and format checks. Commands are in
   [CLAUDE.md](CLAUDE.md#commands).
 - **Branches and PRs.** Every change goes on a short-lived feature branch and through a pull
@@ -69,7 +69,7 @@ docker compose run --rm migrate alembic upgrade head     # apply migrations
 docker compose run --rm migrate alembic downgrade -1     # revert one migration (or: base)
 docker compose run --rm migrate alembic revision --autogenerate -m "describe change"
 
-# Backend tests (unit + integration against the real Postgres, Valkey and Mailpit)
+# Backend tests (unit + integration against the real Postgres and Mailpit)
 docker compose run --rm --no-deps api pytest --cov --cov-report=term-missing
 
 # Lint and type-check
@@ -113,7 +113,6 @@ No configuration is needed for local development. To change ports or credentials
 | Service | What it is | Local address |
 | --- | --- | --- |
 | `db` | PostgreSQL 16 with pgvector | `localhost:5432` (user/password/db `app`) |
-| `valkey` | Valkey 9 (Redis-compatible): rate limits and cache | `localhost:6379` |
 | `mailpit` | Catches all outgoing email (sign-in codes) | <http://localhost:8025> |
 | `migrate` | One-shot `alembic upgrade head`; exits when done | n/a |
 | `api` | FastAPI with hot reload | <http://localhost:8000> |
@@ -132,7 +131,7 @@ No configuration is needed for local development. To change ports or credentials
 | `make migrate` | Apply migrations (`rev=<id>` for a specific target) |
 | `make downgrade` | Revert one migration (`rev=base` to revert all) |
 | `make revision m="add requests"` | Autogenerate a migration from model changes |
-| `make test` | Backend tests: unit + integration against real Postgres and Redis |
+| `make test` | Backend tests: unit + integration against real Postgres and Mailpit |
 | `make lint` | Ruff, mypy (strict), ESLint, TypeScript, Prettier |
 | `make format` | Auto-format backend and frontend |
 | `make psql` | psql shell on the local database |
@@ -154,19 +153,19 @@ PowerShell (or any shell), run these instead:
 | `make downgrade` | `docker compose run --rm migrate alembic downgrade -1` |
 | `make downgrade rev=base` | `docker compose run --rm migrate alembic downgrade base` |
 | `make revision m="..."` | `docker compose run --rm migrate alembic revision --autogenerate -m "..."` |
-| `make test` | `docker compose up --detach --wait db redis` then<br>`docker compose run --rm --no-deps api pytest --cov --cov-report=term-missing` |
+| `make test` | `docker compose up --detach --wait db mailpit` then<br>`docker compose run --rm --no-deps api pytest --cov --cov-report=term-missing` |
 | `make lint` | `docker compose run --rm --no-deps api sh -c "ruff check . && ruff format --check . && mypy"` then<br>`docker compose run --rm --no-deps web sh -c "npm run lint && npm run typecheck && npm run format:check"` |
 | `make format` | `docker compose run --rm --no-deps api sh -c "ruff format . && ruff check --fix ."` then<br>`docker compose run --rm --no-deps web sh -c "npm run format && npm run lint:fix"` |
 | `make psql` | `docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'` |
 
 ## Running without Docker (optional)
 
-Backend (needs local Postgres with pgvector, and Redis):
+Backend (needs local Postgres with pgvector):
 
 ```bash
 cd backend
 uv sync
-cp .env.example .env            # set SECRET_KEY, DATABASE_URL, REDIS_URL
+cp .env.example .env            # set SECRET_KEY and DATABASE_URL
 uv run alembic upgrade head
 uv run uvicorn app.main:create_app --factory --reload
 uv run python -m app.jobs.worker                      # in another terminal

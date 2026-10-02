@@ -8,13 +8,12 @@ so a full free database degrades the product instead of breaking it.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Final, Literal
 
-from redis.asyncio import Redis
-from redis.exceptions import RedisError
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -76,10 +75,13 @@ def classify(settings: Settings, database_bytes: int) -> StorageStatus:
     return StorageStatus(database_bytes=database_bytes, limit_bytes=limit_bytes, level=level)
 
 
+# (monotonic time measured, size) per process; the size is cheap to query but not free.
+_cache: dict[str, tuple[float, int]] = {}
+
+
 class StorageMonitor:
-    def __init__(self, engine: AsyncEngine, redis: Redis, settings: Settings) -> None:
+    def __init__(self, engine: AsyncEngine, settings: Settings) -> None:
         self._engine = engine
-        self._redis = redis
         self._settings = settings
 
     async def _measure(self) -> int:
@@ -88,18 +90,12 @@ class StorageMonitor:
         return int(size or 0)
 
     async def database_bytes(self) -> int:
-        """Current size, cached briefly in Valkey (the query is cheap but not free)."""
-        try:
-            cached = await self._redis.get(_CACHE_KEY)
-            if cached is not None:
-                return int(cached)
-        except RedisError:
-            cached = None
+        """Current size, cached briefly in this process (the query is cheap but not free)."""
+        cached = _cache.get(_CACHE_KEY)
+        if cached is not None and time.monotonic() - cached[0] < _CACHE_SECONDS:
+            return cached[1]
         size = await self._measure()
-        try:
-            await self._redis.set(_CACHE_KEY, size, ex=_CACHE_SECONDS)
-        except RedisError:
-            logger.debug("storage_cache_unavailable")
+        _cache[_CACHE_KEY] = (time.monotonic(), size)
         return size
 
     async def status(self) -> StorageStatus:

@@ -35,11 +35,9 @@ async def readiness(
     response: Response,
     settings: Annotated[Settings, Depends(get_app_settings)],
 ) -> ReadinessResponse:
-    """Check PostgreSQL, the pgvector extension and Redis. Returns 503 if any fail."""
+    """Check PostgreSQL and the pgvector extension. Returns 503 if either fails."""
     result = await check_readiness(
-        request.app.state.engine,
-        request.app.state.redis,
-        timeout_seconds=settings.readiness_timeout_seconds,
+        request.app.state.engine, timeout_seconds=settings.readiness_timeout_seconds
     )
     if result.status != "ok":
         response.status_code = HTTPStatus.SERVICE_UNAVAILABLE

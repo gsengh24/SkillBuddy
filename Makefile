@@ -33,8 +33,8 @@ revision: ## Autogenerate a migration from model changes: make revision m="add r
 	@test -n "$(m)" || (echo 'usage: make revision m="short description"' && exit 1)
 	$(COMPOSE) run --rm migrate alembic revision --autogenerate -m "$(m)"
 
-test: ## Run the backend test suite (unit + integration against real Postgres/Redis)
-	$(COMPOSE) up --detach --wait db redis
+test: ## Run the backend test suite (unit + integration against real Postgres and Mailpit)
+	$(COMPOSE) up --detach --wait db mailpit
 	$(BACKEND) pytest --cov --cov-report=term-missing
 
 lint: ## Lint, format-check and type-check backend and frontend

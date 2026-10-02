@@ -32,12 +32,6 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U app -d app"
           --health-interval 5s --health-timeout 5s --health-retries 10
-      valkey:
-        image: valkey/valkey:9.1.2-alpine
-        ports: ["6379:6379"]
-        options: >-
-          --health-cmd "valkey-cli ping"
-          --health-interval 5s --health-timeout 3s --health-retries 10
       mailpit:
         image: axllent/mailpit:v1.31.3
         ports: ["1025:1025", "8025:8025"]
@@ -47,7 +41,6 @@ jobs:
       # CI-only throwaway value; real secrets never live in the repository.
       SECRET_KEY: ci-only-secret-key-with-at-least-32-characters
       DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/app
-      REDIS_URL: redis://localhost:6379/0
       # Integration tests send real email to the Mailpit service and read it back.
       SMTP_HOST: localhost
       SMTP_PORT: "1025"
@@ -148,12 +141,10 @@ jobs:
         env:
           SECRET_KEY: validate-only-placeholder-value-0000000000
           DATABASE_URL: postgresql+psycopg://u:p@db:5432/app
-          REDIS_URL: redis://:p@valkey:6379/0
           CORS_ALLOW_ORIGINS: https://app.example.com
           POSTGRES_USER: u
           POSTGRES_PASSWORD: p
           POSTGRES_DB: app
-          REDIS_PASSWORD: p
           EMAIL_FROM_ADDRESS: no-reply@example.com
           SMTP_HOST: smtp.example.com
         run: |
@@ -182,7 +173,6 @@ jobs:
           docker run --rm --network none
           -e SECRET_KEY=ci-only-secret-key-with-at-least-32-characters
           -e DATABASE_URL=postgresql+psycopg://app:app@localhost:5432/app
-          -e REDIS_URL=redis://localhost:6379/0
           matchmaking/backend:${{ github.sha }}
           python -m app.ai.memory_check --limit-mb 400
 

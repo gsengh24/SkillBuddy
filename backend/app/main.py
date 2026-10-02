@@ -14,7 +14,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from redis.asyncio import ConnectionPool, Redis
 
 from app.api.deps import CSRF_HEADER
 from app.api.v1.router import api_router
@@ -43,12 +42,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     settings: Settings = app.state.settings
     engine = create_engine(settings)
-    redis_pool = ConnectionPool.from_url(
-        settings.redis_url.unicode_string(),
-        socket_connect_timeout=settings.readiness_timeout_seconds,
-        socket_timeout=settings.readiness_timeout_seconds,
-    )
-    redis = Redis(connection_pool=redis_pool)
     session_factory = create_session_factory(engine)
 
     registry = build_registry()
@@ -59,7 +52,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     app.state.engine = engine
     app.state.session_factory = session_factory
-    app.state.redis = redis
     app.state.job_runner = runner
     logger.info(
         "startup",
@@ -74,8 +66,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     finally:
         runner.stop()
         await runner_task
-        await redis.aclose()
-        await redis_pool.aclose()
         await engine.dispose()
         logger.info("shutdown")
 

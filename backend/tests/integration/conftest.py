@@ -1,4 +1,4 @@
-"""Fixtures backed by real PostgreSQL and Valkey (Redis protocol).
+"""Fixtures backed by real PostgreSQL (with pgvector).
 
 ``DATABASE_URL`` must point at a server where the user may create databases (the
 local Compose and CI ``postgres`` users can). Tests never touch that database itself:
@@ -14,7 +14,6 @@ from collections.abc import AsyncIterator, Iterator, Sequence
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit, urlunsplit
 
 import psycopg
 import pytest
@@ -87,7 +86,7 @@ def integration_settings(make_settings: SettingsFactory, migrated_database_url: 
 
 @asynccontextmanager
 async def live_client(settings: Settings) -> AsyncIterator[AsyncClient]:
-    """A client for an app with its lifespan running, i.e. real DB and Redis pools."""
+    """A client for an app with its lifespan running (real DB pool and job runner)."""
     app: FastAPI = create_app(settings)
     async with LifespanManager(app) as manager:
         transport = ASGITransport(app=manager.app)
@@ -96,15 +95,6 @@ async def live_client(settings: Settings) -> AsyncIterator[AsyncClient]:
 
 
 # --- Authentication fixtures --------------------------------------------------------------
-
-# Rate-limit counters live in a dedicated Valkey database that is flushed per client, so
-# tests never see each other's counts (production never flushes anything).
-AUTH_VALKEY_DB = 15
-
-
-def redis_url_with_db(database: int) -> str:
-    parts = urlsplit(os.environ["REDIS_URL"])
-    return urlunsplit(parts._replace(path=f"/{database}"))
 
 
 class CapturingDelivery:
@@ -124,9 +114,7 @@ class CapturingDelivery:
 
 @pytest.fixture
 def auth_settings(make_settings: SettingsFactory, migrated_database_url: str) -> Settings:
-    return make_settings(
-        database_url=migrated_database_url, redis_url=redis_url_with_db(AUTH_VALKEY_DB)
-    )
+    return make_settings(database_url=migrated_database_url)
 
 
 @pytest.fixture
@@ -153,7 +141,12 @@ async def auth_client(
     if delivery is not None:
         app.dependency_overrides[get_otp_delivery] = lambda: delivery
     async with LifespanManager(app) as manager:
-        await app.state.redis.flushdb()
+        # Each client starts with fresh rate-limit counters, so tests never see each other's
+        # counts (production never clears them early).
+        run_sql(
+            settings.database_url.unicode_string(),
+            "DELETE FROM rate_limit_counters WHERE key LIKE 'rl:%'",
+        )
         transport = ASGITransport(app=manager.app, client=(client_ip, 40000))
         async with AsyncClient(transport=transport, base_url=base_url) as client:
             yield client

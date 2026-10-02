@@ -1,8 +1,8 @@
 # Reference production layout: a single-host deployment of the production images.
 #
 # Not used for local development. It documents how the pieces fit together and is a
-# working starting point for a small VPS. On a managed cloud, replace `db` and `valkey`
-# with managed PostgreSQL (with pgvector) and a Redis-compatible store, and point the URLs at them.
+# working starting point for a small VPS. On a managed cloud, replace `db` with managed
+# PostgreSQL (with pgvector) and point DATABASE_URL at it. No Redis is needed (ADR 0008).
 #
 #   cp infra/production.env.example infra/production.env   # then fill in every value
 #   docker compose -f docker-compose.prod.yml --env-file infra/production.env up -d --build
@@ -19,7 +19,6 @@ x-backend-environment: &backend-environment
   API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
   DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
-  REDIS_URL: ${REDIS_URL:?REDIS_URL must be set}
   EMAIL_BACKEND: smtp
   EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:?EMAIL_FROM_ADDRESS must be set}
   SMTP_HOST: ${SMTP_HOST:?SMTP_HOST must be set}
@@ -70,21 +69,6 @@ services:
     restart: unless-stopped
     logging: *logging
 
-  valkey:
-    image: valkey/valkey:9.1.2-alpine
-    command: ["valkey-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"]
-    volumes:
-      - valkey-data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "valkey-cli -a \"$${REDIS_PASSWORD}\" --no-auth-warning ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-    restart: unless-stopped
-    logging: *logging
-
   # One-shot: apply migrations, then exit. Deploys run it before rolling api/worker.
   migrate:
     <<: *backend-service
@@ -102,8 +86,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-      valkey:
-        condition: service_healthy
     restart: unless-stopped
     deploy:
       resources:
@@ -131,8 +113,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-      valkey:
-        condition: service_healthy
     restart: unless-stopped
     deploy:
       resources:
@@ -167,4 +147,3 @@ services:
 
 volumes:
   postgres-data:
-  valkey-data:

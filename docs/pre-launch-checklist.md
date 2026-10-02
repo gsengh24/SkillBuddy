@@ -75,7 +75,7 @@ short note).
 | --- | --- | --- | --- | --- | --- |
 | 32 | [ ] **Exercise the Codespace** end to end once | Stack up and sign-in works in a Codespace | Project owner | No | Exit report, issue 7 |
 | 33 | [ ] **Export the OpenAPI spec** to the repository | A committed spec, checked in CI | Claude Code | No | Exit report, issue 9 |
-| 34 | [ ] **Dependabot `uv` run** succeeds after the redis cap (moot once Redis is removed in ADR 0008 step 4) | The next weekly run is green, or the item is closed by step 4 | Claude Code | No | Exit report, issue 11 |
+| 34 | [x] **Dependabot `uv` run** succeeds after the redis cap (moot once Redis is removed in ADR 0008 step 4) | The next weekly run is green, or the item is closed by step 4 | Claude Code | No | Exit report, issue 11 |
 | 35 | [ ] **Ruleset: require branches to be up to date** before merging | Decided in the repository settings | Project owner | No | Exit report, issue 12 |
 | 36 | [ ] **Remove the unused `NEXT_PUBLIC_API_URL`** from `docker-compose.yml` | Merged | Claude Code | No | Exit report, issue 13 |
 | 37 | [ ] **Business model** decision | Recorded in ARCHITECTURE.md §12 | Project owner | No | ARCHITECTURE.md §12 |

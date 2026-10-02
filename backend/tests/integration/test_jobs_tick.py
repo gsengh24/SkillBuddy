@@ -23,7 +23,7 @@ from app.jobs.tasks import SEND_LOGIN_CODE
 from app.services.auth.delivery import QueuedOtpDelivery
 from app.services.email import ConsoleEmailSender
 from tests.conftest import SettingsFactory
-from tests.integration.conftest import AUTH_VALKEY_DB, live_client, redis_url_with_db, run_sql
+from tests.integration.conftest import live_client, run_sql
 
 TICK = "/api/v1/admin/jobs/tick"
 TOKEN = "tick-token-for-tests-" + "x" * 20
@@ -31,7 +31,7 @@ SCHEDULED_KINDS = {item.spec.kind for item in SCHEDULE}
 
 
 def _settings(make_settings: SettingsFactory, url: str, **overrides: object) -> Settings:
-    return make_settings(database_url=url, redis_url=redis_url_with_db(AUTH_VALKEY_DB), **overrides)
+    return make_settings(database_url=url, **overrides)
 
 
 @pytest.fixture

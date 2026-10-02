@@ -9,10 +9,8 @@ from app.api.deps import require_storage_capacity
 from app.core.config import Settings
 from tests.conftest import SettingsFactory
 from tests.integration.conftest import (
-    AUTH_VALKEY_DB,
     CapturingDelivery,
     auth_client,
-    redis_url_with_db,
 )
 from tests.integration.test_auth_codes import error_code, new_email, request_code, sign_in, verify
 
@@ -25,7 +23,6 @@ def guarded_settings(
 ) -> Settings:
     return make_settings(
         database_url=database_url,
-        redis_url=redis_url_with_db(AUTH_VALKEY_DB),
         admin_api_token=ADMIN_TOKEN,
         **overrides,
     )
