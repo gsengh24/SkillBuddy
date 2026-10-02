@@ -76,9 +76,13 @@ CLAUDE.md:
       inside an accepted connection; only the two people can read them; read tracking and
       unread counts; adaptive polling with per-person and daily caps; messages deleted after
       90 days (`MESSAGE_RETENTION_DAYS`), with a note in the chat.
-- [ ] **Reports** (owner review before merge): a report endpoint with a per-person limit,
-      a frozen copy of the reported message and the 10 before it, an admin reports endpoint,
-      and an hourly alert email with no message text; copies deleted 180 days after resolve.
+- [x] **Reports** (migration 0010; merged only after owner review): `POST /messages/{id}/report` with
+      `REPORTS_PER_DAY`, a frozen copy of the reported message and the 10 before it, the
+      admin reports API (`X-Admin-Token`, rate-limited, never logged; steps in
+      [moderation.md](moderation.md)), and at most one alert email an hour with counts only;
+      resolved reports deleted after 180 days.
+- [ ] **Report button in the chat screen** and the wording of what the moderator sees
+      (owner review; with item 7).
 - [ ] **Blocking (item 7) must close chat both ways.** Chat already asks
       `app/services/blocks.py` (`blocked_with`) before every send, history page, mark-read and
       poll; it returns nobody today. When blocking is added, fill in that function from the

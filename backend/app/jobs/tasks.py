@@ -30,6 +30,7 @@ from app.services.matching.housekeeping import expire_and_purge_requests, expire
 from app.services.notification_email import send_notification_email
 from app.services.notifications import purge_old_notifications
 from app.services.profile_parsing import BACKFILL_BATCH_SIZE, parse_profile, pending_profiles
+from app.services.reports import purge_resolved_reports, send_report_alert
 
 logger = logging.getLogger(__name__)
 
@@ -185,6 +186,18 @@ async def _purge_messages(ctx: JobContext) -> None:
         await purge_old_messages(db, ctx.settings, datetime.now(UTC))
 
 
+async def _report_alerts(ctx: JobContext) -> None:
+    """Hourly: email the moderator how many new reports are waiting (count only)."""
+    async with ctx.session_factory() as db:
+        await send_report_alert(db, ctx.settings, datetime.now(UTC))
+
+
+async def _purge_reports(ctx: JobContext) -> None:
+    """Daily: delete reports resolved more than REPORT_RETENTION_DAYS ago."""
+    async with ctx.session_factory() as db:
+        await purge_resolved_reports(db, ctx.settings, datetime.now(UTC))
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -254,6 +267,15 @@ PURGE_MESSAGES = JobSpec(
     kind="purge_messages", handler=_purge_messages, priority=200, timeout_seconds=240
 )
 
+# One try: a retry after the email went out could send a second alert in the same hour.
+# Reports not covered stay un-alerted and are counted by the next hour's job.
+REPORT_ALERTS = JobSpec(
+    kind="report_alerts", handler=_report_alerts, priority=60, max_attempts=1, timeout_seconds=30
+)
+PURGE_REPORTS = JobSpec(
+    kind="purge_reports", handler=_purge_reports, priority=200, timeout_seconds=240
+)
+
 SEND_NOTIFICATION_EMAIL = JobSpec(
     kind="send_notification_email",
     handler=_send_notification_email,
@@ -275,6 +297,8 @@ ALL_JOBS = (
     MATCH_REQUEST,
     MATCH_HOUSEKEEPING,
     PURGE_MESSAGES,
+    REPORT_ALERTS,
+    PURGE_REPORTS,
     SEND_NOTIFICATION_EMAIL,
 )
 

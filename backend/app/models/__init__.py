@@ -19,6 +19,14 @@ from app.models.matching import (
     MatchStatus,
     RequestStatus,
 )
+from app.models.moderation import (
+    REPORT_CONTEXT_MESSAGES,
+    REPORT_DETAILS_MAX_LENGTH,
+    REPORT_NOTE_MAX_LENGTH,
+    Report,
+    ReportReason,
+    ReportStatus,
+)
 from app.models.profile import (
     ABOUT_TEXT_MAX_LENGTH,
     DISPLAY_NAME_MAX_LENGTH,
@@ -52,6 +60,9 @@ __all__ = [
     "MAX_LANGUAGES",
     "MAX_LINKS",
     "MESSAGE_MAX_LENGTH",
+    "REPORT_CONTEXT_MESSAGES",
+    "REPORT_DETAILS_MAX_LENGTH",
+    "REPORT_NOTE_MAX_LENGTH",
     "REQUEST_TEXT_MAX_LENGTH",
     "REQUEST_TEXT_MIN_LENGTH",
     "AuthEvent",
@@ -80,6 +91,9 @@ __all__ = [
     "ProfileEmbedding",
     "ProfileVisibility",
     "RateLimitCounter",
+    "Report",
+    "ReportReason",
+    "ReportStatus",
     "RequestStatus",
     "User",
     "UserSession",

@@ -107,3 +107,43 @@ def notification_email(settings: Settings, to: str, kind: str) -> EmailMessage:
             app=escape(settings.app_name),
         ),
     )
+
+
+_REPORT_ALERT_TEXT = """{headline}
+
+{count} new {reports} since the last alert; {open_total} open in total.
+
+Read them with the admin reports endpoint (docs/moderation.md). This email never
+contains message text, names or reasons.
+"""
+
+_REPORT_ALERT_HTML = """<!doctype html>
+<html lang="en">
+  <body
+    style="margin:0;padding:24px;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a"
+  >
+    <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:8px;padding:24px">
+      <p style="margin:0 0 16px;font-size:18px;font-weight:700">{headline}</p>
+      <p style="margin:0 0 16px">{count} new {reports} since the last alert; {open_total} open
+        in total.</p>
+      <p style="margin:0;color:#475569;font-size:14px">
+        Read them with the admin reports endpoint (docs/moderation.md). This email never
+        contains message text, names or reasons.
+      </p>
+    </div>
+  </body>
+</html>
+"""
+
+
+def report_alert_email(settings: Settings, to: str, count: int, open_total: int) -> EmailMessage:
+    """For the moderator: only counts. Never message text, names or report reasons."""
+    headline = f"Reports waiting on {settings.app_name}"
+    reports = "report" if count == 1 else "reports"
+    values = {"count": count, "reports": reports, "open_total": open_total}
+    return EmailMessage(
+        to=to,
+        subject=headline,
+        text=_REPORT_ALERT_TEXT.format(headline=headline, **values),
+        html=_REPORT_ALERT_HTML.format(headline=escape(headline), **values),
+    )

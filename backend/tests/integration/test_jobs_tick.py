@@ -128,7 +128,8 @@ async def test_enqueue_due_jobs_is_idempotent_within_a_period(
     assert set(first.enqueued) == SCHEDULED_KINDS
     assert first.already_enqueued == []
     assert later_same_hour.enqueued == []
-    assert next_hour.enqueued == ["purge_job_tables"]  # daily jobs already ran today
+    # Daily jobs already ran today; only the hourly ones run again.
+    assert next_hour.enqueued == ["purge_job_tables", "report_alerts"]
     run_sql(
         migrated_database_url, "DELETE FROM jobs WHERE dedupe_key LIKE :y", y=f"%:{when.year}-%"
     )

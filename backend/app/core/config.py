@@ -126,6 +126,19 @@ class Settings(BaseSettings):
     # each person is limited to one poll a minute until the next UTC day.
     chat_polls_per_day: int = Field(default=16_000, ge=1, le=1_000_000)
 
+    # --- Reports and moderation (ARCHITECTURE.md §8) -----------------------------------
+    # Reports a person may file per UTC day.
+    reports_per_day: int = Field(default=5, ge=1, le=100)
+    # Resolved reports (and their message copies) are deleted this many days after resolving.
+    report_retention_days: int = Field(default=180, ge=30, le=730)
+    # Where the hourly "new reports waiting" email goes (no alert email if unset). It never
+    # contains message text.
+    moderator_email: str | None = Field(
+        default=None, max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+    )
+    # Requests per IP per minute to any /api/v1/admin endpoint (counted before the token check).
+    admin_requests_per_minute: int = Field(default=30, ge=1, le=600)
+
     # --- Google sign-in (ADR 0011) -------------------------------------------------
     # Off, or any key missing: the button is hidden and the endpoints answer 404.
     google_signin_enabled: bool = False
@@ -202,7 +215,8 @@ class Settings(BaseSettings):
     database_size_limit_mb: int = Field(default=500, ge=1)
     storage_warn_percent: int = Field(default=70, ge=1, le=100)
     storage_pause_percent: int = Field(default=90, ge=1, le=100)
-    # Enables GET /api/v1/admin/storage when set (send it as X-Admin-Token).
+    # Enables the /api/v1/admin endpoints (storage, reports) when set; sent as X-Admin-Token.
+    # Set it only in the hosting dashboard (Render), never in the repository.
     admin_api_token: SecretStr | None = Field(default=None, min_length=32)
 
     # --- Embeddings (ADR 0007) ---------------------------------------------------
