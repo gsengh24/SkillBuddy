@@ -9,7 +9,7 @@
 
 ARG PYTHON_VERSION=3.12
 
-FROM ghcr.io/astral-sh/uv:0.12.21 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.22 AS uv
 
 # ---------------------------------------------------------------------------------------
 FROM python:${PYTHON_VERSION}-slim-trixie AS base
