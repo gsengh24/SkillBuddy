@@ -11,12 +11,15 @@ from datetime import UTC, datetime
 
 from sqlalchemy import select
 
+from app.ai.embeddings import get_embedder
 from app.core.security import mask_email
-from app.jobs.registry import JobContext, JobRegistry, JobSpec
+from app.jobs.queue import enqueue
+from app.jobs.registry import JobContext, JobGroup, JobRegistry, JobSpec
 from app.models import OtpCode
 from app.services.auth.retention import hard_delete_due_accounts, purge_expired_auth_data
 from app.services.email import build_email_sender
 from app.services.email.templates import login_code_email
+from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
 
 logger = logging.getLogger(__name__)
@@ -64,6 +67,28 @@ async def _purge_job_tables(ctx: JobContext) -> None:
         await purge_job_tables(db, ctx.settings, datetime.now(UTC))
 
 
+async def _embed_profile(ctx: JobContext) -> None:
+    """Embed one profile's four facets (after its text or parse changes)."""
+    embedder = get_embedder(ctx.settings)
+    async with ctx.session_factory() as db:
+        await ensure_dimensions_match(db, embedder)
+        await embed_profile(db, embedder, uuid.UUID(ctx.payload["user_id"]))
+
+
+async def _reembed_profiles(ctx: JobContext) -> None:
+    """Embed a batch of profiles that lack current-model vectors; queue the next batch.
+
+    Enqueued by migration 0004 (the switch to 384 dimensions) and safe to enqueue again
+    whenever the embedding model changes. The model only loads if there is work to do.
+    """
+    embedder = get_embedder(ctx.settings)
+    async with ctx.session_factory() as db:
+        _, more = await reembed_batch(db, embedder)
+        if more:
+            await enqueue(db, REEMBED_PROFILES)
+            await db.commit()
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -84,7 +109,32 @@ PURGE_JOB_TABLES = JobSpec(
     kind="purge_job_tables", handler=_purge_job_tables, priority=200, timeout_seconds=240
 )
 
-ALL_JOBS = (PING, SEND_LOGIN_CODE, HARD_DELETE_ACCOUNTS, PURGE_AUTH_DATA, PURGE_JOB_TABLES)
+# AI jobs run one at a time (RAM on the 512 MB host). A batch of 25 profiles x 4 facets
+# fits well inside the timeout even on a slow shared CPU.
+EMBED_PROFILE = JobSpec(
+    kind="embed_profile",
+    handler=_embed_profile,
+    group=JobGroup.AI,
+    priority=150,
+    timeout_seconds=120,
+)
+REEMBED_PROFILES = JobSpec(
+    kind="reembed_profiles",
+    handler=_reembed_profiles,
+    group=JobGroup.AI,
+    priority=300,
+    timeout_seconds=240,
+)
+
+ALL_JOBS = (
+    PING,
+    SEND_LOGIN_CODE,
+    HARD_DELETE_ACCOUNTS,
+    PURGE_AUTH_DATA,
+    PURGE_JOB_TABLES,
+    EMBED_PROFILE,
+    REEMBED_PROFILES,
+)
 
 
 def build_registry() -> JobRegistry:

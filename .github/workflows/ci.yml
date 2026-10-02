@@ -168,10 +168,23 @@ jobs:
           context: backend
           target: runtime
           push: false
+          load: true
           build-args: APP_VERSION=${{ github.sha }}
           tags: matchmaking/backend:${{ github.sha }}
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
+
+      # ADR 0007/0008: the API process with the embedding model must stay under 400 MB peak
+      # on a 512 MB host. Runs in the production image, where the model is baked in (the
+      # only place CI downloads it); no database or network is needed.
+      - name: Embedding memory check (API + model, 400 MB limit)
+        run: >-
+          docker run --rm --network none
+          -e SECRET_KEY=ci-only-secret-key-with-at-least-32-characters
+          -e DATABASE_URL=postgresql+psycopg://app:app@localhost:5432/app
+          -e REDIS_URL=redis://localhost:6379/0
+          matchmaking/backend:${{ github.sha }}
+          python -m app.ai.memory_check --limit-mb 400
 
       - name: Build frontend runtime image
         uses: docker/build-push-action@v7

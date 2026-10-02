@@ -43,7 +43,11 @@ async def test_responses_are_not_cacheable(client: AsyncClient) -> None:
 
 
 async def test_deployed_environments_send_hsts(make_settings: SettingsFactory) -> None:
-    app = create_app(make_settings(environment=Environment.STAGING, email_backend="smtp"))
+    app = create_app(
+        make_settings(
+            environment=Environment.STAGING, email_backend="smtp", embedding_backend="fastembed"
+        )
+    )
     async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as client:
         response = await client.get("/api/v1/health")
 

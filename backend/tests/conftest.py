@@ -21,6 +21,8 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-at-least-32-charact
 os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://app:app@localhost:5432/app")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("LOG_JSON", "true")
+# Tests never download or run the real embedding model (the CI memory check does that).
+os.environ.setdefault("EMBEDDING_BACKEND", "fake")
 
 from app.core.config import Settings  # must follow the env defaults
 from app.main import create_app
