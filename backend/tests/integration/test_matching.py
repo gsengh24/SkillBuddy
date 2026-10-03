@@ -202,6 +202,30 @@ async def test_build_together_ranks_by_offer_and_applies_hard_filters(
     assert not await match(settings, session_factory, request, unit((axis, 1.0)), model)
 
 
+async def test_blocks_are_a_hard_filter_both_ways(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    axis = 300 + uuid.uuid4().int % 60
+    me = person(url, model=model, offer=unit((axis + 1, 1.0)))
+    i_blocked = person(url, model=model, offer=unit((axis, 1.0)))
+    blocked_me = person(url, model=model, offer=unit((axis, 1.0)))
+    other = person(url, model=model, offer=unit((axis, 0.9), (axis + 2, 0.4)))
+    run_sql(url, "INSERT INTO blocks (blocker_id, blocked_id) VALUES (:a, :b)", a=me, b=i_blocked)
+    run_sql(url, "INSERT INTO blocks (blocker_id, blocked_id) VALUES (:a, :b)", a=blocked_me, b=me)
+    request = new_request(url, me, "Looking for a React developer.", "build_together")
+
+    assert await match(settings, session_factory, request, unit((axis, 1.0)), model)
+
+    found = [row["candidate_id"] for row in matches(url, request)]
+    assert other in found
+    assert i_blocked not in found
+    assert blocked_me not in found
+
+
 async def test_at_most_matches_per_request_and_names_never_in_reasons(
     make_settings: SettingsFactory,
     migrated_database_url: str,

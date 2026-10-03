@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.v1 import account, admin, auth, chat, health, jobs, profile, requests, social
+from app.api.v1 import account, admin, auth, blocks, chat, health, jobs, profile, requests, social
 
 API_V1_PREFIX = "/api/v1"
 
@@ -16,5 +16,6 @@ api_router.include_router(profile.router)
 api_router.include_router(requests.router)
 api_router.include_router(social.router)
 api_router.include_router(chat.router)
+api_router.include_router(blocks.router)
 api_router.include_router(admin.router)
 api_router.include_router(jobs.router)

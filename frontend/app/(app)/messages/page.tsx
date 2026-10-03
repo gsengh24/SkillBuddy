@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { BlockButton } from "@/components/safety/block-button";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -57,9 +58,13 @@ export default async function MessagesPage() {
                     ))}
                   </ul>
                 ) : null}
-                <ButtonLink href={`/messages/${id}`} className="self-start">
-                  Open chat
-                </ButtonLink>
+                <div className="flex flex-wrap items-start gap-3">
+                  <ButtonLink href={`/messages/${id}`}>Open chat</ButtonLink>
+                  <BlockButton
+                    userId={person.user_id}
+                    name={person.display_name ?? "this person"}
+                  />
+                </div>
               </Card>
             </li>
           ))}

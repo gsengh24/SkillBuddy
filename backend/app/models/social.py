@@ -88,6 +88,10 @@ class Connection(UUIDPrimaryKeyMixin, Base):
     # Chat read state (ADR 0012): each person has read every message up to this time.
     user_a_read_at: Mapped[datetime | None]
     user_b_read_at: Mapped[datetime | None]
+    # Set when either person blocks the other. An ended connection is hidden from both and
+    # closed for chat for good; unblocking does not reopen it (a new intro is needed). Its
+    # messages stay until the 90-day purge, so they can still be reported.
+    ended_at: Mapped[datetime | None]
 
 
 class NotificationKind(StrEnum):

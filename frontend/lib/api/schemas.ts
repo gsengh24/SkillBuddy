@@ -235,3 +235,13 @@ export const notificationPageSchema = z.object({
 
 export const unreadCountSchema = z.object({ unread: z.number() });
 export const markedReadSchema = z.object({ marked: z.number() });
+
+/** Someone you blocked: no name or links (ARCHITECTURE.md §8). */
+export const blockedSchema = z.object({
+  user_id: z.string(),
+  created_at: z.string(),
+  person: personSchema,
+});
+export type Blocked = z.infer<typeof blockedSchema>;
+
+export const blockListSchema = z.object({ items: z.array(blockedSchema) });

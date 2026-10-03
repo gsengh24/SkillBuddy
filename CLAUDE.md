@@ -45,6 +45,16 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
    green.
 5. Every PR description states what changed, how it was verified (which CI jobs passed, which
    local checks ran) and anything not verified. Use `.github/pull_request_template.md`.
+6. **Review and auto-merge.** Auto-merge a PR only when the owner has allowed it for that PR
+   or step. By default, PRs that change privacy, consent, moderation, reporting, legal or
+   terms wording stop for the owner's review and are never auto-merged.
+   - **Exception, Step 7 (safety and admin: PRs 7a–7d):** auto-merge is allowed, including
+     privacy, terms, moderation and consent wording, once Backend, Frontend, Docker images,
+     Smoke and Secret scan are all green (owner decision, 2026-10-03). This step only.
+   - Build one PR at a time. After a PR with a migration merges, give the owner the
+     migration number and wait for them to confirm Actions → Migrate staging has run before
+     starting the next PR.
+   - If CI fails and one fix attempt does not work, stop and tell the owner.
 
 ## Architecture summary
 

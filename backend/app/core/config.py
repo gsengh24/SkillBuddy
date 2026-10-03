@@ -127,6 +127,8 @@ class Settings(BaseSettings):
     chat_polls_per_day: int = Field(default=16_000, ge=1, le=1_000_000)
 
     # --- Reports and moderation (ARCHITECTURE.md §8) -----------------------------------
+    # People a person may block per UTC day.
+    blocks_per_day: int = Field(default=20, ge=1, le=200)
     # Reports a person may file per UTC day.
     reports_per_day: int = Field(default=5, ge=1, le=100)
     # Resolved reports (and their message copies) are deleted this many days after resolving.

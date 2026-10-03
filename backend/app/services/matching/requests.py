@@ -26,6 +26,7 @@ from app.models import (
     RequestStatus,
     User,
 )
+from app.services import blocks
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import InvalidCursorError, decode_cursor, encode
 
@@ -154,12 +155,16 @@ class MatchRequestService:
         self, user: User, request_id: uuid.UUID
     ) -> list[tuple[Match, Profile | None]]:
         request = await self._owned(user, request_id)
-        rows = await self._db.execute(
+        query = (
             select(Match, Profile)
             .outerjoin(Profile, Profile.user_id == Match.candidate_id)
             .where(Match.request_id == request.id)
             .order_by(Match.rank)
         )
+        blocked = await blocks.blocked_with(self._db, user.id)
+        if blocked:  # someone blocked since this request ran disappears from it
+            query = query.where(Match.candidate_id.not_in(blocked))
+        rows = await self._db.execute(query)
         return [(match, profile) for match, profile in rows.tuples()]
 
     async def close(self, user: User, request_id: uuid.UUID) -> tuple[MatchRequest, int]:
