@@ -7,6 +7,8 @@
 - A decline is silent: the sender keeps seeing "pending" until the intro expires, and the
   match keeps its "intro_sent" status.
 - A withdrawn intro is deleted, so the sender can send a new one from the same match.
+- Blocks (``app.services.blocks``) hide intros between the two people, stop new ones and
+  end their connection; ended connections don't count as connected.
 """
 
 from __future__ import annotations
@@ -39,6 +41,7 @@ from app.models import (
     User,
     UserStatus,
 )
+from app.services import blocks
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 from app.services.notifications import add_notification
@@ -127,7 +130,11 @@ class IntroService:
     async def _connected(self, a: uuid.UUID, b: uuid.UUID) -> bool:
         user_a, user_b = ordered(a, b)
         found = await self._db.scalar(
-            select(Connection.id).where(Connection.user_a == user_a, Connection.user_b == user_b)
+            select(Connection.id).where(
+                Connection.user_a == user_a,
+                Connection.user_b == user_b,
+                Connection.ended_at.is_(None),
+            )
         )
         return found is not None
 
@@ -157,6 +164,7 @@ class IntroService:
             or recipient.status != UserStatus.ACTIVE
             or profile is None
             or profile.visibility != ProfileVisibility.MATCHABLE
+            or recipient.id in await blocks.blocked_with(self._db, user.id)
         ):
             raise CandidateUnavailableError
         if await self._connected(user.id, recipient.id):
@@ -236,6 +244,15 @@ class IntroService:
             intro.status = IntroStatus.ACCEPTED
             match.status = MatchStatus.ACCEPTED
             user_a, user_b = ordered(intro.sender_id, intro.recipient_id)
+            # A connection ended by an earlier block stays closed; this accept starts a new
+            # one (the old one and any messages left in it are removed).
+            await self._db.execute(
+                delete(Connection).where(
+                    Connection.user_a == user_a,
+                    Connection.user_b == user_b,
+                    Connection.ended_at.is_not(None),
+                )
+            )
             await self._db.execute(
                 insert(Connection)
                 .values(id=uuid.uuid4(), user_a=user_a, user_b=user_b, intro_id=intro.id)
@@ -281,13 +298,20 @@ class IntroService:
         intro = await self._load(intro_id)
         if intro is None or user.id not in (intro.sender_id, intro.recipient_id):
             raise IntroNotFoundError
+        other = intro.recipient_id if intro.sender_id == user.id else intro.sender_id
+        if other in await blocks.blocked_with(self._db, user.id):
+            raise IntroNotFoundError
         return await self._view(intro, user.id, datetime.now(UTC))
 
     async def page(
         self, user: User, box: Box, *, cursor: str | None, limit: int
     ) -> tuple[list[IntroView], str | None]:
         column = Intro.recipient_id if box is Box.RECEIVED else Intro.sender_id
+        other = Intro.sender_id if box is Box.RECEIVED else Intro.recipient_id
         query = select(Intro).where(column == user.id)
+        blocked = await blocks.blocked_with(self._db, user.id)
+        if blocked:
+            query = query.where(other.not_in(blocked))
         if cursor:
             created_at, identifier = decode_cursor(cursor)
             query = query.where(
@@ -310,7 +334,10 @@ class IntroService:
     async def connections(self, user: User) -> list[tuple[Connection, uuid.UUID, Profile | None]]:
         rows = await self._db.scalars(
             select(Connection)
-            .where(or_(Connection.user_a == user.id, Connection.user_b == user.id))
+            .where(
+                or_(Connection.user_a == user.id, Connection.user_b == user.id),
+                Connection.ended_at.is_(None),
+            )
             .order_by(Connection.created_at.desc())
         )
         result: list[tuple[Connection, uuid.UUID, Profile | None]] = []

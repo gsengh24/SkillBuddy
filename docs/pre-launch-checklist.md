@@ -64,7 +64,7 @@ short note).
 
 | # | Item | Done when | Owner | Blocks launch | Source |
 | --- | --- | --- | --- | --- | --- |
-| 26 | [ ] **Block, report and rate limits on intros** built before sign-ups open to the campus | Merged with tests: blocks are a hard filter in retrieval, and intros per day are limited | Claude Code | Yes | ARCHITECTURE.md §8 ("part of the launch scope") |
+| 26 | [ ] **Block, report and rate limits on intros** built before sign-ups open to the campus (progress: blocking and intro limits done in step 7a; the report button comes in 7b) | Merged with tests: blocks are a hard filter in retrieval, and intros per day are limited | Claude Code | Yes | ARCHITECTURE.md §8 ("part of the launch scope") |
 | 27 | [ ] **Screening of profiles and first messages, plus a human moderation queue** | Merged with tests; the owner knows how to work the queue | Claude Code (queue is worked by the project owner) | Yes | ARCHITECTURE.md §8 |
 | 28 | [ ] **Safety nudges** (first-chat tips) | Shown in the first chat | Claude Code | Yes | ARCHITECTURE.md §8 |
 | 29 | [ ] **Security headers on web pages** are tested, not just configured (`frontend/next.config.ts` `headers()`) | A test asserts CSP, `X-Content-Type-Options`, `Referrer-Policy`, frame protection, and HSTS when deployed, on the web pages | Claude Code | Yes | Exit report, criterion 5 ("Implemented, untested") |

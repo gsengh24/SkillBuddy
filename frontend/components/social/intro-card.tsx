@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 
+import { BlockButton } from "@/components/safety/block-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
@@ -82,6 +83,9 @@ export function IntroCard({ initial }: { initial: Intro }) {
               Decline
             </Button>
           </div>
+          {intro.direction === "received" ? (
+            <BlockButton userId={person.user_id} name="this person" />
+          ) : null}
         </div>
       ) : null}
       {intro.status === "accepted" ? (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AccountActions } from "@/components/auth/account-actions";
+import { TextLink } from "@/components/ui/text-link";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Account settings" };
@@ -19,6 +20,9 @@ export default async function AccountSettingsPage() {
           Signed in as <strong className="text-ink break-all">{user.email}</strong>
         </p>
       </header>
+      <p>
+        <TextLink href="/settings/blocked">Blocked people</TextLink>
+      </p>
       <AccountActions />
     </div>
   );

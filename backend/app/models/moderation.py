@@ -1,4 +1,7 @@
-"""Reports of chat messages, for the moderator (ARCHITECTURE.md §8).
+"""Blocks between people, and reports for the moderator (ARCHITECTURE.md §8).
+
+A block works both ways (``app/services/blocks.py``). It lasts until the blocker removes it
+or either account is deleted (ON DELETE CASCADE).
 
 A report keeps a frozen copy of the reported message and the 10 before it (``snapshot``),
 so the evidence survives the message purge and account deletion: reporter, reported
@@ -94,3 +97,18 @@ class Report(UUIDPrimaryKeyMixin, Base):
     resolved_at: Mapped[datetime | None]
     # When the moderator alert email covered this report (one digest an hour at most).
     alerted_at: Mapped[datetime | None]
+
+
+class Block(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "blocks"
+    __table_args__ = (
+        UniqueConstraint("blocker_id", "blocked_id"),
+        CheckConstraint("blocker_id <> blocked_id", name="not_self"),
+    )
+
+    # The unique constraint's index serves "who did I block"; this one "who blocked me".
+    blocker_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    blocked_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())

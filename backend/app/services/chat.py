@@ -1,8 +1,9 @@
 """Chat between connected people, delivered by client polling (ADR 0012).
 
 - Messages exist only inside a connection, which needs a two-sided accept (intros).
-- Only the two people in a connection can send or read its messages. Anyone else, and
-  anyone on either side of a block (``app.services.blocks``), gets "not found".
+- Only the two people in a connection can send or read its messages. Anyone else, anyone
+  on either side of a block (``app.services.blocks``), and anyone whose connection was
+  ended by a block, gets "not found".
 - Clients poll ``updates`` for new messages in all their conversations. Each person has a
   per-minute limit, and everyone shares a daily budget; past the budget, each person may
   poll once a minute until the next UTC day, so chat slows down instead of stopping.
@@ -103,6 +104,8 @@ class ChatService:
         connection = await self._db.get(Connection, connection_id)
         if connection is None or user.id not in (connection.user_a, connection.user_b):
             raise ConversationNotFoundError
+        if connection.ended_at is not None:  # ended by a block, for good
+            raise ConversationNotFoundError
         other = connection.user_b if connection.user_a == user.id else connection.user_a
         if other in await blocks.blocked_with(self._db, user.id):
             raise ConversationNotFoundError
@@ -172,7 +175,11 @@ class ChatService:
         query = (
             select(Message, Connection)
             .join(Connection, Connection.id == Message.connection_id)
-            .where(_mine(user.id), tuple_(Message.created_at, Message.id) > start)
+            .where(
+                _mine(user.id),
+                Connection.ended_at.is_(None),
+                tuple_(Message.created_at, Message.id) > start,
+            )
         )
         blocked = await blocks.blocked_with(self._db, user.id)
         if blocked:

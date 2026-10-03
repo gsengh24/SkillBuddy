@@ -83,14 +83,13 @@ CLAUDE.md:
       resolved reports deleted after 180 days.
 - [ ] **Report button in the chat screen** and the wording of what the moderator sees
       (owner review; with item 7).
-- [ ] **Blocking (item 7) must close chat both ways.** Chat already asks
-      `app/services/blocks.py` (`blocked_with`) before every send, history page, mark-read and
-      poll; it returns nobody today. When blocking is added, fill in that function from the
-      blocks table, so a block in either direction stops sending and reading for both people
-      (they get "conversation not found", which does not reveal the block). Also hide the
-      connection from `GET /connections` and add the block as a hard filter in retrieval
-      (ARCHITECTURE.md §8). `test_a_block_stops_sending_and_reading_both_ways` already
-      checks chat's side through the hook.
+- [x] **Blocking** (step 7a, migration 0011): block from a chat, a connection card or a
+      received intro. It works both ways: no chat (`app/services/blocks.blocked_with`),
+      the connection ends for good (`connections.ended_at`) and leaves both Messages lists,
+      open intros are withdrawn and no new ones can be sent, and each is removed from the
+      other's matches (hard filter in retrieval, and in match lists already shown). The
+      blocked person isn't told; reporting still works. Unblock in Settings → Blocked
+      people removes the block only; the old connection stays ended. `BLOCKS_PER_DAY` (20).
 - [ ] Automated screening of messages: not in chat v1; decide in item 7 (it would send
       message text to an AI provider, which needs consent and privacy wording).
 

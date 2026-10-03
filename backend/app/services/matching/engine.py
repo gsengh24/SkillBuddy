@@ -154,6 +154,10 @@ async def retrieve(
             "JOIN users u ON u.id = pe.user_id "
             "WHERE pe.facet = :facet AND pe.model_version = :model AND pe.user_id <> :me "
             "AND u.status = 'active' AND p.visibility = 'matchable' "
+            # Blocks work both ways (app/services/blocks.py).
+            "AND NOT EXISTS (SELECT 1 FROM blocks b WHERE "
+            "(b.blocker_id = :me AND b.blocked_id = pe.user_id) OR "
+            "(b.blocker_id = pe.user_id AND b.blocked_id = :me)) "
             "ORDER BY pe.embedding <=> CAST(:q AS vector) "
             "LIMIT :limit"
         ),

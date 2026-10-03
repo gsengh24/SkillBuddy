@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AppNotification, Intro, Match } from "@/lib/api/schemas";
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+
 import { IntroCard } from "./intro-card";
 import { NotificationList } from "./notification-list";
 import { SendIntro } from "./send-intro";
