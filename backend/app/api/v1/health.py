@@ -41,4 +41,8 @@ async def readiness(
     )
     if result.status != "ok":
         response.status_code = HTTPStatus.SERVICE_UNAVAILABLE
+    # THROWAWAY (step 8e, never merged): break readiness in the Docker stack only, to prove
+    # the Smoke job goes red. Backend tests run with ENVIRONMENT=test and are unaffected.
+    if settings.environment == "local":
+        response.status_code = HTTPStatus.SERVICE_UNAVAILABLE
     return result
