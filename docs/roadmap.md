@@ -97,6 +97,14 @@ CLAUDE.md:
       reports with their copies; resolve, suspend (signs them out at once) and unsuspend;
       suspended accounts list; audit log of every action kept a year;
       `MODERATION_REQUESTS_PER_MINUTE` (60). API under `/api/v1/moderation`.
+- [x] **Privacy and terms rewrite** (step 7d; still drafts until legal review): what we
+      collect, `/privacy#ai` (ADR 0007 §5 wording), who sees what, chat (90 days, no AI),
+      reports and their copies (180 days after resolve, kept past account deletion), blocks,
+      moderation, emails, a retention list, services used and rights; terms with conduct
+      rules, blocking and moderation. `TERMS_VERSION` 2026-10-04-draft. The placeholder
+      contact address lives in `frontend/lib/legal.ts` (pre-launch checklist item 43).
+- [x] **Email switch** (step 7d): Account settings, Emails, "Emails about intros" (on by
+      default); intro emails now point there.
 - [ ] Automated screening of messages: not in chat v1; decide in item 7 (it would send
       message text to an AI provider, which needs consent and privacy wording).
 

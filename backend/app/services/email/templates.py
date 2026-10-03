@@ -56,7 +56,7 @@ _NOTICE_HTML = """<!doctype html>
       <p style="margin:0 0 16px">{body}</p>
       {link}
       <p style="margin:16px 0 0;color:#475569;font-size:14px">
-        You can turn these emails off in {app} under About you.
+        You can turn these emails off in {app}: Account settings, Emails.
       </p>
     </div>
   </body>
@@ -67,7 +67,7 @@ _NOTICE_TEXT = """{headline}
 
 {body}
 {link}
-You can turn these emails off in {app} under About you.
+You can turn these emails off in {app}: Account settings, Emails.
 """
 
 _NOTICES = {

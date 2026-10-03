@@ -2,7 +2,8 @@
 
 Notification emails never use the part of the Gmail cap reserved for login codes
 (ADR 0008): when only the reserve is left, the email is skipped and the in-app
-notification still shows. People can turn these emails off on their profile.
+notification still shows. People can turn these emails off in Account settings (the
+``email_notifications`` switch on their profile, on by default).
 """
 
 from __future__ import annotations

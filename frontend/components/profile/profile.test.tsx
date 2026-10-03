@@ -21,6 +21,7 @@ const PROFILE: Profile = {
   timezone: "Asia/Kolkata",
   languages: ["en"],
   visibility: "matchable",
+  email_notifications: true,
   parse_status: "parsed",
   parse_source: "template",
   understanding: {
