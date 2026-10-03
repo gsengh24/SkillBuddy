@@ -93,6 +93,9 @@ class Settings(BaseSettings):
     allowed_email_domains: Annotated[list[str], NoDecode] = Field(default_factory=list)
     allowed_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
     blocked_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    # Accounts that may use the moderation page and API (signed in as usual). Set it
+    # only in the hosting dashboard.
+    moderator_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
 
     # --- Matching (ARCHITECTURE.md §3; ADR 0007) -------------------------------------
     # New match requests per user per UTC day, and open (pending or ready) at once.
@@ -138,6 +141,10 @@ class Settings(BaseSettings):
     moderator_email: str | None = Field(
         default=None, max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
     )
+    # Requests per moderator per minute to the /api/v1/moderation endpoints.
+    moderation_requests_per_minute: int = Field(default=60, ge=1, le=600)
+    # Moderator actions (resolve, suspend, unsuspend) are kept this long in the audit log.
+    moderation_log_retention_days: int = Field(default=365, ge=30, le=3650)
     # Requests per IP per minute to any /api/v1/admin endpoint (counted before the token check).
     admin_requests_per_minute: int = Field(default=30, ge=1, le=600)
 
@@ -292,7 +299,13 @@ class Settings(BaseSettings):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
-    @field_validator("allowed_email_domains", "allowed_emails", "blocked_emails", mode="before")
+    @field_validator(
+        "allowed_email_domains",
+        "allowed_emails",
+        "blocked_emails",
+        "moderator_emails",
+        mode="before",
+    )
     @classmethod
     def _split_lower(cls, value: object) -> object:
         """Comma-separated, trimmed and lower-cased (matching is case-insensitive)."""
@@ -312,7 +325,7 @@ class Settings(BaseSettings):
                 )
         return value
 
-    @field_validator("allowed_emails", "blocked_emails")
+    @field_validator("allowed_emails", "blocked_emails", "moderator_emails")
     @classmethod
     def _check_addresses(cls, value: list[str]) -> list[str]:
         for address in value:

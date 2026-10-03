@@ -27,6 +27,7 @@ from app.services.embeddings import embed_profile, ensure_dimensions_match, reem
 from app.services.housekeeping import purge_job_tables
 from app.services.matching.engine import run_match_request
 from app.services.matching.housekeeping import expire_and_purge_requests, expire_intros
+from app.services.moderation import purge_old_actions
 from app.services.notification_email import send_notification_email
 from app.services.notifications import purge_old_notifications
 from app.services.profile_parsing import BACKFILL_BATCH_SIZE, parse_profile, pending_profiles
@@ -192,6 +193,12 @@ async def _report_alerts(ctx: JobContext) -> None:
         await send_report_alert(db, ctx.settings, datetime.now(UTC))
 
 
+async def _purge_moderation_log(ctx: JobContext) -> None:
+    """Daily: delete moderator actions older than MODERATION_LOG_RETENTION_DAYS."""
+    async with ctx.session_factory() as db:
+        await purge_old_actions(db, ctx.settings, datetime.now(UTC))
+
+
 async def _purge_reports(ctx: JobContext) -> None:
     """Daily: delete reports resolved more than REPORT_RETENTION_DAYS ago."""
     async with ctx.session_factory() as db:
@@ -275,6 +282,9 @@ REPORT_ALERTS = JobSpec(
 PURGE_REPORTS = JobSpec(
     kind="purge_reports", handler=_purge_reports, priority=200, timeout_seconds=240
 )
+PURGE_MODERATION_LOG = JobSpec(
+    kind="purge_moderation_log", handler=_purge_moderation_log, priority=200, timeout_seconds=240
+)
 
 SEND_NOTIFICATION_EMAIL = JobSpec(
     kind="send_notification_email",
@@ -299,6 +309,7 @@ ALL_JOBS = (
     PURGE_MESSAGES,
     REPORT_ALERTS,
     PURGE_REPORTS,
+    PURGE_MODERATION_LOG,
     SEND_NOTIFICATION_EMAIL,
 )
 

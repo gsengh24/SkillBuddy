@@ -22,6 +22,7 @@ SOCIAL_TABLES = {"intros", "connections", "notifications"}  # migration 0008
 CHAT_TABLES = {"messages"}  # migration 0009 (ADR 0012)
 REPORT_TABLES = {"reports"}  # migration 0010
 BLOCK_TABLES = {"blocks"}  # migration 0011
+MODERATION_TABLES = {"moderation_actions"}  # migration 0013
 ALL_TABLES = (
     PHASE_ZERO_TABLES
     | AUTH_TABLES
@@ -32,6 +33,7 @@ ALL_TABLES = (
     | CHAT_TABLES
     | REPORT_TABLES
     | BLOCK_TABLES
+    | MODERATION_TABLES
 )
 
 
@@ -185,7 +187,10 @@ def test_chat_migration_keeps_connections_and_downgrades_to_0008(
         )
 
     command.downgrade(config, "0008")
-    assert _tables(engine) == ALL_TABLES - CHAT_TABLES - REPORT_TABLES - BLOCK_TABLES
+    assert (
+        _tables(engine)
+        == ALL_TABLES - CHAT_TABLES - REPORT_TABLES - BLOCK_TABLES - MODERATION_TABLES
+    )
     assert not {"user_a_read_at", "user_b_read_at"} & _connection_columns(engine)
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT count(*) FROM connections")) == 1
@@ -260,7 +265,7 @@ def test_reports_migration_downgrades_to_0009_and_back(
     command.upgrade(config, "head")
 
     command.downgrade(config, "0009")
-    assert _tables(engine) == ALL_TABLES - REPORT_TABLES - BLOCK_TABLES
+    assert _tables(engine) == ALL_TABLES - REPORT_TABLES - BLOCK_TABLES - MODERATION_TABLES
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
@@ -295,7 +300,7 @@ def test_blocks_migration_keeps_connections_and_downgrades_to_0010(
         )
 
     command.downgrade(config, "0010")
-    assert _tables(engine) == ALL_TABLES - BLOCK_TABLES
+    assert _tables(engine) == ALL_TABLES - BLOCK_TABLES - MODERATION_TABLES
     assert "ended_at" not in _connection_columns(engine)
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT count(*) FROM connections")) == 1

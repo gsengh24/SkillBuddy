@@ -61,9 +61,12 @@ class UserOut(BaseModel):
     last_login_at: datetime | None
     terms_version: str | None
     terms_accepted_at: datetime | None
+    is_moderator: bool = Field(
+        default=False, description="May use the moderation page and /api/v1/moderation."
+    )
 
     @classmethod
-    def from_user(cls, user: User) -> UserOut:
+    def from_user(cls, user: User, *, is_moderator: bool = False) -> UserOut:
         return cls(
             id=user.id,
             email=user.email,
@@ -72,6 +75,7 @@ class UserOut(BaseModel):
             last_login_at=user.last_login_at,
             terms_version=user.terms_version,
             terms_accepted_at=user.terms_accepted_at,
+            is_moderator=is_moderator,
         )
 
 

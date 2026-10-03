@@ -44,6 +44,8 @@ export const userSchema = z.object({
   last_login_at: z.string().nullable(),
   terms_version: z.string().nullable(),
   terms_accepted_at: z.string().nullable(),
+  /** May use the moderation page (MODERATOR_EMAILS). Older APIs omit it. */
+  is_moderator: z.boolean().default(false),
 });
 export type User = z.infer<typeof userSchema>;
 
@@ -248,3 +250,47 @@ export const blockListSchema = z.object({ items: z.array(blockedSchema) });
 
 /** All a reporter learns: the report was received. */
 export const reportReceiptSchema = z.object({ id: z.string(), created_at: z.string() });
+
+/** A report, as the moderator sees it: the frozen copy, never the whole conversation. */
+export const moderationReportSchema = z.object({
+  id: z.string(),
+  reason: z.enum(["harassment", "spam", "scam", "inappropriate", "safety", "other"]),
+  details: z.string(),
+  status: z.enum(["open", "resolved"]),
+  reporter_id: z.string().nullable(),
+  reported_id: z.string().nullable(),
+  reported_status: z.enum(["active", "suspended", "pending_deletion"]).nullable(),
+  connection_id: z.string().nullable(),
+  target: z.enum(["message", "intro", "profile"]),
+  target_id: z.string(),
+  messages: z.array(
+    z.object({
+      id: z.string().nullable(),
+      label: z.string().nullable(),
+      sender: z.enum(["reporter", "reported"]),
+      body: z.string(),
+      sent_at: z.string().nullable(),
+    }),
+  ),
+  created_at: z.string(),
+  resolved_at: z.string().nullable(),
+  resolution_note: z.string(),
+});
+export type ModerationReport = z.infer<typeof moderationReportSchema>;
+
+export const moderationReportPageSchema = z.object({
+  items: z.array(moderationReportSchema),
+  next_cursor: z.string().nullable(),
+});
+
+export const moderationAccountSchema = z.object({
+  user_id: z.string(),
+  status: z.enum(["active", "suspended", "pending_deletion"]),
+  display_name: z.string().nullable(),
+  person: personSchema,
+  suspended_at: z.string().nullable(),
+  note: z.string(),
+});
+export type ModerationAccount = z.infer<typeof moderationAccountSchema>;
+
+export const moderationAccountListSchema = z.object({ items: z.array(moderationAccountSchema) });

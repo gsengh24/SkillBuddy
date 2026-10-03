@@ -35,6 +35,12 @@ const MESSAGES: Record<string, string> = {
   already_reported: "You've already reported this. Thanks, our moderator has it.",
   message_not_found: "That message no longer exists.",
   cannot_report_own_message: "You can only report messages the other person sent.",
+  moderator_only: "Only moderators can do this.",
+  report_not_found: "That report no longer exists.",
+  report_already_resolved: "This report has already been resolved.",
+  account_not_found: "That account no longer exists.",
+  cannot_suspend: "This account can't be suspended (it's yours, a moderator's, or not active).",
+  not_suspended: "This account isn't suspended.",
   email_not_allowed: "This email address can't be used to sign in here.",
   account_pending_deletion:
     "This account is scheduled for permanent deletion and can no longer sign in. Contact support if this is a mistake.",

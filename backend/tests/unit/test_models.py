@@ -35,6 +35,7 @@ def test_metadata_contains_all_tables() -> None:
         "messages",
         "reports",
         "blocks",
+        "moderation_actions",
     }
 
 

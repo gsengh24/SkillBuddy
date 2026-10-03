@@ -21,6 +21,7 @@ or a GitHub repository secret, and never into chat, email or a committed file.
 | 5 | Cloudflare cron Worker `skill-buddy-tick` deployed; its log shows `tick ok` | Done; the 2-day timing check is still open (checklist item 17) |
 | 6 | Web app on Vercel Hobby, using `API_INTERNAL_URL` | Done |
 | 6 | `WEB_APP_URL` on Render (links in intro emails; step 6c) | **Pending** |
+| 6 | `MODERATOR_EMAILS` on Render (moderation page; step 6d) | **Pending** |
 | 6b | Google sign-in OAuth client | **Pending** |
 | 7 | First sign-in: a real code sent by the Gmail API sender and accepted (2026-10-02) | **Passed** |
 | 8 | Delivery to `@thapar.edu` | **Pending** |
@@ -256,6 +257,15 @@ the web app, the same one you already put in `CORS_ALLOW_ORIGINS` in step 6.5.
 
 If Vercel Authentication is on (step 6.6), people without access to your Vercel team see a
 Vercel login when they follow the link; that is expected while staging is private.
+
+## Step 6d. Moderator access (MODERATOR_EMAILS)
+
+1. Render → your API service → **Environment** → **Add environment variable**:
+   Key `MODERATOR_EMAILS`, Value = the email address you sign in to the app with (for
+   several moderators, comma-separated, no spaces needed).
+2. **Save, rebuild and deploy**.
+3. Sign in to the web app with that address → **Settings → Account settings** now shows
+   **Moderation**. How to use it: [moderation.md](moderation.md).
 
 ## Step 6b. Google sign-in (OAuth client)
 

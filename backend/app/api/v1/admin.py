@@ -84,12 +84,18 @@ async def list_reports(
 ) -> ReportPage:
     """Each report carries a copy of the reported message and the 10 before it."""
     items, next_cursor = await reports.reports_page(db, status, cursor=cursor, limit=limit)
-    return ReportPage(items=[ReportOut.build(item) for item in items], next_cursor=next_cursor)
+    statuses = await reports.reported_statuses(db, items)
+    return ReportPage(
+        items=[ReportOut.build(item, reports.status_of(statuses, item)) for item in items],
+        next_cursor=next_cursor,
+    )
 
 
 @router.get("/reports/{report_id}", summary="One report", responses={404: _404})
 async def get_report(report_id: uuid.UUID, db: DbDep) -> ReportOut:
-    return ReportOut.build(await reports.get_report(db, report_id))
+    report = await reports.get_report(db, report_id)
+    statuses = await reports.reported_statuses(db, [report])
+    return ReportOut.build(report, reports.status_of(statuses, report))
 
 
 @router.post(
@@ -103,4 +109,6 @@ async def get_report(report_id: uuid.UUID, db: DbDep) -> ReportOut:
 )
 async def resolve_report(report_id: uuid.UUID, body: ResolveIn, db: DbDep) -> ReportOut:
     """It and its copy of the messages are deleted REPORT_RETENTION_DAYS (180) later."""
-    return ReportOut.build(await reports.resolve_report(db, report_id, body.note))
+    report = await reports.resolve_report(db, report_id, body.note, moderator_id=None)
+    statuses = await reports.reported_statuses(db, [report])
+    return ReportOut.build(report, reports.status_of(statuses, report))
