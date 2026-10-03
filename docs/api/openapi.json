@@ -1,0 +1,5633 @@
+{
+  "components": {
+    "schemas": {
+      "AccountList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AccountOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AccountList",
+        "type": "object"
+      },
+      "AccountOut": {
+        "description": "An account as the moderator sees it: no email, no messages.",
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/PersonOut"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "suspended",
+              "pending_deletion"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suspended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suspended At"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "status",
+          "display_name",
+          "person"
+        ],
+        "title": "AccountOut",
+        "type": "object"
+      },
+      "AuthMethodsOut": {
+        "description": "Which sign-in methods this server offers, so clients show only what works.",
+        "properties": {
+          "email_code": {
+            "default": true,
+            "title": "Email Code",
+            "type": "boolean"
+          },
+          "google": {
+            "title": "Google",
+            "type": "boolean"
+          },
+          "google_domains": {
+            "description": "Email domains Google sign-in accepts (empty when Google is off).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Google Domains",
+            "type": "array"
+          }
+        },
+        "required": [
+          "google",
+          "google_domains"
+        ],
+        "title": "AuthMethodsOut",
+        "type": "object"
+      },
+      "BlockIn": {
+        "additionalProperties": false,
+        "properties": {
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "BlockIn",
+        "type": "object"
+      },
+      "BlockList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BlockedOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "BlockList",
+        "type": "object"
+      },
+      "BlockedOut": {
+        "description": "Someone you blocked. No name or links: blocking ends the connection.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/PersonOut"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "created_at",
+          "person"
+        ],
+        "title": "BlockedOut",
+        "type": "object"
+      },
+      "Box": {
+        "enum": [
+          "received",
+          "sent"
+        ],
+        "title": "Box",
+        "type": "string"
+      },
+      "ConnectionList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectionOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ConnectionList",
+        "type": "object"
+      },
+      "ConnectionOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_message_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Message At"
+          },
+          "person": {
+            "$ref": "#/components/schemas/PersonOut"
+          },
+          "unread_messages": {
+            "description": "Messages from them you haven't read.",
+            "title": "Unread Messages",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "person",
+          "unread_messages",
+          "last_message_at"
+        ],
+        "title": "ConnectionOut",
+        "type": "object"
+      },
+      "DeletionScheduledOut": {
+        "properties": {
+          "deletion_scheduled_for": {
+            "format": "date-time",
+            "title": "Deletion Scheduled For",
+            "type": "string"
+          },
+          "message": {
+            "default": "Your account is scheduled for permanent deletion and you have been signed out everywhere. Your data is removed on the scheduled date.",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "pending_deletion",
+            "default": "pending_deletion",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deletion_scheduled_for"
+        ],
+        "title": "DeletionScheduledOut",
+        "type": "object"
+      },
+      "DependencyCheck": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Short, non-sensitive reason when the check fails.",
+            "title": "Detail"
+          },
+          "latency_ms": {
+            "title": "Latency Ms",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "fail"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "latency_ms"
+        ],
+        "title": "DependencyCheck",
+        "type": "object"
+      },
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "description": "Stable, machine-readable error code, e.g. 'not_found'.",
+            "title": "Code",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional structured context, e.g. field validation errors.",
+            "title": "Details"
+          },
+          "message": {
+            "description": "Human-readable explanation; safe to show to users.",
+            "title": "Message",
+            "type": "string"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Correlates the response with server logs.",
+            "title": "Request Id"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "request_id"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "GoogleStartIn": {
+        "additionalProperties": false,
+        "properties": {
+          "accept_terms": {
+            "default": false,
+            "description": "Required when creating an account.",
+            "title": "Accept Terms",
+            "type": "boolean"
+          },
+          "age_confirmed": {
+            "default": false,
+            "description": "As for /otp/verify: required for a new account or one without a recorded age confirmation (ADR 0009). Checked when Google sends the person back.",
+            "title": "Age Confirmed",
+            "type": "boolean"
+          },
+          "next": {
+            "anyOf": [
+              {
+                "pattern": "^/([A-Za-z0-9\\-._~!$&'()*+,;=:@%?][A-Za-z0-9\\-._~!$&'()*+,;=:@%/?]{0,198})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Path on this site to return to after signing in (default /home).",
+            "title": "Next"
+          }
+        },
+        "title": "GoogleStartIn",
+        "type": "object"
+      },
+      "GoogleStartOut": {
+        "properties": {
+          "authorization_url": {
+            "description": "Send the browser here (Google's sign-in page).",
+            "title": "Authorization Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorization_url"
+        ],
+        "title": "GoogleStartOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "IntroIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "description": "A short hello, shown to the other person.",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "IntroIn",
+        "type": "object"
+      },
+      "IntroOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "received",
+              "sent"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/PersonOut",
+            "description": "The other person."
+          },
+          "reason": {
+            "description": "Why the two were matched.",
+            "title": "Reason",
+            "type": "string"
+          },
+          "request_text": {
+            "description": "What the sender asked for.",
+            "title": "Request Text",
+            "type": "string"
+          },
+          "responded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responded At"
+          },
+          "status": {
+            "description": "A declined intro shows as `pending` to its sender until it expires.",
+            "enum": [
+              "pending",
+              "accepted",
+              "declined",
+              "withdrawn",
+              "expired"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "direction",
+          "status",
+          "note",
+          "request_text",
+          "reason",
+          "person",
+          "created_at",
+          "expires_at",
+          "responded_at"
+        ],
+        "title": "IntroOut",
+        "type": "object"
+      },
+      "IntroPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IntroOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "IntroPage",
+        "type": "object"
+      },
+      "IntroResponseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "accept": {
+            "title": "Accept",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accept"
+        ],
+        "title": "IntroResponseIn",
+        "type": "object"
+      },
+      "LivenessResponse": {
+        "properties": {
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "service": {
+            "description": "Product name, from the APP_NAME setting.",
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "service",
+          "version",
+          "environment"
+        ],
+        "title": "LivenessResponse",
+        "type": "object"
+      },
+      "MarkReadIn": {
+        "additionalProperties": false,
+        "properties": {
+          "ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Leave out to mark everything read.",
+            "title": "Ids"
+          }
+        },
+        "title": "MarkReadIn",
+        "type": "object"
+      },
+      "MarkedRead": {
+        "properties": {
+          "marked": {
+            "title": "Marked",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "marked"
+        ],
+        "title": "MarkedRead",
+        "type": "object"
+      },
+      "MatchCandidateOut": {
+        "description": "What a match shows about the other person before any introduction: the parsed\nprofile only. No name, links or contact details (they come with an accepted intro).",
+        "properties": {
+          "availability": {
+            "title": "Availability",
+            "type": "string"
+          },
+          "interests": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Interests",
+            "type": "array"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "offers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "seeks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Seeks",
+            "type": "array"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "summary",
+          "offers",
+          "seeks",
+          "interests",
+          "availability",
+          "languages"
+        ],
+        "title": "MatchCandidateOut",
+        "type": "object"
+      },
+      "MatchList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MatchOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "MatchList",
+        "type": "object"
+      },
+      "MatchOut": {
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/MatchCandidateOut"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MatchStatus"
+          }
+        },
+        "required": [
+          "id",
+          "rank",
+          "reason",
+          "status",
+          "candidate"
+        ],
+        "title": "MatchOut",
+        "type": "object"
+      },
+      "MatchRequestIn": {
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "anyOf": [
+              {
+                "enum": [
+                  "build_together",
+                  "skill_exchange",
+                  "interest_buddy",
+                  "accountability",
+                  "mentor",
+                  "explore"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The intent the person picked. Without it the matcher works it out.",
+            "title": "Intent"
+          },
+          "text": {
+            "description": "What the person is looking for, in their own words.",
+            "maxLength": 1000,
+            "minLength": 10,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "MatchRequestIn",
+        "type": "object"
+      },
+      "MatchRequestOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "enum": [
+                  "build_together",
+                  "skill_exchange",
+                  "interest_buddy",
+                  "accountability",
+                  "mentor",
+                  "explore"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The intent the matcher used, once matched.",
+            "title": "Intent"
+          },
+          "match_count": {
+            "title": "Match Count",
+            "type": "integer"
+          },
+          "matched_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched At"
+          },
+          "requested_intent": {
+            "anyOf": [
+              {
+                "enum": [
+                  "build_together",
+                  "skill_exchange",
+                  "interest_buddy",
+                  "accountability",
+                  "mentor",
+                  "explore"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Intent"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RequestStatus",
+            "description": "`pending` while matches are being found (poll until `ready`)."
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "requested_intent",
+          "intent",
+          "status",
+          "match_count",
+          "created_at",
+          "matched_at",
+          "expires_at"
+        ],
+        "title": "MatchRequestOut",
+        "type": "object"
+      },
+      "MatchRequestPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MatchRequestOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as `cursor` for the next page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "MatchRequestPage",
+        "type": "object"
+      },
+      "MatchStatus": {
+        "enum": [
+          "shown",
+          "viewed",
+          "intro_sent",
+          "accepted",
+          "declined",
+          "expired"
+        ],
+        "title": "MatchStatus",
+        "type": "string"
+      },
+      "MessageIn": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "MessageIn",
+        "type": "object"
+      },
+      "MessageOut": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "connection_id": {
+            "format": "uuid",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "sender_id": {
+            "format": "uuid",
+            "title": "Sender Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "connection_id",
+          "sender_id",
+          "body",
+          "created_at"
+        ],
+        "title": "MessageOut",
+        "type": "object"
+      },
+      "MessagePage": {
+        "properties": {
+          "items": {
+            "description": "Newest first.",
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as `before` for older messages.",
+            "title": "Next Cursor"
+          },
+          "retention_days": {
+            "description": "Messages are deleted this many days after sending.",
+            "title": "Retention Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "retention_days"
+        ],
+        "title": "MessagePage",
+        "type": "object"
+      },
+      "MessageUpdates": {
+        "properties": {
+          "cursor": {
+            "description": "Pass as `after` on the next poll.",
+            "title": "Cursor",
+            "type": "string"
+          },
+          "has_more": {
+            "description": "More are waiting: poll again right away.",
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "description": "New messages in all your conversations, oldest first. A recent message can appear in two polls in a row: de-duplicate by `id`.",
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "poll_after_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set when the shared daily budget is spent: wait at least this long before the next poll.",
+            "title": "Poll After Seconds"
+          }
+        },
+        "required": [
+          "items",
+          "cursor",
+          "has_more",
+          "poll_after_seconds"
+        ],
+        "title": "MessageUpdates",
+        "type": "object"
+      },
+      "NotificationOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "intro_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intro Id"
+          },
+          "kind": {
+            "enum": [
+              "intro_received",
+              "intro_accepted",
+              "matches_ready"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "intro_id",
+          "request_id",
+          "read_at",
+          "created_at"
+        ],
+        "title": "NotificationOut",
+        "type": "object"
+      },
+      "NotificationPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "unread": {
+            "title": "Unread",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "unread"
+        ],
+        "title": "NotificationPage",
+        "type": "object"
+      },
+      "OtpRequestIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "OtpRequestIn",
+        "type": "object"
+      },
+      "OtpRequestOut": {
+        "description": "Identical for every address, so it reveals nothing about which accounts exist.",
+        "properties": {
+          "expires_in_seconds": {
+            "title": "Expires In Seconds",
+            "type": "integer"
+          },
+          "message": {
+            "default": "If that address can receive email, a sign-in code is on its way.",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "sent",
+            "default": "sent",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expires_in_seconds"
+        ],
+        "title": "OtpRequestOut",
+        "type": "object"
+      },
+      "OtpVerifyIn": {
+        "additionalProperties": false,
+        "properties": {
+          "accept_terms": {
+            "default": false,
+            "description": "Required when creating an account: the user accepts the terms.",
+            "title": "Accept Terms",
+            "type": "boolean"
+          },
+          "age_confirmed": {
+            "default": false,
+            "description": "Self-declaration that the user is 18 or older (ADR 0009). Must be true to create an account, and to sign in to an account that has no recorded age confirmation.",
+            "title": "Age Confirmed",
+            "type": "boolean"
+          },
+          "code": {
+            "description": "The 6-digit code from the email.",
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ],
+        "title": "OtpVerifyIn",
+        "type": "object"
+      },
+      "ParseSource": {
+        "description": "Who produced ``structured``: an AI provider, the no-AI template, or the user's edit.",
+        "enum": [
+          "llm",
+          "template",
+          "user"
+        ],
+        "title": "ParseSource",
+        "type": "string"
+      },
+      "ParseStatus": {
+        "enum": [
+          "empty",
+          "pending",
+          "parsed"
+        ],
+        "title": "ParseStatus",
+        "type": "string"
+      },
+      "PersonOut": {
+        "description": "Someone else. ``display_name`` and ``links`` are set only once you're connected.",
+        "properties": {
+          "availability": {
+            "title": "Availability",
+            "type": "string"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "interests": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Interests",
+            "type": "array"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links"
+          },
+          "offers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "seeks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Seeks",
+            "type": "array"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "display_name",
+          "links",
+          "summary",
+          "offers",
+          "seeks",
+          "interests",
+          "availability",
+          "languages"
+        ],
+        "title": "PersonOut",
+        "type": "object"
+      },
+      "ProfileIn": {
+        "additionalProperties": false,
+        "description": "Create or replace the profile. A changed about text is parsed in the background.",
+        "properties": {
+          "about_text": {
+            "description": "The user's own description, in their words.",
+            "maxLength": 2000,
+            "minLength": 20,
+            "title": "About Text",
+            "type": "string"
+          },
+          "ai_consent": {
+            "default": false,
+            "description": "The user agrees to the AI-processing consent line shown with the form (ADR 0007, section 5). Required on the first save and whenever the consent version changes.",
+            "title": "Ai Consent",
+            "type": "boolean"
+          },
+          "display_name": {
+            "description": "Shown to people who receive an intro. Never sent to an AI provider.",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "languages": {
+            "items": {
+              "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Languages",
+            "type": "array"
+          },
+          "links": {
+            "items": {
+              "maxLength": 200,
+              "pattern": "^https://[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+(:\\d{1,5})?(/[^\\s]*)?$",
+              "type": "string"
+            },
+            "maxItems": 3,
+            "title": "Links",
+            "type": "array"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "pattern": "^(UTC|[A-Za-z]+(/[A-Za-z0-9_+-]+){1,2})$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/ProfileVisibility",
+            "default": "matchable"
+          }
+        },
+        "required": [
+          "display_name",
+          "about_text"
+        ],
+        "title": "ProfileIn",
+        "type": "object"
+      },
+      "ProfileOut": {
+        "properties": {
+          "about_text": {
+            "title": "About Text",
+            "type": "string"
+          },
+          "ai_consent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Consent At"
+          },
+          "ai_consent_current": {
+            "description": "False when the consent version has changed since the user agreed.",
+            "title": "Ai Consent Current",
+            "type": "boolean"
+          },
+          "ai_consent_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Consent Version"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email_notifications": {
+            "title": "Email Notifications",
+            "type": "boolean"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "links": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "parse_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParseSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parse_status": {
+            "$ref": "#/components/schemas/ParseStatus",
+            "description": "`pending` while the about text is being read; poll until `parsed`."
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "understanding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnderstandingOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/ProfileVisibility"
+          }
+        },
+        "required": [
+          "user_id",
+          "display_name",
+          "about_text",
+          "links",
+          "timezone",
+          "languages",
+          "visibility",
+          "email_notifications",
+          "parse_status",
+          "parse_source",
+          "understanding",
+          "ai_consent_version",
+          "ai_consent_at",
+          "ai_consent_current",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ProfileOut",
+        "type": "object"
+      },
+      "ProfileSettingsIn": {
+        "additionalProperties": false,
+        "description": "Change settings without touching the about text. Omitted fields stay as they are.",
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "email_notifications": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Email me when I get an intro or one is accepted.",
+            "title": "Email Notifications"
+          },
+          "languages": {
+            "anyOf": [
+              {
+                "items": {
+                  "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$",
+                  "type": "string"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Languages"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "pattern": "^https://[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+(:\\d{1,5})?(/[^\\s]*)?$",
+                  "type": "string"
+                },
+                "maxItems": 3,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "pattern": "^(UTC|[A-Za-z]+(/[A-Za-z0-9_+-]+){1,2})$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileVisibility"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "ProfileSettingsIn",
+        "type": "object"
+      },
+      "ProfileVisibility": {
+        "enum": [
+          "matchable",
+          "paused"
+        ],
+        "title": "ProfileVisibility",
+        "type": "string"
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "checks": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DependencyCheck"
+            },
+            "title": "Checks",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "ReadinessResponse",
+        "type": "object"
+      },
+      "ReportIn": {
+        "additionalProperties": false,
+        "properties": {
+          "details": {
+            "default": "",
+            "description": "Optional: anything the moderator should know.",
+            "maxLength": 500,
+            "title": "Details",
+            "type": "string"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/ReportReason"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ReportIn",
+        "type": "object"
+      },
+      "ReportOut": {
+        "description": "The moderator's view. ``messages`` is the frozen copy: for a message report, oldest\nfirst with the reported message last; for an intro or a profile, its labelled parts.\nIds are null once that account or connection is deleted.",
+        "properties": {
+          "connection_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "details": {
+            "title": "Details",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set for message reports only.",
+            "title": "Message Id"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ReportedMessage"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/ReportReason"
+          },
+          "reported_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reported Id"
+          },
+          "reported_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "active",
+                  "suspended",
+                  "pending_deletion"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The reported account's status now; null once it is deleted.",
+            "title": "Reported Status"
+          },
+          "reporter_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporter Id"
+          },
+          "resolution_note": {
+            "title": "Resolution Note",
+            "type": "string"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "resolved"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ReportTarget"
+          },
+          "target_id": {
+            "description": "The message, the intro, or the person's id.",
+            "format": "uuid",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reason",
+          "details",
+          "status",
+          "reporter_id",
+          "reported_id",
+          "reported_status",
+          "connection_id",
+          "target",
+          "target_id",
+          "message_id",
+          "messages",
+          "created_at",
+          "resolved_at",
+          "resolution_note"
+        ],
+        "title": "ReportOut",
+        "type": "object"
+      },
+      "ReportPage": {
+        "properties": {
+          "items": {
+            "description": "Oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/ReportOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "ReportPage",
+        "type": "object"
+      },
+      "ReportReason": {
+        "enum": [
+          "harassment",
+          "spam",
+          "scam",
+          "inappropriate",
+          "safety",
+          "other"
+        ],
+        "title": "ReportReason",
+        "type": "string"
+      },
+      "ReportReceipt": {
+        "description": "All the reporter learns: the report was received.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at"
+        ],
+        "title": "ReportReceipt",
+        "type": "object"
+      },
+      "ReportStatus": {
+        "enum": [
+          "open",
+          "resolved"
+        ],
+        "title": "ReportStatus",
+        "type": "string"
+      },
+      "ReportTarget": {
+        "enum": [
+          "message",
+          "intro",
+          "profile"
+        ],
+        "title": "ReportTarget",
+        "type": "string"
+      },
+      "ReportedMessage": {
+        "description": "One part of the frozen copy: a chat message, or a labelled part of an intro or a\nprofile (``label`` is then e.g. \"request\", \"note\", \"summary\", \"offers\", \"name\").",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "sender": {
+            "enum": [
+              "reporter",
+              "reported"
+            ],
+            "title": "Sender",
+            "type": "string"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "sender",
+          "body",
+          "sent_at"
+        ],
+        "title": "ReportedMessage",
+        "type": "object"
+      },
+      "RequestStatus": {
+        "enum": [
+          "pending",
+          "ready",
+          "closed",
+          "expired"
+        ],
+        "title": "RequestStatus",
+        "type": "string"
+      },
+      "ResolveIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "description": "What you did, for your own records.",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "ResolveIn",
+        "type": "object"
+      },
+      "StorageReport": {
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "database_bytes": {
+            "title": "Database Bytes",
+            "type": "integer"
+          },
+          "largest_tables": {
+            "items": {
+              "$ref": "#/components/schemas/TableSize"
+            },
+            "title": "Largest Tables",
+            "type": "array"
+          },
+          "limit_bytes": {
+            "title": "Limit Bytes",
+            "type": "integer"
+          },
+          "pause_at_percent": {
+            "title": "Pause At Percent",
+            "type": "integer"
+          },
+          "status": {
+            "description": "warning at the warn threshold; critical pauses sign-ups and optional writes.",
+            "enum": [
+              "ok",
+              "warning",
+              "critical"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "used_percent": {
+            "title": "Used Percent",
+            "type": "number"
+          },
+          "warn_at_percent": {
+            "title": "Warn At Percent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "database_bytes",
+          "limit_bytes",
+          "used_percent",
+          "warn_at_percent",
+          "pause_at_percent",
+          "largest_tables",
+          "checked_at"
+        ],
+        "title": "StorageReport",
+        "type": "object"
+      },
+      "SuspendIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "description": "Why, for your own records.",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The report that led to it.",
+            "title": "Report Id"
+          }
+        },
+        "title": "SuspendIn",
+        "type": "object"
+      },
+      "TableSize": {
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "bytes"
+        ],
+        "title": "TableSize",
+        "type": "object"
+      },
+      "TickOut": {
+        "properties": {
+          "already_enqueued": {
+            "description": "Job kinds already enqueued for the current period by an earlier tick.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Already Enqueued",
+            "type": "array"
+          },
+          "enqueued": {
+            "description": "Job kinds enqueued by this tick.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Enqueued",
+            "type": "array"
+          },
+          "ticked_at": {
+            "format": "date-time",
+            "title": "Ticked At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enqueued",
+          "already_enqueued",
+          "ticked_at"
+        ],
+        "title": "TickOut",
+        "type": "object"
+      },
+      "UnderstandingIn": {
+        "additionalProperties": false,
+        "description": "The user's correction of what was understood from their text.",
+        "properties": {
+          "availability": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Availability",
+            "type": "string"
+          },
+          "interests": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Interests",
+            "type": "array"
+          },
+          "offers": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Offers",
+            "type": "array"
+          },
+          "seeks": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Seeks",
+            "type": "array"
+          },
+          "summary": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "title": "UnderstandingIn",
+        "type": "object"
+      },
+      "UnderstandingOut": {
+        "properties": {
+          "availability": {
+            "title": "Availability",
+            "type": "string"
+          },
+          "interests": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Interests",
+            "type": "array"
+          },
+          "offers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "seeks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Seeks",
+            "type": "array"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "offers",
+          "seeks",
+          "interests",
+          "availability"
+        ],
+        "title": "UnderstandingOut",
+        "type": "object"
+      },
+      "UnreadCount": {
+        "properties": {
+          "unread": {
+            "title": "Unread",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "unread"
+        ],
+        "title": "UnreadCount",
+        "type": "object"
+      },
+      "UnsuspendIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "UnsuspendIn",
+        "type": "object"
+      },
+      "UserOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "email_verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_moderator": {
+            "default": false,
+            "description": "May use the moderation page and /api/v1/moderation.",
+            "title": "Is Moderator",
+            "type": "boolean"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At"
+          },
+          "terms_accepted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terms Accepted At"
+          },
+          "terms_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terms Version"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "created_at",
+          "email_verified_at",
+          "last_login_at",
+          "terms_version",
+          "terms_accepted_at"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Skill Buddy API",
+    "version": "v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/admin/jobs/tick": {
+      "post": {
+        "description": "Daily jobs are enqueued once per UTC day and hourly jobs once per UTC hour; the job\nrunner is woken to start on them. Returns at once; the jobs run in the background.",
+        "operationId": "tick_api_v1_admin_jobs_tick_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TickOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Enqueue scheduled jobs that are due (called by the scheduler)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/reports": {
+      "get": {
+        "description": "Each report carries a copy of the reported message and the 10 before it.",
+        "operationId": "list_reports_api_v1_admin_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReportStatus",
+              "default": "open"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reports of chat messages, oldest first",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/reports/{report_id}": {
+      "get": {
+        "operationId": "get_report_api_v1_admin_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`report_not_found`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "One report",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/reports/{report_id}/resolve": {
+      "post": {
+        "description": "It and its copy of the messages are deleted REPORT_RETENTION_DAYS (180) later.",
+        "operationId": "resolve_report_api_v1_admin_reports__report_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`report_not_found`."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`report_already_resolved`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark a report resolved",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/storage": {
+      "get": {
+        "description": "Warns at 70% of the limit; at 90% sign-ups and non-essential writes are paused.",
+        "operationId": "storage_report_api_v1_admin_storage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Database size against the free-tier limit",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/auth/google/callback": {
+      "get": {
+        "description": "Verifies the attempt and Google's ID token, then signs in (session cookie) and\nredirects to ``next``. Any failure redirects to ``/login?error=<code>`` with a stable\ncode (``google_state_invalid``, ``google_cancelled``, ``google_failed``,\n``email_not_allowed``, ``consent_required``, ...); details go to the audit log only.",
+        "operationId": "google_callback_api_v1_auth_google_callback_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 2048,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "error",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "To `next`, or to /login?error=<code>"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Google sends the browser back here",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/google/start": {
+      "post": {
+        "description": "Returns Google's sign-in URL and sets a short-lived httpOnly cookie that ties the\nattempt to this browser. 404 ``google_signin_unavailable`` when Google is off.",
+        "operationId": "google_start_api_v1_auth_google_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleStartIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleStartOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Start Google sign-in",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sign out this device",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "operationId": "logout_all_api_v1_auth_logout_all_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sign out everywhere",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "description": "Also re-issues the CSRF cookie, so a client that lost it can recover.",
+        "operationId": "me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "The signed-in user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/methods": {
+      "get": {
+        "operationId": "methods_api_v1_auth_methods_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMethodsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Available sign-in methods",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/otp/request": {
+      "post": {
+        "description": "Send a 6-digit code (valid 10 minutes) to the address.\n\nThe response is the same whether or not an account exists. Requesting a new code\ninvalidates any earlier unused one. Rate-limited per address and per IP (429).",
+        "operationId": "request_code_api_v1_auth_otp_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Email a sign-in code",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/otp/verify": {
+      "post": {
+        "description": "Verify the code and start a session (cookie). Creates the account on first use,\nwhich requires ``age_confirmed`` and ``accept_terms``; an account without a recorded age\nconfirmation needs ``age_confirmed`` too. Five wrong guesses lock a code.",
+        "operationId": "verify_code_api_v1_auth_otp_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpVerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Sign in with a code",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/blocks": {
+      "get": {
+        "operationId": "list_blocks_api_v1_blocks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "People you've blocked, newest first",
+        "tags": [
+          "blocks"
+        ]
+      },
+      "post": {
+        "description": "Works both ways: no chat, no intros, no matches between you, and your connection\nends for good. They aren't told. Calling it again changes nothing. Unblocking later\ndoes not reopen the connection.",
+        "operationId": "block_person_api_v1_blocks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`person_not_found`: not someone you've matched, had an intro with or connected with."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Daily block limit reached."
+          }
+        },
+        "summary": "Block someone",
+        "tags": [
+          "blocks"
+        ]
+      }
+    },
+    "/api/v1/blocks/{user_id}": {
+      "delete": {
+        "description": "They can appear in your matches again. Your old connection stays ended: to talk\nagain, one of you sends a new intro.",
+        "operationId": "unblock_person_api_v1_blocks__user_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`block_not_found`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unblock someone",
+        "tags": [
+          "blocks"
+        ]
+      }
+    },
+    "/api/v1/connections": {
+      "get": {
+        "operationId": "list_connections_api_v1_connections_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "People you're connected with",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/connections/{connection_id}/messages": {
+      "get": {
+        "operationId": "list_messages_api_v1_connections__connection_id__messages_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connection Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`conversation_not_found`: no such connection, or you're not in it."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Messages in one conversation, newest first",
+        "tags": [
+          "chat"
+        ]
+      },
+      "post": {
+        "description": "Only possible inside a connection (both people accepted). Messages are deleted\n`MESSAGE_RETENTION_DAYS` (90) after they were sent.",
+        "operationId": "send_message_api_v1_connections__connection_id__messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`conversation_not_found`: no such connection, or you're not in it."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`conversation_closed`: the other person's account is not active."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "Send a message",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/api/v1/connections/{connection_id}/read": {
+      "post": {
+        "operationId": "mark_conversation_read_api_v1_connections__connection_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connection Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`conversation_not_found`: no such connection, or you're not in it."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark a conversation read",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "description": "Report that the process is up. Touches no dependencies, so it stays cheap.",
+        "operationId": "liveness_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "description": "Check PostgreSQL and the pgvector extension. Returns 503 if either fails.",
+        "operationId": "readiness_api_v1_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Readiness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/intros": {
+      "get": {
+        "operationId": "list_intros_api_v1_intros_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "box",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Box",
+              "default": "received"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntroPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Intros received or sent",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/intros/{intro_id}": {
+      "delete": {
+        "operationId": "withdraw_intro_api_v1_intros__intro_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "intro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Intro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`intro_not_found`."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`intro_not_pending`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Withdraw an intro you sent",
+        "tags": [
+          "intros"
+        ]
+      },
+      "get": {
+        "operationId": "get_intro_api_v1_intros__intro_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "intro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Intro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntroOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`intro_not_found`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "One intro",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/intros/{intro_id}/report": {
+      "post": {
+        "description": "The moderator sees a copy of the intro's request and note. The sender is not told.",
+        "operationId": "report_intro_api_v1_intros__intro_id__report_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "intro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Intro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`intro_not_found`."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`already_reported`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Daily report limit reached."
+          }
+        },
+        "summary": "Report an intro you received",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/intros/{intro_id}/respond": {
+      "post": {
+        "description": "Accepting connects you: you both see each other's name and links. Declining is\nnever shown to the sender.",
+        "operationId": "respond_to_intro_api_v1_intros__intro_id__respond_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "intro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Intro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntroResponseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntroOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`intro_not_found`."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`intro_not_pending`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept or decline an intro",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/matches/{match_id}/intro": {
+      "post": {
+        "description": "The other person sees your request, the match reason and your note, but not your\nname or links until they accept.",
+        "operationId": "send_intro_api_v1_matches__match_id__intro_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "match_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Match Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntroIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntroOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`match_not_found` (or not yours)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`candidate_unavailable`, `already_connected`, `intro_exists` or `too_many_pending_intros`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Daily intro limit reached."
+          }
+        },
+        "summary": "Send an intro to a match",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "delete": {
+        "description": "Schedule permanent deletion after the grace period (30 days by default).\n\nSigns out every device immediately; signing in is refused during the grace period.",
+        "operationId": "delete_account_api_v1_me_delete",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionScheduledOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Delete my account",
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/v1/me/profile": {
+      "get": {
+        "operationId": "get_profile_api_v1_me_profile_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No profile yet (`profile_not_found`)."
+          }
+        },
+        "summary": "Get my profile",
+        "tags": [
+          "profile"
+        ]
+      },
+      "patch": {
+        "description": "Name, links, timezone, languages and visibility (``paused`` hides the profile from\nnew matches). The about text changes only through ``PUT``.",
+        "operationId": "update_profile_settings_api_v1_me_profile_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileSettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No profile yet (`profile_not_found`)."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          }
+        },
+        "summary": "Change my profile settings",
+        "tags": [
+          "profile"
+        ]
+      },
+      "put": {
+        "description": "Saves at once. If the about text changed, ``parse_status`` is ``pending`` until a\nbackground job has read it (usually seconds); poll ``GET /me/profile``.",
+        "operationId": "save_profile_api_v1_me_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "AI consent missing (`ai_consent_required`)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No profile yet (`profile_not_found`)."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Create or replace my profile",
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/api/v1/me/profile/understanding": {
+      "put": {
+        "description": "Replaces the parsed summary, offers, seeks, interests and availability with the\nuser's version; matching uses it from the next embedding (a background job).",
+        "operationId": "correct_understanding_api_v1_me_profile_understanding_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnderstandingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No profile yet (`profile_not_found`)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No about text (`profile_text_required`)."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          }
+        },
+        "summary": "Correct what was understood from my profile",
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/api/v1/messages/updates": {
+      "get": {
+        "description": "Start without `after` to get a cursor, then pass the returned `cursor` each time.\n\nPoll on this cadence (ADR 0012): every 3 s for a minute after a message, every 10 s\nuntil 5 quiet minutes, every 30 s until 10 quiet minutes, then stop until the person\nis back; never while the app is hidden. If `poll_after_seconds` is set, wait that long.",
+        "operationId": "message_updates_api_v1_messages_updates_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageUpdates"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_cursor`."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "Poll for new messages in all your conversations",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/api/v1/messages/{message_id}/report": {
+      "post": {
+        "description": "Report a message the other person sent. The moderator sees a copy of it and the 10\nmessages before it. The other person is not told, and you won't hear what happens.",
+        "operationId": "report_message_api_v1_messages__message_id__report_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`message_not_found` (or not yours to see)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`cannot_report_own_message` or `already_reported`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "Report a message",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/api/v1/moderation/accounts/suspended": {
+      "get": {
+        "operationId": "suspended_accounts_api_v1_moderation_accounts_suspended_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`moderator_only`."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "Suspended accounts, newest first",
+        "tags": [
+          "moderation"
+        ]
+      }
+    },
+    "/api/v1/moderation/accounts/{user_id}/suspend": {
+      "post": {
+        "description": "Signs them out everywhere at once. They can't sign in, can't be messaged and aren't\nshown in matches until unsuspended. Logged in the audit log.",
+        "operationId": "suspend_account_api_v1_moderation_accounts__user_id__suspend_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuspendIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`moderator_only`."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`account_not_found`."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`cannot_suspend`: your own, a moderator's, or not active."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "Suspend an account",
+        "tags": [
+          "moderation"
+        ]
+      }
+    },
+    "/api/v1/moderation/accounts/{user_id}/unsuspend": {
+      "post": {
+        "description": "They can sign in again. Logged in the audit log.",
+        "operationId": "unsuspend_account_api_v1_moderation_accounts__user_id__unsuspend_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnsuspendIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`moderator_only`."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`account_not_found`."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`not_suspended`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "Unsuspend an account",
+        "tags": [
+          "moderation"
+        ]
+      }
+    },
+    "/api/v1/moderation/reports": {
+      "get": {
+        "operationId": "list_reports_api_v1_moderation_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReportStatus",
+              "default": "open"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`moderator_only`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "Reports, oldest first",
+        "tags": [
+          "moderation"
+        ]
+      }
+    },
+    "/api/v1/moderation/reports/{report_id}": {
+      "get": {
+        "operationId": "get_report_api_v1_moderation_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`moderator_only`."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`report_not_found`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "One report",
+        "tags": [
+          "moderation"
+        ]
+      }
+    },
+    "/api/v1/moderation/reports/{report_id}/resolve": {
+      "post": {
+        "description": "Logged in the audit log. The report and its copy are deleted 180 days later.",
+        "operationId": "resolve_report_api_v1_moderation_reports__report_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`moderator_only`."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`report_not_found`."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`report_already_resolved`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limited (see Retry-After)."
+          }
+        },
+        "summary": "Mark a report resolved",
+        "tags": [
+          "moderation"
+        ]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "list_notifications_api_v1_notifications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "My notifications, newest first",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/notifications/read": {
+      "post": {
+        "operationId": "mark_notifications_read_api_v1_notifications_read_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkReadIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkedRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark notifications read",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/notifications/unread-count": {
+      "get": {
+        "operationId": "unread_notifications_api_v1_notifications_unread_count_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCount"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "Unread notifications",
+        "tags": [
+          "intros"
+        ]
+      }
+    },
+    "/api/v1/people/{user_id}/report": {
+      "post": {
+        "description": "The moderator sees a copy of their profile as you could see it. They are not told.",
+        "operationId": "report_person_api_v1_people__user_id__report_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`person_not_found`: not someone you've matched, had an intro with or connected with."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`already_reported`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Daily report limit reached."
+          }
+        },
+        "summary": "Report someone's profile",
+        "tags": [
+          "blocks"
+        ]
+      }
+    },
+    "/api/v1/requests": {
+      "get": {
+        "operationId": "list_requests_api_v1_requests_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchRequestPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad cursor."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "My requests, newest first",
+        "tags": [
+          "matching"
+        ]
+      },
+      "post": {
+        "description": "Saves the request and returns at once with `status: pending`. Matches are found in\nthe background (usually within 30 seconds); poll `GET /requests/{id}`.",
+        "operationId": "create_request_api_v1_requests_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`profile_required` or `too_many_open_requests`."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Daily request limit reached."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Ask for matches",
+        "tags": [
+          "matching"
+        ]
+      }
+    },
+    "/api/v1/requests/{request_id}": {
+      "get": {
+        "operationId": "get_request_api_v1_requests__request_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No such request (`match_request_not_found`)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "One request",
+        "tags": [
+          "matching"
+        ]
+      }
+    },
+    "/api/v1/requests/{request_id}/close": {
+      "post": {
+        "description": "Stops a request from counting as open. Its matches stay visible.",
+        "operationId": "close_request_api_v1_requests__request_id__close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No such request (`match_request_not_found`)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Close a request",
+        "tags": [
+          "matching"
+        ]
+      }
+    },
+    "/api/v1/requests/{request_id}/matches": {
+      "get": {
+        "description": "In rank order, each with the reason it was suggested. Empty while the request is\n`pending`, or when nobody fits yet.",
+        "operationId": "list_matches_api_v1_requests__request_id__matches_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No such request (`match_request_not_found`)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The matches for a request",
+        "tags": [
+          "matching"
+        ]
+      }
+    }
+  }
+}
