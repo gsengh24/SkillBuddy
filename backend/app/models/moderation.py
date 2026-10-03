@@ -125,3 +125,38 @@ class Block(UUIDPrimaryKeyMixin, Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class ModerationActionKind(StrEnum):
+    RESOLVE_REPORT = "resolve_report"
+    SUSPEND_USER = "suspend_user"
+    UNSUSPEND_USER = "unsuspend_user"
+
+
+class ModerationAction(UUIDPrimaryKeyMixin, Base):
+    """Audit log of moderator actions: who did what, to which report or account, when.
+
+    No message text. Kept ``MODERATION_LOG_RETENTION_DAYS`` (365), then purged daily.
+    ``moderator_id`` is null for actions taken with the admin token (no person attached).
+    """
+
+    __tablename__ = "moderation_actions"
+    __table_args__ = (
+        CheckConstraint(f"action IN ({_in(tuple(ModerationActionKind))})", name="action_valid"),
+        CheckConstraint(f"char_length(note) <= {REPORT_NOTE_MAX_LENGTH}", name="note_length"),
+        # The daily purge by age (a BRIN index is tiny for an append-only time column).
+        Index("ix_moderation_actions_created_at_brin", "created_at", postgresql_using="brin"),
+    )
+
+    moderator_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    action: Mapped[str] = mapped_column(String(24))
+    subject_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    report_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("reports.id", ondelete="SET NULL")
+    )
+    note: Mapped[str] = mapped_column(Text, default="", server_default=text("''"))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())

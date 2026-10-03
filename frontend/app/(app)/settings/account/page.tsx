@@ -20,8 +20,9 @@ export default async function AccountSettingsPage() {
           Signed in as <strong className="text-ink break-all">{user.email}</strong>
         </p>
       </header>
-      <p>
+      <p className="flex flex-wrap gap-x-6 gap-y-2">
         <TextLink href="/settings/blocked">Blocked people</TextLink>
+        {user.is_moderator ? <TextLink href="/moderation">Moderation</TextLink> : null}
       </p>
       <AccountActions />
     </div>

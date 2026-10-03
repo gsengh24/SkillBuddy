@@ -38,6 +38,7 @@ from app.schemas.auth import (
 from app.schemas.errors import ErrorResponse
 from app.services.auth.events import ClientInfo
 from app.services.auth.service import OAUTH_STATE_TTL, AuthService
+from app.services.moderation import is_moderator
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -95,7 +96,7 @@ async def verify_code(
         client=client,
     )
     set_session_cookies(response, settings, result.token, result.session)
-    return UserOut.from_user(result.user)
+    return UserOut.from_user(result.user, is_moderator=is_moderator(settings, result.user))
 
 
 @router.get("/me", summary="The signed-in user")
@@ -103,7 +104,7 @@ async def me(auth: AuthDep, response: Response, settings: SettingsDep) -> UserOu
     """Also re-issues the CSRF cookie, so a client that lost it can recover."""
     if auth.via_cookie:
         set_csrf_cookie(response, settings, auth.session)
-    return UserOut.from_user(auth.user)
+    return UserOut.from_user(auth.user, is_moderator=is_moderator(settings, auth.user))
 
 
 @router.post("/logout", status_code=HTTPStatus.NO_CONTENT, summary="Sign out this device")

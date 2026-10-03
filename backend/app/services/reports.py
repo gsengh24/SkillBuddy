@@ -37,6 +37,8 @@ from app.models import (
     Match,
     MatchRequest,
     Message,
+    ModerationAction,
+    ModerationActionKind,
     Profile,
     Report,
     ReportReason,
@@ -312,7 +314,10 @@ async def get_report(db: AsyncSession, report_id: uuid.UUID) -> Report:
     return report
 
 
-async def resolve_report(db: AsyncSession, report_id: uuid.UUID, note: str) -> Report:
+async def resolve_report(
+    db: AsyncSession, report_id: uuid.UUID, note: str, *, moderator_id: uuid.UUID | None
+) -> Report:
+    """Resolve and write the audit log in one commit (``moderator_id`` None: admin token)."""
     report = await db.get(Report, report_id, with_for_update=True)
     if report is None:
         raise ReportNotFoundError
@@ -322,6 +327,16 @@ async def resolve_report(db: AsyncSession, report_id: uuid.UUID, note: str) -> R
         update(Report)
         .where(Report.id == report.id)
         .values(status=ReportStatus.RESOLVED, resolution_note=note, resolved_at=func.now())
+    )
+    db.add(
+        ModerationAction(
+            id=uuid.uuid4(),
+            moderator_id=moderator_id,
+            action=ModerationActionKind.RESOLVE_REPORT,
+            subject_id=report.reported_id,
+            report_id=report.id,
+            note=note,
+        )
     )
     await db.commit()
     await db.refresh(report)
@@ -369,6 +384,19 @@ async def send_report_alert(db: AsyncSession, settings: Settings, now: datetime)
     )
     logger.info("report_alert_sent", extra={"new_reports": len(pending)})
     return len(pending)
+
+
+async def reported_statuses(db: AsyncSession, items: list[Report]) -> dict[uuid.UUID, str]:
+    """The current account status of each reported person (to show "suspended")."""
+    ids = {item.reported_id for item in items if item.reported_id is not None}
+    if not ids:
+        return {}
+    rows = await db.execute(select(User.id, User.status).where(User.id.in_(ids)))
+    return dict(rows.tuples().all())
+
+
+def status_of(statuses: dict[uuid.UUID, str], report: Report) -> str | None:
+    return statuses.get(report.reported_id) if report.reported_id is not None else None
 
 
 async def purge_resolved_reports(db: AsyncSession, settings: Settings, now: datetime) -> int:

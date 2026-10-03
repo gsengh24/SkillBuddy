@@ -113,7 +113,7 @@ _REPORT_ALERT_TEXT = """{headline}
 
 {count} new {reports} since the last alert; {open_total} open in total.
 
-Read them with the admin reports endpoint (docs/moderation.md). This email never
+Review them on the moderation page in the app. This email never
 contains message text, names or reasons.
 """
 
@@ -127,7 +127,7 @@ _REPORT_ALERT_HTML = """<!doctype html>
       <p style="margin:0 0 16px">{count} new {reports} since the last alert; {open_total} open
         in total.</p>
       <p style="margin:0;color:#475569;font-size:14px">
-        Read them with the admin reports endpoint (docs/moderation.md). This email never
+        Review them on the moderation page in the app. This email never
         contains message text, names or reasons.
       </p>
     </div>

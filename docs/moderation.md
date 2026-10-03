@@ -1,7 +1,34 @@
 # Moderation: reading and resolving reports
 
-Until the moderation page arrives with roadmap item 7, reports are read through the admin
-API from your laptop. This page is for the project owner (the moderator).
+This page is for the project owner (the moderator). The normal way to moderate is the
+**moderation page in the app**. The PowerShell steps further down (admin API with the
+`X-Admin-Token`) still work as a backup.
+
+## The moderation page (in the app)
+
+**One-time setup:** Render → the API service → **Environment** → add `MODERATOR_EMAILS` =
+the email address you sign in with (several addresses: comma-separated) → **Save, rebuild
+and deploy**. It is not a secret, but keep it in Render, not in the repository.
+
+**Using it:**
+
+1. Sign in to the app as usual. **Settings → Account settings** shows a **Moderation** link
+   (only for moderator accounts). It opens `/moderation`.
+2. **Open reports**, oldest first. Each shows the reason in plain words, the reporter's
+   note, and the copy the report kept, with the reported person's parts highlighted (for a
+   message report, the reported message is outlined). You never see whole conversations.
+3. **Resolve** (with an optional note for your records) closes a report.
+4. **Suspend this account** signs the reported person out at once. They can't sign in,
+   can't be messaged and aren't shown in matches. The report stays open until you resolve
+   it.
+5. **Suspended accounts** lists everyone suspended, with your note; **Unsuspend** lets them
+   back in.
+6. **Resolved reports** shows what you have closed.
+
+Every resolve, suspend and unsuspend is written to an audit log (who, what, when, your
+note; no message text), kept for a year (`MODERATION_LOG_RETENTION_DAYS`). The page and its
+API allow `MODERATION_REQUESTS_PER_MINUTE` (60) requests a minute per moderator. You can't
+suspend yourself or another moderator.
 
 ## What a report contains
 
@@ -27,7 +54,9 @@ The reporter is told only that the report was received. The reported person is n
 Resolved reports are deleted 180 days after you resolve them (`REPORT_RETENTION_DAYS`).
 Open reports are kept until you resolve them.
 
-## One-time setup (Render)
+## Backup: the admin API from PowerShell
+
+### One-time setup (Render)
 
 The admin token goes **only** into the Render settings. Never put it in the repository,
 GitHub secrets, a script, a chat message or a note file.
@@ -40,7 +69,7 @@ GitHub secrets, a script, a chat message or a note file.
 3. **Save changes**. Render redeploys the API (about two minutes).
 4. Close the PowerShell window, so the token is not left on screen.
 
-## When the alert email arrives
+### When the alert email arrives
 
 At most one email an hour, sent on the scheduler's hourly tick, says how many new reports
 are waiting. It never contains message text, names or reasons.
@@ -75,7 +104,7 @@ are waiting. It never contains message text, names or reasons.
 4. To see resolved ones: `Invoke-RestMethod "$api/api/v1/admin/reports?status=resolved" -Headers $headers`.
 5. Close the PowerShell window when you are done.
 
-## Limits and safety of the admin API
+### Limits and safety of the admin API
 
 - Every admin request is limited to `ADMIN_REQUESTS_PER_MINUTE` (30) per IP address,
   counted before the token is checked, so guessing the token is slow.
@@ -84,10 +113,7 @@ are waiting. It never contains message text, names or reasons.
 - A wrong or missing token gets 403.
 - People can file at most `REPORTS_PER_DAY` (5) reports a day.
 
-## What the API cannot do yet (item 7)
+## Not built yet
 
-Blocking, suspending an account, a moderation page in the app, and automated screening
-are part of roadmap item 7. Until then, to stop someone you can set their account to
-`suspended` in the database (Neon → SQL editor). That ends their sessions at once, so
-they can't send anything, and others can't message them. Ask Claude Code for the exact
-statement when you need it.
+Automated screening of profiles and messages (to be decided; it would send text to an AI
+provider, which needs consent and privacy wording).

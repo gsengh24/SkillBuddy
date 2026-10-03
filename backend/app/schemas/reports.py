@@ -65,6 +65,9 @@ class ReportOut(BaseModel):
     status: Literal["open", "resolved"]
     reporter_id: uuid.UUID | None
     reported_id: uuid.UUID | None
+    reported_status: Literal["active", "suspended", "pending_deletion"] | None = Field(
+        description="The reported account's status now; null once it is deleted."
+    )
     connection_id: uuid.UUID | None
     target: ReportTarget
     target_id: uuid.UUID = Field(description="The message, the intro, or the person's id.")
@@ -75,7 +78,7 @@ class ReportOut(BaseModel):
     resolution_note: str
 
     @classmethod
-    def build(cls, report: Report) -> ReportOut:
+    def build(cls, report: Report, reported_status: str | None = None) -> ReportOut:
         return cls(
             id=report.id,
             reason=ReportReason(report.reason),
@@ -83,6 +86,7 @@ class ReportOut(BaseModel):
             status=report.status,  # type: ignore[arg-type]  # CHECK-constrained column
             reporter_id=report.reporter_id,
             reported_id=report.reported_id,
+            reported_status=reported_status,  # type: ignore[arg-type]  # CHECK-constrained column
             connection_id=report.connection_id,
             target=ReportTarget(report.target),
             target_id=report.target_id,

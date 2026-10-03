@@ -92,6 +92,11 @@ CLAUDE.md:
       other's matches (hard filter in retrieval, and in match lists already shown). The
       blocked person isn't told; reporting still works. Unblock in Settings → Blocked
       people removes the block only; the old connection stays ended. `BLOCKS_PER_DAY` (20).
+- [x] **Moderation page** (step 7c, migration 0013): `/moderation` for accounts in
+      `MODERATOR_EMAILS` (normal sign-in, `is_moderator` on `/auth/me`); open and resolved
+      reports with their copies; resolve, suspend (signs them out at once) and unsuspend;
+      suspended accounts list; audit log of every action kept a year;
+      `MODERATION_REQUESTS_PER_MINUTE` (60). API under `/api/v1/moderation`.
 - [ ] Automated screening of messages: not in chat v1; decide in item 7 (it would send
       message text to an AI provider, which needs consent and privacy wording).
 
