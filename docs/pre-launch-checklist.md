@@ -81,7 +81,7 @@ short note).
 | 33 | [ ] **Export the OpenAPI spec** to the repository | A committed spec, checked in CI | Claude Code | No | Exit report, issue 9 |
 | 34 | [x] **Dependabot `uv` run** succeeds after the redis cap (moot once Redis is removed in ADR 0008 step 4) | The next weekly run is green, or the item is closed by step 4 | Claude Code | No | Exit report, issue 11 |
 | 35 | [ ] **Ruleset: require branches to be up to date** before merging | Decided in the repository settings | Project owner | No | Exit report, issue 12 |
-| 36 | [ ] **Remove the unused `NEXT_PUBLIC_API_URL`** from `docker-compose.yml` | Merged | Claude Code | No | Exit report, issue 13 |
+| 36 | [x] **Remove the unused `NEXT_PUBLIC_API_URL`** from `docker-compose.yml` (done in step 8b, 2026-10-04) | Merged | Claude Code | No | Exit report, issue 13 |
 | 37 | [ ] **Business model** decision | Recorded in ARCHITECTURE.md §12 | Project owner | No | ARCHITECTURE.md §12 |
 | 38 | [ ] **Platform name and brand** (the email sender name, and a domain later) | Recorded; `lib/brand.ts` and the sender name updated | Project owner | No | ARCHITECTURE.md §12 |
 | 39 | [ ] **Owner dashboard steps** (click-by-click in [deployment-plan.md](deployment-plan.md), steps 1–9): Gmail account and OAuth client, Cloudflare Worker and `JOBS_TICK_TOKEN`, Render environment variables | Done, following the steps Claude Code writes into deployment-plan.md (ADR 0008 step 6). 2026-10-02: steps 1, 2, 4, 5, 6 and 7 done (first sign-in passed); step 3 (AI keys) and 6b (Google client) pending; steps 8 and 9 open | Project owner | Yes | ADR 0008, build step 7 |

@@ -53,9 +53,12 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
      consent, moderation, reporting, or legal or terms wording: that stops for the owner's
      review, is not auto-merged, and is built last (owner decision, 2026-10-03). Step 8
      only. (Step 7 had its own exception, now finished.)
-   - Build one PR at a time. After a PR with a migration merges, give the owner the
-     migration number and wait for them to confirm Actions → Migrate staging has run before
-     starting the next PR.
+   - Build one PR at a time. After a PR with a migration merges, **for staging only**,
+     Claude Code starts Actions → Migrate staging itself (`gh workflow run "Migrate staging"
+     --ref main`), waits for it, confirms its "Revision after upgrade" step shows the new
+     head and that the **Staging migrations** check is green, and tells the owner the
+     migration number before starting the next PR (owner decision, 2026-10-04). **Never**
+     run migrations against production.
    - If CI fails and one fix attempt does not work, stop and tell the owner.
 
 ## Architecture summary

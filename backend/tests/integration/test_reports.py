@@ -439,3 +439,32 @@ async def test_a_profile_report_copies_only_what_the_reporter_could_see(
     assert (
         second["name"] == "Asha"
     )  # connected: the copy has the name (connect() names the sender Asha)
+
+
+async def test_reporting_a_profile_that_was_never_processed_still_works(
+    settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    """A profile whose description hasn't been read yet has nothing structured to copy: the
+    report is still accepted, with an empty copy, instead of failing."""
+    url = migrated_database_url
+    async with auth_client(settings, delivery) as client:
+        asha = await join(client, settings, delivery, "Asha")
+        ravi = await join(client, settings, delivery, "Ravi")
+        matched(url, asha, ravi)
+        run_sql(
+            url,
+            "UPDATE profiles SET structured = '{}'::jsonb, parse_status = 'pending' "
+            "WHERE user_id = :u",
+            u=ravi.id,
+        )
+        filed = await client.post(
+            f"/api/v1/people/{ravi.id}/report", json={"reason": "other"}, headers=asha.headers
+        )
+        shown = await client.get(f"/api/v1/admin/reports/{filed.json()['id']}", headers=ADMIN)
+        listed = await client.get("/api/v1/admin/reports", headers=ADMIN)
+
+    assert filed.status_code == 201, filed.text
+    assert shown.status_code == 200
+    assert shown.json()["target"] == "profile"
+    assert shown.json()["messages"] == []
+    assert listed.status_code == 200

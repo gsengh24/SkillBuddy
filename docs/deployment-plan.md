@@ -393,6 +393,8 @@ Koyeb Free is no longer an option (new accounts need a card since February 2026)
   migrations** workflow checks this for you: it goes red on the merge and turns green again
   after Migrate staging has run (it also re-checks every morning at 09:00 IST, and can be
   run by hand from the Actions tab). It uses the same `STAGING_DATABASE_URL` secret.
+  For staging only, Claude Code starts Migrate staging itself after merging a migration
+  and confirms this check is green (owner decision, 2026-10-04). Never for production.
 - **Rollback:** Render → **Events** → earlier deploy → **Rollback**; Vercel → **Deployments**
   → earlier deployment → **Instant Rollback**. Rollbacks do not undo migrations; revert a
   migration with a new PR.

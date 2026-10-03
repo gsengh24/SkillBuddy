@@ -18,22 +18,27 @@ serverless application). Every job must be idempotent and safe to run late or tw
 Storage tasks from [docs/storage-budget.md](storage-budget.md) and the storage rules in
 CLAUDE.md:
 
-- [ ] OTP codes and sessions tables carry an `expires_at` column with an index.
-- [ ] Daily purge job: delete expired OTP codes and expired or revoked sessions.
-- [ ] `auth_events` table with a fixed retention (number of days set in the ADR/PR) and a
-      daily prune job.
-- [ ] Account deletion: soft delete on request, then a scheduled hard-delete job that
+- [x] OTP codes and sessions tables carry an `expires_at` column with an index
+      (`app/models/auth.py`; verified in step 8b).
+- [x] Daily purge job: delete expired OTP codes and expired or revoked sessions
+      (`purge_auth_data`, `app/services/auth/retention.py`).
+- [x] `auth_events` table with a fixed retention (number of days set in the ADR/PR) and a
+      daily prune job (`AUTH_EVENT_RETENTION_DAYS`, 90; in `purge_auth_data`).
+- [x] Account deletion (`hard_delete_accounts` job; everything cascades): soft delete on
+      request, then a scheduled hard-delete job that
       removes the user, profile, embeddings, matches and messages within 30 days
       (ARCHITECTURE.md §8).
-- [ ] Input caps on all auth-related text fields (email length, etc.).
-- [ ] PR states retention and estimated growth for each new table; rows added to
+- [x] Input caps on all auth-related text fields (email length, etc.; `EMAIL_MAX_LENGTH`
+      254).
+- [x] PR states retention and estimated growth for each new table; rows added to
       `docs/storage-budget.md`.
 
 ## Phase 1: profiles, requests and the AI gateway
 
 - [x] Sign in with Google for `@thapar.edu` (ADR 0011), email codes kept as the fallback;
       allow-list, exceptions and block list for both methods.
-- [ ] Text caps enforced in request schemas: profile text and request text (2,000
+- [x] Text caps enforced in request schemas (profile text 2,000 characters; request text
+      1,000, `REQUEST_TEXT_MAX_LENGTH`, migration 0007): profile text and request text (2,000
       characters planned), with clear validation errors. Profile text: done (schema and
       CHECK, migration 0005); request text comes with the matching endpoints.
 - [x] Profile API (`/api/v1/me/profile`): save with AI-consent version recorded, settings
@@ -55,20 +60,24 @@ CLAUDE.md:
 - [x] Understand and Explain stages on the AI gateway, each with a template fallback
       that needs no AI (`app/ai/stages/`, prompts versioned in `app/ai/prompts/`); first
       quality check against the eval pairs (`evals/quality.py`).
-- [ ] AI gateway stores prompt version, tokens and latency only; raw prompts and responses
+- [x] AI gateway stores prompt version, tokens and latency only; raw prompts and responses
       kept at most for a short debug window (e.g. 7 days) and purged by a daily job.
-- [ ] `events` table partitioned by month (ARCHITECTURE.md §5); raw events kept for a set
+      Verified in step 8b: no raw prompt or response is stored at all (metadata goes to the
+      JSON logs and `match_requests.prompt_version`), so there is nothing to purge.
+- [ ] (Not built: there is no `events` table yet; it comes with the feedback loop, not
+      hardening.) `events` table partitioned by month (ARCHITECTURE.md §5); raw events kept for a set
       window (30 days planned), then aggregated into daily counts and old partitions
       dropped by a scheduled job.
-- [ ] **Size monitor:**
-  - [ ] Database size (`pg_database_size`) and per-table sizes exposed on a protected
+- [x] **Size monitor** (`app/services/storage.py`, `GET /api/v1/admin/storage`):
+  - [x] Database size (`pg_database_size`) and per-table sizes exposed on a protected
         admin/health endpoint.
-  - [ ] Warning state at 70% of the plan limit (350 MB on Neon Free).
-  - [ ] Protect mode at 90% (450 MB): new signups and non-essential writes paused, with a
+  - [x] Warning state at 70% of the plan limit (350 MB on Neon Free).
+  - [x] Protect mode at 90% (450 MB): new signups and non-essential writes paused, with a
         clear "try again later" error in the standard envelope.
-  - [ ] Thresholds and the plan limit come from settings, not constants.
+  - [x] Thresholds and the plan limit come from settings, not constants
+        (`DATABASE_SIZE_LIMIT_MB`, `STORAGE_WARN_PERCENT`, `STORAGE_PAUSE_PERCENT`).
 - [ ] Replace the estimates in `docs/storage-budget.md` with measured per-user sizes from
-      staging (synthetic data).
+      staging (synthetic data). Needs a synthetic load on staging first; not in step 8.
 
 ## Phase 3: chat and safety
 

@@ -181,7 +181,6 @@ services:
     init: true
     environment:
       API_INTERNAL_URL: http://api:8000
-      NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
       WATCHPACK_POLLING: "true"
     ports:
       - "127.0.0.1:${WEB_PORT:-3000}:3000"
