@@ -110,7 +110,8 @@ CLAUDE.md:
 
 ## Hardening
 
-- [ ] **Staging migration drift check**: a check that fails or warns when the staging
+- [x] **Staging migration drift check** (step 8a; `.github/workflows/staging-migrations.yml`,
+      `app/db/drift.py`): a check that fails or warns when the staging
       database is behind the migrations in `main` (for example, `alembic current` against
       Neon compared with the newest file in `backend/migrations/versions/`, run after every
       merge to `main`). Migrations on staging are applied by hand ("Migrate staging"), and

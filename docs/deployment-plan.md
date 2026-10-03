@@ -389,7 +389,10 @@ Koyeb Free is no longer an option (new accounts need a card since February 2026)
 - **Logs:** Render → **Logs** (API and jobs). Vercel → **Logs** (1 hour on Hobby).
   Cloudflare Worker → **Logs** (ticks).
 - **Migrations:** when a merged PR adds a file under `backend/migrations/versions/`, run
-  **Actions → Migrate staging** before or right after Render deploys it.
+  **Actions → Migrate staging** before or right after Render deploys it. The **Staging
+  migrations** workflow checks this for you: it goes red on the merge and turns green again
+  after Migrate staging has run (it also re-checks every morning at 09:00 IST, and can be
+  run by hand from the Actions tab). It uses the same `STAGING_DATABASE_URL` secret.
 - **Rollback:** Render → **Events** → earlier deploy → **Rollback**; Vercel → **Deployments**
   → earlier deployment → **Instant Rollback**. Rollbacks do not undo migrations; revert a
   migration with a new PR.
