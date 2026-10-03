@@ -27,6 +27,7 @@ from app.models.moderation import (
     Report,
     ReportReason,
     ReportStatus,
+    ReportTarget,
 )
 from app.models.profile import (
     ABOUT_TEXT_MAX_LENGTH,
@@ -96,6 +97,7 @@ __all__ = [
     "Report",
     "ReportReason",
     "ReportStatus",
+    "ReportTarget",
     "RequestStatus",
     "User",
     "UserSession",

@@ -5,14 +5,23 @@ API from your laptop. This page is for the project owner (the moderator).
 
 ## What a report contains
 
-When someone reports a message in chat, the API keeps:
+People can report three things from the app: a **chat message** (under each message from
+the other person), an **intro** they received, and a **profile** (on a match card or a
+connection card). For each report the API keeps:
 
-- the reason they picked (harassment, spam, scam, inappropriate, safety, other) and their
-  optional note;
-- a frozen copy of the reported message and the 10 messages before it, each marked as
-  sent by the `reporter` or the `reported` person;
-- the two account ids and the connection id. An id becomes empty if that account or
-  connection is deleted; the copy of the messages stays.
+- what was reported (`target`: `message`, `intro` or `profile`) and its id (`target_id`);
+- the reason they picked and their optional note. Reasons, as people see them:
+  harassment or bullying (`harassment`), spam or advertising (`spam`), scam or asking for
+  money (`scam`), sexual or inappropriate content (`inappropriate`), safety concern:
+  threats, self-harm, or someone may be under 18 (`safety`), something else (`other`);
+- a frozen copy of what the reporter saw (`messages`):
+  - a message: it and the 10 messages before it, each marked as sent by the `reporter` or
+    the `reported` person;
+  - an intro: its `request` text and its `note`;
+  - a profile: its `summary`, `offers`, `seeks`, `interests` and `availability`, plus
+    `name` and `links` only if the two were connected;
+- the two account ids and, for messages and connected profiles, the connection id. An id
+  becomes empty if that account or connection is deleted; the copy stays.
 
 The reporter is told only that the report was received. The reported person is not told.
 Resolved reports are deleted 180 days after you resolve them (`REPORT_RETENTION_DAYS`).
@@ -47,9 +56,9 @@ are waiting. It never contains message text, names or reasons.
    $headers = @{ "X-Admin-Token" = (Read-Host "Admin token") }
    $page = Invoke-RestMethod "$api/api/v1/admin/reports" -Headers $headers
    foreach ($r in $page.items) {
-     "=== Report $($r.id): $($r.reason) ($($r.created_at))"
+     "=== Report $($r.id): $($r.target), $($r.reason) ($($r.created_at))"
      "Note: $($r.details)"
-     $r.messages | Format-Table sender, sent_at, body -Wrap
+     $r.messages | Format-Table label, sender, sent_at, body -Wrap
    }
    ```
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { BlockButton } from "@/components/safety/block-button";
+import { ReportButton } from "@/components/safety/report-button";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -60,6 +61,12 @@ export default async function MessagesPage() {
                 ) : null}
                 <div className="flex flex-wrap items-start gap-3">
                   <ButtonLink href={`/messages/${id}`}>Open chat</ButtonLink>
+                  <ReportButton
+                    kind="profile"
+                    targetId={person.user_id}
+                    blockUserId={person.user_id}
+                    blockName={person.display_name ?? "this person"}
+                  />
                   <BlockButton
                     userId={person.user_id}
                     name={person.display_name ?? "this person"}

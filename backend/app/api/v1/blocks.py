@@ -15,8 +15,9 @@ from app.api.deps import SettingsDep, require_json
 from app.api.v1.auth import AuthDep
 from app.db.session import get_db_session
 from app.schemas.errors import ErrorResponse
+from app.schemas.reports import ReportIn, ReportReceipt
 from app.schemas.social import PersonOut
-from app.services import blocks
+from app.services import blocks, reports
 from app.services.auth.rate_limit import RateLimiter
 from app.services.matching.requests import DAY_SECONDS
 
@@ -101,3 +102,38 @@ async def unblock_person(user_id: uuid.UUID, auth: AuthDep, db: DbDep) -> None:
     """They can appear in your matches again. Your old connection stays ended: to talk
     again, one of you sends a new intro."""
     await blocks.unblock(db, auth.user, user_id)
+
+
+@router.post(
+    "/people/{user_id}/report",
+    status_code=HTTPStatus.CREATED,
+    summary="Report someone's profile",
+    dependencies=[Depends(require_json)],
+    responses={
+        401: _401,
+        404: {
+            "model": ErrorResponse,
+            "description": "`person_not_found`: not someone you've matched, had an intro "
+            "with or connected with.",
+        },
+        409: {"model": ErrorResponse, "description": "`already_reported`."},
+        422: {"model": ErrorResponse, "description": "Validation failed."},
+        429: {"model": ErrorResponse, "description": "Daily report limit reached."},
+    },
+)
+async def report_person(
+    user_id: uuid.UUID,
+    body: ReportIn,
+    auth: AuthDep,
+    request: Request,
+    db: DbDep,
+    settings: SettingsDep,
+) -> ReportReceipt:
+    """The moderator sees a copy of their profile as you could see it. They are not told."""
+    limiter = RateLimiter(
+        request.app.state.session_factory, settings.secret_key, window_seconds=DAY_SECONDS
+    )
+    report = await reports.report_person(
+        db, settings, limiter, auth.user, user_id, body.reason, body.details
+    )
+    return ReportReceipt(id=report.id, created_at=report.created_at)

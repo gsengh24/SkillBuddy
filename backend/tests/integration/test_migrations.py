@@ -302,3 +302,38 @@ def test_blocks_migration_keeps_connections_and_downgrades_to_0010(
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
+
+
+def test_report_targets_migration_keeps_message_reports(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "0011")
+    message = "11111111-0000-4000-8000-00000000000a"
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO reports (message_id, reason, snapshot) "
+                "VALUES (:m, 'spam', '[]'::jsonb)"
+            ),
+            {"m": message},
+        )
+
+    command.upgrade(config, "0012")
+    with engine.begin() as connection:
+        row = connection.execute(text("SELECT target, target_id FROM reports")).one()
+        assert (row[0], str(row[1])) == ("message", message)
+        connection.execute(
+            text(
+                "INSERT INTO reports (target, target_id, reason, snapshot) "
+                "VALUES ('intro', gen_random_uuid(), 'spam', '[]'::jsonb)"
+            )
+        )
+
+    command.downgrade(config, "0011")
+    with engine.connect() as connection:
+        kept = connection.scalars(text("SELECT message_id FROM reports")).all()
+    assert [str(value) for value in kept] == [message]
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES

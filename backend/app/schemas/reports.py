@@ -8,7 +8,13 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from app.models import REPORT_DETAILS_MAX_LENGTH, REPORT_NOTE_MAX_LENGTH, Report, ReportReason
+from app.models import (
+    REPORT_DETAILS_MAX_LENGTH,
+    REPORT_NOTE_MAX_LENGTH,
+    Report,
+    ReportReason,
+    ReportTarget,
+)
 
 
 class ReportIn(BaseModel):
@@ -28,19 +34,30 @@ class ReportReceipt(BaseModel):
 
 
 class ReportedMessage(BaseModel):
-    id: uuid.UUID
+    """One part of the frozen copy: a chat message, or a labelled part of an intro or a
+    profile (``label`` is then e.g. "request", "note", "summary", "offers", "name")."""
+
+    id: uuid.UUID | None
+    label: str | None
     sender: Literal["reporter", "reported"]
     body: str
-    sent_at: datetime
+    sent_at: datetime | None
 
     @classmethod
     def build(cls, item: dict[str, Any]) -> ReportedMessage:
-        return cls(id=item["id"], sender=item["from"], body=item["body"], sent_at=item["sent_at"])
+        return cls(
+            id=item.get("id"),
+            label=item.get("label"),
+            sender=item["from"],
+            body=item["body"],
+            sent_at=item.get("sent_at"),
+        )
 
 
 class ReportOut(BaseModel):
-    """The moderator's view. ``messages`` is the frozen copy, oldest first; the last one is
-    the reported message. Ids are null once that account or connection is deleted."""
+    """The moderator's view. ``messages`` is the frozen copy: for a message report, oldest
+    first with the reported message last; for an intro or a profile, its labelled parts.
+    Ids are null once that account or connection is deleted."""
 
     id: uuid.UUID
     reason: ReportReason
@@ -49,7 +66,9 @@ class ReportOut(BaseModel):
     reporter_id: uuid.UUID | None
     reported_id: uuid.UUID | None
     connection_id: uuid.UUID | None
-    message_id: uuid.UUID
+    target: ReportTarget
+    target_id: uuid.UUID = Field(description="The message, the intro, or the person's id.")
+    message_id: uuid.UUID | None = Field(description="Set for message reports only.")
     messages: list[ReportedMessage]
     created_at: datetime
     resolved_at: datetime | None
@@ -65,7 +84,9 @@ class ReportOut(BaseModel):
             reporter_id=report.reporter_id,
             reported_id=report.reported_id,
             connection_id=report.connection_id,
-            message_id=report.message_id,
+            target=ReportTarget(report.target),
+            target_id=report.target_id,
+            message_id=report.target_id if report.target == ReportTarget.MESSAGE else None,
             messages=[ReportedMessage.build(item) for item in report.snapshot],
             created_at=report.created_at,
             resolved_at=report.resolved_at,

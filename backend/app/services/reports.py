@@ -1,7 +1,11 @@
 """Reports of chat messages and the moderator's side of them (ARCHITECTURE.md §8).
 
-- Either person in a connection can report a message the *other* person sent. The report
-  keeps a frozen copy of that message and the ``REPORT_CONTEXT_MESSAGES`` (10) before it.
+- Either person in a connection can report a message the *other* person sent; the report
+  keeps a frozen copy of it and the ``REPORT_CONTEXT_MESSAGES`` (10) before it.
+- The recipient of an intro can report it (a copy of its request text and note).
+- Anyone who has had contact with someone in the app (a match, an intro or a connection)
+  can report their profile (a copy of what they could see: name and links only if
+  connected). All three share REPORTS_PER_DAY.
 - The reporter learns nothing about what happens next, and the reported person is not told.
 - Reporting works even when a block exists (blocks hide the conversation, not the right to
   report it), and is never paused by the storage guard: it is a safety write.
@@ -29,12 +33,18 @@ from app.models import (
     REPORT_CONTEXT_MESSAGES,
     Connection,
     EmailPurpose,
+    Intro,
+    Match,
+    MatchRequest,
     Message,
+    Profile,
     Report,
     ReportReason,
     ReportStatus,
+    ReportTarget,
     User,
 )
+from app.services import blocks
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 from app.services.email import build_email_sender
@@ -58,7 +68,17 @@ class OwnMessageError(AppError):
 class AlreadyReportedError(AppError):
     status_code = HTTPStatus.CONFLICT
     code = "already_reported"
-    default_message = "You've already reported this message."
+    default_message = "You've already reported this."
+
+
+class IntroToReportNotFoundError(NotFoundError):
+    code = "intro_not_found"
+    default_message = "That intro doesn't exist."
+
+
+class PersonToReportNotFoundError(NotFoundError):
+    code = "person_not_found"
+    default_message = "We couldn't find that person."
 
 
 class ReportNotFoundError(NotFoundError):
@@ -82,6 +102,45 @@ def _copy(message: Message, reporter_is_a: bool) -> dict[str, Any]:
     }
 
 
+async def _save(
+    db: AsyncSession,
+    settings: Settings,
+    limiter: RateLimiter,
+    user: User,
+    *,
+    reported_id: uuid.UUID,
+    connection_id: uuid.UUID | None,
+    target: ReportTarget,
+    target_id: uuid.UUID,
+    reason: ReportReason,
+    details: str,
+    snapshot: list[dict[str, Any]],
+) -> Report:
+    """Count against REPORTS_PER_DAY, store, commit. One report per thing per reporter."""
+    await limiter.hit(f"report:{user.id}", limit=settings.reports_per_day)
+    report = Report(
+        id=uuid.uuid4(),
+        reporter_id=user.id,
+        reported_id=reported_id,
+        connection_id=connection_id,
+        target=target.value,
+        target_id=target_id,
+        reason=reason.value,
+        details=details,
+        snapshot=snapshot,
+    )
+    db.add(report)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise AlreadyReportedError from None
+    await db.refresh(report)
+    # Ids only: never the text, the reason or who is involved.
+    logger.info("report_filed", extra={"report_id": str(report.id), "target": target.value})
+    return report
+
+
 async def file_report(
     db: AsyncSession,
     settings: Settings,
@@ -91,7 +150,7 @@ async def file_report(
     reason: ReportReason,
     details: str,
 ) -> Report:
-    """``limiter`` has a day-long window (REPORTS_PER_DAY). Commits."""
+    """Report a chat message. ``limiter`` has a day-long window (REPORTS_PER_DAY)."""
     row = (
         await db.execute(
             select(Message, Connection)
@@ -105,7 +164,6 @@ async def file_report(
     reporter_is_a = connection.user_a == user.id
     if message.from_a == reporter_is_a:
         raise OwnMessageError
-    await limiter.hit(f"report:{user.id}", limit=settings.reports_per_day)
 
     earlier = list(
         await db.scalars(
@@ -121,27 +179,111 @@ async def file_report(
             .limit(REPORT_CONTEXT_MESSAGES)
         )
     )
-    snapshot = [_copy(m, reporter_is_a) for m in [*reversed(earlier), message]]
-    report = Report(
-        id=uuid.uuid4(),
-        reporter_id=user.id,
+    return await _save(
+        db,
+        settings,
+        limiter,
+        user,
         reported_id=connection.user_b if reporter_is_a else connection.user_a,
         connection_id=connection.id,
-        message_id=message.id,
-        reason=reason.value,
+        target=ReportTarget.MESSAGE,
+        target_id=message.id,
+        reason=reason,
+        details=details,
+        snapshot=[_copy(m, reporter_is_a) for m in [*reversed(earlier), message]],
+    )
+
+
+def _part(label: str, body: str, when: datetime | None = None) -> dict[str, Any]:
+    return {
+        "label": label,
+        "from": "reported",
+        "body": body,
+        "sent_at": when.isoformat() if when else None,
+    }
+
+
+async def report_intro(
+    db: AsyncSession,
+    settings: Settings,
+    limiter: RateLimiter,
+    user: User,
+    intro_id: uuid.UUID,
+    reason: ReportReason,
+    details: str,
+) -> Report:
+    """Report an intro you received: its request text and note, as you saw them."""
+    intro = await db.get(Intro, intro_id)
+    if intro is None or intro.recipient_id != user.id:
+        raise IntroToReportNotFoundError
+    match = await db.get(Match, intro.match_id)
+    request = await db.get(MatchRequest, match.request_id) if match else None
+    snapshot = [_part("request", request.raw_text if request else "", intro.created_at)]
+    if intro.note:
+        snapshot.append(_part("note", intro.note, intro.created_at))
+    return await _save(
+        db,
+        settings,
+        limiter,
+        user,
+        reported_id=intro.sender_id,
+        connection_id=None,
+        target=ReportTarget.INTRO,
+        target_id=intro.id,
+        reason=reason,
         details=details,
         snapshot=snapshot,
     )
-    db.add(report)
-    try:
-        await db.commit()
-    except IntegrityError:
-        await db.rollback()
-        raise AlreadyReportedError from None
-    await db.refresh(report)
-    # Ids only: never the text, the reason or who is involved.
-    logger.info("report_filed", extra={"report_id": str(report.id)})
-    return report
+
+
+async def report_person(
+    db: AsyncSession,
+    settings: Settings,
+    limiter: RateLimiter,
+    user: User,
+    person_id: uuid.UUID,
+    reason: ReportReason,
+    details: str,
+) -> Report:
+    """Report someone's profile, as you could see it (name and links only if connected)."""
+    if person_id == user.id or not await blocks.had_contact(db, user.id, person_id):
+        raise PersonToReportNotFoundError
+    profile = await db.get(Profile, person_id)
+    connection = await db.scalar(
+        select(Connection).where(
+            Connection.user_a == min(user.id, person_id),
+            Connection.user_b == max(user.id, person_id),
+            Connection.ended_at.is_(None),
+        )
+    )
+    data: dict[str, Any] = (profile.structured if profile else None) or {}
+
+    def listed(key: str) -> str:
+        value = data.get(key)
+        return ", ".join(str(item) for item in value) if isinstance(value, list) else ""
+
+    parts = [
+        ("summary", str(data.get("summary", ""))),
+        ("offers", listed("offers")),
+        ("seeks", listed("seeks")),
+        ("interests", listed("interests")),
+        ("availability", str(data.get("availability", ""))),
+    ]
+    if connection is not None and profile is not None:
+        parts = [("name", profile.display_name), ("links", ", ".join(profile.links)), *parts]
+    return await _save(
+        db,
+        settings,
+        limiter,
+        user,
+        reported_id=person_id,
+        connection_id=connection.id if connection else None,
+        target=ReportTarget.PROFILE,
+        target_id=person_id,
+        reason=reason,
+        details=details,
+        snapshot=[_part(label, body) for label, body in parts if body],
+    )
 
 
 async def reports_page(

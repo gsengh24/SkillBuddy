@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BlockButton, UnblockButton } from "./block-button";
+import { ReportButton } from "./report-button";
 
 const router = { push: vi.fn(), refresh: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
@@ -111,5 +112,62 @@ describe("UnblockButton", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`/api/v1/blocks/${THEM}`);
     expect((fetchMock.mock.calls[0]?.[1] as RequestInit).method).toBe("DELETE");
     expect(router.refresh).toHaveBeenCalled();
+  });
+});
+
+describe("ReportButton", () => {
+  it("says what the moderator will see and needs a reason", async () => {
+    const user = userEvent.setup();
+    render(<ReportButton kind="message" targetId="m1" />);
+
+    await user.click(screen.getByRole("button", { name: "Report" }));
+
+    expect(screen.getByText(/this message and the 10 messages before it/)).toBeVisible();
+    expect(screen.getByText(/won't be told who reported them/)).toBeVisible();
+    expect(screen.getByRole("radio", { name: "Harassment or bullying" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", {
+        name: "Safety concern: threats, self-harm, or someone may be under 18",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(6);
+    expect(screen.getByRole("button", { name: "Send report" })).toBeDisabled();
+  });
+
+  it.each([
+    ["message", "m1", "/api/v1/messages/m1/report"],
+    ["intro", "i1", "/api/v1/intros/i1/report"],
+    ["profile", THEM, `/api/v1/people/${THEM}/report`],
+  ] as const)("sends a %s report and then offers to block", async (kind, id, path) => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(json(201, { id: "r1", created_at: "2026-10-04T10:00:00Z" }));
+    render(<ReportButton kind={kind} targetId={id} blockUserId={THEM} blockName="Asha" />);
+
+    await user.click(screen.getByRole("button", { name: "Report" }));
+    await user.click(screen.getByRole("radio", { name: "Scam or asking for money" }));
+    await user.type(screen.getByLabelText(/Anything else/), "  Asked for money  ");
+    await user.click(screen.getByRole("button", { name: "Send report" }));
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(path);
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toEqual({
+      reason: "scam",
+      details: "Asked for money",
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent("received your report");
+    expect(screen.getByRole("button", { name: "Block" })).toBeInTheDocument();
+  });
+
+  it("shows API errors", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(
+      json(409, {
+        error: { code: "already_reported", message: "x", request_id: null, details: null },
+      }),
+    );
+    render(<ReportButton kind="intro" targetId="i1" />);
+    await user.click(screen.getByRole("button", { name: "Report" }));
+    await user.click(screen.getByRole("radio", { name: "Spam or advertising" }));
+    await user.click(screen.getByRole("button", { name: "Send report" }));
+    expect(await screen.findByText(/already reported this/)).toBeVisible();
   });
 });

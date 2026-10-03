@@ -3,9 +3,10 @@
 A block works both ways (``app/services/blocks.py``). It lasts until the blocker removes it
 or either account is deleted (ON DELETE CASCADE).
 
-A report keeps a frozen copy of the reported message and the 10 before it (``snapshot``),
-so the evidence survives the message purge and account deletion: reporter, reported
-person and connection are set to NULL when deleted, the copy stays.
+A report keeps a frozen copy of what was reported (``snapshot``): a message and the 10
+before it, an intro's request and note, or what a profile showed. The evidence survives
+the message purge and account deletion: reporter, reported person and connection are set
+to NULL when deleted, the copy stays.
 
 Retention (storage rules, CLAUDE.md): open reports are kept until resolved; resolved
 reports are deleted ``REPORT_RETENTION_DAYS`` (180) after they were resolved.
@@ -52,6 +53,12 @@ class ReportReason(StrEnum):
     OTHER = "other"
 
 
+class ReportTarget(StrEnum):
+    MESSAGE = "message"
+    INTRO = "intro"
+    PROFILE = "profile"
+
+
 class ReportStatus(StrEnum):
     OPEN = "open"
     RESOLVED = "resolved"
@@ -68,8 +75,9 @@ class Report(UUIDPrimaryKeyMixin, Base):
         CheckConstraint(
             f"char_length(resolution_note) <= {REPORT_NOTE_MAX_LENGTH}", name="note_length"
         ),
-        # One report per message per reporter.
-        UniqueConstraint("reporter_id", "message_id"),
+        CheckConstraint(f"target IN ({_in(tuple(ReportTarget))})", name="target_valid"),
+        # One report per thing per reporter.
+        UniqueConstraint("reporter_id", "target", "target_id"),
         # The moderator's list (open first, oldest first) and the purge of resolved ones.
         Index("ix_reports_status_created_at", "status", "created_at"),
     )
@@ -83,11 +91,16 @@ class Report(UUIDPrimaryKeyMixin, Base):
     connection_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("connections.id", ondelete="SET NULL")
     )
-    # Not a foreign key: the message itself is purged after 90 days; the copy is kept.
-    message_id: Mapped[uuid.UUID]
+    # What was reported: a message, an intro, or a profile (target_id is then the person's
+    # user id). Not a foreign key: the original may be purged or deleted; the copy is kept.
+    target: Mapped[str] = mapped_column(
+        String(16), default=ReportTarget.MESSAGE, server_default=text("'message'")
+    )
+    target_id: Mapped[uuid.UUID]
     reason: Mapped[str] = mapped_column(String(16))
     details: Mapped[str] = mapped_column(Text, default="", server_default=text("''"))
-    # Oldest first; the last item is the reported message.
+    # What the reporter saw, frozen. Messages: oldest first, the reported one last. Intros
+    # and profiles: labelled parts ("label"), e.g. the intro note or the profile summary.
     snapshot: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(
         String(16), default=ReportStatus.OPEN, server_default=text("'open'")

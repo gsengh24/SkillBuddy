@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 import { WhyBox } from "@/components/ui/why-box";
+import { ReportButton } from "@/components/safety/report-button";
 import { SendIntro } from "@/components/social/send-intro";
 import type { Match } from "@/lib/api/schemas";
 import { hueStyle, personHue } from "@/lib/design/color";
@@ -61,6 +62,7 @@ export function MatchCard({ match }: { match: Match }) {
         {match.reason}
       </WhyBox>
       <SendIntro match={match} hue={hue} />
+      <ReportButton kind="profile" targetId={candidate.user_id} compact />
     </Card>
   );
 }
