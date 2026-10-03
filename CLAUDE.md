@@ -145,6 +145,7 @@ and `cd frontend && npm ci`.
 | Backend unit tests | `cd backend && uv run pytest tests/unit` |
 | Frontend lint + types + format | `cd frontend && npm run lint && npm run typecheck && npm run format:check` |
 | Frontend component tests | `cd frontend && npm test` |
+| Regenerate the OpenAPI spec (`docs/api/openapi.json`; CI fails when it is stale) | `cd backend && uv run python -m app.openapi_export` |
 
 Integration tests, migrations and image builds run in CI. The full stack runs only in CI or
 a Codespace, with plain `docker compose` from the repo root (`make` is not assumed to exist;
@@ -236,7 +237,8 @@ The web app is the first client of the API, not the only one. Design every endpo
 mobile app were calling it tomorrow.
 
 - Versioned REST + JSON under `/api/v1`. The OpenAPI schema is the contract; keep it
-  accurate (response models, status codes, error responses).
+  accurate (response models, status codes, error responses). It is committed as
+  `docs/api/openapi.json` and CI fails when it is out of date.
 - No presentation concerns in the API: no HTML, no UI copy, and no response shapes tailored
   to one screen. Return resources and let each client compose them.
 - Authentication must work for non-browser clients (bearer tokens). Cookie sessions for the

@@ -69,6 +69,19 @@ jobs:
       - name: Mypy
         run: uv run mypy
 
+      # The API contract (CLAUDE.md, "API design"). On a mismatch, replace the file with the
+      # openapi-spec artifact of the run, or run `uv run python -m app.openapi_export`.
+      - name: OpenAPI spec is up to date (docs/api/openapi.json)
+        run: uv run python -m app.openapi_export --check --out "$RUNNER_TEMP/openapi/openapi.json"
+
+      - name: Upload the generated OpenAPI spec
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: openapi-spec
+          path: ${{ runner.temp }}/openapi/openapi.json
+          if-no-files-found: ignore
+
       - name: Migrations (upgrade, downgrade, re-upgrade, drift check)
         run: |
           uv run alembic upgrade head
