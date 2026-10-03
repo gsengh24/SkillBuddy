@@ -397,6 +397,13 @@ async def test_a_profile_report_copies_only_what_the_reporter_could_see(
         ravi = await join(client, settings, delivery, "Ravi")
         stranger = await join(client, settings, delivery, "Stranger")
         matched(url, asha, ravi)  # Asha saw Ravi as a match: contact, but not connected
+        # Profiles shown as matches are parsed; parsing runs as a job, so set it here.
+        run_sql(
+            url,
+            "UPDATE profiles SET structured = CAST(:s AS jsonb) WHERE user_id = :u",
+            s='{"summary": "Designs mobile apps.", "offers": ["UI design"]}',
+            u=ravi.id,
+        )
         as_match = await client.post(
             f"/api/v1/people/{ravi.id}/report", json={"reason": "other"}, headers=asha.headers
         )
