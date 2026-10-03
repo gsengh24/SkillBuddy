@@ -20,6 +20,7 @@ GOOGLE_TABLES = {"oauth_states"}  # migration 0006 (ADR 0011)
 MATCH_TABLES = {"match_requests", "matches"}  # migration 0007
 SOCIAL_TABLES = {"intros", "connections", "notifications"}  # migration 0008
 CHAT_TABLES = {"messages"}  # migration 0009 (ADR 0012)
+REPORT_TABLES = {"reports"}  # migration 0010
 ALL_TABLES = (
     PHASE_ZERO_TABLES
     | AUTH_TABLES
@@ -28,6 +29,7 @@ ALL_TABLES = (
     | MATCH_TABLES
     | SOCIAL_TABLES
     | CHAT_TABLES
+    | REPORT_TABLES
 )
 
 
@@ -181,7 +183,7 @@ def test_chat_migration_keeps_connections_and_downgrades_to_0008(
         )
 
     command.downgrade(config, "0008")
-    assert _tables(engine) == ALL_TABLES - CHAT_TABLES
+    assert _tables(engine) == ALL_TABLES - CHAT_TABLES - REPORT_TABLES
     assert not {"user_a_read_at", "user_b_read_at"} & _connection_columns(engine)
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT count(*) FROM connections")) == 1
@@ -247,3 +249,16 @@ def test_models_and_migrations_are_in_sync(migrated_database_url: str) -> None:
     assert diff == [], (
         f"Models and migrations differ; run `alembic revision --autogenerate`: {diff}"
     )
+
+
+def test_reports_migration_downgrades_to_0009_and_back(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+
+    command.downgrade(config, "0009")
+    assert _tables(engine) == ALL_TABLES - REPORT_TABLES
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES

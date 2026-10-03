@@ -52,6 +52,7 @@ Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runti
 | `rate_limit_counters` | One row per key and window, about 150 B | Deleted hourly once the window has expired | A few KB |
 | `email_log` | One row per email recipient: purpose, keyed hash, provider, time; about 150 B | 30 days | Under 2 MB (at most 450 emails a day) |
 | `oauth_states` | One row per unfinished "Continue with Google" attempt: a keyed hash, the tick-box answers and the return path; about 200 B (migration 0006, [ADR 0011](adr/0011-google-sign-in.md)) | Deleted when used; unused rows purged daily after their 10-minute expiry | Under 1 MB |
+| `reports` | One row per chat report: reason, note (up to 500 characters) and a frozen copy of the reported message and the 10 before it, as JSON; about 0.5 KB plus a few KB of copy, at most about 22 KB (migration 0010) | Open: until resolved. Resolved: deleted 180 days after resolving (`REPORT_RETENTION_DAYS`) | Under 5 MB (reports are rare) |
 
 Chosen dimension: **384** (`BAAI/bge-small-en-v1.5`, [ADR 0007](adr/0007-ai-gateway.md)).
 Migration 0004 changed the column from 768 to 384 (2026-10-02).

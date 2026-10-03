@@ -33,6 +33,7 @@ def test_metadata_contains_all_tables() -> None:
         "connections",
         "notifications",
         "messages",
+        "reports",
     }
 
 

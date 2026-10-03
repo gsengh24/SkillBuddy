@@ -14,6 +14,8 @@ from app.api.v1.auth import AuthDep
 from app.db.session import get_db_session
 from app.schemas.chat import MessageIn, MessageOut, MessagePage, MessageUpdates
 from app.schemas.errors import ErrorResponse
+from app.schemas.reports import ReportIn, ReportReceipt
+from app.services import reports
 from app.services.auth.rate_limit import RateLimiter
 from app.services.chat import ChatService
 from app.services.matching.requests import DAY_SECONDS
@@ -122,3 +124,38 @@ async def message_updates(
     is back; never while the app is hidden. If `poll_after_seconds` is set, wait that long.
     """
     return MessageUpdates.build(await service.updates(auth.user, after=after, limit=limit))
+
+
+@router.post(
+    "/messages/{message_id}/report",
+    status_code=HTTPStatus.CREATED,
+    summary="Report a message",
+    dependencies=[Depends(require_json)],
+    responses={
+        401: _401,
+        404: {"model": ErrorResponse, "description": "`message_not_found` (or not yours to see)."},
+        409: {
+            "model": ErrorResponse,
+            "description": "`cannot_report_own_message` or `already_reported`.",
+        },
+        422: {"model": ErrorResponse, "description": "Validation failed."},
+        429: _429,
+    },
+)
+async def report_message(
+    message_id: uuid.UUID,
+    body: ReportIn,
+    auth: AuthDep,
+    request: Request,
+    db: DbDep,
+    settings: SettingsDep,
+) -> ReportReceipt:
+    """Report a message the other person sent. The moderator sees a copy of it and the 10
+    messages before it. The other person is not told, and you won't hear what happens."""
+    limiter = RateLimiter(
+        request.app.state.session_factory, settings.secret_key, window_seconds=DAY_SECONDS
+    )
+    report = await reports.file_report(
+        db, settings, limiter, auth.user, message_id, body.reason, body.details
+    )
+    return ReportReceipt(id=report.id, created_at=report.created_at)
