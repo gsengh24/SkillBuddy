@@ -20,6 +20,7 @@ or a GitHub repository secret, and never into chat, email or a committed file.
 | 4 | API on Render Free (Docker, Singapore); `/api/v1/health` passes | Done |
 | 5 | Cloudflare cron Worker `skill-buddy-tick` deployed; its log shows `tick ok` | Done; the 2-day timing check is still open (checklist item 17) |
 | 6 | Web app on Vercel Hobby, using `API_INTERNAL_URL` | Done |
+| 6 | `WEB_APP_URL` on Render (links in intro emails; step 6c) | **Pending** |
 | 6b | Google sign-in OAuth client | **Pending** |
 | 7 | First sign-in: a real code sent by the Gmail API sender and accepted (2026-10-02) | **Passed** |
 | 8 | Delivery to `@thapar.edu` | **Pending** |
@@ -235,6 +236,26 @@ The API has no cron; this Worker calls `POST /api/v1/admin/jobs/tick` 17 times a
    domain (no trailing slash) → **Save, rebuild and deploy**.
 6. Optional: Vercel project → **Settings** → **Deployment Protection** → **Vercel
    Authentication** on, to keep staging private.
+
+## Step 6c. WEB_APP_URL on Render (links in emails)
+
+Intro and accept emails link back to the web app only when `WEB_APP_URL` is set; without
+it they go out with no link. The value is **not a secret**: it is the public address of
+the web app, the same one you already put in `CORS_ALLOW_ORIGINS` in step 6.5.
+
+1. Render → your API service → **Environment**.
+2. Find `CORS_ALLOW_ORIGINS` and copy its value: the Vercel address, starting with
+   `https://` and ending in `.vercel.app` (if there are several, comma-separated, copy the
+   Vercel one). Check it: opening that address in a browser shows the sign-in page.
+3. **Add environment variable**: Key `WEB_APP_URL`, Value = that address exactly, with
+   no trailing slash and no path (for example `https://<your-project>.vercel.app`, never
+   `https://<your-project>.vercel.app/` or `.../home`).
+4. **Save, rebuild and deploy**.
+5. Check: send an intro between two test accounts (see
+   [staging-tests.md](staging-tests.md)); the email's link opens the Notifications page.
+
+If Vercel Authentication is on (step 6.6), people without access to your Vercel team see a
+Vercel login when they follow the link; that is expected while staging is private.
 
 ## Step 6b. Google sign-in (OAuth client)
 

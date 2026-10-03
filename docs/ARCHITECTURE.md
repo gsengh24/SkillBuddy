@@ -83,7 +83,18 @@ The weights start hand-set per intent. Once there are a few thousand rated match
 
 The web app talks to one API; the API never calls a model itself. It writes to PostgreSQL and adds a job to the job queue, a table in the same PostgreSQL database ([ADR 0008](adr/0008-free-runtime-jobs-and-email.md)), and a job runner does the slow AI work through a single gateway. The runner is a separate worker process in development and CI, and runs inside the API process on free hosting.
 
-&#91;embedded content: system architecture · 9 components\]
+```mermaid
+flowchart LR
+  browser["Browser"] --> web["Web app<br/>Next.js on Vercel"]
+  web -- "/api/v1 forwarder<br/>(same-origin cookies)" --> api["API<br/>FastAPI on Render"]
+  api --> db[("PostgreSQL + pgvector on Neon<br/>data, embeddings, job queue,<br/>rate limits")]
+  runner["Job runner<br/>inside the API on free hosting;<br/>separate worker in dev and CI"] --> db
+  runner --> gateway["AI gateway"]
+  gateway --> llm["LLM providers<br/>Groq, then Cloudflare Workers AI"]
+  gateway --> embed["Embedding model<br/>bge-small, local CPU"]
+  runner --> gmail["Gmail API<br/>sign-in codes, intro and alert emails"]
+  cron["Cloudflare Worker cron"] -- "POST /admin/jobs/tick" --> api
+```
 
 **How one match request flows**
 
