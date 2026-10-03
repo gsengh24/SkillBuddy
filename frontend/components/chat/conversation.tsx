@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 import { ReportButton } from "@/components/safety/report-button";
+import { SafetyTips } from "@/components/safety/safety-tips";
 import { Button } from "@/components/ui/button";
 import { cx } from "@/components/ui/cx";
 import { TextArea } from "@/components/ui/text-field";
@@ -20,6 +21,8 @@ import { hueStyle, personHue } from "@/lib/design/color";
 
 // The API's limit (MESSAGE_MAX_LENGTH); it also rejects longer text.
 const MESSAGE_MAX_LENGTH = 2000;
+// Safety tips show at the start of a conversation, until it has this many messages.
+const FIRST_CHAT_MESSAGES = 10;
 
 type ConversationProps = {
   connectionId: string;
@@ -183,6 +186,7 @@ export function Conversation({
 
   return (
     <div className="flex flex-col gap-4">
+      {messages.length < FIRST_CHAT_MESSAGES ? <SafetyTips /> : null}
       {messages.length ? (
         <ol aria-label="Messages" className="flex flex-col gap-3">
           {messages.map((message) => {

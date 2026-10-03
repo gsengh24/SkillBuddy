@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -86,12 +86,25 @@ describe("poll cadence (ADR 0012)", () => {
 describe("Conversation", () => {
   it("shows messages oldest first, who said what, and the retention note", () => {
     renderConversation([message(2, THEM, "Hi back"), message(1, ME, "Hello")]);
-    const items = screen.getAllByRole("listitem").filter((li) => li.textContent);
+    const items = within(screen.getByRole("list", { name: "Messages" }))
+      .getAllByRole("listitem")
+      .filter((li) => li.textContent);
     expect(items.map((li) => li.querySelector("p")?.textContent)).toEqual([
       "You: Hello",
       "Asha: Hi back",
     ]);
     expect(screen.getByText("Messages are deleted 90 days after they're sent.")).toBeVisible();
+  });
+
+  it("shows the safety tips at the start of a chat, and not once it has 10 messages", () => {
+    const { unmount } = renderConversation([message(1, THEM, "Hi")]);
+    expect(screen.getByText("Staying safe")).toBeVisible();
+    expect(screen.getByText(/Never send money or bank details/)).toBeVisible();
+    unmount();
+
+    const ten = Array.from({ length: 10 }, (_, i) => message(i + 1, i % 2 ? ME : THEM, `m${i}`));
+    renderConversation(ten);
+    expect(screen.queryByText("Staying safe")).not.toBeInTheDocument();
   });
 
   it("marks the conversation read when it opens with unread messages", async () => {
