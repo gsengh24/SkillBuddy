@@ -48,9 +48,11 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
 6. **Review and auto-merge.** Auto-merge a PR only when the owner has allowed it for that PR
    or step. By default, PRs that change privacy, consent, moderation, reporting, legal or
    terms wording stop for the owner's review and are never auto-merged.
-   - **Exception, Step 7 (safety and admin: PRs 7a–7d):** auto-merge is allowed, including
-     privacy, terms, moderation and consent wording, once Backend, Frontend, Docker images,
-     Smoke and Secret scan are all green (owner decision, 2026-10-03). This step only.
+   - **Step 8 (hardening):** auto-merge is allowed once Backend, Frontend, Docker images,
+     Smoke and Secret scan are all green, **except** a PR or change that touches privacy,
+     consent, moderation, reporting, or legal or terms wording: that stops for the owner's
+     review, is not auto-merged, and is built last (owner decision, 2026-10-03). Step 8
+     only. (Step 7 had its own exception, now finished.)
    - Build one PR at a time. After a PR with a migration merges, give the owner the
      migration number and wait for them to confirm Actions → Migrate staging has run before
      starting the next PR.

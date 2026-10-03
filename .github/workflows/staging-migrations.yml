@@ -1,0 +1,83 @@
+name: Staging migrations
+
+# Fails when the staging database is behind the migration head on main, so a merged
+# migration can't leave staging broken silently (it did after #39). It reaches Neon with
+# the same STAGING_DATABASE_URL repository secret as "Migrate staging", and only ever runs
+# main's own code with it: pull requests never get the secret, they only get a reminder.
+#
+# - after a merge to main that adds a migration: red until Migrate staging is run;
+# - after every "Migrate staging" run: re-checks, so it turns green again;
+# - every morning: catches anything missed.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/migrations/**"
+  pull_request:
+    paths:
+      - "backend/migrations/versions/**"
+  workflow_run:
+    workflows: ["Migrate staging"]
+    types: [completed]
+  schedule:
+    - cron: "30 3 * * *" # 09:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-migrations-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reminder:
+    name: Migration reminder
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Remind to migrate staging after merging
+        run: |
+          echo "::warning title=Migration in this PR::After merging, run Actions -> Migrate staging. The Staging migrations check stays red until you do."
+          echo "### This PR adds a migration" >> "$GITHUB_STEP_SUMMARY"
+          echo "After merging, run **Actions -> Migrate staging**." >> "$GITHUB_STEP_SUMMARY"
+
+  check:
+    name: Staging is at the migration head
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # The staging connection string, stored only as a repository secret (never printed).
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      # Settings need a secret key to load; the check never uses it. Not a real secret.
+      SECRET_KEY: migration-only-placeholder-not-used-for-anything
+    steps:
+      - name: Check the secret is set
+        working-directory: .
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Add the STAGING_DATABASE_URL repository secret first (docs/deployment-plan.md)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+        with:
+          # On workflow_run and schedule this is main; never a pull request's code.
+          ref: main
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --no-dev
+
+      - name: Compare staging with the migration head
+        run: uv run python -m app.db.drift
