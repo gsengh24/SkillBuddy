@@ -70,7 +70,7 @@ async def blocked_with(db: AsyncSession, user_id: uuid.UUID) -> frozenset[uuid.U
     )
 
 
-async def _had_contact(db: AsyncSession, me: uuid.UUID, other: uuid.UUID) -> bool:
+async def had_contact(db: AsyncSession, me: uuid.UUID, other: uuid.UUID) -> bool:
     connected = (
         select(Connection.id)
         .where(Connection.user_a == min(me, other), Connection.user_b == max(me, other))
@@ -104,7 +104,7 @@ async def block(
     db: AsyncSession, settings: Settings, limiter: RateLimiter, user: User, other: uuid.UUID
 ) -> BlockedPerson:
     """Block ``other``. Idempotent. ``limiter`` has a day-long window (BLOCKS_PER_DAY)."""
-    if other == user.id or not await _had_contact(db, user.id, other):
+    if other == user.id or not await had_contact(db, user.id, other):
         raise BlockTargetNotFoundError
     existing = await db.scalar(
         select(Block).where(Block.blocker_id == user.id, Block.blocked_id == other)

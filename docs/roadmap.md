@@ -81,8 +81,10 @@ CLAUDE.md:
       admin reports API (`X-Admin-Token`, rate-limited, never logged; steps in
       [moderation.md](moderation.md)), and at most one alert email an hour with counts only;
       resolved reports deleted after 180 days.
-- [ ] **Report button in the chat screen** and the wording of what the moderator sees
-      (owner review; with item 7).
+- [x] **Report button and reasons** (step 7b, migration 0012): report a chat message,
+      a received intro (`POST /intros/{id}/report`) or a profile (`POST /people/{id}/report`)
+      with six reasons in plain words; the form says what the moderator will see, then
+      offers to block. Reports now carry `target` and `target_id`.
 - [x] **Blocking** (step 7a, migration 0011): block from a chat, a connection card or a
       received intro. It works both ways: no chat (`app/services/blocks.blocked_with`),
       the connection ends for good (`connections.ended_at`) and leaves both Messages lists,

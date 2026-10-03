@@ -53,7 +53,7 @@ Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runti
 | `email_log` | One row per email recipient: purpose, keyed hash, provider, time; about 150 B | 30 days | Under 2 MB (at most 450 emails a day) |
 | `oauth_states` | One row per unfinished "Continue with Google" attempt: a keyed hash, the tick-box answers and the return path; about 200 B (migration 0006, [ADR 0011](adr/0011-google-sign-in.md)) | Deleted when used; unused rows purged daily after their 10-minute expiry | Under 1 MB |
 | `blocks` | One row per block (two ids and a time, about 0.1 KB plus two index entries; migration 0011). Also `connections.ended_at` (8 B per connection) | Until the blocker unblocks or either account is deleted | Under 1 MB (people block rarely) |
-| `reports` | One row per chat report: reason, note (up to 500 characters) and a frozen copy of the reported message and the 10 before it, as JSON; about 0.5 KB plus a few KB of copy, at most about 22 KB (migration 0010) | Open: until resolved. Resolved: deleted 180 days after resolving (`REPORT_RETENTION_DAYS`) | Under 5 MB (reports are rare) |
+| `reports` | One row per report of a message, an intro or a profile: reason, note (up to 500 characters) and a frozen copy as JSON (a message and the 10 before it, an intro's request and note, or what a profile showed); about 0.5 KB plus a few KB of copy, at most about 22 KB (migrations 0010, 0012) | Open: until resolved. Resolved: deleted 180 days after resolving (`REPORT_RETENTION_DAYS`) | Under 5 MB (reports are rare) |
 
 Chosen dimension: **384** (`BAAI/bge-small-en-v1.5`, [ADR 0007](adr/0007-ai-gateway.md)).
 Migration 0004 changed the column from 768 to 384 (2026-10-02).

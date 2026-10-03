@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
+import { ReportButton } from "@/components/safety/report-button";
 import { Button } from "@/components/ui/button";
 import { cx } from "@/components/ui/cx";
 import { TextArea } from "@/components/ui/text-field";
@@ -201,16 +202,27 @@ export function Conversation({
                   <span className="sr-only">{mine ? "You: " : `${otherName}: `}</span>
                   {message.body}
                 </p>
-                <time
-                  dateTime={message.created_at}
-                  suppressHydrationWarning
-                  className="text-small text-muted"
-                >
-                  {new Date(message.created_at).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </time>
+                <div className="flex flex-wrap items-center gap-3">
+                  <time
+                    dateTime={message.created_at}
+                    suppressHydrationWarning
+                    className="text-small text-muted"
+                  >
+                    {new Date(message.created_at).toLocaleString(undefined, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </time>
+                  {mine ? null : (
+                    <ReportButton
+                      kind="message"
+                      targetId={message.id}
+                      blockUserId={otherId}
+                      blockName={otherName}
+                      compact
+                    />
+                  )}
+                </div>
               </li>
             );
           })}

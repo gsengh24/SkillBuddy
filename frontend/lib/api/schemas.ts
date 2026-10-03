@@ -245,3 +245,6 @@ export const blockedSchema = z.object({
 export type Blocked = z.infer<typeof blockedSchema>;
 
 export const blockListSchema = z.object({ items: z.array(blockedSchema) });
+
+/** All a reporter learns: the report was received. */
+export const reportReceiptSchema = z.object({ id: z.string(), created_at: z.string() });

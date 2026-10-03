@@ -32,6 +32,9 @@ const MESSAGES: Record<string, string> = {
   conversation_closed: "This person can't receive messages right now.",
   person_not_found: "We couldn't find that person.",
   block_not_found: "You haven't blocked this person.",
+  already_reported: "You've already reported this. Thanks, our moderator has it.",
+  message_not_found: "That message no longer exists.",
+  cannot_report_own_message: "You can only report messages the other person sent.",
   email_not_allowed: "This email address can't be used to sign in here.",
   account_pending_deletion:
     "This account is scheduled for permanent deletion and can no longer sign in. Contact support if this is a mistake.",

@@ -22,7 +22,7 @@ from tests.conftest import SettingsFactory
 from tests.integration.conftest import CapturingDelivery, auth_client, run_sql
 from tests.integration.test_auth_codes import error_code
 from tests.integration.test_chat import clear_of_minute_boundary, connect, say
-from tests.integration.test_intros import Person, join
+from tests.integration.test_intros import Person, join, matched, send
 
 TOKEN = "moderator-token-for-tests-only-0123456789abcdef"  # test value
 ADMIN = {"X-Admin-Token": TOKEN}
@@ -347,3 +347,88 @@ async def test_resolved_reports_are_purged_after_180_days(
     assert old_resolved not in left
     assert recent_resolved in left
     assert old_open in left
+
+
+# --- intros and profiles ------------------------------------------------------------------
+
+
+async def test_the_recipient_can_report_an_intro(
+    settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    url = migrated_database_url
+    async with auth_client(settings, delivery) as client:
+        asha = await join(client, settings, delivery, "Asha")
+        ravi = await join(client, settings, delivery, "Ravi")
+        _, match = matched(url, asha, ravi)
+        intro = (await send(client, asha, match, "Send me your bank details")).json()
+        by_sender = await client.post(
+            f"/api/v1/intros/{intro['id']}/report", json={"reason": "scam"}, headers=asha.headers
+        )
+        filed = await client.post(
+            f"/api/v1/intros/{intro['id']}/report", json={"reason": "scam"}, headers=ravi.headers
+        )
+        again = await client.post(
+            f"/api/v1/intros/{intro['id']}/report", json={"reason": "spam"}, headers=ravi.headers
+        )
+        shown = await client.get(f"/api/v1/admin/reports/{filed.json()['id']}", headers=ADMIN)
+
+    assert by_sender.status_code == 404
+    assert error_code(by_sender) == "intro_not_found"
+    assert filed.status_code == 201, filed.text
+    assert again.status_code == 409
+    report = shown.json()
+    assert report["target"] == "intro"
+    assert report["target_id"] == intro["id"]
+    assert report["message_id"] is None
+    assert report["reported_id"] == asha.id
+    parts = {item["label"]: item["body"] for item in report["messages"]}
+    assert parts == {
+        "request": "Looking for a designer for my app.",
+        "note": "Send me your bank details",
+    }
+
+
+async def test_a_profile_report_copies_only_what_the_reporter_could_see(
+    settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    url = migrated_database_url
+    async with auth_client(settings, delivery) as client:
+        asha = await join(client, settings, delivery, "Asha")
+        ravi = await join(client, settings, delivery, "Ravi")
+        stranger = await join(client, settings, delivery, "Stranger")
+        matched(url, asha, ravi)  # Asha saw Ravi as a match: contact, but not connected
+        as_match = await client.post(
+            f"/api/v1/people/{ravi.id}/report", json={"reason": "other"}, headers=asha.headers
+        )
+        no_contact = await client.post(
+            f"/api/v1/people/{stranger.id}/report", json={"reason": "other"}, headers=asha.headers
+        )
+        myself = await client.post(
+            f"/api/v1/people/{asha.id}/report", json={"reason": "other"}, headers=asha.headers
+        )
+        sender, recipient, _ = await connect(client, settings, delivery, url)
+        connected = await client.post(
+            f"/api/v1/people/{sender.id}/report",
+            json={"reason": "inappropriate"},
+            headers=recipient.headers,
+        )
+        unmatched = await client.get(
+            f"/api/v1/admin/reports/{as_match.json()['id']}", headers=ADMIN
+        )
+        named = await client.get(f"/api/v1/admin/reports/{connected.json()['id']}", headers=ADMIN)
+
+    assert as_match.status_code == 201, as_match.text
+    for response in (no_contact, myself):
+        assert response.status_code == 404
+        assert error_code(response) == "person_not_found"
+    first = unmatched.json()
+    assert first["target"] == "profile"
+    assert first["target_id"] == ravi.id
+    labels = {item["label"] for item in first["messages"]}
+    assert "summary" in labels
+    assert not {"name", "links"} & labels  # not connected: no name or links in the copy
+    assert "Ravi" not in str(first["messages"])
+    second = {item["label"]: item["body"] for item in named.json()["messages"]}
+    assert (
+        second["name"] == "Asha"
+    )  # connected: the copy has the name (connect() names the sender Asha)

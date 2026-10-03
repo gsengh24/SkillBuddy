@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 
 import { BlockButton } from "@/components/safety/block-button";
+import { ReportButton } from "@/components/safety/report-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
@@ -84,7 +85,10 @@ export function IntroCard({ initial }: { initial: Intro }) {
             </Button>
           </div>
           {intro.direction === "received" ? (
-            <BlockButton userId={person.user_id} name="this person" />
+            <div className="flex flex-wrap items-start gap-3">
+              <ReportButton kind="intro" targetId={intro.id} blockUserId={person.user_id} />
+              <BlockButton userId={person.user_id} name="this person" />
+            </div>
           ) : null}
         </div>
       ) : null}

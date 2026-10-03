@@ -13,6 +13,7 @@ from app.api.deps import SettingsDep, require_json, require_storage_capacity
 from app.api.v1.auth import AuthDep
 from app.db.session import get_db_session
 from app.schemas.errors import ErrorResponse
+from app.schemas.reports import ReportIn, ReportReceipt
 from app.schemas.social import (
     ConnectionList,
     ConnectionOut,
@@ -26,7 +27,7 @@ from app.schemas.social import (
     NotificationPage,
     UnreadCount,
 )
-from app.services import chat, notifications
+from app.services import chat, notifications, reports
 from app.services.auth.rate_limit import RateLimiter
 from app.services.intros import Box, IntroService
 from app.services.matching.requests import DAY_SECONDS
@@ -156,3 +157,34 @@ async def unread_notifications(auth: AuthDep, db: DbDep) -> UnreadCount:
 )
 async def mark_notifications_read(body: MarkReadIn, auth: AuthDep, db: DbDep) -> MarkedRead:
     return MarkedRead(marked=await notifications.mark_read(db, auth.user.id, body.ids))
+
+
+@router.post(
+    "/intros/{intro_id}/report",
+    status_code=HTTPStatus.CREATED,
+    summary="Report an intro you received",
+    dependencies=[Depends(require_json)],
+    responses={
+        401: _401,
+        404: _404_INTRO,
+        409: {"model": ErrorResponse, "description": "`already_reported`."},
+        422: {"model": ErrorResponse, "description": "Validation failed."},
+        429: {"model": ErrorResponse, "description": "Daily report limit reached."},
+    },
+)
+async def report_intro(
+    intro_id: uuid.UUID,
+    body: ReportIn,
+    auth: AuthDep,
+    request: Request,
+    db: DbDep,
+    settings: SettingsDep,
+) -> ReportReceipt:
+    """The moderator sees a copy of the intro's request and note. The sender is not told."""
+    limiter = RateLimiter(
+        request.app.state.session_factory, settings.secret_key, window_seconds=DAY_SECONDS
+    )
+    report = await reports.report_intro(
+        db, settings, limiter, auth.user, intro_id, body.reason, body.details
+    )
+    return ReportReceipt(id=report.id, created_at=report.created_at)
