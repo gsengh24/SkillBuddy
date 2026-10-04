@@ -61,6 +61,7 @@ export default async function MessagesPage() {
                 ) : null}
                 <div className="flex flex-wrap items-start gap-3">
                   <ButtonLink href={`/messages/${id}`}>Open chat</ButtonLink>
+                  <ButtonLink href={`/spaces/${id}`}>Open pair space</ButtonLink>
                   <ReportButton
                     kind="profile"
                     targetId={person.user_id}

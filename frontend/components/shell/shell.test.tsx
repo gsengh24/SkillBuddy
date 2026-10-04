@@ -31,7 +31,7 @@ describe("AppShell", () => {
       within(sidebar)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Discover", "Messages", "Saved"]);
+    ).toEqual(["Discover", "Messages", "Saved", "Pair spaces"]);
     expect(
       within(tabs)
         .getAllByRole("link")
@@ -40,17 +40,13 @@ describe("AppShell", () => {
     expect(screen.getByRole("main")).toHaveTextContent("Page content");
   });
 
-  it("marks the current page and shows Pair spaces as disabled, not a link", () => {
+  it("marks the current page, and links Pair spaces in the sidebar", () => {
     navigation.pathname = "/messages";
     renderShell();
     const current = screen.getAllByRole("link", { current: "page" });
     expect(current.map((link) => link.textContent)).toEqual(["Messages", "Messages"]);
-    expect(screen.queryByRole("link", { name: /Pair spaces/ })).not.toBeInTheDocument();
-    expect(screen.getByText("Pair spaces").closest("[aria-disabled]")).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
-    expect(screen.getByText("Pair spaces")).toHaveTextContent("Pair spacesSoon");
+    expect(screen.getByRole("link", { name: "Pair spaces" })).toHaveAttribute("href", "/spaces");
+    expect(screen.queryByText("Soon")).not.toBeInTheDocument();
   });
 
   it("gives icon-only and touch controls labels and 44px targets", () => {

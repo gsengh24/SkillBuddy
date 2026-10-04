@@ -126,8 +126,8 @@ Manrope is loaded at 400–800 and IBM Plex Mono at 400 and 500.
 **Desktop (1024px and up):**
 - **Sidebar (236px):**
   - logo;
-  - Discover, Messages (with an unread badge) and Saved;
-  - Pair spaces, marked SOON and disabled: it is not a link, and has `aria-disabled`;
+  - Discover, Messages (with an unread badge), Saved and Pair spaces (a link since step
+    9c, ADR 0013; on phones pair spaces open from each connection on Messages);
   - the profile-completeness card in amber;
   - the user block, at the bottom.
 - **Main area**, with the notification bell at the top right.

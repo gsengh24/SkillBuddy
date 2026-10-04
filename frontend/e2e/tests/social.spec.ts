@@ -37,3 +37,14 @@ test("a conversation you're not part of is not found", async ({ page, request })
   await expect(page.getByText("This page could not be found.")).toBeVisible();
   await expect(page.getByRole("textbox")).toHaveCount(0);
 });
+
+test("the pair spaces page is accessible on a phone", async ({ page, request }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await signUp(page, request, "/spaces");
+  await expect(page.getByRole("heading", { name: "Pair spaces", level: 1 })).toBeVisible();
+  await expect(page.getByText(/No connections yet/)).toBeVisible();
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(results.violations.map((v) => v.id)).toEqual([]);
+});

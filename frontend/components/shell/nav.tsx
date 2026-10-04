@@ -24,8 +24,10 @@ const MESSAGES: NavItem = {
 };
 const SAVED: NavItem = { label: "Saved", href: "/saved", icon: BookmarkIcon };
 const YOU: NavItem = { label: "You", href: "/profile", icon: PersonIcon };
+const SPACES: NavItem = { label: "Pair spaces", href: "/spaces", icon: PersonIcon };
 
-export const SIDEBAR_ITEMS = [DISCOVER, MESSAGES, SAVED];
+// On phones, pair spaces open from each connection on Messages (the tab bar keeps 4 tabs).
+export const SIDEBAR_ITEMS = [DISCOVER, MESSAGES, SAVED, SPACES];
 export const TAB_ITEMS = [DISCOVER, MESSAGES, SAVED, YOU];
 
 export function isActive(pathname: string, href: string): boolean {
@@ -57,15 +59,6 @@ export function SidebarNav({ unreadMessages = 0 }: { unreadMessages?: number }) 
           </li>
         );
       })}
-      <li>
-        <span
-          aria-disabled="true"
-          className="text-body text-muted flex h-11 cursor-not-allowed items-center gap-2 px-3"
-        >
-          Pair spaces
-          <span className="font-mono text-[10px] font-medium tracking-[0.1em] uppercase">Soon</span>
-        </span>
-      </li>
     </ul>
   );
 }
