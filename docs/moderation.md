@@ -32,11 +32,12 @@ suspend yourself or another moderator.
 
 ## What a report contains
 
-People can report three things from the app: a **chat message** (under each message from
-the other person), an **intro** they received, and a **profile** (on a match card or a
-connection card). For each report the API keeps:
+People can report from the app: a **chat message** (under each message from the other
+person), an **intro** they received, a **profile** (on a match card or a connection card),
+and a **goal** or **progress note** the other person wrote in a pair space. For each report the API keeps:
 
-- what was reported (`target`: `message`, `intro` or `profile`) and its id (`target_id`);
+- what was reported (`target`: `message`, `intro`, `profile`, `goal` or `progress_log`) and
+  its id (`target_id`);
 - the reason they picked and their optional note. Reasons, as people see them:
   harassment or bullying (`harassment`), spam or advertising (`spam`), scam or asking for
   money (`scam`), sexual or inappropriate content (`inappropriate`), safety concern:
@@ -47,6 +48,7 @@ connection card). For each report the API keeps:
   - an intro: its `request` text and its `note`;
   - a profile: its `summary`, `offers`, `seeks`, `interests` and `availability`, plus
     `name` and `links` only if the two were connected;
+  - a pair-space goal: its `goal` title (and `due` date); a progress note: its `note`;
 - the two account ids and, for messages and connected profiles, the connection id. An id
   becomes empty if that account or connection is deleted; the copy stays.
 

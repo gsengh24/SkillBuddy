@@ -123,7 +123,7 @@ CLAUDE.md:
       connection; limits; block hook; space deleted 90 days after the connection ends;
       logs deleted 90 days after writing.
 - [x] **Web (step 9c):** the Pair spaces page (`/spaces`, `/spaces/[connectionId]`), and the nav item switched on.
-- [ ] **Reporting goal titles and log notes (step 9d, owner review):** report targets
+- [x] **Reporting goal titles and log notes (step 9d, migration 0015, merged only after owner review):** report targets
       `goal` and `progress_log`, and the privacy page's retention lines for spaces.
 - [ ] **Post-launch:** reminders (in-app, maybe email within the non-login budget).
 - [ ] **Post-launch:** conversation starters and project templates.

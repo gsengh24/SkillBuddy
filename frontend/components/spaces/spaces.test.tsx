@@ -119,6 +119,22 @@ describe("SpaceView", () => {
     expect(within(notes[1]!).getByRole("button", { name: "Delete" })).toBeInTheDocument();
   });
 
+  it("offers Report only on what the other person wrote, and says notes expire", () => {
+    const theirGoal: Goal = { ...GOAL, id: "g9", title: "Their goal", created_by: THEM };
+    renderSpace(space({ goals: [GOAL, theirGoal] }));
+    const goalRows = within(screen.getByRole("region", { name: "Shared goals" })).getAllByRole(
+      "listitem",
+    );
+    expect(within(goalRows[0]!).queryByRole("button", { name: "Report" })).not.toBeInTheDocument();
+    expect(within(goalRows[1]!).getByRole("button", { name: "Report" })).toBeInTheDocument();
+    const notes = within(screen.getByRole("list", { name: "Progress notes" })).getAllByRole(
+      "listitem",
+    );
+    expect(within(notes[0]!).getByRole("button", { name: "Report" })).toBeInTheDocument();
+    expect(within(notes[1]!).queryByRole("button", { name: "Report" })).not.toBeInTheDocument();
+    expect(screen.getByText("Notes are deleted 90 days after they're written.")).toBeVisible();
+  });
+
   it("adds a goal with a due date, and marks it done", async () => {
     const user = userEvent.setup();
     const added: Goal = { ...GOAL, id: "g2", title: "Launch", due_on: "2026-11-01" };

@@ -351,3 +351,26 @@ def test_report_targets_migration_keeps_message_reports(
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
+
+
+def test_space_report_targets_migration_downgrades_to_0014(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO reports (target, target_id, reason, snapshot) VALUES "
+                "('goal', gen_random_uuid(), 'spam', '[]'::jsonb), "
+                "('message', gen_random_uuid(), 'spam', '[]'::jsonb)"
+            )
+        )
+
+    command.downgrade(config, "0014")
+    with engine.connect() as connection:
+        kept = connection.scalars(text("SELECT target FROM reports")).all()
+    assert kept == ["message"]
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES

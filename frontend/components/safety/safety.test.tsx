@@ -138,6 +138,8 @@ describe("ReportButton", () => {
     ["message", "m1", "/api/v1/messages/m1/report"],
     ["intro", "i1", "/api/v1/intros/i1/report"],
     ["profile", THEM, `/api/v1/people/${THEM}/report`],
+    ["goal", "g1", "/api/v1/space-goals/g1/report"],
+    ["note", "l1", "/api/v1/progress-logs/l1/report"],
   ] as const)("sends a %s report and then offers to block", async (kind, id, path) => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(json(201, { id: "r1", created_at: "2026-10-04T10:00:00Z" }));

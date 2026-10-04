@@ -30,6 +30,8 @@ from app.models import (
     SpaceSkill,
 )
 from app.schemas.errors import ErrorResponse
+from app.schemas.reports import ReportIn, ReportReceipt
+from app.services import reports
 from app.services.auth.rate_limit import RateLimiter
 from app.services.matching.requests import DAY_SECONDS
 from app.services.spaces import SpaceService, author
@@ -349,3 +351,69 @@ async def delete_log(
     connection_id: uuid.UUID, log_id: uuid.UUID, auth: AuthDep, service: ServiceDep
 ) -> None:
     await service.delete_log(auth.user, connection_id, log_id)
+
+
+# Reporting space entries lives outside the space's own path: like messages, entries are
+# reported by their id, and reporting still works after a block closed the space.
+report_router = APIRouter(tags=["spaces"])
+
+_REPORT_ERRORS: dict[int | str, dict[str, Any]] = {
+    401: _401,
+    409: {
+        "model": ErrorResponse,
+        "description": "`cannot_report_own_entry` or `already_reported`.",
+    },
+    422: {"model": ErrorResponse, "description": "Validation failed."},
+    429: {"model": ErrorResponse, "description": "Daily report limit reached."},
+}
+
+
+def _report_limiter(request: Request, settings: SettingsDep) -> RateLimiter:
+    return RateLimiter(
+        request.app.state.session_factory, settings.secret_key, window_seconds=DAY_SECONDS
+    )
+
+
+@report_router.post(
+    "/space-goals/{goal_id}/report",
+    status_code=HTTPStatus.CREATED,
+    summary="Report a goal in a pair space",
+    dependencies=[Depends(require_json)],
+    responses={**_REPORT_ERRORS, 404: {"model": ErrorResponse, "description": "`goal_not_found`."}},
+)
+async def report_goal(
+    goal_id: uuid.UUID,
+    body: ReportIn,
+    auth: AuthDep,
+    db: DbDep,
+    settings: SettingsDep,
+    limiter: Annotated[RateLimiter, Depends(_report_limiter)],
+) -> ReportReceipt:
+    """A goal the other person added. The moderator sees a copy of its title; they are not
+    told."""
+    report = await reports.report_goal(
+        db, settings, limiter, auth.user, goal_id, body.reason, body.details
+    )
+    return ReportReceipt(id=report.id, created_at=report.created_at)
+
+
+@report_router.post(
+    "/progress-logs/{log_id}/report",
+    status_code=HTTPStatus.CREATED,
+    summary="Report a progress note in a pair space",
+    dependencies=[Depends(require_json)],
+    responses={**_REPORT_ERRORS, 404: {"model": ErrorResponse, "description": "`log_not_found`."}},
+)
+async def report_progress_log(
+    log_id: uuid.UUID,
+    body: ReportIn,
+    auth: AuthDep,
+    db: DbDep,
+    settings: SettingsDep,
+    limiter: Annotated[RateLimiter, Depends(_report_limiter)],
+) -> ReportReceipt:
+    """A note the other person wrote. The moderator sees a copy of it; they are not told."""
+    report = await reports.report_progress_log(
+        db, settings, limiter, auth.user, log_id, body.reason, body.details
+    )
+    return ReportReceipt(id=report.id, created_at=report.created_at)

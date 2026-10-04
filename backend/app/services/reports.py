@@ -5,7 +5,9 @@
 - The recipient of an intro can report it (a copy of its request text and note).
 - Anyone who has had contact with someone in the app (a match, an intro or a connection)
   can report their profile (a copy of what they could see: name and links only if
-  connected). All three share REPORTS_PER_DAY.
+  connected).
+- Either person in a pair space can report a goal or a progress note the other person
+  wrote (a copy of its text), also after a block. All of these share REPORTS_PER_DAY.
 - The reporter learns nothing about what happens next, and the reported person is not told.
 - Reporting works even when a block exists (blocks hide the conversation, not the right to
   report it), and is never paused by the storage guard: it is a safety write.
@@ -40,10 +42,12 @@ from app.models import (
     ModerationAction,
     ModerationActionKind,
     Profile,
+    ProgressLog,
     Report,
     ReportReason,
     ReportStatus,
     ReportTarget,
+    SpaceGoal,
     User,
 )
 from app.services import blocks
@@ -81,6 +85,22 @@ class IntroToReportNotFoundError(NotFoundError):
 class PersonToReportNotFoundError(NotFoundError):
     code = "person_not_found"
     default_message = "We couldn't find that person."
+
+
+class GoalToReportNotFoundError(NotFoundError):
+    code = "goal_not_found"
+    default_message = "That goal doesn't exist."
+
+
+class LogToReportNotFoundError(NotFoundError):
+    code = "log_not_found"
+    default_message = "That progress note doesn't exist."
+
+
+class OwnEntryError(AppError):
+    status_code = HTTPStatus.CONFLICT
+    code = "cannot_report_own_entry"
+    default_message = "You can only report what the other person wrote."
 
 
 class ReportNotFoundError(NotFoundError):
@@ -285,6 +305,82 @@ async def report_person(
         reason=reason,
         details=details,
         snapshot=[_part(label, body) for label, body in parts if body],
+    )
+
+
+async def _space_entry_connection(
+    db: AsyncSession, user: User, connection_id: uuid.UUID
+) -> Connection | None:
+    """The entry's connection if ``user`` is in it. Ended connections (a block) still
+    count: like messages, space entries can be reported after a block."""
+    connection = await db.get(Connection, connection_id)
+    if connection is None or user.id not in (connection.user_a, connection.user_b):
+        return None
+    return connection
+
+
+async def report_goal(
+    db: AsyncSession,
+    settings: Settings,
+    limiter: RateLimiter,
+    user: User,
+    goal_id: uuid.UUID,
+    reason: ReportReason,
+    details: str,
+) -> Report:
+    """Report a pair-space goal the other person added (a copy of its title)."""
+    goal = await db.get(SpaceGoal, goal_id)
+    connection = await _space_entry_connection(db, user, goal.connection_id) if goal else None
+    if goal is None or connection is None:
+        raise GoalToReportNotFoundError
+    if goal.from_a == (connection.user_a == user.id):
+        raise OwnEntryError
+    snapshot = [_part("goal", goal.title, goal.created_at)]
+    if goal.due_on:
+        snapshot.append(_part("due", goal.due_on.isoformat()))
+    return await _save(
+        db,
+        settings,
+        limiter,
+        user,
+        reported_id=connection.user_a if goal.from_a else connection.user_b,
+        connection_id=connection.id,
+        target=ReportTarget.GOAL,
+        target_id=goal.id,
+        reason=reason,
+        details=details,
+        snapshot=snapshot,
+    )
+
+
+async def report_progress_log(
+    db: AsyncSession,
+    settings: Settings,
+    limiter: RateLimiter,
+    user: User,
+    log_id: uuid.UUID,
+    reason: ReportReason,
+    details: str,
+) -> Report:
+    """Report a progress note the other person wrote (a copy of its text)."""
+    log = await db.get(ProgressLog, log_id)
+    connection = await _space_entry_connection(db, user, log.connection_id) if log else None
+    if log is None or connection is None:
+        raise LogToReportNotFoundError
+    if log.from_a == (connection.user_a == user.id):
+        raise OwnEntryError
+    return await _save(
+        db,
+        settings,
+        limiter,
+        user,
+        reported_id=connection.user_a if log.from_a else connection.user_b,
+        connection_id=connection.id,
+        target=ReportTarget.PROGRESS_LOG,
+        target_id=log.id,
+        reason=reason,
+        details=details,
+        snapshot=[_part("note", log.note, log.created_at)],
     )
 
 

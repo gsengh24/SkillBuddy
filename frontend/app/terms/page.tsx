@@ -40,8 +40,9 @@ export default function TermsPage() {
         <p>
           {brand.name} suggests people you might want to build, learn or talk with, and explains
           why. Nobody is contacted unless both people agree to the introduction. Once you are
-          connected, you can chat. Chat messages are deleted {retention.messageDays} days after they
-          are sent.
+          connected, you can chat and share a pair space (goals, skills to grow and progress notes).
+          Chat messages are deleted {retention.messageDays} days after they are sent, and progress
+          notes {retention.spaceDays} days after they are written.
         </p>
       </Section>
 
@@ -71,10 +72,11 @@ export default function TermsPage() {
 
       <Section id="reporting" title="Reporting and moderation">
         <p>
-          You can report a message, an intro or a profile. Our moderator reviews reports, using only
-          the copy kept with each report, never whole conversations. We may suspend accounts that
-          break these terms. A suspended account is signed out and can&apos;t sign in, be messaged
-          or be suggested to anyone. How long report copies are kept is in the{" "}
+          You can report a message, an intro, a profile, or a goal or note in a pair space. Our
+          moderator reviews reports, using only the copy kept with each report, never whole
+          conversations. We may suspend accounts that break these terms. A suspended account is
+          signed out and can&apos;t sign in, be messaged or be suggested to anyone. How long report
+          copies are kept is in the{" "}
           <Link href="/privacy#reports" className={textLinkClasses()}>
             Privacy Policy
           </Link>

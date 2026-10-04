@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
+import { ReportButton } from "@/components/safety/report-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cx } from "@/components/ui/cx";
@@ -203,9 +204,20 @@ export function SpaceView({
                       ) : null}
                     </span>
                   </label>
-                  <Button tone="danger" disabled={busy} onClick={() => deleteGoal(goal)}>
-                    Delete
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {goal.created_by !== meId ? (
+                      <ReportButton
+                        kind="goal"
+                        targetId={goal.id}
+                        blockUserId={otherId}
+                        blockName={otherName}
+                        compact
+                      />
+                    ) : null}
+                    <Button tone="danger" disabled={busy} onClick={() => deleteGoal(goal)}>
+                      Delete
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -325,9 +337,14 @@ export function SpaceView({
                 ))}
               </select>
             </label>
-            <Button type="submit" className="self-start" disabled={busy || !note.trim()}>
-              Add note
-            </Button>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-small text-muted">
+                Notes are deleted {space.retention_days} days after they&apos;re written.
+              </p>
+              <Button type="submit" disabled={busy || !note.trim()}>
+                Add note
+              </Button>
+            </div>
           </form>
           <Alert message={errors.logs} />
           {logs.length ? (
@@ -358,7 +375,15 @@ export function SpaceView({
                       >
                         Delete
                       </Button>
-                    ) : null}
+                    ) : (
+                      <ReportButton
+                        kind="note"
+                        targetId={log.id}
+                        blockUserId={otherId}
+                        blockName={otherName}
+                        compact
+                      />
+                    )}
                   </li>
                 );
               })}
