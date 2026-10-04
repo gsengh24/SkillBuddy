@@ -37,3 +37,19 @@ the date and result at the end of each section.
 If a check fails, note which one and what you saw, and ask Claude Code to look into it.
 
 Result: _not run yet_
+
+## Pair spaces ([ADR 0013](adr/0013-pair-spaces-v1.md))
+
+**Before you start:** the two connected test accounts from the chat section (A and B).
+
+| # | Do this | You should see |
+| --- | --- | --- |
+| 1 | In A, Messages → **Open pair space** (or the sidebar's **Pair spaces** on a computer) | "You and B", with empty goals, skills and notes |
+| 2 | In A, add a goal "Ship the first version" with a due date | It appears with "due" and the date |
+| 3 | In B, open the same space and tick that goal | It shows as done (crossed out); reload A: done there too |
+| 4 | In A, add a skill "Public speaking" | It shows under "You" in A, and under A's name in B (without a Remove button) |
+| 5 | In B, write a note about the goal | In A, the note shows with B's name, the time and the goal it is about |
+| 6 | In A, try to remove B's note | There is no Delete on it; only on your own notes |
+| 7 | In B, block A, then open the space in either window | "This page could not be found" for both |
+
+Result: _not run yet_
