@@ -117,6 +117,17 @@ CLAUDE.md:
 - [ ] Automated screening of messages: not in chat v1; decide in item 7 (it would send
       message text to an AI provider, which needs consent and privacy wording).
 
+## Phase 5: pair spaces ([ADR 0013](adr/0013-pair-spaces-v1.md))
+
+- [ ] **Backend (step 9b):** goals, skills to grow and progress logs on each open
+      connection; limits; block hook; space deleted 90 days after the connection ends;
+      logs deleted 90 days after writing.
+- [ ] **Web (step 9c):** the Pair spaces page, and the nav item switched on.
+- [ ] **Reporting goal titles and log notes (step 9d, owner review):** report targets
+      `goal` and `progress_log`, and the privacy page's retention lines for spaces.
+- [ ] **Post-launch:** reminders (in-app, maybe email within the non-login budget).
+- [ ] **Post-launch:** conversation starters and project templates.
+
 ## Hardening
 
 - [x] **Staging migration drift check** (step 8a; `.github/workflows/staging-migrations.yml`,
