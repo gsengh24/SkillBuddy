@@ -296,3 +296,51 @@ export const moderationAccountSchema = z.object({
 export type ModerationAccount = z.infer<typeof moderationAccountSchema>;
 
 export const moderationAccountListSchema = z.object({ items: z.array(moderationAccountSchema) });
+
+/** Pair spaces v1 (ADR 0013): a shared goal. */
+export const goalSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  status: z.enum(["open", "done"]),
+  due_on: z.string().nullable(),
+  done_at: z.string().nullable(),
+  created_by: z.string(),
+  created_at: z.string(),
+});
+export type Goal = z.infer<typeof goalSchema>;
+
+/** A skill one person wants to grow. */
+export const skillSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  owner_id: z.string(),
+  created_at: z.string(),
+});
+export type Skill = z.infer<typeof skillSchema>;
+
+/** A progress note, optionally about one goal or one of its author's skills. */
+export const progressLogSchema = z.object({
+  id: z.string(),
+  note: z.string(),
+  author_id: z.string(),
+  goal_id: z.string().nullable(),
+  skill_id: z.string().nullable(),
+  created_at: z.string(),
+});
+export type ProgressLog = z.infer<typeof progressLogSchema>;
+
+export const spaceSchema = z.object({
+  connection_id: z.string(),
+  goals: z.array(goalSchema),
+  skills: z.array(skillSchema),
+  logs: z.array(progressLogSchema),
+  retention_days: z.number(),
+  max_goals: z.number(),
+  max_skills_per_person: z.number(),
+});
+export type Space = z.infer<typeof spaceSchema>;
+
+export const progressLogPageSchema = z.object({
+  items: z.array(progressLogSchema),
+  next_cursor: z.string().nullable(),
+});

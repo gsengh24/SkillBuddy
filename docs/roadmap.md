@@ -122,7 +122,7 @@ CLAUDE.md:
 - [x] **Backend (step 9b, migration 0014; `/api/v1/connections/{id}/space`):** goals, skills to grow and progress logs on each open
       connection; limits; block hook; space deleted 90 days after the connection ends;
       logs deleted 90 days after writing.
-- [ ] **Web (step 9c):** the Pair spaces page, and the nav item switched on.
+- [x] **Web (step 9c):** the Pair spaces page (`/spaces`, `/spaces/[connectionId]`), and the nav item switched on.
 - [ ] **Reporting goal titles and log notes (step 9d, owner review):** report targets
       `goal` and `progress_log`, and the privacy page's retention lines for spaces.
 - [ ] **Post-launch:** reminders (in-app, maybe email within the non-login budget).
