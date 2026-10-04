@@ -21,6 +21,16 @@ describe("privacy policy", () => {
     expect(container.querySelector("#reports")).toHaveTextContent(
       "deleted 180 days after the report is resolved",
     );
+    expect(container.querySelector("#reports")).toHaveTextContent("a goal or note in a pair space");
+    expect(container.querySelector("#retention")).toHaveTextContent(
+      "Pair-space progress notes: 90 days after each is written",
+    );
+    expect(container.querySelector("#retention")).toHaveTextContent(
+      "hidden from both people as soon as the connection ends, and deleted 90 days later",
+    );
+    expect(container.querySelector("#who-sees")).toHaveTextContent(
+      "can be seen only by the two people in it",
+    );
     expect(container.querySelector("#emails")).toHaveTextContent(
       "We email you when someone sends you an intro or accepts yours",
     );

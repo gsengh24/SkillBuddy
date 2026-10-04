@@ -341,3 +341,73 @@ async def test_old_notes_and_long_ended_spaces_are_purged(
     assert notes(ended_long_ago) == []
     assert goals(ended_long_ago) == []
     assert goals(ended_recently) == ["still here"]  # hidden, but not deleted for 90 days
+
+
+# --- reporting space entries (owner-reviewed) ---------------------------------------------
+
+ADMIN_TOKEN = "moderator-token-for-tests-only-0123456789abcdef"  # test value
+
+
+async def test_goals_and_notes_written_by_the_other_person_can_be_reported(
+    make: Callable[..., Settings], delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    settings = make(admin_api_token=ADMIN_TOKEN)
+    admin = {"X-Admin-Token": ADMIN_TOKEN}
+    async with auth_client(settings, delivery) as client:
+        asha, ravi, connection = await connect(client, settings, delivery, migrated_database_url)
+        mallory = await join(client, settings, delivery, "Mallory")
+        goal = (
+            await post(
+                client,
+                asha,
+                connection,
+                "goals",
+                {"title": "Send me money", "due_on": "2026-12-01"},
+            )
+        ).json()
+        note = (await post(client, asha, connection, "logs", {"note": "Pay up"})).json()
+        reason = {"reason": "scam"}
+        goal_report = await client.post(
+            f"/api/v1/space-goals/{goal['id']}/report", json=reason, headers=ravi.headers
+        )
+        again = await client.post(
+            f"/api/v1/space-goals/{goal['id']}/report", json=reason, headers=ravi.headers
+        )
+        own = await client.post(
+            f"/api/v1/space-goals/{goal['id']}/report", json=reason, headers=asha.headers
+        )
+        outsider = await client.post(
+            f"/api/v1/progress-logs/{note['id']}/report", json=reason, headers=mallory.headers
+        )
+        unknown = await client.post(
+            f"/api/v1/progress-logs/{uuid.uuid4()}/report", json=reason, headers=ravi.headers
+        )
+        # Still possible after a block closed the space.
+        await client.post("/api/v1/blocks", json={"user_id": asha.id}, headers=ravi.headers)
+        note_report = await client.post(
+            f"/api/v1/progress-logs/{note['id']}/report", json=reason, headers=ravi.headers
+        )
+        goal_copy = (
+            await client.get(f"/api/v1/admin/reports/{goal_report.json()['id']}", headers=admin)
+        ).json()
+        note_copy = (
+            await client.get(f"/api/v1/admin/reports/{note_report.json()['id']}", headers=admin)
+        ).json()
+
+    assert goal_report.status_code == 201, goal_report.text
+    assert again.status_code == 409
+    assert error_code(again) == "already_reported"
+    assert own.status_code == 409
+    assert error_code(own) == "cannot_report_own_entry"
+    assert outsider.status_code == 404
+    assert error_code(outsider) == "log_not_found"
+    assert unknown.status_code == 404
+    assert note_report.status_code == 201, note_report.text
+    assert goal_copy["target"] == "goal"
+    assert goal_copy["reported_id"] == asha.id
+    assert {item["label"]: item["body"] for item in goal_copy["messages"]} == {
+        "goal": "Send me money",
+        "due": "2026-12-01",
+    }
+    assert note_copy["target"] == "progress_log"
+    assert [item["body"] for item in note_copy["messages"]] == ["Pay up"]

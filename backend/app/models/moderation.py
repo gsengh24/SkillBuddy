@@ -57,6 +57,9 @@ class ReportTarget(StrEnum):
     MESSAGE = "message"
     INTRO = "intro"
     PROFILE = "profile"
+    # Pair spaces (ADR 0013): a goal title or a progress note.
+    GOAL = "goal"
+    PROGRESS_LOG = "progress_log"
 
 
 class ReportStatus(StrEnum):

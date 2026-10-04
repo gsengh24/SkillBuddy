@@ -81,7 +81,7 @@ class Settings(BaseSettings):
     account_deletion_grace_days: int = Field(default=30, ge=1, le=90)
     # Recorded on each account when the user accepts the terms. Keep equal to the version
     # shown on the terms and privacy pages (frontend/lib/legal.ts).
-    terms_version: str = Field(default="2026-10-04-draft", min_length=1, max_length=32)
+    terms_version: str = Field(default="2026-10-05-draft", min_length=1, max_length=32)
     # Version of the AI-processing consent line shown next to the "About you" box
     # (ADR 0007, section 5). Bump it when the wording changes; profiles then ask again.
     ai_consent_version: str = Field(default="2026-10-01", min_length=1, max_length=32)

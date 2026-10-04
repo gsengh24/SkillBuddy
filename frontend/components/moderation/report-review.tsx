@@ -21,6 +21,8 @@ const WHAT: Record<ModerationReport["target"], string> = {
   message: "Chat message",
   intro: "Intro",
   profile: "Profile",
+  goal: "Pair-space goal",
+  progress_log: "Progress note",
 };
 
 const PART: Record<string, string> = {
@@ -33,6 +35,8 @@ const PART: Record<string, string> = {
   seeks: "Looking for",
   interests: "Interests",
   availability: "Availability",
+  goal: "Goal",
+  due: "Due",
 };
 
 function when(iso: string | null) {

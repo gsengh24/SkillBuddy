@@ -9,9 +9,9 @@ export const legal = {
   /** Where people send privacy requests and complaints. PLACEHOLDER: replace before launch. */
   contactEmail: "privacy-contact@example.com",
   /** Shown as "Last updated" on both pages. */
-  updated: "4 October 2026",
+  updated: "5 October 2026",
   /** Keep equal to the API's TERMS_VERSION (recorded on each account at sign-up). */
-  version: "2026-10-04-draft",
+  version: "2026-10-05-draft",
 } as const;
 
 /**
@@ -23,6 +23,7 @@ export const retention = {
   matchRequestDays: 90, // MATCH_REQUEST_RETENTION_DAYS
   notificationDays: 90, // NOTIFICATION_RETENTION_DAYS
   messageDays: 90, // MESSAGE_RETENTION_DAYS
+  spaceDays: 90, // SPACE_RETENTION_DAYS
   reportDaysAfterResolve: 180, // REPORT_RETENTION_DAYS
   moderationLogDays: 365, // MODERATION_LOG_RETENTION_DAYS
   emailLogDays: 30, // EMAIL_LOG_RETENTION_DAYS

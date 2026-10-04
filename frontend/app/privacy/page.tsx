@@ -63,6 +63,10 @@ export default function PrivacyPage() {
             <strong>Chat:</strong> the messages you send to people you are connected with.
           </li>
           <li>
+            <strong>Pair spaces:</strong> the goals, skills you want to grow and progress notes you
+            add in a pair space with someone you are connected with.
+          </li>
+          <li>
             <strong>Safety:</strong> the people you block, reports you make, and copies kept with
             reports about you (see &quot;Reports, blocks and moderation&quot;).
           </li>
@@ -113,6 +117,10 @@ export default function PrivacyPage() {
             interests and availability, and why you were matched, but not your name or links.
           </li>
           <li>Your name and links are shown only to people you are connected with.</li>
+          <li>
+            A pair space, with its goals, skills and notes, can be seen only by the two people in
+            it. We don&apos;t use AI to read it, and it isn&apos;t used for matching.
+          </li>
           <li>Nobody can contact you unless you both agree to the introduction.</li>
           <li>We don&apos;t sell your data or show you advertising.</li>
         </ul>
@@ -128,12 +136,13 @@ export default function PrivacyPage() {
 
       <Section id="reports" title="Reports, blocks and moderation">
         <p>
-          You can report a message, an intro or a profile. If a message is reported, we keep a copy
-          of it and the 10 before it so our moderator can review it. For an intro we keep its
-          request and note; for a profile, what the person reporting could see. Only the moderator
-          sees this copy. It is deleted {retention.reportDaysAfterResolve} days after the report is
-          resolved, even if the account or the original messages were deleted sooner. The reported
-          person isn&apos;t told who reported them.
+          You can report a message, an intro, a profile, or a goal or note in a pair space. If a
+          message is reported, we keep a copy of it and the 10 before it so our moderator can review
+          it. For an intro we keep its request and note; for a profile, what the person reporting
+          could see; for a goal or a note, its text. Only the moderator sees this copy. It is
+          deleted {retention.reportDaysAfterResolve} days after the report is resolved, even if the
+          account or the original messages were deleted sooner. The reported person isn&apos;t told
+          who reported them.
         </p>
         <p>
           If you block someone, neither of you can message the other, and you won&apos;t be
@@ -178,6 +187,11 @@ export default function PrivacyPage() {
           </li>
           <li>Notifications: {retention.notificationDays} days.</li>
           <li>Chat messages: {retention.messageDays} days after each is sent.</li>
+          <li>Pair-space progress notes: {retention.spaceDays} days after each is written.</li>
+          <li>
+            A pair space (its goals, skills and notes): hidden from both people as soon as the
+            connection ends, and deleted {retention.spaceDays} days later.
+          </li>
           <li>
             Report copies: {retention.reportDaysAfterResolve} days after the report is resolved.
           </li>
@@ -193,9 +207,9 @@ export default function PrivacyPage() {
       <Section id="deleting" title="Deleting your data">
         <p>
           Deleting your account from Account settings signs you out everywhere and permanently
-          removes your account, profile, embeddings, matches, intros, connections and messages{" "}
-          {retention.deletionGraceDays} days later. The only exception is copies kept with a report
-          (see{" "}
+          removes your account, profile, embeddings, matches, intros, connections, messages and pair
+          spaces {retention.deletionGraceDays} days later. The only exception is copies kept with a
+          report (see{" "}
           <a href="#reports" className={textLinkClasses()}>
             Reports, blocks and moderation
           </a>
