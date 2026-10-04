@@ -36,6 +36,9 @@ def test_metadata_contains_all_tables() -> None:
         "reports",
         "blocks",
         "moderation_actions",
+        "space_goals",
+        "space_skills",
+        "progress_logs",
     }
 
 
