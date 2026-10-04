@@ -53,6 +53,10 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
      consent, moderation, reporting, or legal or terms wording: that stops for the owner's
      review, is not auto-merged, and is built last (owner decision, 2026-10-03). Step 8
      only. (Step 7 had its own exception, now finished.)
+   - **Step 9 (pair spaces v1):** auto-merge is allowed once the five required checks are
+     green, **except** a PR that adds the pair-space report target or changes privacy,
+     terms or retention wording: that stops for the owner's review (owner decision,
+     2026-10-04). Step 9 only.
    - Build one PR at a time. After a PR with a migration merges, **for staging only**,
      Claude Code starts Actions → Migrate staging itself (`gh workflow run "Migrate staging"
      --ref main`), waits for it, confirms its "Revision after upgrade" step shows the new

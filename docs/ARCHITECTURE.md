@@ -122,7 +122,7 @@ PostgreSQL is the single source of truth, with the pgvector extension holding em
 | conversations / messages | id, connection\_id, sender, body, sent\_at | Chat, delivered by polling ([ADR 0012](adr/0012-chat-delivery-by-polling.md)); retained per privacy policy |
 | events | id, user\_id, type, payload, ts | Append-only behavioural log; training data for the ranker |
 | feedback | match\_id, rater, rating, tags, comment | Post-conversation signal |
-| spaces / goals / skill\_logs | id, connection\_id, title, progress | Pair space for project and skill tracking (Phase 4) |
+| space\_goals / space\_skills / progress\_logs | id, connection\_id, from\_a, title or name or note, status | Pair space v1 on the connection itself, no spaces table ([ADR 0013](adr/0013-pair-spaces-v1.md)); hidden when the connection ends and deleted 90 days later; logs deleted 90 days after writing |
 | blocks / reports | id, reporter, target, reason, status | Safety; blocks are hard filters in retrieval |
 
 **Design rules**
@@ -145,7 +145,7 @@ Start as a **modular monolith** (one deployable, strict internal module boundari
 | Connection | Intro send, accept, decline, block, report |
 | Messaging | Chat over REST with adaptive client polling ([ADR 0012](adr/0012-chat-delivery-by-polling.md)), read state, history |
 | Notification | Email, push and in-app; preference centre and digests |
-| Spaces | Shared goals and skill tracking (Phase 4) |
+| Spaces | Shared goals, skills to grow and progress logs ([ADR 0013](adr/0013-pair-spaces-v1.md)) |
 | Admin / Trust | Moderation queue, bans, audit log, metrics |
 
 **Core API (REST, versioned under /v1, OpenAPI-documented)**
@@ -272,7 +272,7 @@ The build runs in seven phases, and no phase starts until the previous gate is p
 | 2 Matching MVP | 7 to 11 | Retrieval with hard filters, ranker v1 with per-intent weights, LLM selection and reasons, intro send and accept, email notifications, evaluation run in CI |
 | 3 Chat, safety, closed beta | 12 to 16 | Chat (polled, ADR 0012), block and report, moderation queue, automated screening, rate limits, privacy pages, 100 to 300 invited users |
 | 4 Public launch | 17 to 22 | Waitlist and invites, onboarding polish, analytics dashboards, feedback capture, performance tuning, launch in the first community |
-| 5 Pair spaces and skills | 23 to 30 | Shared goals, skill logs and check-ins, reminders, conversation starters, project templates |
+| 5 Pair spaces and skills | 23 to 30 | Shared goals, skills to grow and progress logs (v1, ADR 0013); after launch: reminders, conversation starters, project templates |
 | 6 Ranker, mobile, scale | 31 onward | Learned ranker trained on feedback, mobile app, dedicated vector store if needed, autoscaling, multilingual interface |
 
 Timelines assume one to two developers working full time with AI-assisted coding; part-time work roughly doubles them. Phase 0 is next: it produces a running, deployable skeleton, and everything after builds on it.
