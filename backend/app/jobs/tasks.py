@@ -194,6 +194,12 @@ async def _report_alerts(ctx: JobContext) -> None:
         await send_report_alert(db, ctx.settings, datetime.now(UTC))
 
 
+async def _ai_probe(ctx: JobContext) -> None:
+    """Health check from the moderation page: one fixed prompt (no user data) per provider."""
+    async with open_gateway(ctx.settings, ctx.session_factory) as gateway:
+        await gateway.probe()
+
+
 async def _purge_spaces(ctx: JobContext) -> None:
     """Daily: old progress logs, and spaces whose connection ended long enough ago."""
     async with ctx.session_factory() as db:
@@ -289,6 +295,15 @@ REPORT_ALERTS = JobSpec(
 PURGE_REPORTS = JobSpec(
     kind="purge_reports", handler=_purge_reports, priority=200, timeout_seconds=240
 )
+# One try: a retry would spend provider budget twice for the same check.
+AI_PROBE = JobSpec(
+    kind="ai_probe",
+    handler=_ai_probe,
+    group=JobGroup.AI,
+    priority=100,
+    max_attempts=1,
+    timeout_seconds=120,
+)
 PURGE_SPACES = JobSpec(
     kind="purge_spaces", handler=_purge_spaces, priority=200, timeout_seconds=240
 )
@@ -321,6 +336,7 @@ ALL_JOBS = (
     PURGE_REPORTS,
     PURGE_MODERATION_LOG,
     PURGE_SPACES,
+    AI_PROBE,
     SEND_NOTIFICATION_EMAIL,
 )
 

@@ -168,6 +168,39 @@ def _retry_after(value: str | None) -> float | None:
         return None
 
 
+@dataclass(frozen=True)
+class ConfiguredProvider:
+    """What the AI status view may show about a provider: never its key or account id."""
+
+    name: str
+    unit: str
+    daily_budget: int
+
+
+def configured_providers(settings: Settings) -> list[ConfiguredProvider]:
+    """The providers ``build_providers`` would use, in fallback order, by name only."""
+    found: list[ConfiguredProvider] = []
+    for provider in settings.ai_llm_providers:
+        if provider == "groq" and settings.groq_api_key is not None:
+            found += [
+                ConfiguredProvider(f"groq:{model}", "tokens", settings.groq_daily_token_budget)
+                for model in settings.groq_models
+            ]
+        if (
+            provider == "cloudflare"
+            and settings.cloudflare_api_token is not None
+            and settings.cloudflare_account_id
+        ):
+            found.append(
+                ConfiguredProvider(
+                    f"cloudflare:{settings.cloudflare_model}",
+                    "neurons",
+                    settings.cloudflare_daily_neuron_budget,
+                )
+            )
+    return found
+
+
 def build_providers(settings: Settings, client: httpx.AsyncClient) -> list[ChatProvider]:
     """The configured providers, in fallback order. A provider without a key is skipped."""
     providers: list[ChatProvider] = []

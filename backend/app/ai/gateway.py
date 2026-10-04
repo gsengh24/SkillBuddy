@@ -50,6 +50,13 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 GLOBAL_CALLS_KEY: Final = "ai:global:calls"
+# Daily counters behind the AI status view (provider name and outcome only, never text):
+# "ai:outcome:<provider>:<outcome>", "ai:outcome:template:<reason>" and, for the
+# health check, "ai:probe:<provider>:<outcome>".
+OUTCOME_PREFIX: Final = "ai:outcome:"
+PROBE_PREFIX: Final = "ai:probe:"
+# The health check: fixed text, no user data, a tiny answer.
+PROBE_PROMPT_VERSION: Final = "probe-v1"
 # Provider name -> monotonic time until which it is skipped (after a 429). Per process.
 _COOLING_UNTIL: dict[str, float] = {}
 DATA_INSTRUCTION: Final = (
@@ -97,6 +104,20 @@ class AIResult[V: BaseModel]:
     source: Source
     provider: str | None = None
     reason: FallbackReason | None = None
+
+
+class ProbeAnswer(BaseModel):
+    ok: bool
+
+
+PROBE_REQUEST: Final = ChatRequest(
+    system=(
+        "This is an automated health check. Reply with exactly this JSON object: "
+        '{"ok": true}\n\n' + DATA_INSTRUCTION
+    ),
+    user=json.dumps({"check": "ping"}),
+    max_tokens=200,
+)
 
 
 def _redact_value(value: Any, names: Sequence[str]) -> Any:
@@ -151,18 +172,18 @@ class AIGateway:
         """Ask the first available provider; on any failure, use ``fallback()``."""
         log: dict[str, Any] = {"task": task.value, "prompt_version": prompt.version}
         if not self._settings.ai_llm_enabled:
-            return self._fallback(fallback, FallbackReason.DISABLED, log)
+            return await self._fallback(fallback, FallbackReason.DISABLED, log)
 
         request = self.build_request(prompt)
         if find_leaks(request.user, names=prompt.name_hints):
             logger.error("ai_privacy_block", extra=log)
-            return self._fallback(fallback, FallbackReason.PRIVACY, log)
+            return await self._fallback(fallback, FallbackReason.PRIVACY, log)
 
         async with self._session_factory() as db:
             if not await budget.try_consume(
                 db, budget.user_key(task.value, user_id), limit=self._user_cap(task)
             ):
-                return self._fallback(fallback, FallbackReason.USER_CAP, log)
+                return await self._fallback(fallback, FallbackReason.USER_CAP, log)
 
             for provider in self._providers:
                 if self._clock() < self._cooling_until.get(provider.name, 0.0):
@@ -174,13 +195,13 @@ class AIGateway:
                     if not await budget.try_consume(
                         db, GLOBAL_CALLS_KEY, limit=self._settings.ai_llm_daily_call_cap
                     ):
-                        return self._fallback(fallback, FallbackReason.GLOBAL_CAP, log)
+                        return await self._fallback(fallback, FallbackReason.GLOBAL_CAP, log)
                     outcome = await self._call(db, provider, request, schema, log, attempt)
                     if isinstance(outcome, BaseModel):
                         return AIResult(value=outcome, source=Source.LLM, provider=provider.name)
                     if outcome != "invalid":
                         break  # provider failure: next provider
-        return self._fallback(fallback, FallbackReason.NO_PROVIDER, log)
+        return await self._fallback(fallback, FallbackReason.NO_PROVIDER, log)
 
     async def _call(
         self,
@@ -190,23 +211,32 @@ class AIGateway:
         schema: type[T],
         log: dict[str, Any],
         attempt: int,
+        *,
+        record: str = OUTCOME_PREFIX,
     ) -> T | str:
         started = self._clock()
         details = log | {"provider": provider.name, "attempt": attempt}
+
+        async def count(outcome: str) -> None:
+            await budget.add(db, f"{record}{provider.name}:{outcome}", 1)
+
         try:
             result = await asyncio.wait_for(
                 provider.complete_json(request), timeout=self._settings.ai_llm_timeout_seconds
             )
         except TimeoutError:
             logger.warning("ai_call_failed", extra=details | {"outcome": "timeout"})
+            await count("timeout")
             return "timeout"
         except ProviderRateLimitedError as exc:
             wait = exc.retry_after_seconds or 60.0
             self._cooling_until[provider.name] = self._clock() + wait
             logger.warning("ai_call_failed", extra=details | {"outcome": "rate_limited"})
+            await count("rate_limited")
             return "rate_limited"
         except ProviderError as exc:
             logger.warning("ai_call_failed", extra=details | {"outcome": exc.kind})
+            await count(exc.kind)
             return "unavailable"
 
         units = math.ceil(provider.cost.units(result))
@@ -224,16 +254,46 @@ class AIGateway:
             # One retry, then fail loudly (CLAUDE.md rule 5); the caller moves on.
             level = logging.ERROR if attempt > 1 else logging.WARNING
             logger.log(level, "ai_call_failed", extra=details | metrics | {"outcome": "invalid"})
+            await count("invalid")
             return "invalid"
         logger.info("ai_call", extra=details | metrics | {"outcome": "ok"})
+        await count("ok")
         return value
 
-    @staticmethod
-    def _fallback(
-        fallback: Callable[[], T], reason: FallbackReason, log: dict[str, Any]
+    async def _fallback(
+        self, fallback: Callable[[], T], reason: FallbackReason, log: dict[str, Any]
     ) -> AIResult[T]:
         logger.info("ai_fallback", extra=log | {"reason": reason.value})
+        async with self._session_factory() as db:
+            await budget.add(db, f"{OUTCOME_PREFIX}template:{reason.value}", 1)
         return AIResult(value=fallback(), source=Source.TEMPLATE, reason=reason)
+
+    async def probe(self) -> dict[str, str]:
+        """Health check: send a fixed prompt with no user data to **each** provider on its own
+        (not in fallback order), and count the result under ``ai:probe:``. Returns provider
+        name -> outcome. Respects the kill switch, the overall daily cap and each provider's
+        daily budget."""
+        if not self._settings.ai_llm_enabled:
+            return {"all": "disabled"}
+        log: dict[str, Any] = {"task": "probe", "prompt_version": PROBE_PROMPT_VERSION}
+        results: dict[str, str] = {}
+        async with self._session_factory() as db:
+            for provider in self._providers:
+                units_key = f"ai:provider:{provider.name}:{provider.cost.unit}"
+                if await budget.used(db, units_key) >= provider.cost.daily_budget:
+                    results[provider.name] = "over_budget"
+                    continue
+                if not await budget.try_consume(
+                    db, GLOBAL_CALLS_KEY, limit=self._settings.ai_llm_daily_call_cap
+                ):
+                    results[provider.name] = "global_cap"
+                    continue
+                outcome = await self._call(
+                    db, provider, PROBE_REQUEST, ProbeAnswer, log, 1, record=PROBE_PREFIX
+                )
+                results[provider.name] = "ok" if isinstance(outcome, BaseModel) else outcome
+        logger.info("ai_probe", extra={"results": results})
+        return results
 
 
 @asynccontextmanager

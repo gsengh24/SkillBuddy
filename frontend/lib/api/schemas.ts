@@ -344,3 +344,24 @@ export const progressLogPageSchema = z.object({
   items: z.array(progressLogSchema),
   next_cursor: z.string().nullable(),
 });
+
+/** Today's AI usage for moderators: provider names and counts only, never keys or text. */
+export const aiStatusSchema = z.object({
+  enabled: z.boolean(),
+  providers: z.array(
+    z.object({
+      name: z.string(),
+      unit: z.string(),
+      daily_budget: z.number(),
+      used_today: z.number(),
+      calls: z.record(z.string(), z.number()),
+      probes: z.record(z.string(), z.number()),
+    }),
+  ),
+  fallbacks: z.record(z.string(), z.number()),
+  global_calls_today: z.number(),
+  global_cap: z.number(),
+});
+export type AIStatus = z.infer<typeof aiStatusSchema>;
+
+export const probeQueuedSchema = z.object({ queued: z.boolean() });
