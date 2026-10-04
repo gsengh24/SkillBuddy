@@ -130,6 +130,13 @@ class Settings(BaseSettings):
     # each person is limited to one poll a minute until the next UTC day.
     chat_polls_per_day: int = Field(default=16_000, ge=1, le=1_000_000)
 
+    # --- Pair spaces (ADR 0013) --------------------------------------------------------
+    # Adds, edits and deletes in pair spaces per person per UTC day.
+    space_writes_per_day: int = Field(default=100, ge=1, le=2000)
+    # Progress logs are deleted this many days after writing, and a whole space this many
+    # days after its connection ends.
+    space_retention_days: int = Field(default=90, ge=7, le=730)
+
     # --- Reports and moderation (ARCHITECTURE.md §8) -----------------------------------
     # People a person may block per UTC day.
     blocks_per_day: int = Field(default=20, ge=1, le=200)

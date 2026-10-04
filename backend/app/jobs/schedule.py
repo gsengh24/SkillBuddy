@@ -24,6 +24,7 @@ from app.jobs.tasks import (
     PURGE_MESSAGES,
     PURGE_MODERATION_LOG,
     PURGE_REPORTS,
+    PURGE_SPACES,
     REPORT_ALERTS,
 )
 
@@ -51,6 +52,7 @@ SCHEDULE: tuple[ScheduledJob, ...] = (
     ScheduledJob(PURGE_MESSAGES, Period.DAY),
     ScheduledJob(PURGE_REPORTS, Period.DAY),
     ScheduledJob(PURGE_MODERATION_LOG, Period.DAY),
+    ScheduledJob(PURGE_SPACES, Period.DAY),
     ScheduledJob(PURGE_JOB_TABLES, Period.HOUR),
     # At most one moderator alert an hour (ticks are hourly at most).
     ScheduledJob(REPORT_ALERTS, Period.HOUR),

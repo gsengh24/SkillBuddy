@@ -32,6 +32,7 @@ from app.services.notification_email import send_notification_email
 from app.services.notifications import purge_old_notifications
 from app.services.profile_parsing import BACKFILL_BATCH_SIZE, parse_profile, pending_profiles
 from app.services.reports import purge_resolved_reports, send_report_alert
+from app.services.spaces import purge_spaces
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +194,12 @@ async def _report_alerts(ctx: JobContext) -> None:
         await send_report_alert(db, ctx.settings, datetime.now(UTC))
 
 
+async def _purge_spaces(ctx: JobContext) -> None:
+    """Daily: old progress logs, and spaces whose connection ended long enough ago."""
+    async with ctx.session_factory() as db:
+        await purge_spaces(db, ctx.settings, datetime.now(UTC))
+
+
 async def _purge_moderation_log(ctx: JobContext) -> None:
     """Daily: delete moderator actions older than MODERATION_LOG_RETENTION_DAYS."""
     async with ctx.session_factory() as db:
@@ -282,6 +289,9 @@ REPORT_ALERTS = JobSpec(
 PURGE_REPORTS = JobSpec(
     kind="purge_reports", handler=_purge_reports, priority=200, timeout_seconds=240
 )
+PURGE_SPACES = JobSpec(
+    kind="purge_spaces", handler=_purge_spaces, priority=200, timeout_seconds=240
+)
 PURGE_MODERATION_LOG = JobSpec(
     kind="purge_moderation_log", handler=_purge_moderation_log, priority=200, timeout_seconds=240
 )
@@ -310,6 +320,7 @@ ALL_JOBS = (
     REPORT_ALERTS,
     PURGE_REPORTS,
     PURGE_MODERATION_LOG,
+    PURGE_SPACES,
     SEND_NOTIFICATION_EMAIL,
 )
 

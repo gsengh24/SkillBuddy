@@ -42,7 +42,8 @@ data; events kept raw for 30 days.
 | `auth_events` | Logins, failures | 20 in the retention window × ~200 B | ~4 KB | ~4 KB |
 | `match_requests` + `matches` | Match requests (text up to 1,000 characters, parsed JSON) and up to 5 matches each, with reasons (migration 0007) | About 1 request a week kept for 90 days (`MATCH_REQUEST_RETENTION_DAYS`): 13 × (1.2 KB + 5 × 0.4 KB) | ~42 KB | ~42 KB |
 | `intros` + `connections` + `notifications` | Intros (note up to 500 characters), connections, in-app notifications (migration 0008) | A few intros and about 20 notifications per 90 days; notifications purged after `NOTIFICATION_RETENTION_DAYS` (90) | ~6 KB | ~6 KB |
-| **Total** | | | **~138 KB** | **~151 KB** |
+| `space_goals` + `space_skills` + `progress_logs` | Pair spaces (migration 0014, [ADR 0013](adr/0013-pair-spaces-v1.md)): shared goals (title up to 120 characters), skills to grow (up to 60) and progress notes (up to 500), keyed by the connection | Notes deleted 90 days after writing; the whole space 90 days after its connection ends (`SPACE_RETENTION_DAYS`); at most 30 goals and 10 skills per person per space | ~3 KB | ~3 KB |
+| **Total** | | | **~141 KB** | **~154 KB** |
 
 Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runtime-jobs-and-email.md)):
 

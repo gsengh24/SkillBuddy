@@ -119,7 +119,7 @@ CLAUDE.md:
 
 ## Phase 5: pair spaces ([ADR 0013](adr/0013-pair-spaces-v1.md))
 
-- [ ] **Backend (step 9b):** goals, skills to grow and progress logs on each open
+- [x] **Backend (step 9b, migration 0014; `/api/v1/connections/{id}/space`):** goals, skills to grow and progress logs on each open
       connection; limits; block hook; space deleted 90 days after the connection ends;
       logs deleted 90 days after writing.
 - [ ] **Web (step 9c):** the Pair spaces page, and the nav item switched on.
