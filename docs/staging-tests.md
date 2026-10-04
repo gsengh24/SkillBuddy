@@ -36,7 +36,7 @@ the date and result at the end of each section.
 
 If a check fails, note which one and what you saw, and ask Claude Code to look into it.
 
-Result: _not run yet_
+Result: passed (owner, 2026-10-05)
 
 ## Pair spaces ([ADR 0013](adr/0013-pair-spaces-v1.md))
 
@@ -52,4 +52,4 @@ Result: _not run yet_
 | 6 | In A, try to remove B's note | There is no Delete on it; only on your own notes |
 | 7 | In B, block A, then open the space in either window | "This page could not be found" for both |
 
-Result: _not run yet_
+Result: passed (owner, 2026-10-05)

@@ -16,12 +16,12 @@ or a GitHub repository secret, and never into chat, email or a committed file.
 | 1 | Neon: PostgreSQL 16, Singapore, autoscaling capped at 0.25 CU | Done |
 | 1 | "Migrate staging" workflow run after #35 (head is migration 0006) | Done |
 | 2 | Gmail sending account and OAuth client; refresh token created 2026-10-02 | Done; day-8 check due on or after **2026-10-10** (step 9) |
-| 3 | Groq and Cloudflare Workers AI keys | **Pending**: matching uses the template fallback until then |
+| 3 | Groq and Cloudflare Workers AI keys | Done (owner, 2026-10-05; Groq Zero Data Retention on) |
 | 4 | API on Render Free (Docker, Singapore); `/api/v1/health` passes | Done |
 | 5 | Cloudflare cron Worker `skill-buddy-tick` deployed; its log shows `tick ok` | Done; the 2-day timing check is still open (checklist item 17) |
 | 6 | Web app on Vercel Hobby, using `API_INTERNAL_URL` | Done |
-| 6 | `WEB_APP_URL` on Render (links in intro emails; step 6c) | **Pending** |
-| 6 | `MODERATOR_EMAILS` on Render (moderation page; step 6d) | **Pending** |
+| 6 | `WEB_APP_URL` on Render (links in intro emails; step 6c) | Done (owner, 2026-10-05) |
+| 6 | `MODERATOR_EMAILS` and `MODERATOR_EMAIL` on Render (moderation page and report alerts; step 6d) | Done (owner, 2026-10-05); `TERMS_VERSION` checked |
 | 6b | Google sign-in OAuth client | **Pending** |
 | 7 | First sign-in: a real code sent by the Gmail API sender and accepted (2026-10-02) | **Passed** |
 | 8 | Delivery to `@thapar.edu` | **Pending** |
