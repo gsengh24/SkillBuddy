@@ -1574,6 +1574,18 @@
         "title": "PersonOut",
         "type": "object"
       },
+      "PingResponse": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "PingResponse",
+        "type": "object"
+      },
       "ProfileIn": {
         "additionalProperties": false,
         "description": "Create or replace the profile. A changed about text is parsed in the background.",
@@ -6963,6 +6975,48 @@
         "summary": "Report a goal in a pair space",
         "tags": [
           "spaces"
+        ]
+      }
+    },
+    "/ping": {
+      "get": {
+        "description": "Always 200 `{\"status\": \"ok\"}` (HEAD: 200, no body). Touches nothing else.",
+        "operationId": "ping_ping_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Keep-alive for uptime monitors",
+        "tags": [
+          "health"
+        ]
+      },
+      "head": {
+        "description": "Always 200 `{\"status\": \"ok\"}` (HEAD: 200, no body). Touches nothing else.",
+        "operationId": "ping_ping_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Keep-alive for uptime monitors",
+        "tags": [
+          "health"
         ]
       }
     }
