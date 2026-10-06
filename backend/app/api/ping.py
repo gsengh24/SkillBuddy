@@ -24,7 +24,14 @@ class PingResponse(BaseModel):
     status: Literal["ok"] = "ok"
 
 
-@router.api_route(PING_PATH, methods=["GET", "HEAD"], summary="Keep-alive for uptime monitors")
+# A fixed operation id: with two methods, FastAPI's generated one picks either at random,
+# which made the committed OpenAPI spec flap between runs.
+@router.api_route(
+    PING_PATH,
+    methods=["GET", "HEAD"],
+    operation_id="ping",
+    summary="Keep-alive for uptime monitors",
+)
 async def ping() -> PingResponse:
     """Always 200 `{"status": "ok"}` (HEAD: 200, no body). Touches nothing else."""
     return PingResponse()
