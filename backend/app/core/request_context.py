@@ -24,6 +24,9 @@ REQUEST_ID_HEADER: Final = "X-Request-ID"
 _VALID_REQUEST_ID: Final = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 
 access_logger = logging.getLogger("app.access")
+# Paths whose access-log line is written at debug level only, so an uptime monitor that
+# calls them every few minutes doesn't fill the logs (app/api/ping.py).
+QUIET_PATHS: Final = frozenset({"/ping"})
 
 
 def get_request_id(request: Request) -> str | None:
@@ -60,7 +63,9 @@ class RequestContextMiddleware:
         try:
             await self.app(scope, receive, send_with_request_id)
         finally:
-            access_logger.info(
+            level = logging.DEBUG if scope["path"] in QUIET_PATHS else logging.INFO
+            access_logger.log(
+                level,
                 "request",
                 extra={
                     "method": scope["method"],
