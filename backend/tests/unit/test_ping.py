@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import logging
 
-import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.main import create_app
@@ -42,14 +41,32 @@ async def test_never_rate_limited(make_settings: SettingsFactory) -> None:
     assert statuses == {200}
 
 
-async def test_logged_at_debug_level_only(
-    make_settings: SettingsFactory, caplog: pytest.LogCaptureFixture
-) -> None:
-    caplog.set_level(logging.DEBUG, logger="app.access")
-    async with client(make_settings) as http:
-        await http.get("/ping")
-        await http.get("/api/v1/health")
+class _Collect(logging.Handler):
+    def __init__(self) -> None:
+        super().__init__(level=logging.DEBUG)
+        self.records: list[logging.LogRecord] = []
 
-    levels = {getattr(r, "path", None): r.levelno for r in caplog.records if r.name == "app.access"}
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
+
+
+async def test_logged_at_debug_level_only(make_settings: SettingsFactory) -> None:
+    # Creating the app reconfigures logging (it clears the root handlers, including pytest's
+    # capture handler), so listen on the access logger itself, after the app exists.
+    http_client = client(make_settings)
+    access = logging.getLogger("app.access")
+    collect = _Collect()
+    previous = access.level
+    access.addHandler(collect)
+    access.setLevel(logging.DEBUG)
+    try:
+        async with http_client as http:
+            await http.get("/ping")
+            await http.get("/api/v1/health")
+    finally:
+        access.removeHandler(collect)
+        access.setLevel(previous)
+
+    levels = {getattr(r, "path", None): r.levelno for r in collect.records}
     assert levels["/ping"] == logging.DEBUG
     assert levels["/api/v1/health"] == logging.INFO
