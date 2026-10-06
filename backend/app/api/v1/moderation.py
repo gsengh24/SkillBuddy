@@ -9,22 +9,27 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from http import HTTPStatus
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.status import ai_status
 from app.api.deps import SettingsDep, require_json
 from app.api.v1.auth import AuthDep
 from app.core.errors import PermissionDeniedError
 from app.db.session import get_db_session
+from app.jobs.queue import enqueue
+from app.jobs.tasks import AI_PROBE
 from app.models import REPORT_NOTE_MAX_LENGTH, Profile, Report, ReportStatus, User
 from app.schemas.errors import ErrorResponse
 from app.schemas.reports import ReportOut, ReportPage, ResolveIn
 from app.schemas.social import PersonOut
 from app.services import moderation, reports
 from app.services.auth.rate_limit import RateLimiter
+from app.services.matching.requests import DAY_SECONDS
 
 
 class ModeratorOnlyError(PermissionDeniedError):
@@ -195,3 +200,77 @@ async def suspended_accounts(moderator: ModeratorDep, db: DbDep) -> AccountList:
             for item in await moderation.suspended_accounts(db)
         ]
     )
+
+
+# --- AI status (which provider answered today; names and counts only) ----------------------
+
+
+class ProviderStatusOut(BaseModel):
+    name: str = Field(description='"<provider>:<model>", e.g. "groq:openai/gpt-oss-120b".')
+    unit: str
+    daily_budget: int
+    used_today: int = Field(description="Tokens or neurons used today (UTC).")
+    calls: dict[str, int] = Field(
+        description='Today\'s real calls by outcome: "ok", "timeout", "rate_limited", '
+        '"unavailable", "invalid", ...'
+    )
+    probes: dict[str, int] = Field(description="Today's health checks by outcome.")
+
+
+class AIStatusOut(BaseModel):
+    """Today's AI usage, from the gateway's counters. No keys, prompts or user data."""
+
+    enabled: bool
+    providers: list[ProviderStatusOut] = Field(description="In fallback order.")
+    fallbacks: dict[str, int] = Field(
+        description='Times the template answered instead, by reason ("no_provider", '
+        '"disabled", "user_cap", "global_cap", "privacy").'
+    )
+    global_calls_today: int
+    global_cap: int
+
+
+class ProbeQueued(BaseModel):
+    queued: bool = True
+
+
+@router.get("/ai", summary="Which AI provider answered today")
+async def ai_status_view(moderator: ModeratorDep, db: DbDep, settings: SettingsDep) -> AIStatusOut:
+    status = await ai_status(db, settings)
+    return AIStatusOut(
+        enabled=status.enabled,
+        providers=[
+            ProviderStatusOut(
+                name=p.name,
+                unit=p.unit,
+                daily_budget=p.daily_budget,
+                used_today=p.used_today,
+                calls=p.calls,
+                probes=p.probes,
+            )
+            for p in status.providers
+        ],
+        fallbacks=status.fallbacks,
+        global_calls_today=status.global_calls_today,
+        global_cap=status.global_cap,
+    )
+
+
+@router.post(
+    "/ai/probe",
+    status_code=HTTPStatus.ACCEPTED,
+    summary="Test each AI provider with a fixed prompt (no user data)",
+)
+async def ai_probe(
+    moderator: ModeratorDep, request: Request, db: DbDep, settings: SettingsDep
+) -> ProbeQueued:
+    """Queues a background job that sends one short, fixed prompt to every configured
+    provider on its own, so the backup is tested too. Results appear under `probes` in
+    GET /moderation/ai. Limited to AI_PROBES_PER_DAY per moderator."""
+    limiter = RateLimiter(
+        request.app.state.session_factory, settings.secret_key, window_seconds=DAY_SECONDS
+    )
+    await limiter.hit(f"ai-probe:{moderator.id}", limit=settings.ai_probes_per_day)
+    await enqueue(db, AI_PROBE)
+    await db.commit()
+    return ProbeQueued()

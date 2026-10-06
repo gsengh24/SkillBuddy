@@ -3,7 +3,11 @@ import "server-only";
 import { cookies } from "next/headers";
 
 import { apiRequest } from "@/lib/api/client";
-import { moderationAccountListSchema, moderationReportPageSchema } from "@/lib/api/schemas";
+import {
+  aiStatusSchema,
+  moderationAccountListSchema,
+  moderationReportPageSchema,
+} from "@/lib/api/schemas";
 
 async function cookieHeader(): Promise<Record<string, string>> {
   return { cookie: (await cookies()).toString() };
@@ -25,4 +29,9 @@ export async function getSuspendedAccounts() {
   return apiRequest("/api/v1/moderation/accounts/suspended", moderationAccountListSchema, {
     headers: await cookieHeader(),
   });
+}
+
+/** Which AI provider answered today (names and counts only). */
+export async function getAIStatus() {
+  return apiRequest("/api/v1/moderation/ai", aiStatusSchema, { headers: await cookieHeader() });
 }

@@ -30,6 +30,24 @@ note; no message text), kept for a year (`MODERATION_LOG_RETENTION_DAYS`). The p
 API allow `MODERATION_REQUESTS_PER_MINUTE` (60) requests a minute per moderator. You can't
 suspend yourself or another moderator.
 
+## AI status: which provider answered
+
+**Moderation → AI status** (`/moderation/ai`) shows, for today (UTC):
+
+- each AI provider in fallback order (for example `groq:openai/gpt-oss-120b`, then
+  `cloudflare:@cf/openai/gpt-oss-20b`), with how many real calls it **answered** and how
+  many failed and why (timed out, rate-limited, unavailable, invalid answer), and its use
+  against its daily budget;
+- how many times the **template** answered instead, and why (no provider could answer, AI
+  switched off, a daily limit, or a privacy block);
+- **Test the AI providers**: queues one short, fixed test message (no user data) to each
+  provider on its own, so the Cloudflare backup is tested even while Groq works. Results
+  show under "Tests today" a minute later. Limited to `AI_PROBES_PER_DAY` (5) a day.
+
+It shows provider names and counts only: never keys, account ids, prompts or user text.
+Groq is working when its line shows answered calls (or a passing test) and the template
+count stays at zero.
+
 ## What a report contains
 
 People can report from the app: a **chat message** (under each message from the other

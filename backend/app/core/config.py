@@ -149,6 +149,9 @@ class Settings(BaseSettings):
     moderator_email: str | None = Field(
         default=None, max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
     )
+    # AI health checks a moderator may start per UTC day (each sends one tiny prompt with no
+    # user data to every configured provider).
+    ai_probes_per_day: int = Field(default=5, ge=1, le=50)
     # Requests per moderator per minute to the /api/v1/moderation endpoints.
     moderation_requests_per_minute: int = Field(default=60, ge=1, le=600)
     # Moderator actions (resolve, suspend, unsuspend) are kept this long in the audit log.

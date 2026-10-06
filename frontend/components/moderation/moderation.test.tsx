@@ -2,8 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ModerationReport } from "@/lib/api/schemas";
+import type { AIStatus, ModerationReport } from "@/lib/api/schemas";
 
+import { AIStatusView } from "./ai-status";
 import { ReportReview, UnsuspendButton } from "./report-review";
 
 const router = { push: vi.fn(), refresh: vi.fn() };
@@ -192,5 +193,57 @@ describe("UnsuspendButton", () => {
     expect(screen.getByText(/can sign in again/)).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Unsuspend" }));
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`/api/v1/moderation/accounts/${REPORTED}/unsuspend`);
+  });
+});
+
+describe("AIStatusView", () => {
+  const STATUS: AIStatus = {
+    enabled: true,
+    providers: [
+      {
+        name: "groq:openai/gpt-oss-120b",
+        unit: "tokens",
+        daily_budget: 190000,
+        used_today: 1200,
+        calls: { ok: 3, rate_limited: 1 },
+        probes: { ok: 1 },
+      },
+      {
+        name: "cloudflare:@cf/openai/gpt-oss-20b",
+        unit: "neurons",
+        daily_budget: 9000,
+        used_today: 0,
+        calls: {},
+        probes: { ok: 1 },
+      },
+    ],
+    fallbacks: { no_provider: 2 },
+    global_calls_today: 4,
+    global_cap: 400,
+  };
+
+  it("shows which provider answered, the template count, and the budgets", () => {
+    render(<AIStatusView status={STATUS} />);
+    expect(screen.getByText("groq:openai/gpt-oss-120b")).toBeVisible();
+    expect(screen.getByText("Real calls today: 3 answered, 1 rate-limited.")).toBeVisible();
+    expect(screen.getAllByText("Tests today: 1 answered.")).toHaveLength(2);
+    expect(screen.getByText("Real calls today: none today.")).toBeVisible();
+    expect(screen.getByText("2 no provider could answer.")).toBeVisible();
+    expect(screen.getByText(/4 of 400 AI calls used today/)).toBeVisible();
+  });
+
+  it("queues a test of every provider", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(json(202, { queued: true }));
+    render(<AIStatusView status={STATUS} />);
+    await user.click(screen.getByRole("button", { name: "Test the AI providers" }));
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/moderation/ai/probe");
+    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).method).toBe("POST");
+    expect(await screen.findByRole("status")).toHaveTextContent("Test queued");
+  });
+
+  it("says plainly when AI is off", () => {
+    render(<AIStatusView status={{ ...STATUS, enabled: false }} />);
+    expect(screen.getByText(/AI is switched off/)).toBeVisible();
   });
 });

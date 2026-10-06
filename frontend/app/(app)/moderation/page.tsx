@@ -36,6 +36,7 @@ export default async function ModerationPage({
             <TextLink href="/moderation?status=resolved">Resolved reports</TextLink>
           )}
           <TextLink href="/moderation/suspended">Suspended accounts</TextLink>
+          <TextLink href="/moderation/ai">AI status</TextLink>
         </nav>
       </header>
       <h2 className="text-section">{resolved ? "Resolved reports" : "Open reports"}</h2>
