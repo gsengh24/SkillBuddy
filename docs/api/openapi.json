@@ -6981,7 +6981,7 @@
     "/ping": {
       "get": {
         "description": "Always 200 `{\"status\": \"ok\"}` (HEAD: 200, no body). Touches nothing else.",
-        "operationId": "ping_ping_get",
+        "operationId": "ping",
         "responses": {
           "200": {
             "content": {
@@ -7001,7 +7001,7 @@
       },
       "head": {
         "description": "Always 200 `{\"status\": \"ok\"}` (HEAD: 200, no body). Touches nothing else.",
-        "operationId": "ping_ping_get",
+        "operationId": "ping",
         "responses": {
           "200": {
             "content": {
