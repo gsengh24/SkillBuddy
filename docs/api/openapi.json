@@ -1,48 +1,6 @@
 {
   "components": {
     "schemas": {
-      "AIStatusOut": {
-        "description": "Today's AI usage, from the gateway's counters. No keys, prompts or user data.",
-        "properties": {
-          "enabled": {
-            "title": "Enabled",
-            "type": "boolean"
-          },
-          "fallbacks": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "description": "Times the template answered instead, by reason (\"no_provider\", \"disabled\", \"user_cap\", \"global_cap\", \"privacy\").",
-            "title": "Fallbacks",
-            "type": "object"
-          },
-          "global_calls_today": {
-            "title": "Global Calls Today",
-            "type": "integer"
-          },
-          "global_cap": {
-            "title": "Global Cap",
-            "type": "integer"
-          },
-          "providers": {
-            "description": "In fallback order.",
-            "items": {
-              "$ref": "#/components/schemas/ProviderStatusOut"
-            },
-            "title": "Providers",
-            "type": "array"
-          }
-        },
-        "required": [
-          "enabled",
-          "providers",
-          "fallbacks",
-          "global_calls_today",
-          "global_cap"
-        ],
-        "title": "AIStatusOut",
-        "type": "object"
-      },
       "AccountList": {
         "properties": {
           "items": {
@@ -1616,15 +1574,16 @@
         "title": "PersonOut",
         "type": "object"
       },
-      "ProbeQueued": {
+      "PingResponse": {
         "properties": {
-          "queued": {
-            "default": true,
-            "title": "Queued",
-            "type": "boolean"
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
           }
         },
-        "title": "ProbeQueued",
+        "title": "PingResponse",
         "type": "object"
       },
       "ProfileIn": {
@@ -1922,54 +1881,6 @@
         ],
         "title": "ProfileVisibility",
         "type": "string"
-      },
-      "ProviderStatusOut": {
-        "properties": {
-          "calls": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "description": "Today's real calls by outcome: \"ok\", \"timeout\", \"rate_limited\", \"unavailable\", \"invalid\", ...",
-            "title": "Calls",
-            "type": "object"
-          },
-          "daily_budget": {
-            "title": "Daily Budget",
-            "type": "integer"
-          },
-          "name": {
-            "description": "\"<provider>:<model>\", e.g. \"groq:openai/gpt-oss-120b\".",
-            "title": "Name",
-            "type": "string"
-          },
-          "probes": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "description": "Today's health checks by outcome.",
-            "title": "Probes",
-            "type": "object"
-          },
-          "unit": {
-            "title": "Unit",
-            "type": "string"
-          },
-          "used_today": {
-            "description": "Tokens or neurons used today (UTC).",
-            "title": "Used Today",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "name",
-          "unit",
-          "daily_budget",
-          "used_today",
-          "calls",
-          "probes"
-        ],
-        "title": "ProviderStatusOut",
-        "type": "object"
       },
       "ReadinessResponse": {
         "properties": {
@@ -5980,109 +5891,6 @@
         ]
       }
     },
-    "/api/v1/moderation/ai": {
-      "get": {
-        "operationId": "ai_status_view_api_v1_moderation_ai_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AIStatusOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Not signed in."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`moderator_only`."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Rate limited (see Retry-After)."
-          }
-        },
-        "summary": "Which AI provider answered today",
-        "tags": [
-          "moderation"
-        ]
-      }
-    },
-    "/api/v1/moderation/ai/probe": {
-      "post": {
-        "description": "Queues a background job that sends one short, fixed prompt to every configured\nprovider on its own, so the backup is tested too. Results appear under `probes` in\nGET /moderation/ai. Limited to AI_PROBES_PER_DAY per moderator.",
-        "operationId": "ai_probe_api_v1_moderation_ai_probe_post",
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProbeQueued"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Not signed in."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`moderator_only`."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Rate limited (see Retry-After)."
-          }
-        },
-        "summary": "Test each AI provider with a fixed prompt (no user data)",
-        "tags": [
-          "moderation"
-        ]
-      }
-    },
     "/api/v1/moderation/reports": {
       "get": {
         "operationId": "list_reports_api_v1_moderation_reports_get",
@@ -7167,6 +6975,48 @@
         "summary": "Report a goal in a pair space",
         "tags": [
           "spaces"
+        ]
+      }
+    },
+    "/ping": {
+      "get": {
+        "description": "Always 200 `{\"status\": \"ok\"}` (HEAD: 200, no body). Touches nothing else.",
+        "operationId": "ping",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Keep-alive for uptime monitors",
+        "tags": [
+          "health"
+        ]
+      },
+      "head": {
+        "description": "Always 200 `{\"status\": \"ok\"}` (HEAD: 200, no body). Touches nothing else.",
+        "operationId": "ping",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Keep-alive for uptime monitors",
+        "tags": [
+          "health"
         ]
       }
     }
