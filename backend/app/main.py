@@ -16,6 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.deps import CSRF_HEADER
+from app.api.ping import router as ping_router
 from app.api.v1.router import api_router
 from app.core.config import Environment, Settings, get_settings
 from app.core.errors import register_exception_handlers
@@ -102,4 +103,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     register_exception_handlers(app)
     app.include_router(api_router)
+    app.include_router(ping_router)
     return app

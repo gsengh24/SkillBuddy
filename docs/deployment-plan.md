@@ -388,6 +388,15 @@ Koyeb Free is no longer an option (new accounts need a card since February 2026)
 
 - **Logs:** Render → **Logs** (API and jobs). Vercel → **Logs** (1 hour on Hobby).
   Cloudflare Worker → **Logs** (ticks).
+- **Keep-alive:** an external monitor pings `/ping` every 5 minutes on staging to stop
+  Render Free from sleeping. `/ping` must stay database-free so it does not wake Neon.
+  The full address is the API's own Render address plus `/ping` (for example
+  `https://<your-api>.onrender.com/ping`), not the Vercel site. GET or HEAD both answer
+  200. **Watch Neon while it runs:** an awake API also keeps its idle database connection
+  pool open, and whether that stops Neon from sleeping is unverified (pre-launch checklist
+  item 15, ADR 0008). After the monitor has run for a day, check Neon → Monitoring: the
+  compute should still drop to zero (suspend) when nobody uses the app. If it stays
+  awake, pause the monitor and ask Claude Code to make the pool close idle connections.
 - **Migrations:** when a merged PR adds a file under `backend/migrations/versions/`, run
   **Actions → Migrate staging** before or right after Render deploys it. The **Staging
   migrations** workflow checks this for you: it goes red on the merge and turns green again
