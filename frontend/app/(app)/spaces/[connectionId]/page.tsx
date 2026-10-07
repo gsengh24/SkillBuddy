@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { SpaceView } from "@/components/spaces/space-view";
 import { ButtonLink } from "@/components/ui/button";
 import { TextLink } from "@/components/ui/text-link";
-import { getCurrentUser } from "@/lib/auth/session";
+import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getConnections } from "@/lib/social/server";
 import { getSpace } from "@/lib/spaces/server";
 
@@ -14,12 +14,15 @@ export const dynamic = "force-dynamic";
 /** A pair space with one connection. Only the two people in it can open it. */
 export default async function SpacePage({ params }: { params: Promise<{ connectionId: string }> }) {
   const { connectionId } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/login?next=/spaces/${encodeURIComponent(connectionId)}`);
-  const connections = await getConnections();
+  // The session, the connections and the space, all at once.
+  const spaceCall = startEarly(getSpace(connectionId));
+  const { user, data: connections } = await withUser(
+    `/login?next=/spaces/${encodeURIComponent(connectionId)}`,
+    getConnections(),
+  );
   const connection = connections.items.find((item) => item.id === connectionId);
   if (!connection) notFound();
-  const space = await getSpace(connectionId);
+  const space = await spaceCall;
   const name = connection.person.display_name ?? "Your connection";
 
   return (

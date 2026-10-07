@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 import { AccountActions } from "@/components/auth/account-actions";
 import { EmailToggle } from "@/components/profile/email-toggle";
 import { Card } from "@/components/ui/card";
 import { TextLink } from "@/components/ui/text-link";
-import { getCurrentUser } from "@/lib/auth/session";
+import { withUser } from "@/lib/auth/with-user";
 import { getMyProfile } from "@/lib/profile/server";
 
 export const metadata: Metadata = { title: "Account settings" };
 export const dynamic = "force-dynamic";
 
 export default async function AccountSettingsPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/settings/account");
-  const profile = await getMyProfile();
+  const { user, data: profile } = await withUser("/login?next=/settings/account", getMyProfile());
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">

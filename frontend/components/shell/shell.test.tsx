@@ -1,13 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "./app-shell";
-import { isActive } from "./nav";
+import { isActive } from "./links";
 
 const navigation = vi.hoisted(() => ({ pathname: "/home" }));
 vi.mock("next/navigation", () => ({ usePathname: () => navigation.pathname }));
 
 const USER = { id: "8d3f4b2a-0000-4000-8000-000000000001", email: "ananya@example.com" };
+const PLACES = ["Home", "Spaces", "Saved", "You"];
 
 beforeEach(() => {
   navigation.pathname = "/home";
@@ -21,62 +23,104 @@ function renderShell(props: Partial<Parameters<typeof AppShell>[0]> = {}) {
   );
 }
 
+function navs() {
+  const [desktop, phone] = screen.getAllByRole("navigation", { name: "Main" }) as [
+    HTMLElement,
+    HTMLElement,
+  ];
+  return { desktop, phone };
+}
+
 describe("AppShell", () => {
-  it("has a sidebar and a bottom tab bar, both named Main", () => {
+  it("has a desktop top bar and a phone bottom nav, both named Main, with the same places", () => {
     renderShell();
-    const navs = screen.getAllByRole("navigation", { name: "Main" });
-    expect(navs).toHaveLength(2);
-    const [sidebar, tabs] = navs as [HTMLElement, HTMLElement];
+    const { desktop, phone } = navs();
     expect(
-      within(sidebar)
+      within(desktop)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Discover", "Messages", "Saved", "Pair spaces"]);
+    ).toEqual(PLACES);
     expect(
-      within(tabs)
+      within(phone)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Discover", "Messages", "Saved", "You"]);
+    ).toEqual(PLACES);
+    expect(within(desktop).getByRole("link", { name: "You" })).toHaveAttribute("href", "/profile");
     expect(screen.getByRole("main")).toHaveTextContent("Page content");
+    expect(screen.queryByText("Soon")).not.toBeInTheDocument();
   });
 
-  it("marks the current page, and links Pair spaces in the sidebar", () => {
-    navigation.pathname = "/messages";
+  it.each([
+    ["/home", "Home"],
+    ["/spaces/42", "Spaces"],
+    ["/saved", "Saved"],
+    ["/profile", "You"],
+  ])("marks the current place on %s in both navs", (pathname, label) => {
+    navigation.pathname = pathname;
     renderShell();
     const current = screen.getAllByRole("link", { current: "page" });
-    expect(current.map((link) => link.textContent)).toEqual(["Messages", "Messages"]);
-    expect(screen.getByRole("link", { name: "Pair spaces" })).toHaveAttribute("href", "/spaces");
-    expect(screen.queryByText("Soon")).not.toBeInTheDocument();
+    expect(current.map((link) => link.textContent)).toEqual([label, label]);
+  });
+
+  it("keeps Messages one tap away until Home takes it over, and marks it when open", () => {
+    navigation.pathname = "/messages/42";
+    renderShell({ unreadMessages: 3 });
+    const links = screen.getAllByRole("link", { name: "Messages (3 unread)" });
+    expect(links).toHaveLength(2); // desktop top bar and phone top row
+    for (const link of links) {
+      expect(link).toHaveAttribute("href", "/messages");
+      expect(link).toHaveAttribute("aria-current", "page");
+    }
+    // No place in the navs is current on the messages pages.
+    const { desktop, phone } = navs();
+    expect(within(desktop).queryByRole("link", { current: "page" })).not.toBeInTheDocument();
+    expect(within(phone).queryByRole("link", { current: "page" })).not.toBeInTheDocument();
   });
 
   it("gives icon-only and touch controls labels and 44px targets", () => {
     renderShell({ hasNotifications: true });
     const bells = screen.getAllByRole("link", { name: "Notifications (new)" });
     expect(bells).toHaveLength(2); // phone top row and desktop
-    for (const bell of bells) expect(bell.className).toMatch(/\bsize-11\b/);
-    const tabs = screen.getAllByRole("navigation", { name: "Main" })[1] as HTMLElement;
-    for (const tab of within(tabs).getAllByRole("link")) {
+    for (const bell of bells) {
+      expect(bell).toHaveAttribute("href", "/notifications");
+      expect(bell.className).toMatch(/\bsize-11\b/);
+    }
+    for (const link of screen.getAllByRole("link", { name: "Messages" })) {
+      expect(link.className).toMatch(/\bsize-11\b/);
+    }
+    for (const tab of within(navs().phone).getAllByRole("link")) {
       expect(tab.className).toMatch(/\bmin-h-11\b/);
-      expect(tab.className).toMatch(/\bmin-w-11\b/);
     }
     expect(screen.getByRole("link", { name: "Skip to content" })).toHaveAttribute("href", "#main");
   });
 
-  it("shows unread messages, the profile card and the account link", () => {
+  it("can be used from the keyboard: skip link first, then the navigation in order", async () => {
+    renderShell();
+    const user = userEvent.setup();
+    await user.tab();
+    expect(screen.getByRole("link", { name: "Skip to content" })).toHaveFocus();
+
+    const { desktop } = navs();
+    const order: string[] = [];
+    for (let step = 0; step < 6; step += 1) {
+      await user.tab();
+      const focused = document.activeElement;
+      if (focused && desktop.contains(focused)) order.push(focused.textContent ?? "");
+    }
+    expect(order).toEqual(PLACES);
+  });
+
+  it("shows profile progress and the account link", () => {
     renderShell({ unreadMessages: 2, profileComplete: 78 });
-    // Announced in the sidebar badge and on the phone tab (only one is shown at a time).
-    expect(screen.getAllByText("2 unread messages")).toHaveLength(2);
     expect(screen.getByRole("meter", { name: "Profile complete" })).toHaveAttribute(
       "aria-valuenow",
       "78",
     );
-    expect(screen.getByRole("link", { name: "Your account" })).toHaveAttribute(
-      "href",
-      "/settings/account",
-    );
-    expect(screen.getByText(USER.email)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Your profile/ })).toHaveAttribute("href", "/profile");
-    expect(screen.getByRole("link", { name: "You" })).toHaveAttribute("href", "/profile");
+    const account = screen.getByRole("link", { name: "Your account" });
+    expect(account).toHaveAttribute("href", "/settings/account");
+    expect(account).toHaveAttribute("title", USER.email);
+    expect(screen.getAllByRole("link", { name: "Messages (2 unread)" })).toHaveLength(2);
   });
 
   it("sends people without a profile to onboarding", () => {
