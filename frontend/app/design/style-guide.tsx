@@ -13,7 +13,8 @@ import {
   PersonIcon,
 } from "@/components/ui/icons";
 import { IntentChip } from "@/components/ui/intent-chip";
-import { Logo } from "@/components/ui/logo";
+import { Logo as LegacyLogo } from "@/components/ui/logo";
+import { Logo } from "@/components/ds";
 import { MatchNumeral } from "@/components/ui/match-numeral";
 import { Overline } from "@/components/ui/overline";
 import { StrengthBar } from "@/components/ui/strength-bar";
@@ -35,6 +36,7 @@ import {
 } from "@/lib/design/tokens";
 
 import { IntentChipDemo } from "./chip-demo";
+import { CynergiGuide } from "./cynergi-guide";
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
@@ -94,18 +96,37 @@ function SamplePersonCard({ id, name, value }: { id: string; name: string; value
   );
 }
 
-/** Every component and colour pair of the design system (ADR 0010). */
+/**
+ * Every component and colour pair of the design system: the Cynergi components (ADR 0014)
+ * first, then the older components that existing screens still use.
+ */
 export function StyleGuide() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 py-10 lg:px-10">
+    <main className="max-w-content mx-auto flex w-full flex-col gap-12 px-4 py-10 lg:px-8">
       <header className="flex flex-col gap-3">
         <Logo />
-        <h1 className="text-h1">Design system</h1>
-        <p className="text-muted max-w-2xl">
-          Direction B, &ldquo;Quiet dashboard&rdquo;. Available in development only. Rules and
-          usage: <span className="text-small font-mono">docs/design/design-system.md</span>.
+        <h1 className="text-headline lg:text-headline-lg">Design system</h1>
+        <p className="text-ink-2 max-w-2xl">
+          Cynergi (ADR 0014). Shown in development and on preview deployments only. Spec:{" "}
+          <span className="text-meta-lg font-mono">docs/design/design-spec.md</span>. Narrow the
+          window (or use the browser&apos;s device toolbar at 390px) to see the phone layout.
         </p>
       </header>
+
+      <CynergiGuide />
+
+      <section
+        aria-labelledby="sg-legacy"
+        className="border-line flex flex-col gap-2 border-t pt-8"
+      >
+        <h2 id="sg-legacy" className="font-display text-headline">
+          Legacy components
+        </h2>
+        <p className="text-ink-2 max-w-2xl">
+          The older components (components/ui), still used by screens that haven&apos;t been
+          restyled yet. They now take their neutrals and greens from the Cynergi palette.
+        </p>
+      </section>
 
       <Section id="sg-neutrals" title="Neutrals">
         <div className="flex flex-wrap gap-4">
@@ -198,14 +219,13 @@ export function StyleGuide() {
 
       <Section id="sg-type" title="Typography">
         <div className="flex flex-col gap-3">
-          <p className="text-h1">Heading 1 · 28 / 700</p>
+          <p className="text-h1 font-display">Heading 1 · 26 / 800</p>
           <p className="text-section">Section heading · 19 / 700</p>
           <p className="max-w-xl">
-            Body text · 14.5 / 1.6. Calm, light green and white, with soft colour. Thin outlined
-            controls, never bulky filled buttons.
+            Body text · 14 / 1.5. The older components, now in Inter on the Cynergi neutrals.
           </p>
           <p className="text-small text-muted">Small text · 13</p>
-          <Overline>Label · Plex Mono 11 uppercase</Overline>
+          <Overline>Label · JetBrains Mono 11 uppercase</Overline>
           <p className="text-numeral">92</p>
         </div>
       </Section>
@@ -280,7 +300,7 @@ export function StyleGuide() {
       <Section id="sg-surfaces" title="Card and hero panel">
         <Card className="max-w-md">
           <p className="font-bold">Card</p>
-          <p className="text-muted">Paper, 1px line border, radius 18.</p>
+          <p className="text-muted">Paper (now the panel colour), 1px line border, radius 12.</p>
         </Card>
         <HeroPanel>
           <Overline tone="green">What are you looking for</Overline>
@@ -314,7 +334,7 @@ export function StyleGuide() {
           <span className="inline-flex items-center gap-2">
             New <BadgeDot label="new activity" />
           </span>
-          <Logo />
+          <LegacyLogo />
           <span className="text-ink inline-flex gap-3">
             <CompassIcon />
             <MessageIcon />

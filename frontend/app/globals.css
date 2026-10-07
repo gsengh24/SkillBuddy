@@ -1,30 +1,66 @@
 @import "tailwindcss";
 
 /*
- * Skill Buddy design system, direction B "Quiet dashboard" (ADR 0010,
- * docs/design/design-system.md). Colour values mirror lib/design/tokens.ts; a test keeps the
- * two identical. Tailwind's default palette is removed, so only these colours exist.
+ * Cynergi design system (ADR 0014, docs/design/design-spec.md). Colour values mirror
+ * lib/design/tokens.ts; a test keeps the two identical. Tailwind's default palette is
+ * removed, so only these colours exist.
  */
-@theme {
+
+/* The palette, once, as CSS variables. */
+:root {
+  --bg: #ffffff;
+  --panel: #f6f7f5;
+  --line: #e4e6e2;
+  --line-strong: #d9dbd6;
+  --ink: #0a0a0a;
+  --ink-hover: #222222;
+  --ink-2: #4a4f4a;
+  --muted: #696d68;
+  --muted-2: #8a8f89;
+  --faint: #b0b4ae;
+  --green: #0f4a34;
+  --green-hover: #0b3828;
+  --green-tint: #e8f1ec;
+  --green-line: #b9d3c5;
+  --green-soft: #f3f9f5;
+  --mint: #7be0a8;
+  --mint-text: #9fd1b6;
+  --danger: #b3261e;
+}
+
+@theme inline {
   --color-*: initial;
 
-  /* Neutrals */
-  --color-ground: #f2f6f0;
-  --color-paper: #fbfdf9;
-  --color-ink: #14201a;
-  --color-muted: #55655b;
-  --color-line: #d3dcd1;
-  --color-line-strong: #b9c7b8;
+  /* Palette (bg-panel, text-ink-2, border-green-line, ...) */
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-hover: var(--ink-hover);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-faint: var(--faint);
+  --color-green: var(--green);
+  --color-green-hover: var(--green-hover);
+  --color-green-tint: var(--green-tint);
+  --color-green-line: var(--green-line);
+  --color-green-soft: var(--green-soft);
+  --color-mint: var(--mint);
+  --color-mint-text: var(--mint-text);
+  --color-danger: var(--danger);
 
-  /* Hues: base = dots, bars and fills only (never text); ink = text; tint = backgrounds */
-  --color-green-base: #2c6a4c;
-  --color-green-ink: #1f5238;
-  --color-green-tint: #e1f0e4;
-  --color-green-edge: #c5d8c8;
-  --color-green-track: #c7d8ce;
-  --color-green-panel: #ddefe1;
-  --color-green-chip: #edf6ee;
-  --color-green-chip-edge: #c5d8c8;
+  /* Older names, used by components/ui until each screen is restyled. */
+  --color-ground: var(--bg);
+  --color-paper: var(--panel);
+  --color-green-base: var(--green);
+  --color-green-ink: var(--green);
+  --color-green-edge: var(--green-line);
+  --color-green-track: var(--green-line);
+  --color-green-panel: var(--green-tint);
+  --color-green-chip: var(--green-soft);
+  --color-green-chip-edge: var(--green-line);
 
   --color-amber-base: #d08a1e;
   --color-amber-ink: #6e4608;
@@ -34,85 +70,167 @@
 
   --color-coral-base: #e2573e;
   --color-coral-ink: #9a3b27;
-  --color-coral-tint: #fbe4dd;
+  --color-coral-tint: #fceae4;
   --color-coral-edge: #f0bfb2;
   --color-coral-track: #f6d4cb;
 
   --color-blue-base: #3f78b5;
   --color-blue-ink: #2a5683;
-  --color-blue-tint: #e0ecf8;
+  --color-blue-tint: #e4eff9;
   --color-blue-edge: #b5cce0;
   --color-blue-track: #ccdce8;
 
   --color-violet-base: #7b63c2;
   --color-violet-ink: #54428f;
-  --color-violet-tint: #ece6f7;
+  --color-violet-tint: #f0ebf9;
   --color-violet-edge: #d2c7ea;
   --color-violet-track: #dfd6f1;
 
   --color-teal-base: #1f8a8c;
   --color-teal-ink: #1b6466;
-  --color-teal-tint: #ddf0ef;
+  --color-teal-tint: #dff2f1;
   --color-teal-edge: #b5dcda;
   --color-teal-track: #c8e5e3;
 
   /* The filled notification badge: darker than coral base so its text passes 4.5:1 */
   --color-badge: #b83d28;
-  --color-badge-text: #fbfdf9;
+  --color-badge-text: var(--bg);
 
-  /* Type scale */
-  --text-h1: 28px;
-  --text-h1--line-height: 1.25;
-  --text-h1--letter-spacing: -0.02em;
-  --text-h1--font-weight: 700;
+  /* Fonts come from next/font (self-hosted at build time; see app/layout.tsx). */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Type scale (phone, then the -lg step for desktop). Display sizes use font-display. */
+  --text-hero: 32px;
+  --text-hero--line-height: 1.02;
+  --text-hero--letter-spacing: -0.05em;
+  --text-hero--font-weight: 800;
+  --text-hero-lg: 64px;
+  --text-hero-lg--line-height: 1;
+  --text-hero-lg--letter-spacing: -0.05em;
+  --text-hero-lg--font-weight: 800;
+  --text-headline: 26px;
+  --text-headline--line-height: 1.05;
+  --text-headline--letter-spacing: -0.045em;
+  --text-headline--font-weight: 800;
+  --text-headline-lg: 48px;
+  --text-headline-lg--line-height: 1.02;
+  --text-headline-lg--letter-spacing: -0.05em;
+  --text-headline-lg--font-weight: 800;
+  --text-title: 14px;
+  --text-title--line-height: 1.4;
+  --text-title--letter-spacing: -0.01em;
+  --text-title--font-weight: 600;
+  --text-title-lg: 16px;
+  --text-title-lg--line-height: 1.4;
+  --text-title-lg--letter-spacing: -0.01em;
+  --text-title-lg--font-weight: 600;
+  --text-body: 14px;
+  --text-body--line-height: 1.5;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 1.5;
+  --text-meta: 12px;
+  --text-meta--line-height: 1.5;
+  --text-meta-lg: 13px;
+  --text-meta-lg--line-height: 1.5;
+  --text-mono: 10px;
+  --text-mono--line-height: 1.4;
+  --text-mono--letter-spacing: 0.06em;
+  --text-mono-lg: 11px;
+  --text-mono-lg--line-height: 1.4;
+  --text-mono-lg--letter-spacing: 0.06em;
+
+  /* Older type names, used by existing screens. */
+  --text-h1: 26px;
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.045em;
+  --text-h1--font-weight: 800;
   --text-section: 19px;
-  --text-section--line-height: 1.35;
+  --text-section--line-height: 1.3;
+  --text-section--letter-spacing: -0.01em;
   --text-section--font-weight: 700;
-  --text-body: 14.5px;
-  --text-body--line-height: 1.6;
   --text-small: 13px;
   --text-small--line-height: 1.5;
   --text-label: 11px;
   --text-label--line-height: 1.4;
-  --text-label--letter-spacing: 0.09em;
+  --text-label--letter-spacing: 0.06em;
   --text-numeral: 33px;
   --text-numeral--line-height: 1;
-  --text-numeral--letter-spacing: -0.03em;
+  --text-numeral--letter-spacing: -0.05em;
   --text-numeral--font-weight: 800;
 
-  /* Radii */
+  /* Radii: panels 14, cards 12, inputs 10, buttons 9, small chips 4. Pills: rounded-full. */
+  --radius-panel: 14px;
+  --radius-card: 12px;
+  --radius-input: 10px;
+  --radius-control: 9px;
+  --radius-chip: 4px;
+  --radius-hero: 14px;
   --radius-why: 12px;
-  --radius-card: 18px;
-  --radius-hero: 22px;
-}
 
-/* Fonts come from next/font (self-hosted at build time; see app/layout.tsx). */
-@theme inline {
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  /* Content max width (max-w-content). */
+  --container-content: 1160px;
+
+  /* Motion (ADR 0014): transform and opacity only, off for reduced motion. */
+  --animate-fade-up: fade-up 450ms ease both;
+  --animate-pulse-soft: pulse-soft 1.6s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
 }
 
 @layer base {
   body {
-    background-color: var(--color-ground);
-    color: var(--color-ink);
+    background-color: var(--bg);
+    color: var(--ink);
     font-family: var(--font-sans);
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
   }
 
-  /* One visible focus ring everywhere: 2px green, offset 2px. */
-  :focus-visible {
-    outline: 2px solid var(--color-green-base);
-    outline-offset: 2px;
+  h1 {
+    font-family: var(--font-display);
   }
 
-  /* No motion anywhere: hover and focus change colour only. */
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
+  /*
+   * One visible focus ring everywhere: white 2px, then green 2px. The transparent outline
+   * shows up in Windows high-contrast mode, where box shadows are removed.
+   */
+  :focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow:
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--green);
+  }
+
+  /* Reduced motion: nothing moves, content simply appears. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

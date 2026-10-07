@@ -1,6 +1,6 @@
 # 10. Design system: direction B, "Quiet dashboard"
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0014](0014-design-system-cynergi.md) (2026-10-07)
 - **Date:** 2026-10-02
 
 ## Context

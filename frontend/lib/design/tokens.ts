@@ -1,20 +1,83 @@
 /**
- * Design tokens for direction B, "Quiet dashboard" (ADR 0010, docs/design/design-system.md).
+ * Design tokens: the Cynergi design system (ADR 0014, docs/design/design-spec.md).
  *
  * This file is the source of truth for colour values. app/globals.css repeats them as CSS
- * variables in the Tailwind theme, and a test checks the two stay identical.
+ * variables on :root and maps them into the Tailwind theme, and a test checks the two stay
+ * identical.
  *
- * Rules: a hue's `base` is for dots, bars and fills only, never text. Text on a tint uses
- * that hue's `ink`. Colour never encodes a personal attribute.
+ * `colors` is the palette for new screens. The older names further down (`neutrals`, `hues`,
+ * `greenSurfaces`, `badge`) belong to the components in `components/ui` that existing
+ * screens still use; they point at the new palette where one exists and go away as each
+ * screen is restyled.
  */
 
+export const colors = {
+  /** Page background. */
+  bg: "#FFFFFF",
+  /** Cards, composer, inactive segments. */
+  panel: "#F6F7F5",
+  /** Hairline borders and dividers (decorative: never the only edge of a control). */
+  line: "#E4E6E2",
+  /** Outer frames. */
+  lineStrong: "#D9DBD6",
+  /** Primary text and the primary button. */
+  ink: "#0A0A0A",
+  /** The primary button's hover fill (from the reference HTML). */
+  inkHover: "#222222",
+  /** Body text. */
+  ink2: "#4A4F4A",
+  /**
+   * Muted text that must stay readable. The spec gives #6B6F6A, which is 4.44:1 on
+   * green-tint; this is two steps darker so it passes 4.5:1 on every surface (ADR 0014).
+   */
+  muted: "#696D68",
+  /** Second half of two-tone headlines, and field borders (3:1). Large text only. */
+  muted2: "#8A8F89",
+  /** Section numerals 01, 02, 03. Decorative only, never real text. */
+  faint: "#B0B4AE",
+  /** The brand: links, outline buttons, eyebrows, the CTA band. */
+  green: "#0F4A34",
+  greenHover: "#0B3828",
+  /** Hero panel, soft badges. */
+  greenTint: "#E8F1EC",
+  /** Borders inside green-tint areas (decorative). */
+  greenLine: "#B9D3C5",
+  /** Chip fill on tint. */
+  greenSoft: "#F3F9F5",
+  /** Pixel-art fills and dots only. Never text. */
+  mint: "#7BE0A8",
+  /** Second line of a headline on the green CTA band. */
+  mintText: "#9FD1B6",
+  /** Errors, report and block confirmations. */
+  danger: "#B3261E",
+} as const;
+
+export type ColorName = keyof typeof colors;
+
+/** Radii in px: panels, cards, buttons, inputs, small chips. Pills use `rounded-full`. */
+export const radii = { panel: 14, card: 12, control: 9, input: 10, chip: 4 } as const;
+
+/** Content max width and side gutters in px. */
+export const layout = { maxWidth: 1160, gutterPhone: 16, gutterDesktop: 32 } as const;
+
+/**
+ * An avatar's fill: green or ink, from a stable hash of the person's id (see
+ * `avatarFill` in ./color.ts). Text on both is white.
+ */
+export const AVATAR_FILLS = ["green", "ink"] as const;
+export type AvatarFill = (typeof AVATAR_FILLS)[number];
+
+/* ------------------------------------------------------------------------------------- */
+/* Older names, used by components/ui until each screen is restyled.                      */
+/* ------------------------------------------------------------------------------------- */
+
 export const neutrals = {
-  ground: "#F2F6F0",
-  paper: "#FBFDF9",
-  ink: "#14201A",
-  muted: "#55655B",
-  line: "#D3DCD1",
-  lineStrong: "#B9C7B8",
+  ground: colors.bg,
+  paper: colors.panel,
+  ink: colors.ink,
+  muted: colors.muted,
+  line: colors.line,
+  lineStrong: colors.lineStrong,
 } as const;
 
 export type HueName = "green" | "amber" | "coral" | "blue" | "violet" | "teal";
@@ -33,49 +96,50 @@ export type Hue = {
 };
 
 /**
- * Values marked "derived" were not in the brief; they mix the hue's base into paper at the
- * same strength as the given ones (edge about 37%, track about 25%). See the design doc.
+ * Green now uses the brand greens. The other hues keep their ADR 0010 values, except the
+ * coral, blue, violet and teal tints, which are a little lighter so muted text still
+ * reaches 4.5:1 on them.
  */
 export const hues: Record<HueName, Hue> = {
   green: {
-    base: "#2C6A4C",
-    ink: "#1F5238",
-    tint: "#E1F0E4",
-    edge: "#C5D8C8", // the brief's chip-edge
-    track: "#C7D8CE", // derived
+    base: colors.green,
+    ink: colors.green,
+    tint: colors.greenTint,
+    edge: colors.greenLine,
+    track: colors.greenLine,
   },
   amber: {
     base: "#D08A1E",
     ink: "#6E4608",
     tint: "#FDF3DC",
-    edge: "#EBD2A8", // derived
+    edge: "#EBD2A8",
     track: "#F3DFB2",
   },
   coral: {
     base: "#E2573E",
     ink: "#9A3B27",
-    tint: "#FBE4DD",
+    tint: "#FCEAE4",
     edge: "#F0BFB2",
     track: "#F6D4CB",
   },
   blue: {
     base: "#3F78B5",
     ink: "#2A5683",
-    tint: "#E0ECF8",
-    edge: "#B5CCE0", // derived
-    track: "#CCDCE8", // derived
+    tint: "#E4EFF9",
+    edge: "#B5CCE0",
+    track: "#CCDCE8",
   },
   violet: {
     base: "#7B63C2",
     ink: "#54428F",
-    tint: "#ECE6F7",
+    tint: "#F0EBF9",
     edge: "#D2C7EA",
     track: "#DFD6F1",
   },
   teal: {
     base: "#1F8A8C",
     ink: "#1B6466",
-    tint: "#DDF0EF",
+    tint: "#DFF2F1",
     edge: "#B5DCDA",
     track: "#C8E5E3",
   },
@@ -83,21 +147,21 @@ export const hues: Record<HueName, Hue> = {
 
 export const HUE_NAMES = Object.keys(hues) as HueName[];
 
-/** Green-only surfaces from the brief. */
+/** Green-only surfaces, now the brand greens. */
 export const greenSurfaces = {
-  panel: "#DDEFE1",
-  chip: "#EDF6EE",
-  chipEdge: "#C5D8C8",
+  panel: colors.greenTint,
+  chip: colors.greenSoft,
+  chipEdge: colors.greenLine,
 } as const;
 
 /**
- * The filled notification badge. The coral base (#E2573E) gives only 3.71:1 under paper
- * text, so the badge uses this darker coral (5.49:1).
+ * The filled notification badge. The coral base (#E2573E) gives only 3.6:1 under white
+ * text, so the badge uses this darker coral (5.62:1).
  */
-export const badge = { fill: "#B83D28", text: neutrals.paper } as const;
+export const badge = { fill: "#B83D28", text: colors.bg } as const;
 
-/** Focus ring: 2px, offset 2px, on every focusable element. */
-export const focusRing = hues.green.base;
+/** Focus ring colour: the brand green, on every focusable element. */
+export const focusRing = colors.green;
 
 export type Intent =
   "build_together" | "skill_exchange" | "interest_buddy" | "accountability" | "mentor" | "explore";
@@ -112,5 +176,3 @@ export const intents: Record<Intent, { label: string; hue: HueName }> = {
 };
 
 export const INTENTS = Object.keys(intents) as Intent[];
-
-export const radii = { card: 18, hero: 22, why: 12 } as const;
