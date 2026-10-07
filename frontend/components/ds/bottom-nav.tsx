@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ComponentType } from "react";
+import type { ReactNode } from "react";
 
 import { isActive } from "../shell/nav";
 import { cx } from "../ui/cx";
@@ -10,7 +10,8 @@ import { cx } from "../ui/cx";
 export type BottomNavItem = {
   href: string;
   label: string;
-  icon: ComponentType<{ className?: string }>;
+  /** An icon element, e.g. <HomeIcon />. (An element, not a component: server pages pass these.) */
+  icon: ReactNode;
 };
 
 /**
@@ -27,7 +28,7 @@ export function BottomNav({ items, className }: { items: BottomNavItem[]; classN
         className,
       )}
     >
-      {items.map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon }) => {
         const current = isActive(pathname, href);
         return (
           <Link
@@ -39,7 +40,7 @@ export function BottomNav({ items, className }: { items: BottomNavItem[]; classN
               current ? "text-green font-medium" : "text-muted hover:text-ink",
             )}
           >
-            <Icon />
+            {icon}
             {label}
           </Link>
         );

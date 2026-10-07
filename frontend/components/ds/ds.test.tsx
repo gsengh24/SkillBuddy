@@ -258,8 +258,8 @@ describe("Navigation", () => {
     render(
       <BottomNav
         items={[
-          { href: "/home", label: "Home", icon: HomeIcon },
-          { href: "/spaces", label: "Spaces", icon: PeopleIcon },
+          { href: "/home", label: "Home", icon: <HomeIcon /> },
+          { href: "/spaces", label: "Spaces", icon: <PeopleIcon /> },
         ]}
       />,
     );
