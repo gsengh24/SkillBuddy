@@ -32,8 +32,8 @@ Define once as CSS variables on `:root` (and mirror in the Tailwind or CSS confi
 | `--ink` | `#0A0A0A` | primary text, primary button |
 | `--ink-2` | `#4A4F4A` | body text |
 | `--muted` | `#6B6F6A` | muted text that must stay readable (4.5:1 on white) |
-| `--muted-2` | `#8A8F89` | second half of two-tone headlines (large text only) |
-| `--faint` | `#B0B4AE` | section numerals 01, 02, 03 (decorative only) |
+| `--muted-2` | `#8A8F89` | second half of two-tone headlines and stat numerals, large bold text only (24px bold and up). NEVER for small text, times, counters, placeholders or labels: use `--muted` there |
+| `--faint` | `#B0B4AE` | section numerals 01, 02, 03: decorative, `aria-hidden`. If axe still flags them in Smoke, darken the colour until it passes, do not exempt them |
 | `--green` | `#0F4A34` | brand: links, outline buttons, eyebrows, CTA band |
 | `--green-hover` | `#0B3828` | hover and pressed |
 | `--green-tint` | `#E8F1EC` | hero panel, soft badges |
