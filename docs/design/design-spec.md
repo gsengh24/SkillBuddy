@@ -77,14 +77,14 @@ Use contractions. Active voice. Button labels: verb first, 1 to 3 words, no full
 ## 4. Components (build these first, in PR 1)
 
 1. **Button**: `primary` (ink fill, white text), `outline` (green border and text, transparent fill), `ghost`. Height 40px phone and desktop, 36px compact. Hover lifts 2px (transform). Active scales .97. At most one primary per view.
-2. **Keycap chip** (inside the main desktop button: "S"): decorative hint, desktop only, hidden on touch. Shortcut is off by default behind a setting (Settings > Accessibility), `aria-hidden` on the chip itself, never single-key shortcuts while a text field has focus.
+2. **Keycap chip**: NOT in v1. No "S" or "D" chips and no single-key shortcuts. This avoids a new setting and screen-reader conflicts. Maybe later.
 3. **Panel**: white or `--panel`, 1px `--line`, radius 14px, padding 16 phone / 24 desktop.
 4. **Hero grid**: bordered cells, 1px `--green-line`, on `--green-tint`. Cells hold real product pieces only.
 5. **Label chip**: black fill, white mono text, 10px, radius 4px, with a leading `*`. Used on cards.
 6. **Topic chip**: pill, 1px green border, green mono text, white fill.
 7. **Badge**: `REQUEST` (black), `INTRO` (green tint with green text and green-line border).
 8. **Segmented control**: `--panel` track, white selected segment with 1px line. Used for All, Requests, Messages.
-9. **List row**: 34px leading icon or avatar, title 14px 800, one-line preview 12px, optional right-side badge or unread dot. Rows separated by 1px lines, not cards.
+9. **List row**: 34px leading icon or avatar, title 14px weight 600, one-line secondary text 12px, optional right-side badge or unread dot. Rows separated by 1px lines, not cards.
 10. **Avatar**: circle with initials, `--green` or `--ink` fill, white text. No photos.
 11. **Input and textarea**: white, 1px `--line`, radius 10px, 16px text on phone (prevents iOS zoom), green focus ring, character counter in mono.
 12. **Accordion** (FAQ): hairline rows, chevron rotates 180deg, height opens with `grid-template-rows` transition, one open at a time optional.
@@ -114,12 +114,12 @@ Use contractions. Active voice. Button labels: verb first, 1 to 3 words, no full
 ### 6.1 Landing (public), see `reference-landing.html`
 Sections in order:
 1. Top bar.
-2. Hero panel on `--green-tint`. Left: mono eyebrow chip "for builders, learners, explorers", headline **Say what you're building.** / *Meet who can help.* (second half muted), one-sentence body, buttons "Find your people" (primary, keycap chip on desktop) and "See how it works" (outline). Right (desktop) or below (phone): the hero grid with cells: topic chip "cybersecurity", people icon, "Why this match" card, pixel pattern, "Intro sent" state.
+2. Hero panel on `--green-tint`. Left: mono eyebrow chip "for builders, learners, explorers", headline **Say what you're building.** / *Meet who can help.* (second half muted), one-sentence body, buttons "Find your people" (primary) and "See how it works" (outline). Right (desktop) or below (phone): the hero grid with cells: topic chip "cybersecurity", people icon, "Why this match" card, pixel pattern, "Intro sent" state.
 3. How it works: mono label, headline **Skills. Interests. Intent.** / *Matched.*, then three lead-word rows (Skills, Interests, Intent) numbered 01 to 03.
-4. Three cards with black label chips: Safe by default, Human chats, Pair spaces. Copy must match `/privacy` and the "no AI in chats" promise exactly. Do not claim anything the privacy page does not say.
+4. Three cards with black label chips: Safe by default, Human chats, Pair spaces. Do not say "one tap" (reporting asks for a reason): use "Block or report from any chat." Copy must match `/privacy` and the "no AI in chats" promise exactly. Do not claim anything the privacy page does not say.
 5. FAQ accordion. Answers are drafted from `docs/` and `/privacy`. Privacy answers stop for owner review.
 6. CTA band: **Your next collaborator** / *is one sentence away.*
-7. Footer: Privacy, Terms, Contact (the address in `frontend/lib/legal.ts`).
+7. Footer: Privacy, Terms, Contact (the address in `frontend/lib/legal.ts`). Legal row is "© 2026 Cynergi" only, with no "All rights reserved" until the lawyer approves.
 
 Dropped on purpose until real: customer logos, quotes, testimonials, pricing, comparison receipts, world map.
 
@@ -128,26 +128,26 @@ Requests and Messages are now one page. The old Messages route redirects to Home
 
 Phone (single column):
 1. Header: "Home" (800), bell icon.
-2. Greeting: mono label ("Good morning", "Good afternoon" or "Good evening" from the device clock), then a two-tone display headline "What are you building today?" / "Say it in a sentence." (second line muted).
+2. Greeting: mono label ("Good morning", "Good afternoon" or "Good evening" from the device clock, set in the browser after load so the server's UTC clock never shows the wrong one; the first paint says "Hello"), then a two-tone display headline "What are you building today?" / "Say it in a sentence." (second line muted).
 3. New request composer on `--green-tint` with green-line border: mono label NEW REQUEST, textarea, counter (500 max, as today), primary "Find people", and four suggestion pills under it (examples such as "a design partner", "learn React"). Tapping a pill fills the textarea with that phrase, it never sends anything. Suggestions are static text for now, not AI-generated and not based on user data.
 4. Summary strip: three bordered cells with a large 800 numeral and a mono label (Requests, Messages, Spaces). Numbers come from the data already fetched, no new endpoint.
 5. Mono label "Recent activity", then the segmented filter: All (default), Requests n, Messages n.
 6. One list, newest activity first, rows separated by hairlines. Each row shows a mono relative time on the right ("2m", "12m", "1h", "Yesterday") next to the badge or unread dot:
    - Request row: search icon tile, request title, "n matches ready to view", REQUEST badge. Opens the matches for that request.
    - Intro received row: dashed tile with user-plus icon, "New intro received", what they asked for, INTRO badge. Opens the intro (accept, decline, block, report).
-   - Message row: avatar initials, name (only shown once connected, as today), last message preview, unread dot. Opens the chat.
+   - Message row: avatar initials, name (only shown once connected, as today), a one-line status, and an unread dot. Opens the chat. The status is "n new messages" when `unread_messages` is above 0, otherwise "Open chat". The API does not send message text, so there is NO message preview in v1 (no extra calls, no backend field). The time comes from `last_message_at`.
 7. Green band under the list with a static pixel pattern: "Turn a connection into a shared goal." and a white "Open pair spaces" button. Hide it when the user has no connections yet.
 8. Bottom nav: Home, Spaces, Saved, You.
 
 Desktop (two columns, left 380px list, right flexible detail):
 - Left: composer, filter, list. Right: the opened thing (matches, intro, or chat), or an empty state that invites a first request.
-- The route stays `/home`. Opening an item sets `?item=<type>-<id>` so back and refresh work. On phone the same URL shows the detail full screen with a back arrow.
+- The route stays `/home`. Keep `/messages/[id]` as the chat page (deep links and report flows use it) and make `/messages` redirect to `/home`. Opening an item sets `?item=<type>-<id>` so back and refresh work. On phone the same URL shows the detail full screen with a back arrow.
 
 Rules:
 - Names and links stay hidden until the connection exists. Do not change this.
 - Block and report stay inside the chat, the intro and the match card, exactly as built. Restyle only. Those screens are legal-sensitive (see section 9).
 - "Open pair space" button stays on a connected person's row and chat header.
-- Data comes from the existing endpoints only (`/auth/me`, `/me/profile`, `/requests`, `/connections`, `/messages/updates`, `/notifications/unread-count`). Fetch them in parallel (`Promise.all`), never one after another. Do not add endpoints.
+- Data comes from the existing endpoints only (`/auth/me`, `/me/profile`, `/requests`, `/intros?box=received`, `/connections`, `/messages/updates`, `/notifications/unread-count`). Fetch them in parallel (`Promise.all`), never one after another. Do not add endpoints.
 - Empty state: headline "Start your first request", one line of body, button "Find people".
 - Error state: one sentence, then a "Try again" button.
 
@@ -171,7 +171,9 @@ Matches and the intro form, chat, Pair spaces list, a pair space, Profile, Setti
 - Item 30 (NVDA and TalkBack pass) stays an owner task after the redesign.
 
 ## 9. Constraints from the existing project
-- CSP and HSTS stay as they are. Self-hosted fonts and own-domain images only. No inline scripts. No external fonts, CDNs or analytics. Smoke fails on any CSP violation, so check it on the preview.
+- Design rules: ADR 0010 and the design rules in CLAUDE.md ban motion, allow outline buttons only and require `personHue()` colours. They conflict with this spec. PR 1 adds ADR 0014 (replaces 0010), updates the design rules in CLAUDE.md, and updates the token and contrast tests to the new values. Contrast tests must still enforce the same minimum ratios on the new colours. Motion is allowed only as described in section 5. Avatars use `--green` or `--ink`, chosen by a stable hash of the person's id.
+- Existing Smoke tests (`security.spec`, `social.spec`, `login.spec`, `discover.spec`) expect the old headings and tab names. Update only their expected text for the new Home and nav, nothing else.
+- CSP and HSTS stay as they are (the CSP already allows the inline scripts Next.js itself needs; do not loosen it). Write no hand-made inline scripts. Self-hosted fonts and own-domain images only. No external fonts, CDNs or analytics. Smoke fails on any CSP violation, so check it on the preview.
 - Performance: keep each route's first-load JS small, avoid large images, use SVG and CSS for art, and do not make pages slower than today. Report the bundle size per page before and after each PR.
 - Legal-sensitive screens: privacy, terms, consent, report, block, moderation, `frontend/lib/legal.ts`, `TERMS_VERSION`. A restyle PR touching these stops for the owner's review, no auto-merge.
 - No backend change. No migration. `docs/api/openapi.json` must not change.
@@ -179,8 +181,8 @@ Matches and the intro form, chat, Pair spaces list, a pair space, Profile, Setti
 
 ## 10. Brand and rename
 - Name: **Cynergi** (lowercase `cynergi` in the wordmark). Define it once in a single brand constant (name, tagline, contact address source) and import it everywhere.
-- Logo: the supplied logo is teal and lavender on dark plum, which does not match the palette. Until a vector file arrives, use a placeholder four-dot mark in `--green` and `--ink` plus the wordmark in Inter Tight 800, lowercase, tracking -0.04em. Keep the logo in one component so it can be swapped for the real SVG in one place.
-- Rename only what users see: page titles, metadata, favicon and app icons, email subjects and sender name, backend email text, docs. Keep the repo, Render service and Vercel project names for now.
+- Logo: the supplied file has spaces and "WhatsApp" in its name, so save it as `docs/design/cynergi-logo-source.jpeg`. The real logo, once vector, goes to `frontend/public/logo.svg`. The supplied logo is teal and lavender on dark plum, which does not match the palette. Until a vector file arrives, use a placeholder four-dot mark in `--green` and `--ink` plus the wordmark in Inter Tight 800, lowercase, tracking -0.04em. Keep the logo in one component so it can be swapped for the real SVG in one place.
+- Rename only what users see: page titles, metadata, favicon and app icons, docs. Email names and subjects come from the backend `app_name` setting: the owner sets `APP_NAME=Cynergi` in Render (no repo change). The OpenAPI title and `docs/api/openapi.json` stay as they are until a separate small backend PR. Keep the repo, Render service and Vercel project names for now.
 - ADRs keep their history, with a one-line note that the product was renamed.
 - Privacy and terms: the name change is a legal-wording PR. New `TERMS_VERSION`. Stops for the owner's review.
 - Check cookie and storage key names. Do not rename them without telling the owner (renaming signs everyone out; fine on staging).

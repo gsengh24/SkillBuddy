@@ -142,7 +142,7 @@ button{font:inherit;color:inherit}
   <div class="layout">
     <div class="list-col">
       <div class="hello">
-        <div class="lbl" style="color:var(--muted);margin:0">Good evening</div>
+        <div class="lbl" style="color:var(--muted);margin:0" id="greet">Hello</div>
         <h2 class="display">What are you building today?<br><span>Say it in a sentence.</span></h2>
       </div>
       <div class="composer">
@@ -173,7 +173,7 @@ button{font:inherit;color:inherit}
         </li>
         <li class="item" data-k="msg" tabindex="0" aria-selected="true">
           <div class="av" style="background:var(--green)">AR</div>
-          <div class="body"><div class="t"><b>Aarav R.</b><span class="meta"><span class="time">12m</span><span class="dot" role="img" aria-label="Unread"></span></span></div><div class="sub unread">Happy to look at your wireframes.</div></div>
+          <div class="body"><div class="t"><b>Aarav R.</b><span class="meta"><span class="time">12m</span><span class="dot" role="img" aria-label="Unread"></span></span></div><div class="sub unread">2 new messages</div></div>
         </li>
         <li class="item" data-k="req" tabindex="0">
           <div class="tile intro"><svg class="ico" viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.2"/><path d="M4 20c0-3.3 2.7-6 6-6M18 9v6M15 12h6"/></svg></div>
@@ -181,7 +181,7 @@ button{font:inherit;color:inherit}
         </li>
         <li class="item" data-k="msg" tabindex="0">
           <div class="av" style="background:var(--ink)">MK</div>
-          <div class="body"><div class="t"><b>Meera K.</b><span class="meta"><span class="time">Yesterday</span></span></div><div class="sub">You: Sounds good, Friday works.</div></div>
+          <div class="body"><div class="t"><b>Meera K.</b><span class="meta"><span class="time">Yesterday</span></span></div><div class="sub">Open chat</div></div>
         </li>
       </ul>
 
@@ -218,6 +218,7 @@ button{font:inherit;color:inherit}
 (function(){
   var ta=document.getElementById('req'),c=document.getElementById('cnt');
   ta.addEventListener('input',function(){c.textContent=ta.value.length+'/500'});
+  var h=new Date().getHours();document.getElementById('greet').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
   var segs=document.querySelectorAll('.seg button'),items=document.querySelectorAll('#list .item');
   segs.forEach(function(b){b.addEventListener('click',function(){
     segs.forEach(function(x){x.setAttribute('aria-pressed',x===b)});
