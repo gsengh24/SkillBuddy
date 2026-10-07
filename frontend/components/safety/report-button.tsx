@@ -2,10 +2,9 @@
 
 import { useId, useState, type FormEvent } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ds/button";
+import { Textarea } from "@/components/ds/fields";
 import { cx } from "@/components/ui/cx";
-import { textLinkClasses } from "@/components/ui/text-link";
-import { TextArea } from "@/components/ui/text-field";
 import { browserApi } from "@/lib/api/browser";
 import { reportReceiptSchema } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
@@ -79,7 +78,7 @@ export function ReportButton({
   if (done) {
     return (
       <div role="status" className="flex flex-col gap-3">
-        <p className="text-small text-ink font-semibold">
+        <p className="text-meta-lg text-ink font-medium">
           Thanks. We&apos;ve received your report. They won&apos;t be told who reported them.
         </p>
         {blockUserId ? <BlockButton userId={blockUserId} name={blockName} /> : null}
@@ -92,12 +91,14 @@ export function ReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={textLinkClasses("muted", "text-small min-h-11 lg:pointer-fine:min-h-0")}
+        className="text-meta-lg text-muted hover:text-ink min-h-11 font-medium underline decoration-1 underline-offset-2 lg:pointer-fine:min-h-0"
       >
         Report
       </button>
     ) : (
-      <Button onClick={() => setOpen(true)}>Report</Button>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Report
+      </Button>
     );
   }
 
@@ -105,14 +106,16 @@ export function ReportButton({
     <form
       onSubmit={submit}
       aria-labelledby={`${ids}-title`}
-      className="border-line rounded-card flex w-full max-w-lg flex-col gap-3 border p-4"
+      className="border-line rounded-panel bg-bg flex w-full max-w-lg flex-col gap-3 border p-4"
     >
-      <p id={`${ids}-title`} className="text-ink font-bold">
+      <p id={`${ids}-title`} className="text-title text-ink">
         Report this {kind}
       </p>
-      <p className="text-small">{WHAT_IS_SEEN[kind]} They won&apos;t be told who reported them.</p>
+      <p className="text-meta-lg text-ink-2">
+        {WHAT_IS_SEEN[kind]} They won&apos;t be told who reported them.
+      </p>
       <fieldset className="flex flex-col gap-1">
-        <legend className="text-small text-ink mb-1 font-semibold">What&apos;s wrong?</legend>
+        <legend className="text-meta-lg text-ink mb-1 font-medium">What&apos;s wrong?</legend>
         {REPORT_REASONS.map((option) => (
           <label
             key={option.value}
@@ -124,25 +127,26 @@ export function ReportButton({
               value={option.value}
               checked={reason === option.value}
               onChange={() => setReason(option.value)}
-              className="accent-green-base size-4"
+              className="accent-green size-4"
             />
             <span>{option.label}</span>
           </label>
         ))}
       </fieldset>
-      <TextArea
+      <Textarea
         label="Anything else the moderator should know? (optional)"
         rows={2}
         maxLength={REPORT_DETAILS_MAX_LENGTH}
+        showCounter={false}
         value={details}
         onChange={(event) => setDetails(event.target.value)}
         error={error}
       />
       <div className="flex flex-wrap gap-3">
-        <Button type="submit" tone="danger" disabled={busy || !reason}>
+        <Button type="submit" variant="danger" disabled={busy || !reason}>
           {busy ? "Sending…" : "Send report"}
         </Button>
-        <Button disabled={busy} onClick={() => setOpen(false)}>
+        <Button variant="ghost" disabled={busy} onClick={() => setOpen(false)}>
           Cancel
         </Button>
       </div>

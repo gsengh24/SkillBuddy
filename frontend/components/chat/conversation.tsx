@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 
 import { ReportButton } from "@/components/safety/report-button";
 import { SafetyTips } from "@/components/safety/safety-tips";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ds/button";
+import { Textarea } from "@/components/ds/fields";
 import { cx } from "@/components/ui/cx";
-import { TextArea } from "@/components/ui/text-field";
 import { browserApi } from "@/lib/api/browser";
 import { ApiError } from "@/lib/api/errors";
 import {
@@ -17,7 +17,6 @@ import {
 } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { delayAfterError, nextPollDelay } from "@/lib/chat/cadence";
-import { hueStyle, personHue } from "@/lib/design/color";
 
 // The API's limit (MESSAGE_MAX_LENGTH); it also rejects longer text.
 const MESSAGE_MAX_LENGTH = 2000;
@@ -182,8 +181,6 @@ export function Conversation({
     }
   }
 
-  const theirs = hueStyle(personHue(otherId));
-
   return (
     <div className="flex flex-col gap-4">
       {messages.length < FIRST_CHAT_MESSAGES ? <SafetyTips /> : null}
@@ -197,10 +194,9 @@ export function Conversation({
                 className={cx("flex flex-col gap-1", mine ? "items-end" : "items-start")}
               >
                 <p
-                  style={mine ? undefined : theirs}
                   className={cx(
-                    "rounded-card max-w-[85%] px-4 py-2 break-words whitespace-pre-wrap",
-                    mine ? "border-line bg-paper border" : "text-ink bg-(--hue-tint)",
+                    "rounded-panel max-w-[85%] px-3.5 py-2.5 break-words whitespace-pre-wrap lg:max-w-[70%]",
+                    mine ? "bg-ink text-bg" : "border-line bg-panel text-ink border",
                   )}
                 >
                   <span className="sr-only">{mine ? "You: " : `${otherName}: `}</span>
@@ -210,7 +206,7 @@ export function Conversation({
                   <time
                     dateTime={message.created_at}
                     suppressHydrationWarning
-                    className="text-small text-muted"
+                    className="text-meta text-muted"
                   >
                     {new Date(message.created_at).toLocaleString(undefined, {
                       dateStyle: "medium",
@@ -233,24 +229,27 @@ export function Conversation({
           <li ref={endRef} aria-hidden className="h-0" />
         </ol>
       ) : (
-        <p className="text-muted">No messages yet. Say hello.</p>
+        <p className="text-muted text-center">No messages yet. Say hello.</p>
       )}
 
       {paused ? (
         <div role="status" className="flex flex-wrap items-center gap-3">
-          <p className="text-small text-muted">
+          <p className="text-meta-lg text-muted">
             Paused while it&apos;s quiet. New messages load when you come back.
           </p>
-          <Button onClick={wake}>Check for messages</Button>
+          <Button variant="outline" onClick={wake}>
+            Check for messages
+          </Button>
         </div>
       ) : null}
 
-      <form onSubmit={send} className="flex flex-col gap-3">
-        <TextArea
+      <form onSubmit={send} className="border-line flex flex-col gap-3 border-t pt-4">
+        <Textarea
           label={`Message ${otherName}`}
           hideLabel
           rows={2}
           maxLength={MESSAGE_MAX_LENGTH}
+          showCounter={false}
           value={body}
           onChange={(event) => {
             setBody(event.target.value);
@@ -260,10 +259,10 @@ export function Conversation({
           error={error}
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-small text-muted">
+          <p className="text-meta text-muted">
             Messages are deleted {retentionDays} days after they&apos;re sent.
           </p>
-          <Button type="submit" disabled={sending || !body.trim()}>
+          <Button type="submit" variant="primary" disabled={sending || !body.trim()}>
             {sending ? "Sending…" : "Send"}
           </Button>
         </div>

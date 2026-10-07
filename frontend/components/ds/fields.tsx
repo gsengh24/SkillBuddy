@@ -118,10 +118,15 @@ export function Textarea({
   className,
   rows = 3,
   maxLength,
+  showCounter = true,
   defaultValue,
   onChange,
   ...props
-}: FieldProps & ComponentProps<"textarea">) {
+}: FieldProps &
+  ComponentProps<"textarea"> & {
+    /** Show the mono "n/max" counter when there is a maxLength (default). */
+    showCounter?: boolean;
+  }) {
   const autoId = useId();
   const inputId = id ?? autoId;
   const hintId = `${inputId}-hint`;
@@ -130,7 +135,7 @@ export function Textarea({
   // A controlled field (value set by its owner, e.g. from a suggestion) counts its value.
   const length = props.value === undefined ? typed : String(props.value).length;
   const counter =
-    maxLength === undefined ? null : (
+    maxLength === undefined || !showCounter ? null : (
       <span aria-hidden className="text-mono text-muted shrink-0 font-mono">
         {length}/{maxLength}
       </span>
