@@ -38,6 +38,7 @@ out/
 next-env.d.ts
 playwright-report/
 test-results/
+frontend/e2e/screenshots/
 *.tsbuildinfo
 npm-debug.log*
 

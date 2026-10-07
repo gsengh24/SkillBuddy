@@ -62,19 +62,12 @@ describe("AppShell", () => {
     expect(current.map((link) => link.textContent)).toEqual([label, label]);
   });
 
-  it("keeps Messages one tap away until Home takes it over, and marks it when open", () => {
+  it("counts chats as Home, with no separate Messages link", () => {
     navigation.pathname = "/messages/42";
-    renderShell({ unreadMessages: 3 });
-    const links = screen.getAllByRole("link", { name: "Messages (3 unread)" });
-    expect(links).toHaveLength(2); // desktop top bar and phone top row
-    for (const link of links) {
-      expect(link).toHaveAttribute("href", "/messages");
-      expect(link).toHaveAttribute("aria-current", "page");
-    }
-    // No place in the navs is current on the messages pages.
-    const { desktop, phone } = navs();
-    expect(within(desktop).queryByRole("link", { current: "page" })).not.toBeInTheDocument();
-    expect(within(phone).queryByRole("link", { current: "page" })).not.toBeInTheDocument();
+    renderShell();
+    const current = screen.getAllByRole("link", { current: "page" });
+    expect(current.map((link) => link.textContent)).toEqual(["Home", "Home"]);
+    expect(screen.queryByRole("link", { name: /^Messages/ })).not.toBeInTheDocument();
   });
 
   it("gives icon-only and touch controls labels and 44px targets", () => {
@@ -84,9 +77,6 @@ describe("AppShell", () => {
     for (const bell of bells) {
       expect(bell).toHaveAttribute("href", "/notifications");
       expect(bell.className).toMatch(/\bsize-11\b/);
-    }
-    for (const link of screen.getAllByRole("link", { name: "Messages" })) {
-      expect(link.className).toMatch(/\bsize-11\b/);
     }
     for (const tab of within(navs().phone).getAllByRole("link")) {
       expect(tab.className).toMatch(/\bmin-h-11\b/);
@@ -111,7 +101,7 @@ describe("AppShell", () => {
   });
 
   it("shows profile progress and the account link", () => {
-    renderShell({ unreadMessages: 2, profileComplete: 78 });
+    renderShell({ profileComplete: 78 });
     expect(screen.getByRole("meter", { name: "Profile complete" })).toHaveAttribute(
       "aria-valuenow",
       "78",
@@ -120,7 +110,6 @@ describe("AppShell", () => {
     const account = screen.getByRole("link", { name: "Your account" });
     expect(account).toHaveAttribute("href", "/settings/account");
     expect(account).toHaveAttribute("title", USER.email);
-    expect(screen.getAllByRole("link", { name: "Messages (2 unread)" })).toHaveLength(2);
   });
 
   it("sends people without a profile to onboarding", () => {

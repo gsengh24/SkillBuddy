@@ -27,7 +27,7 @@ test("web pages send the security headers and break no CSP rule", async ({ page,
 
   // A signed-in page, with its client-side code and API calls, under the same policy.
   await signUp(page, request, "/messages");
-  await expect(page.getByRole("heading", { name: "Messages", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Home", level: 1 })).toBeVisible();
   await page.goto("/privacy");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 

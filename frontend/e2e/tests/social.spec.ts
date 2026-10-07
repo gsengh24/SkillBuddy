@@ -21,7 +21,7 @@ test("notifications and messages pages are accessible on a phone", async ({ page
   expect(results.violations.map((v) => v.id)).toEqual([]);
 
   await page.goto("/messages");
-  await expect(page.getByRole("heading", { name: "Messages", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Home", level: 1 })).toBeVisible();
   await expect(page.getByText(/No connections yet/)).toBeVisible();
   results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -32,7 +32,7 @@ test("notifications and messages pages are accessible on a phone", async ({ page
 test("a conversation you're not part of is not found", async ({ page, request }) => {
   await signUp(page, request, "/messages");
   // signUp returns once "Sign in" is clicked: wait until the session is set.
-  await expect(page.getByRole("heading", { name: "Messages", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Home", level: 1 })).toBeVisible();
   await page.goto("/messages/00000000-0000-4000-8000-000000000000");
   await expect(page.getByText("This page could not be found.")).toBeVisible();
   await expect(page.getByRole("textbox")).toHaveCount(0);

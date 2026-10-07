@@ -30,7 +30,7 @@ export function SendIntro({ match, hue }: { match: Match; hue: HueName }) {
     return (
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-small text-ink font-semibold">You&apos;re connected.</span>
-        <ButtonLink href="/messages" hue={hue}>
+        <ButtonLink href="/home?filter=messages" hue={hue}>
           Open Messages
         </ButtonLink>
       </div>

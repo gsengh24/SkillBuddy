@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Conversation } from "@/components/chat/conversation";
+import { ButtonLink } from "@/components/ds/button";
 import { BlockButton } from "@/components/safety/block-button";
 import { Card } from "@/components/ui/card";
 import { TextLink } from "@/components/ui/text-link";
@@ -34,12 +35,21 @@ export default async function ConversationPage({
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <TextLink href="/messages" tone="muted" className="text-small self-start">
+        <TextLink href="/home?filter=messages" tone="muted" className="text-small self-start">
           All messages
         </TextLink>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="text-h1 break-words">{name}</h1>
-          <BlockButton userId={connection.person.user_id} name={name} redirectTo="/messages" />
+          <div className="flex flex-wrap items-start gap-3">
+            <ButtonLink href={`/spaces/${connectionId}`} variant="outline" size="compact">
+              Open pair space
+            </ButtonLink>
+            <BlockButton
+              userId={connection.person.user_id}
+              name={name}
+              redirectTo="/home?filter=messages"
+            />
+          </div>
         </div>
       </header>
       <Card className="p-4 sm:p-6">

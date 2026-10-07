@@ -171,7 +171,8 @@ export function TwoToneHeadline({
   lead: string;
   rest: string;
   as?: "h1" | "h2" | "h3";
-  size?: "hero" | "headline";
+  /** hero 32/64, headline 26/48, greeting 30/34 (Home's "What are you building today?"). */
+  size?: "hero" | "headline" | "greeting";
   /** On green tint the rest uses muted: muted-2 is under 3:1 there. */
   onTint?: boolean;
   className?: string;
@@ -180,7 +181,11 @@ export function TwoToneHeadline({
     <Heading
       className={cx(
         "font-display",
-        size === "hero" ? "text-hero lg:text-hero-lg" : "text-headline lg:text-headline-lg",
+        {
+          hero: "text-hero lg:text-hero-lg",
+          headline: "text-headline lg:text-headline-lg",
+          greeting: "text-[30px] leading-none font-extrabold tracking-[-0.05em] lg:text-[34px]",
+        }[size],
         className,
       )}
     >

@@ -8,7 +8,7 @@ import { Logo } from "@/components/ds/logo";
 import { cx } from "@/components/ui/cx";
 
 import { APP_LINKS, DOT, ICON_LINK } from "./links";
-import { AppTopBar, MessagesLink } from "./nav";
+import { AppTopBar } from "./nav";
 
 export type ShellUser = { id: string; email: string };
 
@@ -17,7 +17,6 @@ type AppShellProps = {
   children: ReactNode;
   /** Optional 284px right rail, shown from 1280px up. */
   rightRail?: ReactNode;
-  unreadMessages?: number;
   hasNotifications?: boolean;
   /** Profile completeness, 0 to 100; null when the user has no profile yet. */
   profileComplete?: number | null;
@@ -72,14 +71,13 @@ function ProfileProgress({ value }: { value: number | null }) {
 
 /**
  * The signed-in app frame (ADR 0014). Desktop (1024px+): the top bar with Home, Spaces,
- * Saved and You, plus profile progress, messages, the bell and the account. Phone: a slim
- * top row (logo, messages, bell) and the bottom nav with the same four places.
+ * Saved and You, plus profile progress, the bell and the account. Phone: a slim top row
+ * (logo, bell) and the bottom nav with the same four places. Chats count as Home.
  */
 export function AppShell({
   user,
   children,
   rightRail,
-  unreadMessages = 0,
   hasNotifications = false,
   profileComplete = null,
 }: AppShellProps) {
@@ -97,7 +95,6 @@ export function AppShell({
           actions={
             <>
               <ProfileProgress value={profileComplete} />
-              <MessagesLink unread={unreadMessages} />
               <BellLink hasNotifications={hasNotifications} />
               <Link
                 href="/settings/account"
@@ -116,10 +113,7 @@ export function AppShell({
         <Link href="/home" className="rounded-control inline-flex min-h-11 items-center">
           <Logo />
         </Link>
-        <div className="flex items-center gap-2">
-          <MessagesLink unread={unreadMessages} />
-          <BellLink hasNotifications={hasNotifications} />
-        </div>
+        <BellLink hasNotifications={hasNotifications} />
       </header>
 
       <div

@@ -84,7 +84,7 @@ describe("SendIntro", () => {
     rerender(<SendIntro match={{ ...MATCH, status: "accepted" }} hue="green" />);
     expect(screen.getByRole("link", { name: "Open Messages" })).toHaveAttribute(
       "href",
-      "/messages",
+      "/home?filter=messages",
     );
   });
 
