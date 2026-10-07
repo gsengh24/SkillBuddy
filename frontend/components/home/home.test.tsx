@@ -8,7 +8,8 @@ import { connection, intro, NOW, request } from "@/lib/home/fixtures";
 
 import { ActivityList } from "./activity-list";
 import { Greeting, greetingFor } from "./greeting";
-import { HomeComposer, SUGGESTIONS } from "./home-composer";
+import { EscapeToComposer } from "./escape-to-composer";
+import { HomeComposer } from "./home-composer";
 
 const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
@@ -85,15 +86,55 @@ describe("ActivityList", () => {
 });
 
 describe("HomeComposer", () => {
-  it("fills the box from a suggestion without sending anything", async () => {
-    const { browserApi } = await import("@/lib/api/browser");
+  it("starts collapsed on phones and opens on focus, with every intent and the counter", async () => {
     render(<HomeComposer />);
-    const box = screen.getByLabelText("Describe it in your own words");
+    const form = screen.getByRole("form", { name: "New request" });
+    expect(form).toHaveAttribute("data-open", "false");
+    // Collapsed: the chips and counter are hidden below 1024px (shown from lg up).
+    const fieldset = screen.getByRole("group", { name: "What kind of help" });
+    expect(fieldset.className.split(" ")).toContain("hidden");
+    expect(fieldset.className.split(" ")).toContain("lg:flex");
+
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: SUGGESTIONS[1] }));
-    expect(box).toHaveValue("learn React");
-    expect(screen.getByText(`${"learn React".length}/1000`)).toBeInTheDocument();
-    expect(browserApi).not.toHaveBeenCalled();
+    await user.click(screen.getByLabelText("Describe it in your own words"));
+    expect(form).toHaveAttribute("data-open", "true");
+    expect(fieldset.className.split(" ")).not.toContain("hidden");
+    expect(
+      within(fieldset)
+        .getAllByRole("button")
+        .map((chip) => chip.textContent),
+    ).toEqual([
+      "Build together",
+      "Skill exchange",
+      "Interest buddy",
+      "Accountability",
+      "Mentor",
+      "Explore",
+    ]);
+    await user.keyboard("learn React");
+    expect(screen.getByText("11/1000")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "learn React" })).not.toBeInTheDocument();
+  });
+
+  it("toggles one intent at a time and sends it", async () => {
+    const { browserApi } = await import("@/lib/api/browser");
+    vi.mocked(browserApi).mockResolvedValue(request({ id: "new-2", status: "pending" }));
+    render(<HomeComposer />);
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByLabelText("Describe it in your own words"),
+      "A study group for DSA",
+    );
+    const mentor = screen.getByRole("button", { name: "Mentor" });
+    await user.click(mentor);
+    expect(mentor).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Explore" }));
+    expect(mentor).toHaveAttribute("aria-pressed", "false");
+    await user.click(screen.getByRole("button", { name: "Find matches" }));
+    expect(browserApi).toHaveBeenCalledWith("/requests", expect.anything(), {
+      method: "POST",
+      body: { text: "A study group for DSA", intent: "explore" },
+    });
   });
 
   it("opens the new request after sending it", async () => {
@@ -111,6 +152,25 @@ describe("HomeComposer", () => {
       body: { text: "A designer for a budgeting app", intent: null },
     });
     expect(router.push).toHaveBeenCalledWith("/home?item=request-new-1");
+  });
+});
+
+describe("EscapeToComposer", () => {
+  it("goes back to the composer view on Escape, but not while typing in a field", async () => {
+    render(
+      <>
+        <EscapeToComposer href="/home?filter=messages" />
+        <textarea aria-label="Message" />
+      </>,
+    );
+    const user = userEvent.setup();
+    router.push.mockClear();
+    screen.getByLabelText("Message").focus();
+    await user.keyboard("{Escape}");
+    expect(router.push).not.toHaveBeenCalled();
+    (document.activeElement as HTMLElement).blur();
+    await user.keyboard("{Escape}");
+    expect(router.push).toHaveBeenCalledWith("/home?filter=messages");
   });
 });
 

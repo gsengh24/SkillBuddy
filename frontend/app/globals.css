@@ -101,22 +101,29 @@
   --font-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
+  /*
+   * Display tracking: one token, from tokens.ts (displayTracking). -0.03em up to 52px,
+   * -0.04em from 56px up, never tighter: at -0.05em the letters touched.
+   */
+  --tracking-display: -0.03em;
+  --tracking-display-xl: -0.04em;
+
   /* Type scale (phone, then the -lg step for desktop). Display sizes use font-display. */
   --text-hero: 32px;
-  --text-hero--line-height: 1.02;
-  --text-hero--letter-spacing: -0.05em;
+  --text-hero--line-height: 1.05;
+  --text-hero--letter-spacing: var(--tracking-display);
   --text-hero--font-weight: 800;
   --text-hero-lg: 64px;
   --text-hero-lg--line-height: 1;
-  --text-hero-lg--letter-spacing: -0.05em;
+  --text-hero-lg--letter-spacing: var(--tracking-display-xl);
   --text-hero-lg--font-weight: 800;
   --text-headline: 26px;
   --text-headline--line-height: 1.05;
-  --text-headline--letter-spacing: -0.045em;
+  --text-headline--letter-spacing: var(--tracking-display);
   --text-headline--font-weight: 800;
   --text-headline-lg: 48px;
   --text-headline-lg--line-height: 1.02;
-  --text-headline-lg--letter-spacing: -0.05em;
+  --text-headline-lg--letter-spacing: var(--tracking-display);
   --text-headline-lg--font-weight: 800;
   --text-title: 14px;
   --text-title--line-height: 1.4;
@@ -144,7 +151,7 @@
   /* Older type names, used by existing screens. */
   --text-h1: 26px;
   --text-h1--line-height: 1.1;
-  --text-h1--letter-spacing: -0.045em;
+  --text-h1--letter-spacing: var(--tracking-display);
   --text-h1--font-weight: 800;
   --text-section: 19px;
   --text-section--line-height: 1.3;
@@ -157,7 +164,7 @@
   --text-label--letter-spacing: 0.06em;
   --text-numeral: 33px;
   --text-numeral--line-height: 1;
-  --text-numeral--letter-spacing: -0.05em;
+  --text-numeral--letter-spacing: var(--tracking-display);
   --text-numeral--font-weight: 800;
 
   /* Radii: panels 14, cards 12, inputs 10, buttons 9, small chips 4. Pills: rounded-full. */

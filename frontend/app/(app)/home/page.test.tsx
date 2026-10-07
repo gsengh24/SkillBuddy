@@ -80,16 +80,41 @@ describe("Home", () => {
     expect(screen.getByRole("link", { name: /Aarav R\./ })).toBeInTheDocument();
     expect(new Set(calledPaths())).toEqual(new Set(LIST_CALLS));
     expect(screen.getByText(/You're signed in as/)).toHaveTextContent(USER.email);
-    expect(screen.getByRole("link", { name: "Open pair spaces" })).toHaveAttribute(
+    // The band shows twice: after the list on phones, beside the summary on desktop.
+    for (const band of screen.getAllByRole("link", { name: "Open pair spaces" })) {
+      expect(band).toHaveAttribute("href", "/spaces");
+    }
+  });
+
+  it("shows the composer view by default, beside the Inbox (v2)", async () => {
+    await renderHome();
+    expect(screen.getByRole("heading", { name: "Home", level: 1 })).toHaveClass("sr-only");
+    const inbox = screen.getByRole("complementary", { name: "Inbox" });
+    expect(within(inbox).getByRole("link", { name: "New request" })).toHaveAttribute(
       "href",
-      "/spaces",
+      "/home#new-request",
     );
+    expect(within(inbox).queryByRole("form")).not.toBeInTheDocument();
+    const composer = screen.getByRole("region", { name: "New request" });
+    expect(
+      within(composer).getByRole("heading", { name: /What are you building today\?/ }),
+    ).toBeInTheDocument();
+    expect(within(composer).getByRole("form", { name: "New request" })).toBeInTheDocument();
+    expect(within(composer).getByLabelText("Summary")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Opened item" })).not.toBeInTheDocument();
+    expect(screen.queryByText("a design partner")).not.toBeInTheDocument();
   });
 
   it("opens a request from ?item", async () => {
     await renderHome({ item: "request-req-1" });
     const pane = screen.getByRole("region", { name: "Opened item" });
     expect(within(pane).getByText("“Budgeting app design”")).toBeInTheDocument();
+    // An opened item replaces the composer view; "New request" goes back to it.
+    expect(screen.queryByRole("form", { name: "New request" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "New request" })).toHaveAttribute(
+      "href",
+      "/home#new-request",
+    );
     expect(within(pane).getByRole("link", { name: /Back to Home/ })).toHaveAttribute(
       "href",
       "/home",
@@ -135,7 +160,7 @@ describe("Home", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
   });
 
-  it("invites a first request when there is nothing yet", async () => {
+  it("says there are no requests yet, with the composer as the invitation", async () => {
     vi.mocked(apiRequest).mockImplementation(async (path: string) => {
       if (path === "/api/v1/auth/me") return USER;
       if (path === "/api/v1/me/profile") return PROFILE;
@@ -143,12 +168,9 @@ describe("Home", () => {
     });
     await renderHome();
     expect(
-      screen.getAllByRole("heading", { name: "Start your first request" }).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: "Find people" })[0]).toHaveAttribute(
-      "href",
-      "#new-request",
-    );
+      screen.getByText("No requests yet. Describe what you're building and we'll find people."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "New request" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open pair spaces" })).not.toBeInTheDocument();
   });
 
