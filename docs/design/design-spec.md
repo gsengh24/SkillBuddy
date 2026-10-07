@@ -56,7 +56,7 @@ Self-host through `next/font` (the CSP and the privacy page rule out Google Font
 
 | Role | Font | Weight | Notes |
 |---|---|---|---|
-| Display headlines | Inter Tight (or Geist if Inter Tight is unavailable) | 800 | tracking -0.045em to -0.05em, line-height 1.0 to 1.05 |
+| Display headlines | Inter Tight (or Geist if Inter Tight is unavailable) | 800 | tracking -0.03em up to 52px, -0.04em from 56px up, never tighter. Line-height 1.02 to 1.05. (-0.05em made letters touch in the first build: "Whatareyoubuilding") |
 | Body and UI | Inter | 400 and 500 | line-height 1.5 |
 | Labels, numerals, chips, counters | JetBrains Mono (or Geist Mono) | 400 and 500 | small caps style via uppercase and letter-spacing .06em |
 
@@ -123,33 +123,40 @@ Sections in order:
 
 Dropped on purpose until real: customer logos, quotes, testimonials, pricing, comparison receipts, world map.
 
-### 6.2 Home (signed in), see `reference-home.html`
-Requests and Messages are now one page. The old Messages route redirects to Home.
+### 6.2 Home (signed in), version 2, see `reference-home.html`
+Requests and Messages are one page. `/messages` (the list) redirects to `/home`. `/messages/[id]` stays as the chat page (deep links and report flows use it).
 
-Phone (single column):
-1. Header: "Home" (800), bell icon.
-2. Greeting: mono label ("Good morning", "Good afternoon" or "Good evening" from the device clock, set in the browser after load so the server's UTC clock never shows the wrong one; the first paint says "Hello"), then a two-tone display headline "What are you building today?" / "Say it in a sentence." (second line muted).
-3. New request composer on `--green-tint` with green-line border: mono label NEW REQUEST, textarea, counter (500 max, as today), primary "Find people", and four suggestion pills under it (examples such as "a design partner", "learn React"). Tapping a pill fills the textarea with that phrase, it never sends anything. Suggestions are static text for now, not AI-generated and not based on user data.
-4. Summary strip: three bordered cells with a large 800 numeral and a mono label (Requests, Messages, Spaces). Numbers come from the data already fetched, no new endpoint.
-5. Mono label "Recent activity", then the segmented filter: All (default), Requests n, Messages n.
-6. One list, newest activity first, rows separated by hairlines. Each row shows a mono relative time on the right ("2m", "12m", "1h", "Yesterday") next to the badge or unread dot:
-   - Request row: search icon tile, request title, "n matches ready to view", REQUEST badge. Opens the matches for that request.
-   - Intro received row: dashed tile with user-plus icon, "New intro received", what they asked for, INTRO badge. Opens the intro (accept, decline, block, report).
-   - Message row: avatar initials, name (only shown once connected, as today), a one-line status, and an unread dot. Opens the chat. The status is "n new messages" when `unread_messages` is above 0, otherwise "Open chat". The API does not send message text, so there is NO message preview in v1 (no extra calls, no backend field). The time comes from `last_message_at`.
-7. Green band under the list with a static pixel pattern: "Turn a connection into a shared goal." and a white "Open pair spaces" button. Hide it when the user has no connections yet.
-8. Bottom nav: Home, Spaces, Saved, You.
+Problems this version fixes: the right pane was a big empty space until something was opened, the left column was overloaded (greeting, intent chips, suggestion pills, stats, list and band), "Home" appeared twice, and the headline letters touched.
 
-Desktop (two columns, left 380px list, right flexible detail):
-- Left: composer, filter, list. Right: the opened thing (matches, intro, or chat), or an empty state that invites a first request.
-- The route stays `/home`. Keep `/messages/[id]` as the chat page (deep links and report flows use it) and make `/messages` redirect to `/home`. Opening an item sets `?item=<type>-<id>` so back and refresh work. On phone the same URL shows the detail full screen with a back arrow.
+**Desktop (1024px and up), two panes under a 1160px centred shell**
+- Left pane, 360px, inbox only: "Inbox" heading with a "New request" ghost button, the All / Requests n / Messages n segmented filter, then the list. Nothing else in this pane.
+- Right pane, default state (nothing opened): the composer view, centred in a 640px column, starting about 72px from the top:
+  1. Mono label with the greeting ("Good morning" / "Good afternoon" / "Good evening", set in the browser after load, first paint says "Hello").
+  2. Two-tone display headline, 44px: "What are you building today?" (ink) and, on its own line, "Say it in a sentence." (`--muted-2`, large bold text so it passes contrast).
+  3. Composer on `--green-tint`: textarea (1000 characters, counter in mono), then the existing intent picker ("What kind of help": Build together, Skill exchange, Interest buddy, Accountability, Mentor, Explore) restyled with one green dot on every chip, the selected chip filled green with a mint dot, then the "Find matches" primary button on the right. Behaviour, options and limits are exactly as today.
+  4. Under the composer, two quiet cards side by side: the summary strip (Requests, Messages, Spaces with large 800 numerals and mono labels) and the green pair-spaces band ("Turn a connection into a shared goal.", white "Open pair spaces" button, static pixel pattern). Hide the band when the user has no connections.
+- Right pane, an item opened: the matches, intro or chat fills the pane. "New request" in the left pane (or Escape) returns to the composer view. The selected row gets `--green-tint`.
+- No suggestion pills. No "Home" heading (an `sr-only` h1 "Home" stays for screen readers).
 
-Rules:
-- Names and links stay hidden until the connection exists. Do not change this.
-- Block and report stay inside the chat, the intro and the match card, exactly as built. Restyle only. Those screens are legal-sensitive (see section 9).
-- "Open pair space" button stays on a connected person's row and chat header.
-- Data comes from the existing endpoints only (`/auth/me`, `/me/profile`, `/requests`, `/intros?box=received`, `/connections`, `/messages/updates`, `/notifications/unread-count`). Fetch them in parallel (`Promise.all`), never one after another. Do not add endpoints.
-- Empty state: headline "Start your first request", one line of body, button "Find people".
-- Error state: one sentence, then a "Try again" button.
+**Phone (below 1024px), single column**
+1. Top bar: logo, bell with unread dot, account circle. No "Home" title.
+2. Greeting label, then the two-tone headline at 30px (38px on tablet).
+3. Composer card, collapsed by default: only the textarea (2 to 3 rows) and the "Find matches" button. When the textarea gets focus the card opens to show the "What kind of help" chips and the counter. This keeps the first screen calm.
+4. "Inbox" heading, the segmented filter, then the list.
+5. Green pair-spaces band after the list (hidden if no connections). The summary strip is not shown on phone.
+6. Bottom nav: Home, Spaces, Saved, You.
+- Opening an item goes full screen with a back arrow and `?item=<type>-<id>`, as before.
+
+**List rows (both)**
+- Request row: search icon tile, request title (one line, ends with an ellipsis if long), "n matches ready to view", REQUEST badge, date.
+- Intro row: dashed tile with user-plus icon, "New intro received", what they asked for, INTRO badge, time.
+- Message row: avatar initials, name (only once connected, as today), "n new messages" when `unread_messages` is above 0 otherwise "Open chat", unread dot with an accessible label, time from `last_message_at`. No message text anywhere in the list.
+- Newest activity first. Times are mono, never wrap. Row title weight 600.
+
+**Rules**
+- Names and links stay hidden until the connection exists. Block, report, the "Staying safe" tips and "Open pair space" stay where they are, wording unchanged.
+- Data comes from the existing endpoints only (`/auth/me`, `/me/profile`, `/requests`, `/intros?box=received`, `/connections`, `/messages/updates`, `/notifications/unread-count`), fetched in parallel. No new endpoint.
+- Empty state (no requests yet): the composer view is already the invitation; the list shows "No requests yet. Describe what you're building and we'll find people." Error state: one sentence and "Try again".
 
 ### 6.3 Other app pages (restyle with the same components)
 Matches and the intro form, chat, Pair spaces list, a pair space, Profile, Settings (account, emails, blocked people), Saved, You, sign in, 404 and error. Moderation pages (queue, AI status, suspended accounts): restyle last, same components, functional first.

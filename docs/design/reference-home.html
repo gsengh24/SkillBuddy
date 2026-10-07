@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>cynergi: Home reference</title>
+<title>cynergi: Home reference v2</title>
 <style>
 :root{
   --bg:#fff;--panel:#F6F7F5;--line:#E4E6E2;--ink:#0A0A0A;--ink-2:#4A4F4A;--muted:#6B6F6A;--muted-2:#8A8F89;
-  --green:#0F4A34;--green-tint:#E8F1EC;--green-line:#B9D3C5;
+  --green:#0F4A34;--green-tint:#E8F1EC;--green-line:#B9D3C5;--green-soft:#F3F9F5;--mint:#7BE0A8;--mint-text:#9FD1B6;
   --display:"Inter Tight","Geist","Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --mono:"JetBrains Mono","Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -15,85 +15,99 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5}
 button{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
 :focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--green)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .mono{font-family:var(--mono)}
-.display{font-family:var(--display);font-weight:800;letter-spacing:-.05em;line-height:1}
+.display{font-family:var(--display);font-weight:800;letter-spacing:-.03em;line-height:1.02}
 .ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 
-.app{min-height:100vh;display:grid;grid-template-rows:auto 1fr auto}
-.bar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
-.bar h1{margin:0;font-size:24px}
-.brand{display:none;align-items:center;gap:8px;font-family:var(--display);font-weight:800;letter-spacing:-.04em;font-size:18px}
-.bell{width:32px;height:32px;border-radius:50%;background:var(--green-tint);border:1px solid var(--green-line);display:flex;align-items:center;justify-content:center;color:var(--green)}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;justify-content:space-between;height:60px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;letter-spacing:-.03em;font-size:18px}
 .topnav{display:none}
+.tools{display:flex;align-items:center;gap:10px}
+.prof{display:none;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.prof i{display:block;width:56px;height:4px;border-radius:9px;background:var(--line);position:relative;overflow:hidden}
+.prof i::after{content:"";position:absolute;inset:0 10% 0 0;background:var(--green);border-radius:9px}
+.circ{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:#fff;position:relative}
+.circ.dark{background:var(--ink);color:#fff;border-color:var(--ink);font-size:13px;font-weight:500}
+.circ .nd{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--green);border:1.5px solid #fff}
 
-.layout{display:grid}
-.list-col{padding:12px 12px 24px}
-.detail{display:none}
+.shell{flex:1;display:flex;flex-direction:column;width:100%;max-width:1160px;margin:0 auto}
+.list-pane{padding:0 16px 24px;order:2}
+.main-pane{padding:20px 16px 8px;order:1}
 
-.composer{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
-.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin-bottom:6px}
-.ta{width:100%;min-height:72px;resize:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 11px;font:inherit;font-size:16px;color:var(--ink)}
+/* greeting + composer */
+.hello .lbl{color:var(--green)}
+.hl{margin:10px 0 0;font-size:30px}
+.hl span{color:var(--muted-2);display:block}
+.composer{margin-top:16px;background:var(--green-tint);border:1px solid var(--green-line);border-radius:16px;padding:12px}
+.ta{width:100%;min-height:76px;resize:none;background:#fff;border:1px solid var(--green-line);border-radius:12px;padding:12px;font:inherit;font-size:16px;color:var(--ink);line-height:1.45}
 .ta::placeholder{color:var(--muted)}
-.crow{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-.count{font-family:var(--mono);font-size:10px;color:var(--muted)}
-.btn{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 14px;border-radius:9px;border:1px solid transparent;background:var(--ink);color:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:transform .15s}
+.intents{display:none;margin-top:12px}
+.composer.open .intents{display:block}
+.intents .lbl{margin-bottom:8px;color:var(--green)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.ch{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--green-line);background:#fff;border-radius:99px;padding:0 12px;min-height:36px;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s,color .15s}
+.ch::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.ch[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
+.ch[aria-pressed="true"]::before{background:var(--mint)}
+.crow{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px}
+.count{font-family:var(--mono);font-size:10px;color:var(--muted);display:none}
+.composer.open .count{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:42px;padding:0 18px;border-radius:10px;border:1px solid transparent;background:var(--ink);color:#fff;font-size:14px;font-weight:500;cursor:pointer;transition:transform .15s;margin-left:auto}
 .btn:active{transform:scale(.97)}
+.btn.ghost{background:#fff;color:var(--ink);border-color:var(--line);height:36px;font-size:13px;padding:0 12px}
+.btn.white{background:#fff;color:var(--ink);height:38px;margin:0}
 
-.seg{display:flex;gap:4px;margin:14px 0 6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
-.seg button{flex:1;border:1px solid transparent;background:transparent;border-radius:8px;padding:8px 0;min-height:36px;font-size:12px;color:var(--muted);cursor:pointer}
+/* quiet cards under composer (desktop main pane) */
+.cards{display:none}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stat div{padding:14px 16px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:space-between;gap:20px}
+.stat div:last-child{border-right:0}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-.03em;line-height:1}
+.stat span{display:block}
+.band{background:var(--green);border-radius:14px;padding:18px 18px;position:relative;overflow:hidden}
+.band h3{margin:0 0 14px;font-size:20px;color:#fff;max-width:240px}
+.band h3 span{color:var(--mint-text)}
+.px{position:absolute;right:16px;bottom:14px;display:grid;grid-template-columns:repeat(5,8px);gap:3px}
+.px i{display:block;height:8px;background:var(--mint)}
+.px i:nth-child(3n){background:var(--green);outline:1px solid var(--mint)}
+.px i:nth-child(4n){background:#fff}
+
+/* list */
+.lhead{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px}
+.lhead .btn{display:none}
+.lhead h2{margin:0;font-size:18px;font-family:var(--display);font-weight:800;letter-spacing:-.02em}
+.seg{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{flex:1;border:1px solid transparent;background:transparent;border-radius:8px;padding:0;min-height:34px;font-size:12px;color:var(--muted);cursor:pointer}
 .seg button[aria-pressed="true"]{background:#fff;border-color:var(--line);color:var(--ink);font-weight:500}
-
-.list{border-top:1px solid var(--line);margin:0;padding:0;list-style:none}
-.item{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer;animation:up .45s ease both;min-height:56px}
-.item:nth-child(1){animation-delay:.05s}.item:nth-child(2){animation-delay:.12s}.item:nth-child(3){animation-delay:.19s}.item:nth-child(4){animation-delay:.26s}
+.list{border-top:1px solid var(--line);margin:12px 0 0;padding:0;list-style:none}
+.item{display:flex;gap:12px;padding:12px 8px;margin:0 -8px;border-bottom:1px solid var(--line);cursor:pointer;min-height:60px;border-radius:0;animation:up .45s ease both}
+.item:nth-child(2){animation-delay:.07s}.item:nth-child(3){animation-delay:.14s}.item:nth-child(4){animation-delay:.21s}
 @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.tile{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:none}
+.tile{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
 .tile.req{background:var(--green-tint);border:1px solid var(--green-line);color:var(--green)}
 .tile.intro{background:#fff;border:1px dashed var(--green);color:var(--green)}
-.av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;color:#fff;font-size:13px;font-weight:500}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;color:#fff;font-size:13px;font-weight:500}
 .body{flex:1;min-width:0}
-.t{display:flex;justify-content:space-between;gap:8px}
-.t b,.name{font-weight:600;font-size:14px;letter-spacing:-.01em}
-.meta{display:flex;align-items:center;gap:8px;height:max-content}
-.time{font-family:var(--mono);font-size:10px;color:var(--muted)}
-.meta .dot{margin-top:0}
-
-.hello{padding:8px 4px 16px}
-.hello h2{margin:6px 0 0;font-size:30px}
-.hello h2 span{color:var(--muted-2)}
-.composer{background:var(--green-tint);border-color:var(--green-line)}
-.ta{border-color:var(--green-line)}
-.sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.sugg button:active{background:var(--green-tint)}
-.sugg button{font-family:var(--mono);font-size:11px;border:1px solid var(--green);color:var(--green);background:#fff;border-radius:99px;padding:6px 11px;min-height:32px;cursor:pointer;transition:background .15s}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.stats div{padding:12px 14px;border-right:1px solid var(--line)}
-.stats div:last-child{border-right:0}
-.stats b{display:block;font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.05em;line-height:1}
-.stats span{display:block;margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.sect{display:flex;justify-content:space-between;align-items:baseline;margin:20px 0 8px}
-.sect .lbl{margin:0;color:var(--muted)}
-.band{margin-top:20px;background:var(--green);border-radius:14px;padding:18px 16px;position:relative;overflow:hidden}
-.band h3{margin:0 0 14px;font-size:22px;color:#fff;max-width:230px}
-.band h3 span{color:#9FD1B6}
-.band .btn{background:#fff;color:var(--ink);height:36px}
-.band .px{position:absolute;right:14px;bottom:12px;display:grid;grid-template-columns:repeat(5,8px);gap:3px}
-.band .px i{display:block;height:8px;background:#7BE0A8}
-.band .px i:nth-child(3n){background:#0F4A34;outline:1px solid #7BE0A8}
-.band .px i:nth-child(4n){background:#fff}
+.t{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.t b{font-weight:600;font-size:14px;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{flex:none}
 .sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sub.unread{color:var(--ink)}
-.badge{font-family:var(--mono);font-size:10px;border-radius:4px;padding:2px 6px;height:max-content;text-transform:uppercase}
+.sub.unread{color:var(--ink);font-weight:500}
+.meta{display:flex;align-items:center;gap:8px}
+.time{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+.badge{font-family:var(--mono);font-size:10px;border-radius:4px;padding:2px 6px;text-transform:uppercase}
 .badge.req{background:var(--ink);color:#fff}
 .badge.intro{background:var(--green-tint);color:var(--green);border:1px solid var(--green-line)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:5px;flex:none}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.mband{margin-top:20px}
 
-.bnav{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding:8px 6px calc(10px + env(safe-area-inset-bottom));text-align:center;font-size:10px;color:var(--muted);position:sticky;bottom:0;background:#fff}
-.bnav a{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:44px;justify-content:center;color:inherit;text-decoration:none}
-.bnav a[aria-current="page"]{color:var(--green);font-weight:500}
-
-/* detail pane (desktop) */
+/* chat (desktop detail) */
+.detail{display:none}
 .chat-head{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--line)}
 .chat-body{padding:24px;display:flex;flex-direction:column;gap:12px;flex:1}
 .msg{max-width:70%;padding:10px 14px;border-radius:14px;font-size:14px}
@@ -104,107 +118,144 @@ button{font:inherit;color:inherit}
 .chat-in input{flex:1;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:14px}
 .pill{font-size:12px;border:1px solid var(--green);color:var(--green);border-radius:99px;padding:5px 12px;margin-left:auto}
 
-@media (prefers-reduced-motion:reduce){.item{animation:none}.btn{transition:none}}
+.bnav{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding:8px 6px calc(10px + env(safe-area-inset-bottom));text-align:center;font-size:10px;color:var(--muted);position:sticky;bottom:0;background:#fff}
+.bnav a{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:44px;justify-content:center}
+.bnav a[aria-current="page"]{color:var(--green);font-weight:500}
 
-@media (min-width:640px){.list-col{padding:16px 24px 32px;max-width:640px;margin:0 auto;width:100%}}
+@media (prefers-reduced-motion:reduce){.item{animation:none}.btn,.ch{transition:none}}
+@media (min-width:640px){.list-pane,.main-pane{max-width:640px;margin:0 auto;width:100%}.hl{font-size:38px}}
 
 @media (min-width:1024px){
-  .bar{padding:0 32px;height:68px}
-  .bar h1{display:none}
-  .hello h2{font-size:34px}
-  .sugg button:hover{background:var(--green-tint)}
-  .brand{display:flex}
+  .bar{height:68px;padding:0 32px}
   .topnav{display:flex;gap:28px;font-size:13px;color:var(--muted)}
-  .topnav a{color:inherit;text-decoration:none;padding:6px 0;border-bottom:2px solid transparent}
+  .topnav a{padding:6px 0;border-bottom:2px solid transparent}
   .topnav a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--green);font-weight:500}
+  .prof{display:flex}
   .bnav{display:none}
-  .layout{grid-template-columns:400px 1fr;min-height:calc(100vh - 68px)}
-  .list-col{max-width:none;margin:0;padding:24px;border-right:1px solid var(--line)}
-  .detail{display:flex;flex-direction:column}
+  .shell{flex-direction:row;align-items:stretch;min-height:calc(100vh - 68px)}
+  .list-pane{order:1;width:360px;max-width:360px;margin:0;flex:none;padding:24px 20px;border-right:1px solid var(--line)}
+  .main-pane{order:2;flex:1;max-width:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .lhead{margin-top:0}
+  .lhead .btn{display:inline-flex}
+  .mband{display:none}
   .item:hover{background:var(--panel)}
-  .btn:hover{transform:translateY(-2px)}
   .item[aria-selected="true"]{background:var(--green-tint)}
+  .btn:hover{transform:translateY(-2px)}
+  .ch:hover{background:var(--green-soft)}
+  .ch[aria-pressed="true"]:hover{background:var(--green)}
+
+  .home-view{width:100%;max-width:640px;margin:0 auto;padding:72px 24px 48px}
+  .hl{font-size:44px}
+  .composer{padding:16px;margin-top:24px}
+  .ta{min-height:96px}
+  .intents{display:block}
+  .count{display:block}
+  .cards{display:grid;grid-template-columns:1.1fr 1fr;gap:12px;margin-top:20px}
+  .detail{flex:1;flex-direction:column}
+  .main-pane.chat .home-view{display:none}
+  .main-pane.chat .detail{display:flex}
 }
 </style>
 </head>
 <body>
 <div class="app">
   <header class="bar">
-    <h1 class="display">Home</h1>
-    <div class="brand">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="6" cy="6" r="3.5" fill="#0F4A34"/><circle cx="16" cy="6" r="3.5" fill="#0A0A0A"/><circle cx="6" cy="16" r="3.5" fill="#0A0A0A"/><circle cx="16" cy="16" r="3.5" fill="#0F4A34"/></svg>
-      cynergi
-    </div>
+    <a class="brand" href="#"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="6" cy="6" r="3.5" fill="#0F4A34"/><circle cx="16" cy="6" r="3.5" fill="#0A0A0A"/><circle cx="6" cy="16" r="3.5" fill="#0A0A0A"/><circle cx="16" cy="16" r="3.5" fill="#0F4A34"/></svg>cynergi</a>
     <nav class="topnav" aria-label="Main"><a href="#" aria-current="page">Home</a><a href="#">Spaces</a><a href="#">Saved</a><a href="#">You</a></nav>
-    <button class="bell" aria-label="Notifications"><svg class="ico" viewBox="0 0 24 24"><path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4L6 17zM10 20a2 2 0 0 0 4 0"/></svg></button>
+    <div class="tools">
+      <div class="prof">Your profile <i></i>90%</div>
+      <button class="circ" aria-label="Notifications"><svg class="ico" viewBox="0 0 24 24"><path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4L6 17zM10 20a2 2 0 0 0 4 0"/></svg><span class="nd"></span></button>
+      <span class="circ dark" aria-label="Your account">G</span>
+    </div>
   </header>
 
-  <div class="layout">
-    <div class="list-col">
-      <div class="hello">
-        <div class="lbl" style="color:var(--muted);margin:0" id="greet">Hello</div>
-        <h2 class="display">What are you building today?<br><span>Say it in a sentence.</span></h2>
+  <div class="shell">
+    <aside class="list-pane" aria-label="Inbox">
+      <div class="lhead">
+        <h2>Inbox</h2>
+        <button class="btn ghost" id="newreq" type="button">New request</button>
       </div>
-      <div class="composer">
-        <div class="lbl">New request</div>
-        <label for="req" class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden">What are you building?</label>
-        <textarea id="req" class="ta" maxlength="500" placeholder="I'm building a budgeting app and need a design eye."></textarea>
-        <div class="crow"><span class="count" id="cnt">0/500</span><button class="btn">Find people</button></div>
-        <div class="sugg" aria-label="Try one of these"><button type="button">a design partner</button><button type="button">learn React</button><button type="button">a study group</button><button type="button">co-founder</button></div>
-      </div>
-
-      <div class="stats" aria-label="Summary">
-        <div><b>2</b><span>Requests</span></div>
-        <div><b>2</b><span>Messages</span></div>
-        <div><b>1</b><span>Spaces</span></div>
-      </div>
-
-      <div class="sect"><span class="lbl">Recent activity</span></div>
       <div class="seg" role="group" aria-label="Filter">
         <button aria-pressed="true" data-f="all">All</button>
         <button aria-pressed="false" data-f="req">Requests 2</button>
-        <button aria-pressed="false" data-f="msg">Messages 2</button>
+        <button aria-pressed="false" data-f="msg">Messages 1</button>
       </div>
-
       <ul class="list" id="list">
-        <li class="item" data-k="req" tabindex="0">
-          <div class="tile req"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.2-4.2"/></svg></div>
-          <div class="body"><div class="t"><b>Budgeting app design</b><span class="meta"><span class="time">2m</span><span class="badge req">Request</span></span></div><div class="sub">4 matches ready to view</div></div>
-        </li>
-        <li class="item" data-k="msg" tabindex="0" aria-selected="true">
+        <li class="item" data-k="msg" tabindex="0">
           <div class="av" style="background:var(--green)">AR</div>
           <div class="body"><div class="t"><b>Aarav R.</b><span class="meta"><span class="time">12m</span><span class="dot" role="img" aria-label="Unread"></span></span></div><div class="sub unread">2 new messages</div></div>
+        </li>
+        <li class="item" data-k="req" tabindex="0">
+          <div class="tile req"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.2-4.2"/></svg></div>
+          <div class="body"><div class="t"><b>Designer for my website</b><span class="meta"><span class="time">4 Oct</span><span class="badge req">Request</span></span></div><div class="sub">1 match ready to view</div></div>
+        </li>
+        <li class="item" data-k="req" tabindex="0">
+          <div class="tile req"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.2-4.2"/></svg></div>
+          <div class="body"><div class="t"><b>Interested in cybersecurity</b><span class="meta"><span class="time">3 Oct</span><span class="badge req">Request</span></span></div><div class="sub">2 matches ready to view</div></div>
         </li>
         <li class="item" data-k="req" tabindex="0">
           <div class="tile intro"><svg class="ico" viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.2"/><path d="M4 20c0-3.3 2.7-6 6-6M18 9v6M15 12h6"/></svg></div>
           <div class="body"><div class="t"><b>New intro received</b><span class="meta"><span class="time">1h</span><span class="badge intro">Intro</span></span></div><div class="sub">Wants help with: React basics</div></div>
         </li>
-        <li class="item" data-k="msg" tabindex="0">
-          <div class="av" style="background:var(--ink)">MK</div>
-          <div class="body"><div class="t"><b>Meera K.</b><span class="meta"><span class="time">Yesterday</span></span></div><div class="sub">Open chat</div></div>
-        </li>
       </ul>
-
-      <div class="band">
+      <div class="band mband">
         <h3 class="display">Turn a connection <span>into a shared goal.</span></h3>
-        <a class="btn" href="#" style="text-decoration:none">Open pair spaces</a>
+        <a class="btn white" href="#">Open pair spaces</a>
         <div class="px" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </div>
-    </div>
-
-    <aside class="detail" aria-label="Open conversation">
-      <div class="chat-head">
-        <div class="av" style="background:var(--green)">AR</div>
-        <div><b class="name">Aarav R.</b><div class="sub">Connected</div></div>
-        <span class="pill">Open pair space</span>
-      </div>
-      <div class="chat-body">
-        <div class="tip">Staying safe: keep chats in Cynergi until you trust each other. You can block or report from the menu at any time.</div>
-        <div class="msg out">Hi Aarav, I'm building a budgeting app and would love your design eye.</div>
-        <div class="msg in">Happy to look at your wireframes.</div>
-      </div>
-      <div class="chat-in"><input aria-label="Message" placeholder="Write a message"><button class="btn">Send</button></div>
     </aside>
+
+    <main class="main-pane" id="main">
+      <div class="home-view">
+        <div class="hello">
+          <h1 class="sr">Home</h1>
+          <div class="lbl" id="greet">Hello</div>
+          <h2 class="display hl">What are you building today? <span>Say it in a sentence.</span></h2>
+        </div>
+        <form class="composer" id="comp" onsubmit="return false">
+          <label for="req" class="sr">Describe what you're building</label>
+          <textarea id="req" class="ta" maxlength="1000" placeholder="I'm building a budgeting app and need a design eye."></textarea>
+          <div class="intents">
+            <div class="lbl">What kind of help</div>
+            <div class="chips" role="group" aria-label="What kind of help">
+              <button type="button" class="ch" aria-pressed="true">Build together</button>
+              <button type="button" class="ch" aria-pressed="false">Skill exchange</button>
+              <button type="button" class="ch" aria-pressed="false">Interest buddy</button>
+              <button type="button" class="ch" aria-pressed="false">Accountability</button>
+              <button type="button" class="ch" aria-pressed="false">Mentor</button>
+              <button type="button" class="ch" aria-pressed="false">Explore</button>
+            </div>
+          </div>
+          <div class="crow"><span class="count" id="cnt">0/1000</span><button class="btn" type="submit">Find matches</button></div>
+        </form>
+        <div class="cards">
+          <div class="stat" aria-label="Summary">
+            <div><b>2</b><span class="lbl">Requests</span></div>
+            <div><b>1</b><span class="lbl">Messages</span></div>
+            <div><b>1</b><span class="lbl">Spaces</span></div>
+          </div>
+          <div class="band">
+            <h3 class="display">Turn a connection <span>into a shared goal.</span></h3>
+            <a class="btn white" href="#">Open pair spaces</a>
+            <div class="px" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </div>
+
+      <section class="detail" aria-label="Open conversation">
+        <div class="chat-head">
+          <div class="av" style="background:var(--green)">AR</div>
+          <div><b style="font-weight:600">Aarav R.</b><div class="sub">Connected</div></div>
+          <span class="pill">Open pair space</span>
+        </div>
+        <div class="chat-body">
+          <div class="tip">Staying safe: keep chats in Cynergi until you trust each other. You can block or report from the menu at any time.</div>
+          <div class="msg out">Hi Aarav, I'm building a budgeting app and would love your design eye.</div>
+          <div class="msg in">Happy to look at your wireframes.</div>
+        </div>
+        <div class="chat-in"><input aria-label="Message" placeholder="Write a message"><button class="btn" style="margin:0">Send</button></div>
+      </section>
+    </main>
   </div>
 
   <nav class="bnav" aria-label="Main">
@@ -216,15 +267,22 @@ button{font:inherit;color:inherit}
 </div>
 <script>
 (function(){
-  var ta=document.getElementById('req'),c=document.getElementById('cnt');
-  ta.addEventListener('input',function(){c.textContent=ta.value.length+'/500'});
-  var h=new Date().getHours();document.getElementById('greet').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-  var segs=document.querySelectorAll('.seg button'),items=document.querySelectorAll('#list .item');
+  var h=new Date().getHours();
+  document.getElementById('greet').textContent=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  var ta=document.getElementById('req'),c=document.getElementById('cnt'),comp=document.getElementById('comp');
+  ta.addEventListener('input',function(){c.textContent=ta.value.length+'/1000'});
+  ta.addEventListener('focus',function(){comp.classList.add('open')});
+  document.querySelectorAll('.ch').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('.ch').forEach(function(x){x.setAttribute('aria-pressed',x===b)})})});
+  var segs=document.querySelectorAll('.seg button'),items=document.querySelectorAll('#list .item'),main=document.getElementById('main');
   segs.forEach(function(b){b.addEventListener('click',function(){
     segs.forEach(function(x){x.setAttribute('aria-pressed',x===b)});
-    var f=b.dataset.f;
-    items.forEach(function(i){i.style.display=(f==='all'||i.dataset.k===f)?'':'none'});
-  })});
+    items.forEach(function(i){i.style.display=(b.dataset.f==='all'||i.dataset.k===b.dataset.f)?'':'none'})})});
+  items.forEach(function(i){i.addEventListener('click',function(){
+    items.forEach(function(x){x.removeAttribute('aria-selected')});i.setAttribute('aria-selected','true');
+    if(i.dataset.k==='msg')main.classList.add('chat')})});
+  document.getElementById('newreq').addEventListener('click',function(){
+    main.classList.remove('chat');items.forEach(function(x){x.removeAttribute('aria-selected')});ta.focus()});
 })();
 </script>
 </body>
