@@ -69,7 +69,7 @@ text, 3:1 for large text and for control edges and states.
 | Numbered rows: rest in `--muted-2` | `--muted` | It is normal-size text, and `muted-2` is 3.30:1 |
 | Two-tone headline on green tint: rest in `--muted-2` | `--muted` | `muted-2` is 2.86:1 there, under 3:1 even for large text |
 | Counters, times, placeholders in `--muted-2` | `--muted` | Small text needs 4.5:1 |
-| Section numerals in `--faint` | Drawn with CSS (`::before`) | Decorative; the list itself gives the numbering |
+| Section numerals in `--faint` | `--muted` (real text, hidden from screen readers) | 13px text; `faint` is 2.10:1. The list itself gives the numbering |
 | Button height 40px on phones | 44px on touch screens | Touch targets (spec section 7) |
 
 To keep the older screens passing, the coral, blue, violet and teal tints are a little
@@ -80,7 +80,8 @@ lighter, so muted text still reaches 4.5:1 on them.
 - One palette, guarded by tests:
   - every allowed pair meets its minimum;
   - restricted colours (muted-2, faint, mint, line) are checked to fail where they aren't
-    allowed;
+    allowed. Small text (times, counters, placeholders, labels, numerals) always uses
+    `muted`, never `muted-2` or `faint`;
   - `:root`, the Tailwind theme and `tokens.ts` must agree.
 - Two component sets coexist until the redesign PRs finish. Then `components/ui`, the six
   hues and `personHue` can go, and that change needs no new ADR.

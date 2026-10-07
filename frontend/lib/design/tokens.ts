@@ -31,9 +31,9 @@ export const colors = {
    * green-tint; this is two steps darker so it passes 4.5:1 on every surface (ADR 0014).
    */
   muted: "#696D68",
-  /** Second half of two-tone headlines, and field borders (3:1). Large text only. */
+  /** Second half of two-tone headlines (large bold text only), and field borders (3:1). */
   muted2: "#8A8F89",
-  /** Section numerals 01, 02, 03. Decorative only, never real text. */
+  /** Decorative only, never text (2.1:1 on white). Numerals 01, 02, 03 use `muted`. */
   faint: "#B0B4AE",
   /** The brand: links, outline buttons, eyebrows, the CTA band. */
   green: "#0F4A34",

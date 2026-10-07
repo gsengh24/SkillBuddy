@@ -124,9 +124,10 @@ export function SkeletonGroup({
 }
 
 /**
- * Numbered feature rows: a faint mono numeral (decorative, drawn by CSS so it is never
- * read or checked as text), then a bold lead word and the rest. The rest is `muted`, not
- * the reference's muted-2: at this size muted-2 fails 4.5:1.
+ * Numbered feature rows: a mono numeral, then a bold lead word and the rest. The numeral
+ * and the rest are `muted`, not the reference's faint and muted-2: at these sizes those fail
+ * 4.5:1. The numeral is real text (checked by axe like any other) but hidden from screen
+ * readers, because the list already numbers the rows.
  */
 export function NumberedRows({
   rows,
@@ -137,18 +138,24 @@ export function NumberedRows({
 }) {
   return (
     <ol className={cx("border-line max-w-[720px] border-t", className)}>
-      {rows.map((row, index) => (
-        <li
-          key={row.lead}
-          data-n={String(index + 1).padStart(2, "0")}
-          className="border-line text-body-lg before:text-faint flex items-baseline gap-3.5 border-b py-3.5 before:font-mono before:text-[13px] before:content-[attr(data-n)] lg:py-[18px] lg:text-[20px]"
-        >
-          <span>
-            <strong className="text-ink font-extrabold">{row.lead}</strong>{" "}
-            <span className="text-muted">{row.rest}</span>
-          </span>
-        </li>
-      ))}
+      {rows.map((row, index) => {
+        const n = String(index + 1).padStart(2, "0");
+        return (
+          <li
+            key={row.lead}
+            data-n={n}
+            className="border-line text-body-lg flex items-baseline gap-3.5 border-b py-3.5 lg:py-[18px] lg:text-[20px]"
+          >
+            <span aria-hidden className="text-muted font-mono text-[13px]">
+              {n}
+            </span>
+            <span>
+              <strong className="text-ink font-extrabold">{row.lead}</strong>{" "}
+              <span className="text-muted">{row.rest}</span>
+            </span>
+          </li>
+        );
+      })}
     </ol>
   );
 }

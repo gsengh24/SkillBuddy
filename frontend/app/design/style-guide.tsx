@@ -200,7 +200,11 @@ export function StyleGuide() {
                         />
                       ) : (
                         <span
-                          className="inline-block rounded-md px-2 py-0.5 font-semibold"
+                          className={
+                            pair.kind === "large"
+                              ? "inline-block rounded-md px-2 py-0.5 text-[24px] leading-tight font-bold"
+                              : "inline-block rounded-md px-2 py-0.5 font-semibold"
+                          }
                           style={{ color: pair.foreground, backgroundColor: pair.background }}
                         >
                           Sample text
