@@ -12,6 +12,8 @@ export type BottomNavItem = {
   label: string;
   /** An icon element, e.g. <HomeIcon />. (An element, not a component: server pages pass these.) */
   icon: ReactNode;
+  /** Other paths that belong to this item (e.g. chats belong to Home). */
+  match?: readonly string[];
 };
 
 /**
@@ -28,8 +30,8 @@ export function BottomNav({ items, className }: { items: BottomNavItem[]; classN
         className,
       )}
     >
-      {items.map(({ href, label, icon }) => {
-        const current = isActive(pathname, href);
+      {items.map(({ href, label, icon, match = [] }) => {
+        const current = [href, ...match].some((path) => isActive(pathname, path));
         return (
           <Link
             key={href}

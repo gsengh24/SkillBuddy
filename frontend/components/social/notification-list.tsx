@@ -16,7 +16,7 @@ const WORDS: Record<AppNotification["kind"], { text: string; href: string; link:
   },
   intro_accepted: {
     text: "Your intro was accepted. You're now connected.",
-    href: "/messages",
+    href: "/home?filter=messages",
     link: "Open Messages",
   },
   matches_ready: { text: "Your matches are ready.", href: "/home", link: "Open Discover" },

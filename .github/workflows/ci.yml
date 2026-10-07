@@ -231,9 +231,19 @@ jobs:
         run: >-
           docker run --rm --network host --ipc=host
           -e CI=true -e E2E_BASE_URL=http://localhost:3000 -e MAILPIT_URL=http://localhost:8025
-          -v "$PWD/frontend/e2e:/e2e" -w /e2e
+          -v "$PWD/frontend/e2e:/e2e" -v "$PWD/docs/design:/design:ro" -w /e2e
           mcr.microsoft.com/playwright:v1.63.0-noble
           sh -c "npm ci --no-audit --no-fund && npx playwright test"
+
+      # Screenshots of the redesigned screens beside the design reference (390 and 1280px),
+      # for pull request descriptions.
+      - name: Upload UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-screenshots
+          path: frontend/e2e/screenshots
+          if-no-files-found: ignore
 
       - name: Upload Playwright report
         if: failure()

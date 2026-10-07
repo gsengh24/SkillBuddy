@@ -126,7 +126,9 @@ export function Textarea({
   const inputId = id ?? autoId;
   const hintId = `${inputId}-hint`;
   const errorId = `${inputId}-error`;
-  const [length, setLength] = useState(String(props.value ?? defaultValue ?? "").length);
+  const [typed, setTyped] = useState(String(defaultValue ?? "").length);
+  // A controlled field (value set by its owner, e.g. from a suggestion) counts its value.
+  const length = props.value === undefined ? typed : String(props.value).length;
   const counter =
     maxLength === undefined ? null : (
       <span aria-hidden className="text-mono text-muted shrink-0 font-mono">
@@ -144,7 +146,7 @@ export function Textarea({
         maxLength={maxLength}
         defaultValue={defaultValue}
         onChange={(event) => {
-          setLength(event.target.value.length);
+          setTyped(event.target.value.length);
           onChange?.(event);
         }}
         {...props}

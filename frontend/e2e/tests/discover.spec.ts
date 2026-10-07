@@ -36,7 +36,7 @@ test("ask for matches from Discover and see the request finish", async ({ page, 
   // bottom-left of the screen, on top of the phone tab bar.
   await expect(page.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/home");
   await page.goto("/home");
-  await expect(page.getByRole("heading", { name: "Discover", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Home", level: 1 })).toBeVisible();
   await expectNoViolations(page);
 
   // Bottom tab bar on a phone, with 44px targets.

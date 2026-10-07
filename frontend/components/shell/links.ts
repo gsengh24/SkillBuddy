@@ -1,16 +1,26 @@
-/** The four places in the app, the same on desktop (top bar) and phones (bottom nav). */
+/**
+ * The four places in the app, the same on desktop (top bar) and phones (bottom nav).
+ * Chats (/messages/...) belong to Home, which lists requests and messages together.
+ */
 export const APP_LINKS = [
-  { href: "/home", label: "Home" },
-  { href: "/spaces", label: "Spaces" },
-  { href: "/saved", label: "Saved" },
-  { href: "/profile", label: "You" },
+  { href: "/home", label: "Home", match: ["/messages"] },
+  { href: "/spaces", label: "Spaces", match: [] },
+  { href: "/saved", label: "Saved", match: [] },
+  { href: "/profile", label: "You", match: [] },
 ] as const;
 
 export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Round 44px icon link (bell, messages). */
+/** The place the current page belongs to, if any. */
+export function currentPlace(pathname: string) {
+  return APP_LINKS.find((link) =>
+    [link.href, ...link.match].some((path) => isActive(pathname, path)),
+  );
+}
+
+/** Round 44px icon link (the bell). */
 export const ICON_LINK =
   "border-line bg-bg text-ink hover:bg-panel relative inline-flex size-11 shrink-0 items-center justify-center rounded-full border";
 
