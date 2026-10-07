@@ -58,3 +58,12 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
     }
   }
 });
+
+test("match, intro and chat screens, at 390 and 1280px", async ({ page }) => {
+  for (const { name, width, height } of WIDTHS) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/design/screens");
+    await expect(page.getByRole("heading", { name: "Screens", level: 1 })).toBeVisible();
+    await shoot(page, `screens-${name}`);
+  }
+});
