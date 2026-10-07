@@ -1,5 +1,9 @@
 # Skill Buddy design system: direction B, "Quiet dashboard"
 
+> **Superseded** by the Cynergi design ([ADR 0014](../adr/0014-design-system-cynergi.md),
+> [design-spec.md](design-spec.md)). This page still describes the older components in
+> `frontend/components/ui`, which existing screens use until they are restyled.
+
 Chosen by the owner on 2026-10-02 ([ADR 0010](../adr/0010-design-system-quiet-dashboard.md)).
 Visual references: [desktop](reference/desktop.png) and [phone](reference/phone.png).
 

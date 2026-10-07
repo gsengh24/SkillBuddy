@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 
 import { cx } from "./cx";
 
-/** Small uppercase label in IBM Plex Mono (11px, wide letter-spacing). */
+/** Small uppercase label in the mono font (11px, wide letter-spacing). */
 export function Overline({
   tone = "muted",
   className,

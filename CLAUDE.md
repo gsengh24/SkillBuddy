@@ -117,10 +117,11 @@ backend/
 frontend/
   app/                   App Router pages: /login, /terms, /privacy; signed-in pages in app/(app)/
                          (/home, /messages, /saved, /notifications, /settings/account) share
-                         the app shell; /design is the style guide (development only)
+                         the app shell; /design is the style guide (development and previews)
   app/api/v1/[...path]/  Same-origin forwarder to the API (app/api/health = web liveness)
   proxy.ts               Next.js Proxy: sends signed-out visitors of protected pages to /login
-  components/ui/         Design-system components (Button, Card, IntentChip, ...; ADR 0010)
+  components/ds/         Cynergi design-system components (Button, Panel, ListRow, ...; ADR 0014)
+  components/ui/         Older components (ADR 0010), until every screen is restyled
   components/shell/      App shell: desktop sidebar, phone top row and tab bar
   components/            Other React components (auth, legal)
   lib/design/            Design tokens (source of truth), colour helpers, contrast pairs
@@ -286,12 +287,21 @@ mobile app were calling it tomorrow.
 - Protected pages call `getCurrentUser()` (`lib/auth/session.ts`) and redirect when it is
   null; `proxy.ts` is only a fast first check.
 - Read env only through `lib/env.ts`. Never import server-only modules into client components.
-- Use the brand name only from `lib/brand.ts`.
-- **Design system** ([docs/design/design-system.md](docs/design/design-system.md), ADR 0010):
-  build screens from `components/ui` and the shell. Only token colours (Tailwind's default
-  palette is removed); never a hue's base colour for text; no animations or transitions;
-  outline buttons only; 44px touch targets on phones. A person's colour comes only from
-  `personHue(userId)`. Add colours to `lib/design/tokens.ts` and `app/globals.css` together.
+- Use the brand name only from `lib/brand.ts` (`name` today; `displayName` and `wordmark`
+  are the new Cynergi name, switched in over the rename PRs).
+- **Design system** ([docs/design/design-spec.md](docs/design/design-spec.md), ADR 0014,
+  which replaces ADR 0010): build new and restyled screens from `components/ds`;
+  `components/ui` is the older set, kept only until every screen has moved over.
+  - Only token colours (Tailwind's default palette is removed), never raw hex. Add colours
+    to `lib/design/tokens.ts` and `app/globals.css` together.
+  - Buttons: solid ink primary (at most one per view), green outline, ghost. 44px touch
+    targets on phones.
+  - Avatars are white initials on green or ink, chosen only by `avatarFill(userId)` (a
+    stable hash of the id). No photos.
+  - Motion only as in spec section 5: `transform` and `opacity`, once, and off with
+    `prefers-reduced-motion`. No animation library.
+  - Contrast: text 4.5:1, large text and control edges 3:1. `muted-2` is for large text
+    and field borders only; `faint` and `mint` are never text.
 - ESLint (`--max-warnings=0`) and Prettier must pass.
 
 **General**

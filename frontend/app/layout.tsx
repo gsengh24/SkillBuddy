@@ -1,25 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 
 import { brand } from "@/lib/brand";
-import { neutrals } from "@/lib/design/tokens";
+import { colors } from "@/lib/design/tokens";
 
 import "./globals.css";
 
 // next/font downloads the fonts at build time and serves them from this app: no request
-// to a font CDN at runtime.
-const manrope = Manrope({
+// to a font CDN at runtime (the CSP allows fonts from this site only).
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-manrope",
+  variable: "--font-inter",
   display: "swap",
 });
 
-const plexMono = IBM_Plex_Mono({
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["800"],
+  variable: "--font-inter-tight",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
-  variable: "--font-plex-mono",
+  variable: "--font-jetbrains-mono",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -27,12 +34,15 @@ export const metadata: Metadata = {
   description: brand.description,
 };
 
-export const viewport: Viewport = { themeColor: neutrals.ground };
+export const viewport: Viewport = { themeColor: colors.bg };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${manrope.variable} ${plexMono.variable}`}>
-      <body className="bg-ground text-body text-ink font-sans antialiased">{children}</body>
+    <html
+      lang="en"
+      className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable}`}
+    >
+      <body className="bg-bg text-body text-ink font-sans antialiased">{children}</body>
     </html>
   );
 }

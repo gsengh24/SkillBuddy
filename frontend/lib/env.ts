@@ -27,3 +27,20 @@ export function getServerEnv(): ServerEnv {
   cached = result.data;
   return cached;
 }
+
+const deploymentSchema = z.object({
+  NODE_ENV: z.enum(["development", "production", "test"]).optional(),
+  /** Set by Vercel on its deployments: "production", "preview" or "development". */
+  VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
+});
+
+/**
+ * The flag for the /design style guide: on in local development and on Vercel preview
+ * deployments, off in production (including any self-hosted production build). Vercel sets
+ * VERCEL_ENV itself, so there is nothing to configure.
+ */
+export function isStyleGuideEnabled(): boolean {
+  const env = deploymentSchema.safeParse(process.env);
+  if (!env.success) return false;
+  return env.data.NODE_ENV === "development" || env.data.VERCEL_ENV === "preview";
+}

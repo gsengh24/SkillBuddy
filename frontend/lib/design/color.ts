@@ -1,6 +1,14 @@
 import type { CSSProperties } from "react";
 
-import { HUE_NAMES, hues, intents, type HueName, type Intent } from "./tokens";
+import {
+  AVATAR_FILLS,
+  HUE_NAMES,
+  hues,
+  intents,
+  type AvatarFill,
+  type HueName,
+  type Intent,
+} from "./tokens";
 
 /** WCAG 2.x relative luminance of a #RRGGBB colour. */
 export function relativeLuminance(hex: string): number {
@@ -27,12 +35,25 @@ export function contrastRatio(foreground: string, background: string): number {
  * It depends on the id alone, never on anything about the person.
  */
 export function personHue(userId: string): HueName {
+  return HUE_NAMES[idHash(userId) % HUE_NAMES.length] as HueName;
+}
+
+/**
+ * An avatar's fill in the Cynergi design (ADR 0014): green or ink, from the same stable
+ * hash of the user id. It depends on the id alone, never on anything about the person.
+ */
+export function avatarFill(userId: string): AvatarFill {
+  return AVATAR_FILLS[idHash(userId) % AVATAR_FILLS.length] as AvatarFill;
+}
+
+/** FNV-1a over the id's UTF-16 code units. */
+function idHash(id: string): number {
   let hash = 0x811c9dc5;
-  for (let i = 0; i < userId.length; i += 1) {
-    hash ^= userId.charCodeAt(i);
+  for (let i = 0; i < id.length; i += 1) {
+    hash ^= id.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
-  return HUE_NAMES[hash % HUE_NAMES.length] as HueName;
+  return hash;
 }
 
 export function intentHue(intent: Intent): HueName {
