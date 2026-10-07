@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cynergi: landing reference</title>
+<style>
+:root{
+  --bg:#fff;--panel:#F6F7F5;--line:#E4E6E2;--line-strong:#D9DBD6;
+  --ink:#0A0A0A;--ink-2:#4A4F4A;--muted:#6B6F6A;--muted-2:#8A8F89;--faint:#B0B4AE;
+  --green:#0F4A34;--green-hover:#0B3828;--green-tint:#E8F1EC;--green-line:#B9D3C5;--green-soft:#F3F9F5;
+  --mint:#7BE0A8;--mint-text:#9FD1B6;
+  --display:"Inter Tight","Geist","Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono","Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1160px;margin:0 auto;padding:0 16px}
+.mono{font-family:var(--mono)}
+.display{font-family:var(--display);font-weight:800;letter-spacing:-.05em;line-height:1}
+.muted2{color:var(--muted-2)}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;height:60px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;letter-spacing:-.04em;font-size:18px}
+.top nav{display:none;gap:24px;color:var(--muted);font-size:13px}
+.top .right{display:flex;align-items:center;gap:10px;font-size:13px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:500;border:1px solid transparent;transition:transform .15s ease,background .15s ease;cursor:pointer;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.outline{border-color:var(--green);color:var(--green);background:transparent}
+.btn.ghost{color:var(--ink)}
+.btn.white{background:#fff;color:var(--ink)}
+.keycap{display:none;border:1px solid #555;border-radius:4px;padding:0 5px;font-family:var(--mono);font-size:11px;color:#bbb}
+:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--green)}
+
+/* hero */
+.hero{margin:12px 0;background:var(--green-tint);border:1px solid var(--green-line);border-radius:14px;overflow:hidden;display:grid}
+.hero-copy{padding:20px 16px}
+.chip{display:inline-block;border:1px solid #8FB8A3;border-radius:7px;padding:3px 9px;font-family:var(--mono);font-size:10px;color:var(--green);background:var(--green-soft)}
+.hero h1{font-size:32px;margin:14px 0 12px}
+.hero p{margin:0 0 16px;color:var(--ink-2);font-size:14px;max-width:46ch}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--green-line)}
+.cell{min-height:84px;display:flex;align-items:center;justify-content:center;padding:10px;border-right:1px solid var(--green-line);border-bottom:1px solid var(--green-line)}
+.cell:nth-child(2n){border-right:0}
+.cell.wide{grid-column:span 2;background:#fff;justify-content:flex-start;border-right:0;padding:12px 16px}
+.tc{font-family:var(--mono);font-size:11px;border:1px solid var(--green);border-radius:99px;padding:3px 10px;color:var(--green);background:#fff}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--green);margin-bottom:3px;text-transform:uppercase}
+.px{display:grid;grid-template-columns:repeat(5,8px);gap:3px}
+.px i{display:block;height:8px;background:var(--mint)}
+.px i:nth-child(3n){background:var(--green)}
+.px i:nth-child(4n){background:var(--ink)}
+
+/* sections */
+section{padding:40px 0 8px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--green);text-transform:uppercase;margin-bottom:10px}
+h2.display{font-size:26px;margin:0}
+.rows{margin-top:20px;border-top:1px solid var(--line);max-width:720px}
+.row{display:flex;gap:14px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line);font-size:16px}
+.row .n{font-family:var(--mono);font-size:13px;color:var(--faint)}
+.row b{font-weight:800;color:var(--ink)}
+.row span.rest{color:var(--muted-2)}
+.cards{display:grid;gap:10px;margin-top:32px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;transition:border-color .2s}
+.card p{margin:12px 0 0;color:var(--ink-2);font-size:14px}
+.tag{display:inline-block;background:var(--ink);color:#fff;font-family:var(--mono);font-size:10px;padding:3px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em}
+
+/* faq */
+.faq{margin-top:20px;border-top:1px solid var(--line);max-width:760px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;padding:16px 0;font-weight:500;font-size:15px;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";width:8px;height:8px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);margin-top:6px;flex:none;transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(-135deg)}
+.faq p{margin:0 0 16px;color:var(--ink-2);max-width:62ch}
+
+/* cta */
+.cta{margin:40px 0 12px;background:var(--green);border-radius:14px;padding:24px 20px;display:flex;flex-direction:column;gap:20px;position:relative;overflow:hidden}
+.cta .btn{align-self:flex-start}
+.cta h3{margin:0;font-size:28px;color:#fff;max-width:420px}
+.cta h3 span{color:var(--mint-text)}
+.cta .px{position:absolute;right:16px;bottom:12px;opacity:.9}
+
+/* footer */
+footer{border-top:1px solid var(--line);margin-top:24px;padding:28px 0 24px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.fgrid .about{grid-column:span 2;color:var(--muted);max-width:30ch}
+.fgrid h4{margin:0 0 10px;font-size:12px;font-weight:500}
+.fgrid a{display:block;color:var(--muted);font-size:13px;padding:4px 0}
+.legal{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+
+/* motion */
+.reveal{opacity:0;transform:translateY(8px);transition:opacity .45s ease,transform .45s ease}
+.reveal.in{opacity:1;transform:none}
+.cell{animation:up .5s ease both}
+.cell:nth-child(1){animation-delay:.05s}.cell:nth-child(2){animation-delay:.12s}.cell:nth-child(3){animation-delay:.19s}.cell:nth-child(4){animation-delay:.26s}.cell:nth-child(5){animation-delay:.33s}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.cell{animation:none}.btn{transition:none}}
+
+/* tablet */
+@media (min-width:640px){
+  .wrap{padding:0 24px}
+  .cards{grid-template-columns:repeat(3,1fr)}
+  .fgrid{grid-template-columns:repeat(4,1fr)}
+  .fgrid .about{grid-column:span 1}
+}
+
+/* desktop */
+@media (min-width:1024px){
+  .wrap{padding:0 32px}
+  .top{height:68px}
+  .top nav{display:flex}
+  .hero{grid-template-columns:1.15fr 1fr;margin:16px 0}
+  .hero-copy{padding:56px 48px}
+  .hero h1{font-size:64px;margin:20px 0 18px}
+  .hero p{font-size:16px}
+  .btn{height:44px;padding:0 18px;font-size:14px}
+  .keycap{display:inline-block}
+  .grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);border-top:0;border-left:1px solid var(--green-line)}
+  .cell{min-height:130px}
+  section{padding:88px 0 8px}
+  h2.display{font-size:48px}
+  .row{font-size:20px;padding:18px 0}
+  .card{padding:24px}
+  .card:hover,.btn.outline:hover{border-color:var(--green-line)}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.primary:hover{background:#222}
+  .btn.outline:hover{border-color:var(--green)}
+  .cta{flex-direction:row;align-items:center;justify-content:space-between;padding:48px}
+  .cta h3{font-size:44px;max-width:560px}
+  footer{padding:56px 0 32px}
+  .fgrid{grid-template-columns:2fr 1fr 1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#" aria-label="cynergi home">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="6" cy="6" r="3.5" fill="#0F4A34"/><circle cx="16" cy="6" r="3.5" fill="#0A0A0A"/><circle cx="6" cy="16" r="3.5" fill="#0A0A0A"/><circle cx="16" cy="16" r="3.5" fill="#0F4A34"/></svg>
+      cynergi
+    </a>
+    <nav aria-label="Main"><a href="#how">How it works</a><a href="#safety">Safety</a><a href="#faq">FAQ</a></nav>
+    <div class="right"><a class="btn ghost" href="#" style="height:36px">Sign in</a><a class="btn primary" href="#" style="height:36px">Get started</a></div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="hero-copy">
+        <span class="chip">for builders, learners, explorers</span>
+        <h1 class="display">Say what you're building.<br><span class="muted2">Meet who can help.</span></h1>
+        <p>Describe your goal in a sentence. Cynergi finds people with the right skills, interests and intent. No feed. No follower counts.</p>
+        <div class="btns">
+          <a class="btn primary" href="#">Find your people <span class="keycap" aria-hidden="true">S</span></a>
+          <a class="btn outline" href="#how">See how it works</a>
+        </div>
+      </div>
+      <div class="grid" aria-hidden="true">
+        <div class="cell"><span class="tc">cybersecurity</span></div>
+        <div class="cell"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0F4A34" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4.5 2 4.5 4.5"/></svg></div>
+        <div class="cell wide"><div><div class="lbl">Why this match</div><div style="font-weight:500;font-size:14px">A close match for what you described.</div></div></div>
+        <div class="cell"><div class="px"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="cell"><span style="font-size:13px;color:var(--green);display:flex;gap:6px;align-items:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F4A34" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Intro sent</span></div>
+      </div>
+    </div>
+
+    <section id="how" class="reveal">
+      <div class="eyebrow">How it works</div>
+      <h2 class="display">Skills. Interests. Intent.<br><span class="muted2">Matched.</span></h2>
+      <div class="rows">
+        <div class="row"><span class="n">01</span><span><b>Skills</b> <span class="rest">tell you what someone knows.</span></span></div>
+        <div class="row"><span class="n">02</span><span><b>Interests</b> <span class="rest">tell you what they care about.</span></span></div>
+        <div class="row"><span class="n">03</span><span><b>Intent</b> <span class="rest">tells you why you should meet.</span></span></div>
+      </div>
+    </section>
+
+    <section id="safety" class="reveal" style="padding-top:32px">
+      <div class="cards">
+        <div class="card"><span class="tag">* Safe by default</span><p>Block and report in one tap. Your name and links stay hidden until you accept.</p></div>
+        <div class="card"><span class="tag">* Human chats</span><p>Only the two of you in a chat. No AI reads it.</p></div>
+        <div class="card"><span class="tag">* Pair spaces</span><p>Shared goals, skills and progress notes once you connect.</p></div>
+      </div>
+    </section>
+
+    <section id="faq" class="reveal">
+      <div class="eyebrow">FAQ</div>
+      <h2 class="display">Questions, <span class="muted2">answered.</span></h2>
+      <div class="faq">
+        <details><summary>Who can see my name?</summary><p>Placeholder answer. The real text comes from the privacy page and needs the owner's approval.</p></details>
+        <details><summary>Does AI read my chats?</summary><p>Placeholder answer. Must match the privacy page word for word.</p></details>
+        <details><summary>What happens when I block someone?</summary><p>Placeholder answer.</p></details>
+        <details><summary>Is Cynergi free?</summary><p>Placeholder answer. Business model is still undecided.</p></details>
+      </div>
+    </section>
+
+    <div class="cta reveal">
+      <h3 class="display">Your next collaborator <span>is one sentence away.</span></h3>
+      <a class="btn white" href="#">Find your people</a>
+      <div class="px" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="fgrid">
+      <div class="about"><div class="brand" style="margin-bottom:10px">cynergi</div>Find people to build, learn and explore with.</div>
+      <div><h4>Product</h4><a href="#how">How it works</a><a href="#safety">Safety</a><a href="#faq">FAQ</a></div>
+      <div><h4>Legal</h4><a href="#">Privacy</a><a href="#">Terms</a></div>
+      <div><h4>Contact</h4><a href="#">Contact us</a></div>
+    </div>
+    <div class="legal">&copy; 2026 Cynergi. All rights reserved.</div>
+  </footer>
+</div>
+<script>
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches){els.forEach(function(e){e.classList.add('in')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>
