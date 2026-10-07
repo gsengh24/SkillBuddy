@@ -7,7 +7,7 @@ import { VisibilityToggle } from "@/components/profile/visibility-toggle";
 import { Card } from "@/components/ui/card";
 import { Overline } from "@/components/ui/overline";
 import { TextLink } from "@/components/ui/text-link";
-import { getCurrentUser } from "@/lib/auth/session";
+import { withUser } from "@/lib/auth/with-user";
 import { getMyProfile } from "@/lib/profile/server";
 
 export const metadata: Metadata = { title: "About you" };
@@ -17,9 +17,7 @@ type Props = { searchParams: Promise<{ welcome?: string }> };
 
 /** "About you": what we understood (correctable), visibility, and the profile itself. */
 export default async function ProfilePage({ searchParams }: Props) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/profile");
-  const profile = await getMyProfile();
+  const { data: profile } = await withUser("/login?next=/profile", getMyProfile());
   if (!profile) redirect("/onboarding");
   const { welcome } = await searchParams;
 

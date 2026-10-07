@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 import { UnblockButton } from "@/components/safety/block-button";
 import { Card } from "@/components/ui/card";
 import { TextLink } from "@/components/ui/text-link";
-import { getCurrentUser } from "@/lib/auth/session";
+import { withUser } from "@/lib/auth/with-user";
 import { getBlocks } from "@/lib/safety/server";
 
 export const metadata: Metadata = { title: "Blocked people" };
@@ -12,9 +11,7 @@ export const dynamic = "force-dynamic";
 
 /** People you've blocked. Their names aren't shown: blocking ended the connection. */
 export default async function BlockedPeoplePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/settings/blocked");
-  const blocks = await getBlocks();
+  const { data: blocks } = await withUser("/login?next=/settings/blocked", getBlocks());
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">

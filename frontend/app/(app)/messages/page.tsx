@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 import { BlockButton } from "@/components/safety/block-button";
 import { ReportButton } from "@/components/safety/report-button";
@@ -8,7 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 import { TextLink } from "@/components/ui/text-link";
-import { getCurrentUser } from "@/lib/auth/session";
+import { withUser } from "@/lib/auth/with-user";
 import { personHue } from "@/lib/design/color";
 import { getConnections } from "@/lib/social/server";
 
@@ -17,9 +16,7 @@ export const dynamic = "force-dynamic";
 
 /** People you're connected with, each with a link to your chat. */
 export default async function MessagesPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/messages");
-  const connections = await getConnections();
+  const { data: connections } = await withUser("/login?next=/messages", getConnections());
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">

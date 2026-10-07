@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { isActive } from "../shell/nav";
+import { isActive } from "../shell/links";
 import { cx } from "../ui/cx";
 
 export type BottomNavItem = {

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { Conversation } from "@/components/chat/conversation";
 import { BlockButton } from "@/components/safety/block-button";
 import { Card } from "@/components/ui/card";
 import { TextLink } from "@/components/ui/text-link";
-import { getCurrentUser } from "@/lib/auth/session";
+import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getConversation } from "@/lib/chat/server";
 import { getConnections } from "@/lib/social/server";
 
@@ -19,12 +19,16 @@ export default async function ConversationPage({
   params: Promise<{ connectionId: string }>;
 }) {
   const { connectionId } = await params;
-  const user = await getCurrentUser();
-  if (!user) redirect(`/login?next=/messages/${encodeURIComponent(connectionId)}`);
-  const connections = await getConnections();
+  // Three things at once: the session, the connections and the conversation. The
+  // conversation keeps its own order (polling cursor first, then the messages).
+  const conversation = startEarly(getConversation(connectionId));
+  const { user, data: connections } = await withUser(
+    `/login?next=/messages/${encodeURIComponent(connectionId)}`,
+    getConnections(),
+  );
   const connection = connections.items.find((item) => item.id === connectionId);
   if (!connection) notFound();
-  const { page, cursor } = await getConversation(connectionId);
+  const { page, cursor } = await conversation;
   const name = connection.person.display_name ?? "Your connection";
 
   return (

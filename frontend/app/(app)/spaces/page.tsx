@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getCurrentUser } from "@/lib/auth/session";
+import { withUser } from "@/lib/auth/with-user";
 import { getConnections } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Pair spaces" };
@@ -11,9 +10,7 @@ export const dynamic = "force-dynamic";
 
 /** Every connection has a pair space: pick one. */
 export default async function SpacesPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/spaces");
-  const connections = await getConnections();
+  const { data: connections } = await withUser("/login?next=/spaces", getConnections());
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">

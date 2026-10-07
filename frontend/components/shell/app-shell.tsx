@@ -1,22 +1,21 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { Avatar } from "@/components/ui/avatar";
-import { BadgeDot } from "@/components/ui/badge";
-import { BellIcon } from "@/components/ui/icons";
-import { Logo } from "@/components/ui/logo";
-import { StrengthBar } from "@/components/ui/strength-bar";
-import { brand } from "@/lib/brand";
+import { Avatar } from "@/components/ds/avatar";
+import { BottomNav } from "@/components/ds/bottom-nav";
+import { BellIcon, HomeIcon, PeopleIcon, SavedIcon, YouIcon } from "@/components/ds/icons";
+import { Logo } from "@/components/ds/logo";
+import { cx } from "@/components/ui/cx";
 
-import { SidebarNav, TabBar } from "./nav";
+import { APP_LINKS, DOT, ICON_LINK } from "./links";
+import { AppTopBar, MessagesLink } from "./nav";
 
 export type ShellUser = { id: string; email: string };
 
 type AppShellProps = {
   user: ShellUser;
   children: ReactNode;
-  /** Optional 284px right rail, shown from 1280px up (it does not fit beside the sidebar
-   * at 1024px). */
+  /** Optional 284px right rail, shown from 1280px up. */
   rightRail?: ReactNode;
   unreadMessages?: number;
   hasNotifications?: boolean;
@@ -24,44 +23,57 @@ type AppShellProps = {
   profileComplete?: number | null;
 };
 
+const ICONS: Record<(typeof APP_LINKS)[number]["href"], ReactNode> = {
+  "/home": <HomeIcon />,
+  "/spaces": <PeopleIcon />,
+  "/saved": <SavedIcon />,
+  "/profile": <YouIcon />,
+};
+
+const BOTTOM_NAV_ITEMS = APP_LINKS.map((link) => ({ ...link, icon: ICONS[link.href] }));
+
 function BellLink({ hasNotifications }: { hasNotifications: boolean }) {
   return (
     <Link
       href="/notifications"
       aria-label={hasNotifications ? "Notifications (new)" : "Notifications"}
-      className="border-line bg-paper text-ink hover:bg-green-chip relative inline-flex size-11 items-center justify-center rounded-full border"
+      className={ICON_LINK}
     >
       <BellIcon />
-      {hasNotifications ? <BadgeDot className="absolute top-2 right-2.5" /> : null}
+      {hasNotifications ? <span aria-hidden className={DOT} /> : null}
     </Link>
   );
 }
 
-function ProfileCard({ value }: { value: number | null }) {
+/** How complete the profile is, linking to it (or to onboarding before there is one). */
+function ProfileProgress({ value }: { value: number | null }) {
   return (
     <Link
       href={value === null ? "/onboarding" : "/profile"}
-      className="rounded-card bg-amber-tint hover:ring-amber-edge flex flex-col gap-2 p-4 hover:ring-1"
+      className="rounded-control text-meta-lg text-ink hover:bg-panel flex min-h-11 items-center gap-2 px-2"
     >
-      <div className="text-small text-amber-ink flex items-baseline justify-between gap-2 font-bold">
-        <span>Your profile</span>
-        <span>{value === null ? "Not started" : `${value}%`}</span>
-      </div>
-      <StrengthBar value={value ?? 0} hue="amber" label="Profile complete" />
-      <p className="text-small text-amber-ink">
-        {value === null
-          ? "Describe yourself in a few lines to start getting matches."
-          : value < 100
-            ? "Add links and languages for sharper matches."
-            : "Keep it current: matches use what you write here."}
-      </p>
+      <span>Your profile</span>
+      <span
+        role="meter"
+        aria-label="Profile complete"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={value ?? 0}
+        className="bg-green-tint border-green-line h-1.5 w-12 overflow-hidden rounded-full border"
+      >
+        <span className="bg-green block h-full" style={{ width: `${value ?? 0}%` }} />
+      </span>
+      <span className="text-muted font-mono text-[11px]">
+        {value === null ? "Not started" : `${value}%`}
+      </span>
     </Link>
   );
 }
 
 /**
- * The signed-in app frame. Desktop (1024px+): 236px sidebar, main area, optional 284px
- * right rail. Phone: a top row (logo, bell) and a 64px bottom tab bar.
+ * The signed-in app frame (ADR 0014). Desktop (1024px+): the top bar with Home, Spaces,
+ * Saved and You, plus profile progress, messages, the bell and the account. Phone: a slim
+ * top row (logo, messages, bell) and the bottom nav with the same four places.
  */
 export function AppShell({
   user,
@@ -72,61 +84,61 @@ export function AppShell({
   profileComplete = null,
 }: AppShellProps) {
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[236px_minmax(0,1fr)]">
+    <div className="flex min-h-dvh flex-col">
       <a
         href="#main"
-        className="focus:border-ink focus:bg-paper sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:border focus:px-4 focus:py-2"
+        className="focus:border-ink focus:bg-bg rounded-control sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:border focus:px-4 focus:py-2"
       >
         Skip to content
       </a>
 
-      <aside className="border-line bg-paper hidden border-r px-5 py-7 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-7">
-        <Link href="/home" aria-label={`${brand.name} home`} className="self-start px-2">
+      <div className="max-w-content mx-auto hidden w-full px-8 lg:block">
+        <AppTopBar
+          actions={
+            <>
+              <ProfileProgress value={profileComplete} />
+              <MessagesLink unread={unreadMessages} />
+              <BellLink hasNotifications={hasNotifications} />
+              <Link
+                href="/settings/account"
+                aria-label="Your account"
+                title={user.email}
+                className="inline-flex size-11 items-center justify-center rounded-full"
+              >
+                <Avatar userId={user.id} name={user.email} decorative />
+              </Link>
+            </>
+          }
+        />
+      </div>
+
+      <header className="border-line flex h-14 items-center justify-between gap-3 border-b px-4 lg:hidden">
+        <Link href="/home" className="rounded-control inline-flex min-h-11 items-center">
           <Logo />
         </Link>
-        <nav aria-label="Main">
-          <SidebarNav unreadMessages={unreadMessages} />
-        </nav>
-        <ProfileCard value={profileComplete} />
-        <Link
-          href="/settings/account"
-          aria-label="Your account"
-          className="hover:bg-green-chip mt-auto flex min-h-11 items-center gap-3 rounded-xl px-2 py-1"
-        >
-          <Avatar userId={user.id} name={user.email} decorative />
-          <span className="text-small text-ink min-w-0 truncate font-semibold">{user.email}</span>
-        </Link>
-      </aside>
-
-      <div className="flex min-h-dvh min-w-0 flex-col">
-        <header className="flex h-16 items-center justify-between px-4 lg:hidden">
-          <Link href="/home" aria-label={`${brand.name} home`}>
-            <Logo />
-          </Link>
-          <BellLink hasNotifications={hasNotifications} />
-        </header>
-        <div className="hidden justify-end px-10 pt-7 lg:flex">
+        <div className="flex items-center gap-2">
+          <MessagesLink unread={unreadMessages} />
           <BellLink hasNotifications={hasNotifications} />
         </div>
+      </header>
 
-        <div className="flex-1 px-4 pt-2 pb-24 lg:px-10 lg:pb-10 xl:grid xl:grid-cols-[minmax(0,1fr)_284px] xl:gap-6">
-          <main id="main" className="min-w-0">
-            {children}
-          </main>
-          {rightRail ? (
-            <aside aria-label="Side panel" className="hidden flex-col gap-4 xl:flex">
-              {rightRail}
-            </aside>
-          ) : null}
-        </div>
-
-        <nav
-          aria-label="Main"
-          className="border-line bg-paper fixed inset-x-0 bottom-0 z-10 border-t lg:hidden"
-        >
-          <TabBar unreadMessages={unreadMessages} />
-        </nav>
+      <div
+        className={cx(
+          "max-w-content mx-auto w-full flex-1 px-4 pt-4 pb-8 lg:px-8 lg:pt-8",
+          rightRail ? "xl:grid xl:grid-cols-[minmax(0,1fr)_284px] xl:gap-6" : null,
+        )}
+      >
+        <main id="main" className="min-w-0">
+          {children}
+        </main>
+        {rightRail ? (
+          <aside aria-label="Side panel" className="hidden flex-col gap-4 xl:flex">
+            {rightRail}
+          </aside>
+        ) : null}
       </div>
+
+      <BottomNav items={BOTTOM_NAV_ITEMS} className="z-10" />
     </div>
   );
 }
