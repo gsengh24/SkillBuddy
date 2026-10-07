@@ -4,15 +4,13 @@ import { useId, useState } from "react";
 
 import { BlockButton } from "@/components/safety/block-button";
 import { ReportButton } from "@/components/safety/report-button";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Tag } from "@/components/ui/tag";
+import { Button } from "@/components/ds/button";
+import { InlineError } from "@/components/ds/fields";
+import { Panel, TopicChip, WhyPanel } from "@/components/ds/surfaces";
 import { TextLink } from "@/components/ui/text-link";
-import { WhyBox } from "@/components/ui/why-box";
 import { browserApi } from "@/lib/api/browser";
 import { introSchema, type Intro } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
-import { personHue } from "@/lib/design/color";
 
 /**
  * An intro someone sent you: what they asked for, why you were matched, their note and
@@ -23,7 +21,6 @@ export function IntroCard({ initial }: { initial: Intro }) {
   const [intro, setIntro] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hue = personHue(intro.person.user_id);
   const { person } = intro;
 
   async function answer(accept: boolean) {
@@ -44,43 +41,41 @@ export function IntroCard({ initial }: { initial: Intro }) {
   }
 
   return (
-    <Card className="flex flex-col gap-4" role="article" aria-labelledby={`${ids}-h`}>
+    <Panel className="flex flex-col gap-4" role="article" aria-labelledby={`${ids}-h`}>
       <div className="flex flex-col gap-1">
-        <h3 id={`${ids}-h`} className="text-body text-ink font-bold">
+        <h3 id={`${ids}-h`} className="text-title lg:text-title-lg text-ink">
           {intro.status === "accepted" && person.display_name
             ? `${person.display_name} wants to meet you`
             : "Someone wants to meet you"}
         </h3>
-        <p className="text-small text-muted">They&apos;re looking for: “{intro.request_text}”</p>
+        <p className="text-meta-lg text-muted">They&apos;re looking for: “{intro.request_text}”</p>
       </div>
-      {person.summary ? <p>{person.summary}</p> : null}
+      {person.summary ? <p className="text-ink-2">{person.summary}</p> : null}
       {person.offers.length ? (
         <ul className="flex flex-wrap gap-2" aria-label="They offer">
           {person.offers.map((item) => (
             <li key={item}>
-              <Tag hue={hue}>{item}</Tag>
+              <TopicChip>{item}</TopicChip>
             </li>
           ))}
         </ul>
       ) : null}
-      <WhyBox hue={hue} title="Why you were matched">
-        {intro.reason}
-      </WhyBox>
+      <WhyPanel title="Why you were matched">{intro.reason}</WhyPanel>
       {intro.note ? (
-        <blockquote className="border-line text-ink border-l-2 pl-3">{intro.note}</blockquote>
+        <blockquote className="border-green-line text-ink border-l-2 pl-3">{intro.note}</blockquote>
       ) : null}
 
       {intro.status === "pending" ? (
         <div className="flex flex-col gap-3">
-          <p className="text-small text-muted">
+          <p className="text-meta-lg text-ink-2">
             If you accept, you&apos;ll both see each other&apos;s name and links. If you decline,
             they won&apos;t be told.
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button type="button" hue={hue} disabled={busy} onClick={() => answer(true)}>
+            <Button type="button" variant="primary" disabled={busy} onClick={() => answer(true)}>
               Accept
             </Button>
-            <Button type="button" disabled={busy} onClick={() => answer(false)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => answer(false)}>
               Decline
             </Button>
           </div>
@@ -94,7 +89,7 @@ export function IntroCard({ initial }: { initial: Intro }) {
       ) : null}
       {intro.status === "accepted" ? (
         <div className="flex flex-col gap-1" role="status">
-          <p className="text-ink font-semibold">You&apos;re connected.</p>
+          <p className="text-ink font-medium">You&apos;re connected.</p>
           {person.links?.length ? (
             <ul className="flex flex-col gap-1">
               {person.links.map((link) => (
@@ -112,11 +107,7 @@ export function IntroCard({ initial }: { initial: Intro }) {
         </p>
       ) : null}
       {intro.status === "expired" ? <p className="text-muted">This intro has expired.</p> : null}
-      {error ? (
-        <p role="alert" className="text-small text-coral-ink font-semibold">
-          {error}
-        </p>
-      ) : null}
-    </Card>
+      {error ? <InlineError announce>{error}</InlineError> : null}
+    </Panel>
   );
 }

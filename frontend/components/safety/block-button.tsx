@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ds/button";
+import { InlineError } from "@/components/ds/fields";
 import { browserApi } from "@/lib/api/browser";
 import { blockedSchema, noContentSchema } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
@@ -44,7 +45,7 @@ export function BlockButton({
 
   if (!confirming) {
     return (
-      <Button tone="danger" onClick={() => setConfirming(true)}>
+      <Button variant="danger" onClick={() => setConfirming(true)}>
         Block
       </Button>
     );
@@ -53,12 +54,12 @@ export function BlockButton({
     <div
       role="group"
       aria-labelledby={`${ids}-title`}
-      className="border-line rounded-card flex flex-col gap-3 border p-4"
+      className="border-line rounded-panel bg-bg flex flex-col gap-3 border p-4"
     >
-      <p id={`${ids}-title`} className="text-ink font-bold">
+      <p id={`${ids}-title`} className="text-title text-ink">
         Block {name}?
       </p>
-      <ul className="text-small flex list-disc flex-col gap-1 pl-5">
+      <ul className="text-meta-lg text-ink-2 flex list-disc flex-col gap-1 pl-5">
         <li>Neither of you can message the other, and your chat closes for both of you.</li>
         <li>No intros between you, and you won&apos;t be shown to each other as matches.</li>
         <li>They won&apos;t be told.</li>
@@ -67,16 +68,12 @@ export function BlockButton({
           would need to send a new intro.
         </li>
       </ul>
-      {error ? (
-        <p role="alert" className="text-small text-coral-ink font-semibold">
-          {error}
-        </p>
-      ) : null}
+      {error ? <InlineError announce>{error}</InlineError> : null}
       <div className="flex flex-wrap gap-3">
-        <Button tone="danger" disabled={busy} onClick={confirm}>
+        <Button variant="danger" disabled={busy} onClick={confirm}>
           {busy ? "Blocking…" : "Block"}
         </Button>
-        <Button disabled={busy} onClick={() => setConfirming(false)}>
+        <Button variant="ghost" disabled={busy} onClick={() => setConfirming(false)}>
           Cancel
         </Button>
       </div>
@@ -104,23 +101,23 @@ export function UnblockButton({ userId }: { userId: string }) {
   }
 
   if (!confirming) {
-    return <Button onClick={() => setConfirming(true)}>Unblock</Button>;
+    return (
+      <Button variant="outline" onClick={() => setConfirming(true)}>
+        Unblock
+      </Button>
+    );
   }
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-small">
+      <p className="text-meta-lg text-ink-2">
         They may be shown to you as a match again, and you to them. Your old chat stays closed.
       </p>
-      {error ? (
-        <p role="alert" className="text-small text-coral-ink font-semibold">
-          {error}
-        </p>
-      ) : null}
+      {error ? <InlineError announce>{error}</InlineError> : null}
       <div className="flex flex-wrap gap-3">
-        <Button disabled={busy} onClick={confirm}>
+        <Button variant="outline" disabled={busy} onClick={confirm}>
           {busy ? "Unblocking…" : "Unblock"}
         </Button>
-        <Button disabled={busy} onClick={() => setConfirming(false)}>
+        <Button variant="ghost" disabled={busy} onClick={() => setConfirming(false)}>
           Cancel
         </Button>
       </div>

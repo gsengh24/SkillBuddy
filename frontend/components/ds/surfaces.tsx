@@ -100,6 +100,32 @@ export function StatusBadge({
   );
 }
 
+/**
+ * "Why this match": a green-tint panel with a mono label, as in the hero grid. The text is
+ * ink on green tint.
+ */
+export function WhyPanel({
+  title = "Why this match",
+  children,
+  className,
+}: {
+  title?: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cx(
+        "bg-green-tint border-green-line rounded-card flex flex-col gap-1 border px-4 py-3",
+        className,
+      )}
+    >
+      <p className="text-mono-lg text-green font-mono uppercase">{title}</p>
+      <div className="text-ink">{children}</div>
+    </div>
+  );
+}
+
 /** A loading placeholder block on panel, with a slow opacity pulse. */
 export function Skeleton({ className }: { className?: string }) {
   return <div aria-hidden className={cx("bg-panel animate-pulse-soft rounded-card", className)} />;
