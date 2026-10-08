@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { SpaceView } from "@/components/spaces/space-view";
-import { ButtonLink } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ds/button";
 import { TextLink } from "@/components/ui/text-link";
 import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getConnections } from "@/lib/social/server";
@@ -28,12 +28,16 @@ export default async function SpacePage({ params }: { params: Promise<{ connecti
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <TextLink href="/spaces" tone="muted" className="text-small self-start">
+        <TextLink
+          href="/spaces"
+          tone="muted"
+          className="text-meta-lg inline-flex min-h-11 items-center self-start"
+        >
           All pair spaces
         </TextLink>
-        <h1 className="text-h1 break-words">You and {name}</h1>
-        <p className="text-muted">Goals you share, skills you want to grow, and your progress.</p>
-        <ButtonLink href={`/messages/${connectionId}`} className="self-start">
+        <h1 className="text-headline lg:text-headline-lg break-words">You and {name}</h1>
+        <p className="text-ink-2">Goals you share, skills you want to grow, and your progress.</p>
+        <ButtonLink href={`/messages/${connectionId}`} variant="outline" className="self-start">
           Open chat
         </ButtonLink>
       </header>

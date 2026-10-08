@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 import { Conversation } from "@/components/chat/conversation";
 import { MatchCard } from "@/components/discover/match-card";
 import { IntroCard } from "@/components/social/intro-card";
-import type { Intro, Match, Message } from "@/lib/api/schemas";
+import { SpaceView } from "@/components/spaces/space-view";
+import type { Intro, Match, Message, Space } from "@/lib/api/schemas";
 import { isStyleGuideEnabled } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -80,6 +81,47 @@ const MESSAGES: Message[] = [
   created_at: at as string,
 }));
 
+const SPACE: Space = {
+  connection_id: "sample-connection",
+  goals: [
+    {
+      id: "sample-goal-1",
+      title: "Ship the first version",
+      status: "open",
+      due_on: "2026-11-01",
+      done_at: null,
+      created_by: THEM,
+      created_at: "2026-10-05T10:00:00Z",
+    },
+    {
+      id: "sample-goal-2",
+      title: "Pick a name",
+      status: "done",
+      due_on: null,
+      done_at: "2026-10-06T10:00:00Z",
+      created_by: ME,
+      created_at: "2026-10-05T10:00:00Z",
+    },
+  ],
+  skills: [
+    { id: "sample-skill-1", name: "React", owner_id: ME, created_at: "2026-10-05T10:00:00Z" },
+    { id: "sample-skill-2", name: "Figma", owner_id: THEM, created_at: "2026-10-05T10:00:00Z" },
+  ],
+  logs: [
+    {
+      id: "sample-log-1",
+      note: "Drew the first screens.",
+      author_id: THEM,
+      goal_id: "sample-goal-1",
+      skill_id: null,
+      created_at: "2026-10-06T18:00:00Z",
+    },
+  ],
+  retention_days: 90,
+  max_goals: 30,
+  max_skills_per_person: 10,
+};
+
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-4">
@@ -122,6 +164,11 @@ export default function ScreensPage() {
             retentionDays={90}
             hasUnread={false}
           />
+        </div>
+      </Section>
+      <Section id="screens-space" title="A pair space">
+        <div className="max-w-3xl">
+          <SpaceView space={SPACE} meId={ME} otherId={THEM} otherName="Aarav R." />
         </div>
       </Section>
     </main>
