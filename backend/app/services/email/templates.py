@@ -185,3 +185,75 @@ def data_export_email(settings: Settings, to: str, url: str, hours: int) -> Emai
         text=_EXPORT_TEXT.format(app=settings.app_name, url=url, hours=hours),
         html=_EXPORT_HTML.format(app=escape(settings.app_name), url=escape(url), hours=hours),
     )
+
+
+_SAFETY = {
+    "warn": (
+        "A warning about your account",
+        "We reviewed a report about your account and found it broke our terms. This is a "
+        "warning: please read the terms again. Further problems can lead to a suspension.",
+    ),
+    "suspend": (
+        "Your account is suspended for 7 days",
+        "We reviewed a report about your account and suspended it for 7 days. You can't sign "
+        "in until then.",
+    ),
+    "ban": (
+        "Your account has been banned",
+        "We reviewed a report about your account and banned it. You can no longer sign in.",
+    ),
+    "upheld": (
+        "We reviewed your appeal",
+        "We reviewed your appeal and the decision stays.",
+    ),
+    "overturned": (
+        "Your appeal was accepted",
+        "We reviewed your appeal and lifted the restriction. You can sign in again.",
+    ),
+}
+
+_SAFETY_TEXT = """{headline}
+
+{body}
+{appeal}
+This email never says who reported you or includes any message text.
+"""
+
+_SAFETY_HTML = """<!doctype html>
+<html lang="en">
+  <body
+    style="margin:0;padding:24px;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a"
+  >
+    <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:8px;padding:24px">
+      <p style="margin:0 0 16px;font-size:18px;font-weight:700">{headline}</p>
+      <p style="margin:0 0 16px">{body}</p>
+      {appeal}
+      <p style="margin:16px 0 0;color:#475569;font-size:14px">
+        This email never says who reported you or includes any message text.
+      </p>
+    </div>
+  </body>
+</html>
+"""
+
+
+def safety_email(
+    settings: Settings, to: str, kind: str, appeal_url: str | None = None
+) -> EmailMessage:
+    """A warning, suspension or ban (with a link to appeal), or an appeal's outcome."""
+    headline, body = _SAFETY[kind]
+    appeal_text = (
+        f"\nIf you think this is wrong, you can appeal once:\n{appeal_url}\n" if appeal_url else ""
+    )
+    appeal_html = (
+        f'<p style="margin:0 0 16px"><a href="{escape(appeal_url)}" style="color:#166534">'
+        "Appeal this decision</a> (you can appeal once).</p>"
+        if appeal_url
+        else ""
+    )
+    return EmailMessage(
+        to=to,
+        subject=f"{headline} ({settings.app_name})",
+        text=_SAFETY_TEXT.format(headline=headline, body=body, appeal=appeal_text),
+        html=_SAFETY_HTML.format(headline=escape(headline), body=escape(body), appeal=appeal_html),
+    )

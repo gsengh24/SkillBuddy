@@ -136,7 +136,7 @@ class ConnectionList(BaseModel):
 
 class NotificationOut(BaseModel):
     id: uuid.UUID
-    kind: Literal["intro_received", "intro_accepted", "matches_ready"]
+    kind: Literal["intro_received", "intro_accepted", "matches_ready", "report_reviewed"]
     intro_id: uuid.UUID | None
     request_id: uuid.UUID | None
     read_at: datetime | None

@@ -60,6 +60,7 @@ export default async function ConversationPage({
               <ReportButton
                 kind="profile"
                 targetId={connection.person.user_id}
+                attachFrom={connection.id}
                 blockUserId={connection.person.user_id}
                 blockName={connection.person.display_name ?? "this person"}
               />

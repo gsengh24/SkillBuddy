@@ -139,3 +139,63 @@ export const userDetailSchema = z.object({
   notes: z.array(noteSchema),
 });
 export type UserDetail = z.infer<typeof userDetailSchema>;
+
+const personSchema = z.object({ id: z.string(), email: z.string(), status: z.string() });
+
+export const queueItemSchema = z.object({
+  id: z.string(),
+  status: z.enum(["open", "in_review", "resolved"]),
+  reason: z.string(),
+  target: z.string(),
+  created_at: z.string(),
+  decision: z.string().nullable(),
+  reported: personSchema.nullable(),
+  reporter: personSchema.nullable(),
+});
+export type QueueItem = z.infer<typeof queueItemSchema>;
+export const queueSchema = z.object({
+  items: z.array(queueItemSchema),
+  next_cursor: z.string().nullable(),
+});
+
+export const caseSchema = z.object({
+  report: queueItemSchema,
+  details: z.string(),
+  attached: z.array(
+    z.object({
+      label: z.string().nullable(),
+      sender: z.enum(["reporter", "reported"]),
+      body: z.string(),
+      sent_at: z.string().nullable(),
+    }),
+  ),
+  resolution_note: z.string(),
+  resolved_at: z.string().nullable(),
+  reported_history: z.record(z.string(), z.number()),
+  reporter_history: z.record(z.string(), z.number()),
+});
+export type Case = z.infer<typeof caseSchema>;
+
+export const appealSchema = z.object({
+  id: z.string(),
+  person: personSchema.nullable(),
+  against: z.string(),
+  appeal: z.string(),
+  status: z.enum(["open", "upheld", "overturned"]),
+  created_at: z.string(),
+  decided_at: z.string().nullable(),
+});
+export type Appeal = z.infer<typeof appealSchema>;
+export const appealPageSchema = z.object({
+  items: z.array(appealSchema),
+  next_cursor: z.string().nullable(),
+});
+
+export const blockStatsSchema = z.object({
+  total: z.number(),
+  last_30_days: z.number(),
+  most_blocked: z.array(
+    z.object({ user_id: z.string(), email: z.string(), status: z.string(), times: z.number() }),
+  ),
+});
+export type BlockStats = z.infer<typeof blockStatsSchema>;

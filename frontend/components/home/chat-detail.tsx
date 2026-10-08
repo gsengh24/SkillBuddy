@@ -46,6 +46,7 @@ export function ChatDetail({
           <ReportButton
             kind="profile"
             targetId={person.user_id}
+            attachFrom={connection.id}
             blockUserId={person.user_id}
             blockName={person.display_name ?? "this person"}
           />

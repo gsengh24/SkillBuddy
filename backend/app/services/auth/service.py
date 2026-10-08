@@ -24,6 +24,7 @@ from app.models import (
     UserSession,
     UserStatus,
 )
+from app.services import appeals
 from app.services.auth.codes import (
     OTP_DIGITS,
     email_hash,
@@ -276,11 +277,19 @@ class AuthService:
             await self._db.commit()
             if user.status == UserStatus.PENDING_DELETION:
                 raise AccountPendingDeletionError(user.deletion_scheduled_for)
+            # They just proved the address, so they may send one appeal (A3).
+            appeal = [
+                {
+                    "appeal_token": appeals.make_token(
+                        self._settings, user.id, appeals.SIGN_IN_TOKEN_HOURS
+                    )
+                }
+            ]
             if user.status == UserStatus.BANNED:
-                raise AccountBannedError
+                raise AccountBannedError(details=appeal)
             if user.status == UserStatus.PENDING:
                 raise AccountPendingError
-            raise AccountSuspendedError
+            raise AccountSuspendedError(details=appeal)
 
         created_account = user is None
         if user is None:

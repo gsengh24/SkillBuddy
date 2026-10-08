@@ -36,8 +36,6 @@ from app.db.base import Base, UUIDPrimaryKeyMixin
 
 REPORT_DETAILS_MAX_LENGTH = 500
 REPORT_NOTE_MAX_LENGTH = 500
-# Messages copied before the reported one, as context for the moderator.
-REPORT_CONTEXT_MESSAGES = 10
 
 
 def _in(values: tuple[str, ...]) -> str:
@@ -64,7 +62,31 @@ class ReportTarget(StrEnum):
 
 class ReportStatus(StrEnum):
     OPEN = "open"
+    # Someone on the team has started looking at it.
+    IN_REVIEW = "in_review"
     RESOLVED = "resolved"
+
+
+class ReportDecision(StrEnum):
+    """What the admin decided (A3). Warn, suspend and ban email the reported person."""
+
+    DISMISS = "dismiss"
+    WARN = "warn"
+    SUSPEND = "suspend"
+    BAN = "ban"
+
+
+class AppealStatus(StrEnum):
+    OPEN = "open"
+    # The suspension or ban stays.
+    UPHELD = "upheld"
+    # It is lifted.
+    OVERTURNED = "overturned"
+
+
+APPEAL_TEXT_MAX_LENGTH = 1000
+# Messages a reporter may attach when reporting someone from a chat.
+MAX_ATTACHED_MESSAGES = 5
 
 
 class Report(UUIDPrimaryKeyMixin, Base):
@@ -72,6 +94,10 @@ class Report(UUIDPrimaryKeyMixin, Base):
     __table_args__ = (
         CheckConstraint(f"reason IN ({_in(tuple(ReportReason))})", name="reason_valid"),
         CheckConstraint(f"status IN ({_in(tuple(ReportStatus))})", name="status_valid"),
+        CheckConstraint(
+            f"decision IS NULL OR decision IN ({_in(tuple(ReportDecision))})",
+            name="decision_valid",
+        ),
         CheckConstraint(
             f"char_length(details) <= {REPORT_DETAILS_MAX_LENGTH}", name="details_length"
         ),
@@ -117,6 +143,10 @@ class Report(UUIDPrimaryKeyMixin, Base):
     resolution_note: Mapped[str] = mapped_column(Text, default="", server_default=text("''"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     resolved_at: Mapped[datetime | None]
+    # The admin portal's decision (A3); null for reports resolved before it. The decider is
+    # a plain id, like the audit log, so removing an admin changes nothing here.
+    decision: Mapped[str | None] = mapped_column(String(16))
+    decided_by: Mapped[uuid.UUID | None]
     # When the moderator alert email covered this report (one digest an hour at most).
     alerted_at: Mapped[datetime | None]
 
@@ -169,3 +199,30 @@ class ModerationAction(UUIDPrimaryKeyMixin, Base):
     )
     note: Mapped[str] = mapped_column(Text, default="", server_default=text("''"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class Appeal(UUIDPrimaryKeyMixin, Base):
+    """A suspended or banned person's one appeal (A3), sent without signing in through a
+    signed link. Deleted with the account, or 180 days after it was decided."""
+
+    __tablename__ = "appeals"
+    __table_args__ = (
+        CheckConstraint(f"status IN ({_in(tuple(AppealStatus))})", name="status_valid"),
+        CheckConstraint(
+            f"char_length(body) BETWEEN 1 AND {APPEAL_TEXT_MAX_LENGTH}", name="body_length"
+        ),
+        Index("ix_appeals_status_created_at", "status", "created_at"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    # What it was about when it was sent: "suspended" or "banned".
+    against: Mapped[str] = mapped_column(String(16))
+    body: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(
+        String(16), default=AppealStatus.OPEN, server_default=text(f"'{AppealStatus.OPEN}'")
+    )
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    decided_at: Mapped[datetime | None]
+    decided_by: Mapped[uuid.UUID | None]

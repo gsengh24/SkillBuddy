@@ -20,6 +20,11 @@ const WORDS: Record<AppNotification["kind"], { text: string; href: string; link:
     link: "Open Messages",
   },
   matches_ready: { text: "Your matches are ready.", href: "/home", link: "Open Discover" },
+  report_reviewed: {
+    text: "We reviewed your report. Thank you for helping keep the community safe.",
+    href: "/notifications",
+    link: "OK",
+  },
 };
 
 function when(iso: string): string {

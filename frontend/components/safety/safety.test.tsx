@@ -122,7 +122,7 @@ describe("ReportButton", () => {
 
     await user.click(screen.getByRole("button", { name: "Report" }));
 
-    expect(screen.getByText(/this message and the 10 messages before it/)).toBeVisible();
+    expect(screen.getByText(/Our moderator will see a copy of this message./)).toBeVisible();
     expect(screen.getByText(/won't be told who reported them/)).toBeVisible();
     expect(screen.getByRole("radio", { name: "Harassment or bullying" })).toBeInTheDocument();
     expect(
