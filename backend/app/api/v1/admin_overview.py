@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import AfterValidator
 
 from app.api.admin_deps import AdminContext, DbDep, require_admin
 from app.api.deps import SettingsDep
@@ -31,13 +32,28 @@ router = APIRouter(prefix="/admin", tags=["admin"], responses=_ERRORS)
 
 Viewer = Annotated[AdminContext, Depends(require_admin(Permission.VIEW_DASHBOARDS))]
 
+_RANGES = (7, 30, 90)
+
+
+def _known_range(days: int) -> int:
+    if days not in _RANGES:
+        raise ValueError(f"days must be one of {_RANGES}")
+    return days
+
+
+# An int checked against _RANGES, not Literal[7, 30, 90]: the query string "30" is not
+# coerced into an int literal, so a Literal turned away every value with 422.
+Range = Annotated[
+    int, AfterValidator(_known_range), Query(json_schema_extra={"enum": list(_RANGES)})
+]
+
 
 @router.get("/overview", summary="The admin Overview")
 async def get_overview(
     _: Viewer,
     db: DbDep,
     settings: SettingsDep,
-    days: Annotated[Literal[7, 30, 90], Query()] = 7,
+    days: Range = 7,
 ) -> OverviewOut:
     """KPIs against the previous period, sign-ups by day, the funnel, what needs attention
     and recent admin activity. Counts only; cached for 60 seconds per range."""
