@@ -21,7 +21,7 @@ from app.ai.providers import FakeProvider
 from app.core.config import Settings
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
-from app.models import AdminRole, FlaggedItem
+from app.models import AdminRole, ContentRule, FlaggedItem
 from app.services import app_settings, content_rules
 from tests.conftest import SettingsFactory
 from tests.integration.conftest import (
@@ -210,7 +210,7 @@ async def test_repeated_identical_intros_are_flagged(
         await db.commit()
 
     # All three are in the table by now, so both calls see three identical notes.
-    assert second == third == [content_rules.ContentRule.REPEATED_INTROS]
+    assert second == third == [ContentRule.REPEATED_INTROS]
     assert len(flags(fresh_url)) == 2
 
 
@@ -234,7 +234,7 @@ async def test_queue_keep_and_remove(
             headers=ravi.headers,
         )
         queue = (await client.get(f"{ADMIN}/content/flags", headers=readonly.headers)).json()
-        by_user = {}
+        by_user: dict[str, list[dict[str, str]]] = {}
         for item in queue["items"]:
             by_user.setdefault(item["user_id"], []).append(item)
         asha_flag = by_user[asha.id][0]
