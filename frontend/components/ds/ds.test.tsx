@@ -21,6 +21,7 @@ import {
   LabelChip,
   ListRow,
   Logo,
+  MoreMenu,
   NumberedRows,
   Panel,
   PeopleIcon,
@@ -417,5 +418,38 @@ describe("FadeUp and reduced motion", () => {
     const section = screen.getByText("Section");
     expect(section).toHaveAttribute("data-motion", "static");
     expect(section.className).not.toMatch(/opacity-0|translate-y-2|transition/);
+  });
+});
+
+describe("MoreMenu", () => {
+  it("is a labelled button that opens its actions, and Escape closes it back to the button", async () => {
+    const onPageKey = vi.fn();
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") onPageKey(event.defaultPrevented);
+    });
+    render(
+      <MoreMenu label="More actions for Asha">
+        <button type="button">Report</button>
+        <button type="button">Block</button>
+      </MoreMenu>,
+    );
+    const trigger = screen.getByRole("button", { name: "More actions for Asha" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("button", { name: "Block" })).not.toBeInTheDocument();
+
+    const user = userEvent.setup();
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(document.getElementById(trigger.getAttribute("aria-controls") ?? "")).toContainElement(
+      screen.getByRole("button", { name: "Block" }),
+    );
+
+    screen.getByRole("button", { name: "Report" }).focus();
+    await user.keyboard("{Escape}");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveFocus();
+    // The page's own Escape handler sees it as already handled.
+    expect(onPageKey).toHaveBeenCalledWith(true);
   });
 });
