@@ -26,6 +26,7 @@ MESSAGE_MAX_LENGTH = 2000
 class Message(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "messages"
     __table_args__ = (
+        Index("ix_messages_created_at_brin", "created_at", postgresql_using="brin"),
         CheckConstraint(
             f"char_length(body) BETWEEN 1 AND {MESSAGE_MAX_LENGTH}", name="body_length"
         ),

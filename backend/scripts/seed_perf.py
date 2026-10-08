@@ -12,6 +12,7 @@ throwaway database.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 import statistics
 import sys
@@ -21,7 +22,11 @@ from typing import Any, Final
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Connection, Dialect, make_url
 
+from app.core.config import get_settings
+from app.db.engine import create_engine as create_async_db_engine
+from app.db.session import create_session_factory
 from app.models import User, UserStatus
+from app.services.admin import overview
 from app.services.admin.users import PAGE_DEFAULT, Filters, list_query
 
 LIMIT_MS: Final = 200.0
@@ -104,6 +109,34 @@ def _time(connection: Connection, sql: str, params: dict[str, Any]) -> float:
     return statistics.median(runs)
 
 
+async def _time_overview() -> list[tuple[str, float]]:
+    """The admin Overview (A4), built without its cache, for each range, and health."""
+    settings = get_settings()
+    async_engine = create_async_db_engine(settings)
+    factory = create_session_factory(async_engine)
+    slow: list[tuple[str, float]] = []
+    try:
+        for days in overview.RANGES:
+            runs = []
+            for _ in range(3):
+                async with factory() as db:
+                    started = time.perf_counter()
+                    await overview.build(db, settings, days)
+                    runs.append((time.perf_counter() - started) * 1000)
+            median = statistics.median(runs)
+            _say(f"## overview, {days} days (all its queries, uncached): median {median:.1f} ms")
+            if median >= LIMIT_MS:
+                slow.append((f"overview {days}", median))
+        async with factory() as db:
+            started = time.perf_counter()
+            await overview.health(db, settings)
+            took = (time.perf_counter() - started) * 1000
+        _say(f"## health (uncached): {took:.1f} ms")
+    finally:
+        await async_engine.dispose()
+    return slow
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--users", type=int, default=100_000)
@@ -147,6 +180,7 @@ def main() -> int:
             if median >= LIMIT_MS:
                 slow.append((name, median))
     engine.dispose()
+    slow += asyncio.run(_time_overview())
     if slow:
         _say(f"Slower than {LIMIT_MS:.0f} ms: {slow}")
         return 1

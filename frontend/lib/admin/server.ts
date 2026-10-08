@@ -18,6 +18,8 @@ import {
   blockStatsSchema,
   caseSchema,
   queueSchema,
+  healthSchema,
+  overviewSchema,
 } from "./schemas";
 
 async function adminGet<T extends z.ZodType>(path: string, schema: T): Promise<z.infer<T>> {
@@ -45,3 +47,6 @@ export const getCase = (id: string) =>
   adminGet(`/safety/reports/${encodeURIComponent(id)}`, caseSchema);
 export const getAppeals = () => adminGet("/safety/appeals?status=open", appealPageSchema);
 export const getBlockStats = () => adminGet("/safety/blocks", blockStatsSchema);
+
+export const getOverview = (days: number) => adminGet(`/overview?days=${days}`, overviewSchema);
+export const getHealth = () => adminGet("/health", healthSchema);
