@@ -71,7 +71,7 @@ export default async function CommsPage({
                         BANNER_STYLES[banner.kind],
                       )}
                     >
-                      {banner.message}
+                      {banner.announcement}
                       {banner.ends_at ? (
                         <span className="text-meta block opacity-80" suppressHydrationWarning>
                           Ends {when(banner.ends_at)}

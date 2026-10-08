@@ -66,7 +66,7 @@ async def publish_banner(
     banner = await banners.publish(
         db,
         admin.who,
-        message=body.message,
+        message=body.announcement,
         kind=BannerKind(body.kind),
         ends_at=body.ends_at,
         reason=body.reason,

@@ -338,7 +338,7 @@ export const probeQueuedSchema = z.object({ queued: z.boolean() });
 
 export const adminBannerSchema = z.object({
   id: z.string(),
-  message: z.string(),
+  announcement: z.string(),
   kind: z.enum(["info", "warning", "maintenance"]),
   created_at: z.string(),
   ends_at: z.string().nullable(),

@@ -433,7 +433,7 @@ export const currentBannerSchema = z.object({
   banner: z
     .object({
       id: z.string(),
-      message: z.string(),
+      announcement: z.string(),
       kind: z.enum(["info", "warning", "maintenance"]),
       ends_at: z.string().nullable(),
     })

@@ -33,7 +33,7 @@ describe("NewBanner", () => {
       new Response(
         JSON.stringify({
           id: "b1",
-          message: "Down on Sunday",
+          announcement: "Down on Sunday",
           kind: "warning",
           created_at: "2026-10-09T10:00:00Z",
           ends_at: null,
@@ -55,7 +55,7 @@ describe("NewBanner", () => {
 
     expect(sent()).toEqual({
       url: "/api/v1/admin/comms/banners",
-      body: { message: "Down on Sunday", kind: "warning", ends_at: null, reason: REASON },
+      body: { announcement: "Down on Sunday", kind: "warning", ends_at: null, reason: REASON },
     });
     expect(router.refresh).toHaveBeenCalled();
   });

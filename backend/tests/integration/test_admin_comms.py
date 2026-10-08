@@ -88,7 +88,7 @@ async def test_a_banner_is_shown_until_it_ends(
         published = await client.post(
             f"{COMMS}/banners",
             json={
-                "message": "<b>Down</b> on Sunday 2:00 to 2:30 AM IST.",
+                "announcement": "<b>Down</b> on Sunday 2:00 to 2:30 AM IST.",
                 "kind": "maintenance",
                 "reason": REASON,
             },
@@ -97,13 +97,13 @@ async def test_a_banner_is_shown_until_it_ends(
         shown = await client.get(BANNER)
         too_long = await client.post(
             f"{COMMS}/banners",
-            json={"message": "x" * 161, "kind": "info", "reason": REASON},
+            json={"announcement": "x" * 161, "kind": "info", "reason": REASON},
             headers=owner.headers,
         )
         in_the_past = await client.post(
             f"{COMMS}/banners",
             json={
-                "message": "Old news",
+                "announcement": "Old news",
                 "kind": "info",
                 "ends_at": (datetime.now(UTC) - timedelta(minutes=1)).isoformat(),
                 "reason": REASON,
@@ -127,7 +127,7 @@ async def test_a_banner_is_shown_until_it_ends(
     assert shown.headers["Cache-Control"] == "public, max-age=60"
     banner = shown.json()["banner"]
     # Plain text, exactly as written: clients never render it as HTML.
-    assert banner["message"] == "<b>Down</b> on Sunday 2:00 to 2:30 AM IST."
+    assert banner["announcement"] == "<b>Down</b> on Sunday 2:00 to 2:30 AM IST."
     assert banner["kind"] == "maintenance"
     assert banner["ends_at"] is None
     assert too_long.status_code == 422
@@ -285,7 +285,7 @@ async def test_template_tests_and_permissions(
         unknown = await client.post(f"{COMMS}/templates/nonsense/test", headers=owner.headers)
         moderator = await client.post(
             f"{COMMS}/banners",
-            json={"message": "Hi", "kind": "info", "reason": REASON},
+            json={"announcement": "Hi", "kind": "info", "reason": REASON},
             headers=people[AdminRole.MODERATOR].headers,
         )
         limited = [

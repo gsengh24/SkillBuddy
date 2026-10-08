@@ -18,13 +18,15 @@ _REQUEST = ConfigDict(extra="forbid")
 
 class BannerOut(BaseModel):
     id: uuid.UUID
-    message: str = Field(description="Plain text, at most 160 characters.")
+    announcement: str = Field(description="Plain text, at most 160 characters.")
     kind: BannerKind
     ends_at: datetime | None
 
     @classmethod
     def from_active(cls, banner: ActiveBanner) -> BannerOut:
-        return cls(id=banner.id, message=banner.message, kind=banner.kind, ends_at=banner.ends_at)
+        return cls(
+            id=banner.id, announcement=banner.message, kind=banner.kind, ends_at=banner.ends_at
+        )
 
 
 class CurrentBannerOut(BaseModel):
@@ -36,7 +38,7 @@ class CurrentBannerOut(BaseModel):
 
 class AdminBannerOut(BaseModel):
     id: uuid.UUID
-    message: str
+    announcement: str
     kind: BannerKind
     created_at: datetime
     ends_at: datetime | None
@@ -48,7 +50,7 @@ class AdminBannerOut(BaseModel):
         live = banner.ended_at is None and (banner.ends_at is None or banner.ends_at > now)
         return cls(
             id=banner.id,
-            message=banner.message,
+            announcement=banner.message,
             kind=BannerKind(banner.kind),
             created_at=banner.created_at,
             ends_at=banner.ends_at,
@@ -60,7 +62,7 @@ class AdminBannerOut(BaseModel):
 class BannerIn(BaseModel):
     model_config = _REQUEST
 
-    message: Annotated[
+    announcement: Annotated[
         str,
         StringConstraints(strip_whitespace=True, min_length=1, max_length=BANNER_MAX_LENGTH),
     ]

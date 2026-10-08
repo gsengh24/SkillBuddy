@@ -9,7 +9,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 
 const BANNER = {
   id: "b1",
-  message: "<b>Down</b> on Sunday 2:00 AM",
+  announcement: "<b>Down</b> on Sunday 2:00 AM",
   kind: "maintenance",
   ends_at: null,
 };

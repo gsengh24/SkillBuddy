@@ -83,7 +83,7 @@ export function NewBanner() {
           await browserApi("/admin/comms/banners", adminBannerSchema, {
             method: "POST",
             body: {
-              message: text,
+              announcement: text,
               kind,
               ends_at: endsAt ? new Date(endsAt).toISOString() : null,
               reason,

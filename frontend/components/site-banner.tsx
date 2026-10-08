@@ -18,10 +18,10 @@ function parse(body: unknown): Banner | null {
   if (typeof body !== "object" || body === null || !("banner" in body)) return null;
   const banner: unknown = body.banner;
   if (typeof banner !== "object" || banner === null) return null;
-  const { id, message, kind } = banner as Record<string, unknown>;
-  if (typeof id !== "string" || typeof message !== "string") return null;
+  const { id, announcement, kind } = banner as Record<string, unknown>;
+  if (typeof id !== "string" || typeof announcement !== "string") return null;
   if (kind !== "info" && kind !== "warning" && kind !== "maintenance") return null;
-  return { id, message, kind };
+  return { id, message: announcement, kind };
 }
 
 function dismissed(): string[] {
