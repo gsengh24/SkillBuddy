@@ -24,8 +24,9 @@ from app.services.chat import purge_old_messages
 from app.services.content_rules import purge_flags
 from app.services.data_exports import build_export
 from app.services.data_exports import purge as purge_data_exports
-from app.services.email import build_email_sender
+from app.services.email import catalog as email_catalog
 from app.services.email.budget import may_send, record_sent
+from app.services.email.send_log import logged_sender
 from app.services.email.templates import invite_email, login_code_email, safety_email
 from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
@@ -64,7 +65,7 @@ async def _send_login_code(ctx: JobContext) -> None:
             # The API checked before creating the code; this is a race at the cap.
             logger.error("login_code_not_sent", extra={"reason": "email_quota_exhausted"})
             return
-        sender = build_email_sender(ctx.settings)
+        sender = logged_sender(ctx.settings, db, template="login_code")
         message_id = await sender.send(login_code_email(ctx.settings, otp.email, ctx.secret))
         await record_sent(
             db,
@@ -251,7 +252,13 @@ async def _send_safety_notice(ctx: JobContext) -> None:
         if kind in {"suspend", "ban"} and ctx.settings.web_app_url:
             token = appeals.make_token(ctx.settings, user.id, appeals.EMAIL_TOKEN_HOURS)
             appeal_url = f"{ctx.settings.web_app_url.rstrip('/')}/appeal?token={token}"
-        sender = build_email_sender(ctx.settings)
+        sender = logged_sender(
+            ctx.settings,
+            db,
+            template=f"safety_notice:{kind}",
+            retry_kind="send_safety_notice",
+            retry_payload={"user_id": str(user.id), "kind": kind},
+        )
         message_id = await sender.send(safety_email(ctx.settings, user.email, kind, appeal_url))
         await record_sent(
             db,
@@ -292,7 +299,13 @@ async def _send_invite(ctx: JobContext) -> None:
         login_url = (
             f"{ctx.settings.web_app_url.rstrip('/')}/login" if ctx.settings.web_app_url else None
         )
-        sender = build_email_sender(ctx.settings)
+        sender = logged_sender(
+            ctx.settings,
+            db,
+            template="invite",
+            retry_kind="send_invite",
+            retry_payload={"invite_code_id": str(code.id)},
+        )
         message_id = await sender.send(
             invite_email(ctx.settings, email, code.code, until, login_url)
         )
@@ -305,6 +318,31 @@ async def _send_invite(ctx: JobContext) -> None:
             message_id=message_id,
         )
         logger.info("invite_sent", extra={"email": mask_email(email)})
+
+
+async def _send_test_email(ctx: JobContext) -> None:
+    """Send an admin a "[Test]" copy of one template, with made-up values (A8)."""
+    key = str(ctx.payload["template"])
+    if key not in email_catalog.BY_KEY:
+        return
+    async with ctx.session_factory() as db:
+        user = await db.get(User, uuid.UUID(ctx.payload["user_id"]))
+        if user is None:
+            return
+        if not await may_send(db, ctx.settings, EmailPurpose.NOTIFICATION):
+            logger.warning("test_email_skipped", extra={"reason": "email_quota_reserve"})
+            return
+        sender = logged_sender(ctx.settings, db, template=f"test:{key}")
+        message_id = await sender.send(email_catalog.sample_message(ctx.settings, key, user.email))
+        await record_sent(
+            db,
+            ctx.settings,
+            purpose=EmailPurpose.NOTIFICATION,
+            recipient=user.email,
+            provider=sender.provider,
+            message_id=message_id,
+        )
+        logger.info("test_email_sent", extra={"template": key})
 
 
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
@@ -429,6 +467,13 @@ SEND_INVITE = JobSpec(
     max_attempts=3,
     timeout_seconds=30,
 )
+SEND_TEST_EMAIL = JobSpec(
+    kind="send_test_email",
+    handler=_send_test_email,
+    priority=50,
+    max_attempts=1,
+    timeout_seconds=30,
+)
 PURGE_DATA_EXPORTS = JobSpec(
     kind="purge_data_exports", handler=_purge_data_exports, priority=200, timeout_seconds=240
 )
@@ -456,6 +501,7 @@ ALL_JOBS = (
     PURGE_DATA_EXPORTS,
     SEND_SAFETY_NOTICE,
     SEND_INVITE,
+    SEND_TEST_EMAIL,
 )
 
 

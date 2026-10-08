@@ -21,6 +21,7 @@ from app.models.auth import (
     UserSession,
 )
 from app.models.chat import MESSAGE_MAX_LENGTH, Message
+from app.models.comms import BANNER_MAX_LENGTH, Banner, BannerKind, EmailSend, EmailSendStatus
 from app.models.content import AiCall, ContentFlag, ContentRule, FlaggedItem, FlagStatus
 from app.models.data_export import DataExport, DataExportStatus
 from app.models.jobs import EmailLog, EmailPurpose, Job, JobStatus, RateLimitCounter
@@ -112,6 +113,7 @@ __all__ = [
     "APPEAL_TEXT_MAX_LENGTH",
     "AUDIT_REASON_MAX_LENGTH",
     "AUDIT_REASON_MIN_LENGTH",
+    "BANNER_MAX_LENGTH",
     "CITY_MAX_LENGTH",
     "DISPLAY_NAME_MAX_LENGTH",
     "EMAIL_MAX_LENGTH",
@@ -154,6 +156,8 @@ __all__ = [
     "AuthEventType",
     "AuthIdentity",
     "AuthProvider",
+    "Banner",
+    "BannerKind",
     "Block",
     "Connection",
     "ContentFlag",
@@ -163,6 +167,8 @@ __all__ = [
     "DomainKind",
     "EmailLog",
     "EmailPurpose",
+    "EmailSend",
+    "EmailSendStatus",
     "EmbeddingFacet",
     "ExperienceLevel",
     "FlagStatus",

@@ -209,6 +209,66 @@
         "title": "ActionIn",
         "type": "object"
       },
+      "AdminBannerOut": {
+        "properties": {
+          "announcement": {
+            "title": "Announcement",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/BannerKind"
+          },
+          "live": {
+            "title": "Live",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "announcement",
+          "kind",
+          "created_at",
+          "ends_at",
+          "ended_at",
+          "live"
+        ],
+        "title": "AdminBannerOut",
+        "type": "object"
+      },
       "AdminMeOut": {
         "properties": {
           "email": {
@@ -789,6 +849,92 @@
         "title": "AuthMethodsOut",
         "type": "object"
       },
+      "BannerIn": {
+        "additionalProperties": false,
+        "properties": {
+          "announcement": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Announcement",
+            "type": "string"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Empty: until ended by hand.",
+            "title": "Ends At"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/BannerKind"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "announcement",
+          "kind",
+          "reason"
+        ],
+        "title": "BannerIn",
+        "type": "object"
+      },
+      "BannerKind": {
+        "enum": [
+          "info",
+          "warning",
+          "maintenance"
+        ],
+        "title": "BannerKind",
+        "type": "string"
+      },
+      "BannerOut": {
+        "properties": {
+          "announcement": {
+            "description": "Plain text, at most 160 characters.",
+            "title": "Announcement",
+            "type": "string"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/BannerKind"
+          }
+        },
+        "required": [
+          "id",
+          "announcement",
+          "kind",
+          "ends_at"
+        ],
+        "title": "BannerOut",
+        "type": "object"
+      },
       "BlockIn": {
         "additionalProperties": false,
         "properties": {
@@ -970,6 +1116,31 @@
         "title": "CaseOut",
         "type": "object"
       },
+      "CommsOut": {
+        "properties": {
+          "banners": {
+            "description": "The 20 newest, live or not.",
+            "items": {
+              "$ref": "#/components/schemas/AdminBannerOut"
+            },
+            "title": "Banners",
+            "type": "array"
+          },
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateOut"
+            },
+            "title": "Templates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "banners",
+          "templates"
+        ],
+        "title": "CommsOut",
+        "type": "object"
+      },
       "ConnectionList": {
         "properties": {
           "items": {
@@ -1054,6 +1225,26 @@
           "rules"
         ],
         "title": "ContentRulesOut",
+        "type": "object"
+      },
+      "CurrentBannerOut": {
+        "description": "The banner to show at the top of the app, or null. Clients remember dismissals\nthemselves (by ``id``). Cached for up to 60 seconds.",
+        "properties": {
+          "banner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BannerOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "banner"
+        ],
+        "title": "CurrentBannerOut",
         "type": "object"
       },
       "DataExportList": {
@@ -1293,6 +1484,107 @@
         ],
         "title": "DomainOut",
         "type": "object"
+      },
+      "EmailSendOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A short summary; never a token or key.",
+            "title": "Error"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "retried_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retried At"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EmailSendStatus"
+          },
+          "template": {
+            "title": "Template",
+            "type": "string"
+          },
+          "to": {
+            "title": "To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "to",
+          "template",
+          "status",
+          "error",
+          "retryable",
+          "retried_at"
+        ],
+        "title": "EmailSendOut",
+        "type": "object"
+      },
+      "EmailSendPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EmailSendOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "EmailSendPage",
+        "type": "object"
+      },
+      "EmailSendStatus": {
+        "enum": [
+          "delivered",
+          "failed"
+        ],
+        "title": "EmailSendStatus",
+        "type": "string"
       },
       "ErrorDetail": {
         "properties": {
@@ -5458,6 +5750,29 @@
         "title": "TeamOut",
         "type": "object"
       },
+      "TemplateOut": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sent_when": {
+            "title": "Sent When",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "sent_when"
+        ],
+        "title": "TemplateOut",
+        "type": "object"
+      },
       "TickOut": {
         "properties": {
           "already_enqueued": {
@@ -7230,6 +7545,477 @@
           }
         },
         "summary": "The audit log, newest first",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/comms": {
+      "get": {
+        "operationId": "get_comms_api_v1_admin_comms_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Banners and email templates",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/comms/banners": {
+      "post": {
+        "description": "Shows at the top of the app within 60 seconds, until ``ends_at`` or until ended.",
+        "operationId": "publish_banner_api_v1_admin_comms_banners_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BannerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBannerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish a banner",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/comms/banners/{banner_id}/end": {
+      "post": {
+        "operationId": "end_banner_api_v1_admin_comms_banners__banner_id__end_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "banner_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Banner Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "End a banner now",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/comms/emails": {
+      "get": {
+        "description": "Kept 30 days. Never the body of an email.",
+        "operationId": "list_emails_api_v1_admin_comms_emails_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EmailSendStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailSendPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The email send log, newest first",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/comms/emails/{send_id}/retry": {
+      "post": {
+        "description": "Queues the job that sent it again; the usual sender sends it. Once per failed email.\n409 ``email_not_retryable`` (delivered, already retried, or a sign-in code).",
+        "operationId": "retry_email_api_v1_admin_comms_emails__send_id__retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "send_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Send Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry a failed email",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/comms/templates/{key}/test": {
+      "post": {
+        "description": "Made-up values, \"[Test]\" in the subject. At most 10 an hour per admin.",
+        "operationId": "send_test_api_v1_admin_comms_templates__key__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Send a test copy of a template to yourself",
         "tags": [
           "admin"
         ]
@@ -10808,6 +11594,28 @@
         "summary": "Sign out one device",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/banner": {
+      "get": {
+        "description": "Public; cached for 60 seconds (here and by the browser). Plain text: never render it\nas HTML. Dismissing is up to the client (remember the ``id``).",
+        "operationId": "current_banner_api_v1_banner_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentBannerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "The banner to show at the top of the app",
+        "tags": [
+          "features"
         ]
       }
     },

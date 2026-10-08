@@ -64,6 +64,8 @@ Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runti
 | `app_settings` + `signup_domains` | Admin settings by key (the signup mode) and allowed or blocked email domains, about 0.1 KB each (migration 0022) | Until an admin removes them; at most 200 domains per list | A few KB |
 | `content_flags` | One row per content rule matched by a saved request, bio or intro note (migration 0023): rule, item id and status, about 0.1 KB; never the text. One open flag per rule and item | Deleted with the account; decided flags 90 days after the decision, open ones after 180 days | Under 2 MB (flags are rare) |
 | `ai_calls` | One row per AI provider call (migration 0023): provider, kind, outcome, duration, cost; about 0.1 KB. No prompt, response or user | 30 days, removed as new calls are logged (at most hourly) | Under 3 MB at the daily AI call cap |
+| `banners` | Admin announcements (migration 0024): message (at most 160 characters), type, times; about 0.3 KB | Deleted 90 days after they end | A few KB |
+| `email_sends` | One row per email the app tries to send (migration 0024): address, template, delivered or failed, a short error, the job to retry it with; about 0.3 KB. Never the body | 30 days, removed as new emails are logged (at most hourly) | Under 4 MB at the daily email cap (450 a day) |
 
 Chosen dimension: **384** (`BAAI/bge-small-en-v1.5`, [ADR 0007](adr/0007-ai-gateway.md)).
 Migration 0004 changed the column from 768 to 384 (2026-10-02).

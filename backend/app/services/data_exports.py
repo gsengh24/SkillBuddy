@@ -35,8 +35,8 @@ from app.models import (
     User,
 )
 from app.schemas.profile import ProfileOut
-from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
+from app.services.email.send_log import logged_sender
 from app.services.email.templates import data_export_email
 
 logger = logging.getLogger(__name__)
@@ -232,7 +232,13 @@ async def build_export(db: AsyncSession, settings: Settings, export_id: uuid.UUI
     now = datetime.now(UTC)
     url = f"{settings.web_app_url.rstrip('/')}/you/download?export={export.id}&token={token}"
     # Email first, then mark it ready: if sending fails the job is retried with a new token.
-    sender = build_email_sender(settings)
+    sender = logged_sender(
+        settings,
+        db,
+        template="data_export",
+        retry_kind="build_data_export",
+        retry_payload={"export_id": str(export.id)},
+    )
     message_id = await sender.send(
         data_export_email(settings, user.email, url, settings.data_export_link_hours)
     )

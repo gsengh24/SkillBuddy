@@ -427,3 +427,16 @@ export const featuresSchema = z.object({
   message_max_length: z.number(),
 });
 export type Features = z.infer<typeof featuresSchema>;
+
+/** GET /api/v1/banner (A8): the announcement at the top of the app, as plain text. */
+export const currentBannerSchema = z.object({
+  banner: z
+    .object({
+      id: z.string(),
+      announcement: z.string(),
+      kind: z.enum(["info", "warning", "maintenance"]),
+      ends_at: z.string().nullable(),
+    })
+    .nullable(),
+});
+export type CurrentBanner = z.infer<typeof currentBannerSchema>;

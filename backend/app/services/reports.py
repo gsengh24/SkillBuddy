@@ -58,8 +58,8 @@ from app.models import (
 from app.services import blocks
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
-from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
+from app.services.email.send_log import logged_sender
 from app.services.email.templates import report_alert_email
 
 logger = logging.getLogger(__name__)
@@ -504,7 +504,9 @@ async def send_report_alert(db: AsyncSession, settings: Settings, now: datetime)
     open_total = await db.scalar(
         select(func.count()).select_from(Report).where(Report.status == ReportStatus.OPEN)
     )
-    sender = build_email_sender(settings)
+    sender = logged_sender(
+        settings, db, template="report_alert", retry_kind="report_alerts", retry_payload={}
+    )
     message_id = await sender.send(
         report_alert_email(settings, settings.moderator_email, len(pending), int(open_total or 0))
     )
