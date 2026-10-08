@@ -47,7 +47,7 @@ class Settings(BaseSettings):
 
     # --- Identity --------------------------------------------------------------
     # The product name lives here and only here on the backend; rename by changing it.
-    app_name: str = "Skill Buddy"
+    app_name: str = "Cynergi"
     # Set by the image build (git SHA or release tag) so every response is traceable.
     app_version: str = "dev"
     environment: Environment = Environment.LOCAL

@@ -10,7 +10,7 @@ from tests.conftest import SettingsFactory
 def test_defaults_are_safe(make_settings: SettingsFactory) -> None:
     settings = make_settings()
 
-    assert settings.app_name == "Skill Buddy"
+    assert settings.app_name == "Cynergi"
     assert settings.debug is False
     assert settings.db_echo is False
 
