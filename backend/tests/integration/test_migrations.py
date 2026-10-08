@@ -199,6 +199,7 @@ def test_chat_migration_keeps_connections_and_downgrades_to_0008(
         - BLOCK_TABLES
         - MODERATION_TABLES
         - SPACE_TABLES
+        - EXPORT_TABLES
     )
     assert not {"user_a_read_at", "user_b_read_at"} & _connection_columns(engine)
     with engine.connect() as connection:
@@ -275,7 +276,7 @@ def test_reports_migration_downgrades_to_0009_and_back(
 
     command.downgrade(config, "0009")
     assert _tables(engine) == (
-        ALL_TABLES - REPORT_TABLES - BLOCK_TABLES - MODERATION_TABLES - SPACE_TABLES
+        ALL_TABLES - REPORT_TABLES - BLOCK_TABLES - MODERATION_TABLES - SPACE_TABLES - EXPORT_TABLES
     )
 
     command.upgrade(config, "head")
@@ -311,7 +312,9 @@ def test_blocks_migration_keeps_connections_and_downgrades_to_0010(
         )
 
     command.downgrade(config, "0010")
-    assert _tables(engine) == ALL_TABLES - BLOCK_TABLES - MODERATION_TABLES - SPACE_TABLES
+    assert _tables(engine) == (
+        ALL_TABLES - BLOCK_TABLES - MODERATION_TABLES - SPACE_TABLES - EXPORT_TABLES
+    )
     assert "ended_at" not in _connection_columns(engine)
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT count(*) FROM connections")) == 1
