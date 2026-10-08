@@ -104,19 +104,19 @@ async def _texts(db: AsyncSession, flags: list[ContentFlag]) -> dict[uuid.UUID, 
                 MatchRequest.id.in_(ids[FlaggedItem.REQUEST])
             )
         )
-        texts.update(dict(rows.tuples()))
+        texts.update(dict(rows.tuples().all()))
     if ids[FlaggedItem.PROFILE]:
         rows = await db.execute(
             select(Profile.user_id, Profile.raw_about_text).where(
                 Profile.user_id.in_(ids[FlaggedItem.PROFILE])
             )
         )
-        texts.update(dict(rows.tuples()))
+        texts.update(dict(rows.tuples().all()))
     if ids[FlaggedItem.INTRO]:
         rows = await db.execute(
             select(Intro.id, Intro.note).where(Intro.id.in_(ids[FlaggedItem.INTRO]))
         )
-        texts.update(dict(rows.tuples()))
+        texts.update(dict(rows.tuples().all()))
     return texts
 
 
