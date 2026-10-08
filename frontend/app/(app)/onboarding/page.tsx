@@ -20,7 +20,7 @@ export default async function OnboardingPage() {
     <div className="flex max-w-2xl flex-col gap-6">
       <header className="flex flex-col gap-2">
         <Overline tone="green">Step 1 of 2</Overline>
-        <h1 className="text-h1">Tell us about you</h1>
+        <h1 className="text-headline lg:text-headline-lg">Tell us about you</h1>
         <p className="text-muted">
           Write it the way you&apos;d say it to a friend. Next, you&apos;ll check what we understood
           and fix anything we got wrong.

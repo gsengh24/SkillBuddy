@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { InlineError } from "@/components/ds/fields";
+import { Panel } from "@/components/ds/surfaces";
+import { Button } from "@/components/ds/button";
 import { textLinkClasses } from "@/components/ui/text-link";
 import { browserApi } from "@/lib/api/browser";
 import { deletionScheduledSchema, noContentSchema } from "@/lib/api/schemas";
@@ -59,8 +60,10 @@ export function AccountActions() {
 
   if (deletedUntil) {
     return (
-      <Card role="status" className="flex flex-col gap-3">
-        <h2 className="text-section">Your account is scheduled for deletion</h2>
+      <Panel role="status" className="flex flex-col gap-3">
+        <h2 className="font-display tracking-display text-[20px] leading-tight font-extrabold">
+          Your account is scheduled for deletion
+        </h2>
         <p>
           You have been signed out everywhere. Your account and all its data will be permanently
           deleted on <strong>{deletedUntil}</strong>. Until then, signing in is disabled.
@@ -68,42 +71,41 @@ export function AccountActions() {
         <Link href="/" className={textLinkClasses()}>
           Go to the home page
         </Link>
-      </Card>
+      </Panel>
     );
   }
 
   return (
     <div className="flex flex-col gap-8">
-      {error ? (
-        <p
-          role="alert"
-          className="rounded-why bg-coral-tint text-coral-ink px-4 py-3 font-semibold"
-        >
-          {error}
-        </p>
-      ) : null}
+      {error ? <InlineError announce>{error}</InlineError> : null}
 
       <section aria-labelledby={`${ids}-sessions`} className="flex flex-col gap-3">
-        <h2 id={`${ids}-sessions`} className="text-section">
+        <h2
+          id={`${ids}-sessions`}
+          className="font-display tracking-display text-[20px] leading-tight font-extrabold"
+        >
           Sign out
         </h2>
         <div className="flex flex-wrap gap-3">
-          <Button onClick={() => signOut(false)} disabled={busy !== null}>
+          <Button variant="outline" onClick={() => signOut(false)} disabled={busy !== null}>
             {busy === "logout" ? "Signing out…" : "Sign out"}
           </Button>
-          <Button onClick={() => signOut(true)} disabled={busy !== null}>
+          <Button variant="outline" onClick={() => signOut(true)} disabled={busy !== null}>
             {busy === "logout-all" ? "Signing out…" : "Sign out of all devices"}
           </Button>
         </div>
       </section>
 
       <section aria-labelledby={`${ids}-delete`} className="flex flex-col gap-3">
-        <h2 id={`${ids}-delete`} className="text-section">
+        <h2
+          id={`${ids}-delete`}
+          className="font-display tracking-display text-[20px] leading-tight font-extrabold"
+        >
           Delete account
         </h2>
         {!confirmingDelete ? (
           <div>
-            <Button tone="danger" onClick={() => setConfirmingDelete(true)}>
+            <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
               Delete my account…
             </Button>
           </div>
@@ -111,7 +113,7 @@ export function AccountActions() {
           <div
             role="group"
             aria-label="Confirm account deletion"
-            className="rounded-card border-coral-edge bg-coral-tint flex flex-col gap-4 border p-5"
+            className="rounded-panel border-danger bg-bg flex flex-col gap-4 border p-5"
           >
             <p>
               Your account will be scheduled for permanent deletion in{" "}
@@ -124,15 +126,20 @@ export function AccountActions() {
                 type="checkbox"
                 checked={understood}
                 onChange={(event) => setUnderstood(event.target.checked)}
-                className="accent-green-base mt-1 size-4 shrink-0"
+                className="accent-green mt-1 size-4 shrink-0"
               />
               <span>I understand that my account will be permanently deleted.</span>
             </label>
             <div className="flex flex-wrap gap-3">
-              <Button tone="danger" onClick={deleteAccount} disabled={!understood || busy !== null}>
+              <Button
+                variant="danger"
+                onClick={deleteAccount}
+                disabled={!understood || busy !== null}
+              >
                 {busy === "delete" ? "Deleting…" : "Delete my account"}
               </Button>
               <Button
+                variant="outline"
                 onClick={() => {
                   setConfirmingDelete(false);
                   setUnderstood(false);
