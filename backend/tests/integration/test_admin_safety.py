@@ -289,7 +289,15 @@ async def test_block_counts_and_roles(
 # API: attached messages (and the older report routes' identical copy), an admin's own
 # note, and the report's own description of what was reported.
 TEXT_FIELDS = {"body", "text", "content", "message", "message_text"}
-ALLOWED = {("AttachedMessage", "body"), ("ReportedMessage", "body"), ("NoteOut", "body")}
+ALLOWED = {
+    ("AttachedMessage", "body"),
+    ("ReportedMessage", "body"),
+    # An admin's own private note, written and read in the portal.
+    ("NoteIn", "body"),
+    ("NoteOut", "body"),
+    # The API's own error message (the standard error envelope).
+    ("ErrorDetail", "message"),
+}
 
 
 def _refs(node: Any) -> set[str]:
