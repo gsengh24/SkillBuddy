@@ -67,8 +67,8 @@ describe("match card", () => {
     await user.keyboard("{Enter}");
     const note = screen.getByLabelText("A short hello (optional)");
     expect(note).toHaveAccessibleDescription(/0\/500 characters/);
-    // Opening the form doesn't move focus into it (unchanged behaviour; noted in the PR).
-    note.focus();
+    // Opening the form moves focus into the note.
+    expect(note).toHaveFocus();
     await user.tab();
     expect(screen.getByRole("button", { name: "Send intro" })).toHaveFocus();
     await user.tab();
@@ -76,6 +76,8 @@ describe("match card", () => {
     expect(cancel).toHaveFocus();
     await user.keyboard("{Enter}");
     expect(screen.queryByLabelText("A short hello (optional)")).not.toBeInTheDocument();
+    // Cancel puts focus back on "Send intro".
+    expect(screen.getByRole("button", { name: "Send intro" })).toHaveFocus();
   });
 
   it("names the match and keeps the person's dot out of the accessibility tree", () => {
