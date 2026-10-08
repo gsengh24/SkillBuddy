@@ -39,6 +39,8 @@ def test_metadata_contains_all_tables() -> None:
         "invite_codes",
         "content_flags",
         "ai_calls",
+        "banners",
+        "email_sends",
         "email_log",
         "match_requests",
         "matches",

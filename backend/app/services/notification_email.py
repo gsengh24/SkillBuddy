@@ -24,8 +24,8 @@ from app.models import (
     User,
 )
 from app.services import app_settings
-from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
+from app.services.email.send_log import logged_sender
 from app.services.email.templates import notification_email
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,13 @@ async def send_notification_email(
     if not await may_send(db, settings, EmailPurpose.NOTIFICATION):
         logger.warning("notification_email_skipped", extra={"reason": "email_quota_reserve"})
         return False
-    sender = build_email_sender(settings)
+    sender = logged_sender(
+        settings,
+        db,
+        template=f"notification:{notification.kind}",
+        retry_kind="send_notification_email",
+        retry_payload={"notification_id": str(notification_id)},
+    )
     message_id = await sender.send(notification_email(settings, user.email, notification.kind))
     await record_sent(
         db,

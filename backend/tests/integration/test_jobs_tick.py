@@ -17,11 +17,10 @@ from app.core.config import Settings
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
 from app.jobs import JobRegistry, JobRunner
-from app.jobs import tasks as tasks_module
 from app.jobs.schedule import SCHEDULE, enqueue_due_jobs
 from app.jobs.tasks import SEND_LOGIN_CODE
 from app.services.auth.delivery import QueuedOtpDelivery
-from app.services.email import ConsoleEmailSender
+from app.services.email import ConsoleEmailSender, send_log
 from tests.conftest import SettingsFactory
 from tests.integration.conftest import live_client, run_sql
 
@@ -183,7 +182,7 @@ async def test_login_code_job_emails_a_valid_code_and_skips_a_used_one(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     outbox = io.StringIO()
-    monkeypatch.setattr(tasks_module, "build_email_sender", lambda _: ConsoleEmailSender(outbox))
+    monkeypatch.setattr(send_log, "build_email_sender", lambda _: ConsoleEmailSender(outbox))
     delivery = QueuedOtpDelivery(code_ttl=timedelta(minutes=10))
     valid_id, valid_email = _new_otp(migrated_database_url)
     used_id, used_email = _new_otp(migrated_database_url, consumed=True)

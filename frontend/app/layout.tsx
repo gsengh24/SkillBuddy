@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 
+import { SiteBanner } from "@/components/site-banner";
 import { brand } from "@/lib/brand";
 import { colors } from "@/lib/design/tokens";
 
@@ -42,7 +43,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       lang="en"
       className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="bg-bg text-body text-ink font-sans antialiased">{children}</body>
+      <body className="bg-bg text-body text-ink font-sans antialiased">
+        <SiteBanner />
+        {children}
+      </body>
     </html>
   );
 }

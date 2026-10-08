@@ -14,11 +14,10 @@ from app.core.config import Settings
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
 from app.jobs import JobRegistry, JobRunner
-from app.jobs import tasks as tasks_module
 from app.jobs.tasks import SEND_LOGIN_CODE
 from app.models import EmailPurpose
 from app.services.auth.delivery import QueuedOtpDelivery
-from app.services.email import ConsoleEmailSender
+from app.services.email import ConsoleEmailSender, send_log
 from app.services.email.budget import may_send, remaining, sent_in_last_day
 from tests.conftest import SettingsFactory
 from tests.integration.conftest import auth_client, run_sql
@@ -93,7 +92,7 @@ async def test_login_code_job_logs_the_send_with_a_hashed_address(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     outbox = io.StringIO()
-    monkeypatch.setattr(tasks_module, "build_email_sender", lambda _: ConsoleEmailSender(outbox))
+    monkeypatch.setattr(send_log, "build_email_sender", lambda _: ConsoleEmailSender(outbox))
     email = f"log-{uuid.uuid4().hex[:10]}@example.com"
     otp = run_sql(
         clean_log,
@@ -128,7 +127,7 @@ async def test_login_code_job_does_not_send_past_the_cap(
 ) -> None:
     settings = make_settings(database_url=clean_log, email_daily_cap=1, email_reserve_for_codes=0)
     outbox = io.StringIO()
-    monkeypatch.setattr(tasks_module, "build_email_sender", lambda _: ConsoleEmailSender(outbox))
+    monkeypatch.setattr(send_log, "build_email_sender", lambda _: ConsoleEmailSender(outbox))
     email = f"over-{uuid.uuid4().hex[:10]}@example.com"
     otp = run_sql(
         clean_log,

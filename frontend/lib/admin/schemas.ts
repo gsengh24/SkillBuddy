@@ -335,3 +335,35 @@ export type AiOverview = z.infer<typeof aiOverviewSchema>;
 
 export const rerunQueuedSchema = z.object({ request_id: z.string(), status: z.literal("queued") });
 export const probeQueuedSchema = z.object({ queued: z.boolean() });
+
+export const adminBannerSchema = z.object({
+  id: z.string(),
+  message: z.string(),
+  kind: z.enum(["info", "warning", "maintenance"]),
+  created_at: z.string(),
+  ends_at: z.string().nullable(),
+  ended_at: z.string().nullable(),
+  live: z.boolean(),
+});
+export type AdminBanner = z.infer<typeof adminBannerSchema>;
+
+export const commsSchema = z.object({
+  banners: z.array(adminBannerSchema),
+  templates: z.array(z.object({ key: z.string(), name: z.string(), sent_when: z.string() })),
+});
+
+export const emailSendSchema = z.object({
+  id: z.string(),
+  created_at: z.string(),
+  to: z.string(),
+  template: z.string(),
+  status: z.enum(["delivered", "failed"]),
+  error: z.string().nullable(),
+  retryable: z.boolean(),
+  retried_at: z.string().nullable(),
+});
+export type EmailSend = z.infer<typeof emailSendSchema>;
+export const emailSendPageSchema = z.object({
+  items: z.array(emailSendSchema),
+  next_cursor: z.string().nullable(),
+});
