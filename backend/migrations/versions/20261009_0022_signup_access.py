@@ -19,6 +19,7 @@ narrower check.
 """
 
 from collections.abc import Sequence
+from datetime import datetime
 
 import sqlalchemy as sa
 from alembic import op
@@ -45,7 +46,7 @@ def _swap(table: str, name: str, condition: str) -> None:
     op.create_check_constraint(op.f(f"ck_{table}_{name}"), table, condition)
 
 
-def _created_at() -> sa.Column[sa.DateTime]:
+def _created_at() -> sa.Column[datetime]:
     return sa.Column(
         "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
     )
