@@ -68,3 +68,74 @@ export const ROLE_LABELS: Record<AdminRole, string> = {
   moderator: "Moderator",
   readonly: "Read-only",
 };
+
+export const userStatusSchema = z.enum([
+  "active",
+  "paused",
+  "pending",
+  "suspended",
+  "banned",
+  "pending_deletion",
+]);
+export type UserStatus = z.infer<typeof userStatusSchema>;
+
+export const STATUS_LABELS: Record<UserStatus, string> = {
+  active: "Active",
+  paused: "Paused",
+  pending: "Pending",
+  suspended: "Suspended",
+  banned: "Banned",
+  pending_deletion: "Deleting",
+};
+
+export const userRowSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  name: z.string().nullable(),
+  status: userStatusSchema,
+  intents: z.array(z.string()),
+  flagged: z.boolean(),
+  created_at: z.string(),
+  last_login_at: z.string().nullable(),
+});
+export type UserRow = z.infer<typeof userRowSchema>;
+export const userPageSchema = z.object({
+  items: z.array(userRowSchema),
+  next_cursor: z.string().nullable(),
+  total: z.number(),
+});
+
+export const noteSchema = z.object({
+  id: z.string(),
+  author_id: z.string().nullable(),
+  body: z.string(),
+  created_at: z.string(),
+});
+export type Note = z.infer<typeof noteSchema>;
+
+export const userDetailSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  status: userStatusSchema,
+  suspended_until: z.string().nullable(),
+  deletion_scheduled_for: z.string().nullable(),
+  created_at: z.string(),
+  last_login_at: z.string().nullable(),
+  email_verified_at: z.string().nullable(),
+  sign_in_methods: z.array(z.string()),
+  profile: z
+    .object({
+      display_name: z.string(),
+      headline: z.string(),
+      city: z.string(),
+      about_text: z.string(),
+      intents: z.array(z.string()),
+      visibility: z.string(),
+      parse_status: z.string(),
+    })
+    .nullable(),
+  counts: z.record(z.string(), z.number()),
+  timeline: z.array(z.object({ at: z.string(), event: z.string() })),
+  notes: z.array(noteSchema),
+});
+export type UserDetail = z.infer<typeof userDetailSchema>;

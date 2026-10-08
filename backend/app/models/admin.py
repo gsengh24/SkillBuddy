@@ -114,3 +114,23 @@ class AdminAuditEntry(UUIDPrimaryKeyMixin, Base):
     # Required for every change (at least 10 characters); null for sign-ins and the like.
     reason: Mapped[str | None] = mapped_column(Text)
     ip: Mapped[str | None] = mapped_column(String(IP_MAX_LENGTH))
+
+
+NOTE_MAX_LENGTH = 1000
+
+
+class AdminNote(UUIDPrimaryKeyMixin, Base):
+    """A private note an admin keeps on a user. Never shown to the user; deleted with the
+    account. The author is a plain id so removing an admin changes nothing here."""
+
+    __tablename__ = "admin_notes"
+    __table_args__ = (
+        CheckConstraint(f"char_length(body) BETWEEN 1 AND {NOTE_MAX_LENGTH}", name="body_length"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    author_id: Mapped[uuid.UUID | None]
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())

@@ -12,6 +12,8 @@ import {
   permissionTableSchema,
   teamSchema,
   twoStepStatusSchema,
+  userDetailSchema,
+  userPageSchema,
 } from "./schemas";
 
 async function adminGet<T extends z.ZodType>(path: string, schema: T): Promise<z.infer<T>> {
@@ -26,3 +28,9 @@ export const getAdminMe = cache(() => adminGet("/me", adminMeSchema));
 export const getPermissionTable = () => adminGet("/permissions", permissionTableSchema);
 export const getTeam = () => adminGet("/team", teamSchema);
 export const getAudit = () => adminGet("/audit?limit=50", auditPageSchema);
+
+/** One page of the Users list; ``params`` are the page's own query (q, status, ...). */
+export const getUsers = (params: URLSearchParams) =>
+  adminGet(`/users?${params.toString()}`, userPageSchema);
+export const getUserDetail = (id: string) =>
+  adminGet(`/users/${encodeURIComponent(id)}`, userDetailSchema);

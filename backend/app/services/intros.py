@@ -20,7 +20,7 @@ from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from http import HTTPStatus
 
-from sqlalchemy import and_, delete, func, or_, select
+from sqlalchemy import and_, delete, exists, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,6 +29,7 @@ from app.core.errors import AppError, NotFoundError
 from app.jobs.queue import enqueue
 from app.jobs.tasks import SEND_NOTIFICATION_EMAIL
 from app.models import (
+    HIDDEN_STATUSES,
     Connection,
     Intro,
     IntroStatus,
@@ -312,6 +313,10 @@ class IntroService:
         blocked = await blocks.blocked_with(self._db, user.id)
         if blocked:
             query = query.where(other.not_in(blocked))
+        # Suspended and banned people drop out of other people's lists.
+        query = query.where(
+            ~exists().where(User.id == other, User.status.in_(list(HIDDEN_STATUSES)))
+        )
         if cursor:
             created_at, identifier = decode_cursor(cursor)
             query = query.where(
@@ -340,8 +345,23 @@ class IntroService:
             )
             .order_by(Connection.created_at.desc())
         )
+        connections = list(rows)
+        others = {c.user_b if c.user_a == user.id else c.user_a for c in connections}
+        hidden = (
+            set(
+                await self._db.scalars(
+                    select(User.id).where(
+                        User.id.in_(others), User.status.in_(list(HIDDEN_STATUSES))
+                    )
+                )
+            )
+            if others
+            else set()
+        )
         result: list[tuple[Connection, uuid.UUID, Profile | None]] = []
-        for connection in rows:
+        for connection in connections:
             other = connection.user_b if connection.user_a == user.id else connection.user_a
+            if other in hidden:
+                continue  # suspended or banned: out of the list until reinstated
             result.append((connection, other, await self._db.get(Profile, other)))
         return result

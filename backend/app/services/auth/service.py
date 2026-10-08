@@ -33,7 +33,9 @@ from app.services.auth.codes import (
 )
 from app.services.auth.delivery import OtpDelivery
 from app.services.auth.errors import (
+    AccountBannedError,
     AccountPendingDeletionError,
+    AccountPendingError,
     AccountSuspendedError,
     CannotPauseError,
     CodeLockedError,
@@ -253,6 +255,15 @@ class AuthService:
         """Refuse inactive accounts, create or link the account, and start a session."""
         google = provider is AuthProvider.GOOGLE
         detail = {"method": SignInMethod.GOOGLE.value} if google else None
+        if (
+            user is not None
+            and user.status == UserStatus.SUSPENDED
+            and user.suspended_until is not None
+            and user.suspended_until <= now
+        ):
+            # A time-limited suspension that has run out lifts itself.
+            user.status = UserStatus.ACTIVE
+            user.suspended_until = None
         if user is not None and user.status not in SIGNED_IN_STATUSES:
             record_event(
                 self._db,
@@ -265,6 +276,10 @@ class AuthService:
             await self._db.commit()
             if user.status == UserStatus.PENDING_DELETION:
                 raise AccountPendingDeletionError(user.deletion_scheduled_for)
+            if user.status == UserStatus.BANNED:
+                raise AccountBannedError
+            if user.status == UserStatus.PENDING:
+                raise AccountPendingError
             raise AccountSuspendedError
 
         created_account = user is None

@@ -8,6 +8,7 @@ from app.api.v1 import (
     account,
     admin,
     admin_portal,
+    admin_users,
     auth,
     blocks,
     chat,
@@ -36,4 +37,5 @@ api_router.include_router(spaces.report_router)
 api_router.include_router(moderation.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_portal.router)
+api_router.include_router(admin_users.router)
 api_router.include_router(jobs.router)

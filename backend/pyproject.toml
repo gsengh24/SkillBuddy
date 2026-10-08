@@ -78,7 +78,7 @@ platform = "linux"
 strict = true
 plugins = ["pydantic.mypy"]
 warn_unreachable = true
-files = ["app", "evals", "tests", "migrations"]
+files = ["app", "evals", "tests", "migrations", "scripts"]
 
 [[tool.mypy.overrides]]
 module = ["pgvector.*", "asgi_lifespan.*", "fastembed.*"]

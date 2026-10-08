@@ -10,7 +10,7 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import Engine, create_engine, inspect, text
 
-from app.db.base import Base
+from app.db.base import MIGRATION_ONLY_INDEXES, Base, include_in_drift_check
 from tests.integration.conftest import alembic_config
 
 PHASE_ZERO_TABLES = {"users", "profiles", "profile_embeddings"}
@@ -30,6 +30,7 @@ ADMIN_TABLES = {
     "admin_recovery_codes",
     "admin_sessions",
     "admin_audit_log",
+    "admin_notes",  # migration 0019
 }  # migration 0018
 ALL_TABLES = (
     PHASE_ZERO_TABLES
@@ -266,7 +267,10 @@ def test_models_and_migrations_are_in_sync(migrated_database_url: str) -> None:
     engine = create_engine(migrated_database_url)
     try:
         with engine.connect() as connection:
-            context = MigrationContext.configure(connection, opts={"compare_type": True})
+            context = MigrationContext.configure(
+                connection,
+                opts={"compare_type": True, "include_object": include_in_drift_check},
+            )
             diff = compare_metadata(context, Base.metadata)
     finally:
         engine.dispose()
@@ -441,3 +445,46 @@ def test_admin_migration_downgrades_to_0017(empty_database_url: str, engine: Eng
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
+
+
+def test_admin_users_migration_downgrades_to_0018(empty_database_url: str, engine: Engine) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO users (email, status) VALUES "
+                "('banned@example.com', 'banned'), ('pending@example.com', 'pending')"
+            )
+        )
+
+    command.downgrade(config, "0018")
+    with engine.connect() as connection:
+        statuses = set(connection.scalars(text("SELECT status FROM users")).all())
+        indexes = set(
+            connection.scalars(
+                text("SELECT indexname FROM pg_indexes WHERE indexname LIKE '%trgm%'")
+            ).all()
+        )
+    assert statuses == {"active"}
+    assert indexes == set()
+    assert "admin_notes" not in _tables(engine)
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
+
+
+def test_the_migration_only_indexes_exist(migrated_database_url: str) -> None:
+    """The drift checks skip these by name, so check them here instead."""
+    engine = create_engine(migrated_database_url)
+    try:
+        with engine.connect() as connection:
+            rows = connection.execute(
+                text("SELECT indexname, indexdef FROM pg_indexes WHERE indexname = ANY(:n)"),
+                {"n": list(MIGRATION_ONLY_INDEXES)},
+            )
+            found: dict[str, str] = {str(row[0]): str(row[1]) for row in rows}
+    finally:
+        engine.dispose()
+    assert set(found) == MIGRATION_ONLY_INDEXES
+    assert all("gin_trgm_ops" in definition for definition in found.values())

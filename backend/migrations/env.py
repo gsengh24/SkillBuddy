@@ -13,7 +13,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 from app.core.config import get_settings
-from app.db.base import Base
+from app.db.base import Base, include_in_drift_check
 from app.models import *  # noqa: F403  # register every model on Base.metadata
 
 config = context.config
@@ -39,6 +39,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_in_drift_check,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -51,6 +52,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
+            include_object=include_in_drift_check,
             # Each migration in its own transaction, so a failure leaves the database
             # at the last good revision rather than half-way through a batch.
             transaction_per_migration=True,

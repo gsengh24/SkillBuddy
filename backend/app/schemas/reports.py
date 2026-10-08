@@ -65,9 +65,9 @@ class ReportOut(BaseModel):
     status: Literal["open", "resolved"]
     reporter_id: uuid.UUID | None
     reported_id: uuid.UUID | None
-    reported_status: Literal["active", "suspended", "pending_deletion"] | None = Field(
-        description="The reported account's status now; null once it is deleted."
-    )
+    reported_status: (
+        Literal["active", "paused", "pending", "suspended", "banned", "pending_deletion"] | None
+    ) = Field(description="The reported account's status now; null once it is deleted.")
     connection_id: uuid.UUID | None
     target: ReportTarget
     target_id: uuid.UUID = Field(description="The message, the intro, or the person's id.")
