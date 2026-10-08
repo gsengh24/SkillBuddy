@@ -5,33 +5,66 @@ import { useId, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ds/button";
 import { InlineError, Textarea } from "@/components/ds/fields";
-import { IntentChip } from "@/components/ui/intent-chip";
+import { cx } from "@/components/ui/cx";
 import { browserApi } from "@/lib/api/browser";
 import { matchRequestSchema } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
-import { INTENTS, type Intent } from "@/lib/design/tokens";
+import { INTENTS, intents, type Intent } from "@/lib/design/tokens";
 import { itemHref } from "@/lib/home/activity";
 
 const MIN = 10;
-// The request limit the API and the old composer use (1000); see the PR note.
+// The request limit the API and the old composer use.
 const MAX = 1000;
 
-/** Static examples. Tapping one fills the box; it never sends anything. */
-export const SUGGESTIONS = ["a design partner", "learn React", "a study group", "co-founder"];
+/** One intent as a pill: a green dot on every chip; selected is filled green with a mint dot. */
+function IntentToggle({
+  intent,
+  selected,
+  onToggle,
+}: {
+  intent: Intent;
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onToggle}
+      className={cx(
+        "text-meta-lg inline-flex min-h-11 items-center gap-2 rounded-full border px-3 font-medium pointer-fine:min-h-9",
+        selected
+          ? "bg-green border-green text-bg"
+          : "border-green-line bg-bg text-ink lg:hover:bg-green-soft",
+      )}
+    >
+      <span
+        aria-hidden
+        className={cx("size-[7px] shrink-0 rounded-full", selected ? "bg-mint" : "bg-green")}
+      />
+      {intents[intent].label}
+    </button>
+  );
+}
 
 /**
- * The new-request composer on green tint: an optional intent, the text, a counter, "Find
- * matches", and suggestion pills. After sending, the new request opens in the detail pane.
+ * The new-request composer on green tint (design spec 6.2, v2): the text first, then "What
+ * kind of help" and the counter, then "Find matches". On phones the card starts collapsed
+ * (text and button only) and opens when the text gets focus; it stays open after that, so
+ * a tap on a chip is never lost. Behaviour, options and limits are as before. After
+ * sending, the new request opens in the detail pane.
  */
 export function HomeComposer() {
   const router = useRouter();
   const ids = useId();
   const [intent, setIntent] = useState<Intent | null>(null);
   const [text, setText] = useState("");
+  const [opened, setOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const length = text.trim().length;
+  const open = opened || intent !== null || text.length > 0;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,20 +95,31 @@ export function HomeComposer() {
     <form
       noValidate
       onSubmit={onSubmit}
-      aria-labelledby={`${ids}-h`}
-      className="bg-green-tint border-green-line rounded-panel flex flex-col gap-3 border p-3 lg:p-4"
+      aria-label="New request"
+      data-open={open}
+      className="bg-green-tint border-green-line rounded-panel mt-4 flex flex-col gap-3 border p-3 lg:mt-6 lg:p-4"
     >
-      <h2 id={`${ids}-h`} className="text-mono text-green font-mono uppercase">
-        New request
-      </h2>
       <p role="status" aria-live="polite" className="sr-only">
         {status}
       </p>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-meta text-ink-2 mb-1">Pick one, or just describe it</legend>
-        <div className="flex flex-wrap gap-2">
+      <Textarea
+        id={`${ids}-text`}
+        label="Describe it in your own words"
+        hideLabel
+        rows={3}
+        maxLength={MAX}
+        showCounter={false}
+        value={text}
+        onFocus={() => setOpened(true)}
+        onChange={(event) => setText(event.target.value)}
+        placeholder="I'm building a budgeting app and need a design eye."
+        className="border-green-line lg:min-h-24"
+      />
+      <fieldset className={cx("flex-col gap-2", open ? "flex" : "hidden lg:flex")}>
+        <legend className="text-mono text-green mb-2 font-mono uppercase">What kind of help</legend>
+        <div className="flex flex-wrap gap-1.5">
           {INTENTS.map((value) => (
-            <IntentChip
+            <IntentToggle
               key={value}
               intent={value}
               selected={intent === value}
@@ -84,33 +128,17 @@ export function HomeComposer() {
           ))}
         </div>
       </fieldset>
-      <Textarea
-        id={`${ids}-text`}
-        label="Describe it in your own words"
-        hideLabel
-        rows={3}
-        maxLength={MAX}
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        placeholder="I'm building a budgeting app and need a design eye."
-      />
       {error ? <InlineError announce>{error}</InlineError> : null}
-      <div className="flex justify-end">
-        <Button type="submit" variant="primary" disabled={submitting}>
+      <div className="flex items-center justify-between gap-3">
+        <span
+          aria-hidden
+          className={cx("text-mono text-muted font-mono", open ? "block" : "hidden lg:block")}
+        >
+          {text.length}/{MAX}
+        </span>
+        <Button type="submit" variant="primary" disabled={submitting} className="ml-auto">
           {submitting ? "Sending…" : "Find matches"}
         </Button>
-      </div>
-      <div role="group" aria-label="Try one of these" className="flex flex-wrap gap-1.5">
-        {SUGGESTIONS.map((phrase) => (
-          <button
-            key={phrase}
-            type="button"
-            onClick={() => setText(phrase)}
-            className="border-green text-green bg-bg hover:bg-green-tint text-mono-lg min-h-11 rounded-full border px-3 font-mono pointer-fine:min-h-8"
-          >
-            {phrase}
-          </button>
-        ))}
       </div>
     </form>
   );

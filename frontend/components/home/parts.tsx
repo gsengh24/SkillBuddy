@@ -16,7 +16,7 @@ export function SummaryStrip({
   return (
     <dl
       aria-label="Summary"
-      className="border-line rounded-card mt-3 grid grid-cols-3 overflow-hidden border"
+      className="border-line rounded-panel grid grid-cols-3 overflow-hidden border"
     >
       {cells.map((cell) => (
         <div
@@ -27,7 +27,7 @@ export function SummaryStrip({
             {cell.label}
             <span className="sr-only"> ({cell.hint})</span>
           </dt>
-          <dd className="font-display text-[26px] leading-none font-extrabold tracking-[-0.05em]">
+          <dd className="font-display tracking-display text-[28px] leading-none font-extrabold">
             {cell.value}
           </dd>
         </div>
@@ -36,33 +36,13 @@ export function SummaryStrip({
   );
 }
 
-/** "Start your first request": the empty state, with a way to start. */
-export function StartFirstRequest({
-  href,
-  className,
-}: {
-  /** Where "Find people" goes: the composer, or onboarding before there is a profile. */
-  href: string;
-  className?: string;
-}) {
-  return (
-    <div className={cx("flex flex-col items-start gap-3 py-6", className)}>
-      <h2 className="font-display text-headline">Start your first request</h2>
-      <p className="text-ink-2 max-w-[46ch]">
-        Say what you&apos;re building in a sentence, and we&apos;ll find people who can help.
-      </p>
-      <ButtonLink href={href} variant="primary">
-        Find people
-      </ButtonLink>
-    </div>
-  );
-}
-
 /** The green band under the list: from a connection to a shared goal. */
-export function SpacesBand() {
+export function SpacesBand({ className }: { className?: string }) {
   return (
-    <div className="bg-green rounded-panel relative mt-5 overflow-hidden px-4 py-[18px]">
-      <h2 className="font-display text-bg mb-3.5 max-w-[230px] text-[22px] leading-none font-extrabold tracking-[-0.05em]">
+    <div
+      className={cx("bg-green rounded-panel relative overflow-hidden px-4 py-[18px]", className)}
+    >
+      <h2 className="font-display text-bg tracking-display mb-3.5 max-w-[230px] text-[20px] leading-[1.05] font-extrabold">
         Turn a connection <span className="text-mint-text">into a shared goal.</span>
       </h2>
       <ButtonLink href="/spaces" variant="white" size="compact">

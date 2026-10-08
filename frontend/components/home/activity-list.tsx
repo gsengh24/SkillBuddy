@@ -10,8 +10,8 @@ import { itemHref, type ActivityRow, type Filter } from "@/lib/home/activity";
 
 /** What an empty list says, per filter. The Messages wording is the old Messages page's. */
 const EMPTY: Record<Filter, string> = {
-  all: "Nothing here yet. Your requests, intros and chats will show up here.",
-  requests: "No requests yet. Ask for the kind of person you want to meet above.",
+  all: "No requests yet. Describe what you're building and we'll find people.",
+  requests: "No requests yet. Describe what you're building and we'll find people.",
   messages:
     "No connections yet. When someone accepts your intro (or you accept theirs), they'll appear here.",
 };
@@ -24,8 +24,9 @@ function leadingFor(row: ActivityRow) {
 }
 
 /**
- * "Recent activity": the All / Requests / Messages filter over one list, newest first.
- * Filtering happens here, without a reload; the open item stays selected.
+ * The inbox list: the All / Requests / Messages filter over one list, newest first. The
+ * pane around it gives the "Inbox" heading. Filtering happens here, without a reload; the
+ * open item stays selected.
  */
 export function ActivityList({
   rows,
@@ -42,10 +43,7 @@ export function ActivityList({
   const shown = filter === "all" ? rows : rows.filter((row) => row.group === filter);
 
   return (
-    <section aria-labelledby="activity-h" className="flex flex-col gap-2">
-      <h2 id="activity-h" className="text-mono text-muted mt-5 font-mono uppercase">
-        Recent activity
-      </h2>
+    <div className="flex flex-col gap-2">
       <SegmentedControl
         label="Filter"
         value={filter}
@@ -82,6 +80,6 @@ export function ActivityList({
       ) : (
         <p className="text-muted py-4">{EMPTY[filter]}</p>
       )}
-    </section>
+    </div>
   );
 }

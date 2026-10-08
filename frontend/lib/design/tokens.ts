@@ -54,6 +54,13 @@ export const colors = {
 
 export type ColorName = keyof typeof colors;
 
+/**
+ * Letter-spacing for display headlines (design spec section 3): -0.03em up to 52px and
+ * -0.04em from 56px up, never tighter (at -0.05em the letters touched). Mirrored in
+ * app/globals.css as --tracking-display and --tracking-display-xl.
+ */
+export const displayTracking = { upTo52px: "-0.03em", from56px: "-0.04em" } as const;
+
 /** Radii in px: panels, cards, buttons, inputs, small chips. Pills use `rounded-full`. */
 export const radii = { panel: 14, card: 12, control: 9, input: 10, chip: 4 } as const;
 

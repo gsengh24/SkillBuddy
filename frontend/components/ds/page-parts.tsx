@@ -36,7 +36,7 @@ export function CtaBand({
         className,
       )}
     >
-      <Heading className="font-display text-bg max-w-[420px] text-[28px] leading-none font-extrabold tracking-[-0.05em] lg:max-w-[560px] lg:text-[44px]">
+      <Heading className="font-display text-bg tracking-display max-w-[420px] text-[28px] leading-[1.05] font-extrabold lg:max-w-[560px] lg:text-[44px]">
         {lead} <span className="text-mint-text">{rest}</span>
       </Heading>
       <ButtonLink href={action.href} variant="white" className="self-start lg:self-center">
@@ -171,7 +171,7 @@ export function TwoToneHeadline({
   lead: string;
   rest: string;
   as?: "h1" | "h2" | "h3";
-  /** hero 32/64, headline 26/48, greeting 30/34 (Home's "What are you building today?"). */
+  /** hero 32/64, headline 26/48, greeting 30/38/44 (Home's "What are you building today?"). */
   size?: "hero" | "headline" | "greeting";
   /** On green tint the rest uses muted: muted-2 is under 3:1 there. */
   onTint?: boolean;
@@ -184,7 +184,8 @@ export function TwoToneHeadline({
         {
           hero: "text-hero lg:text-hero-lg",
           headline: "text-headline lg:text-headline-lg",
-          greeting: "text-[30px] leading-none font-extrabold tracking-[-0.05em] lg:text-[34px]",
+          greeting:
+            "tracking-display text-[30px] leading-[1.05] font-extrabold sm:text-[38px] lg:text-[44px]",
         }[size],
         className,
       )}
