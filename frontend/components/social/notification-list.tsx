@@ -7,6 +7,7 @@ import { TextLink } from "@/components/ui/text-link";
 import { browserApi } from "@/lib/api/browser";
 import { markedReadSchema, type AppNotification } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
+import { CONTENT_RULES } from "@/lib/content-rules";
 
 const WORDS: Record<AppNotification["kind"], { text: string; href: string; link: string }> = {
   intro_received: {
@@ -25,7 +26,18 @@ const WORDS: Record<AppNotification["kind"], { text: string; href: string; link:
     href: "/notifications",
     link: "OK",
   },
+  content_removed: {
+    text: "We removed some text you wrote because it broke our rules.",
+    href: "/terms",
+    link: "Read the terms",
+  },
 };
+
+/** "Reason: contact details." for a content_removed notice (A7). */
+function ruleReason(item: AppNotification): string | null {
+  const rule = item.kind === "content_removed" && item.rule ? CONTENT_RULES[item.rule] : undefined;
+  return rule ? ` Reason: ${rule.reason}.` : null;
+}
 
 function when(iso: string): string {
   return new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
@@ -82,6 +94,7 @@ export function NotificationList({
               <p className={item.read_at ? "text-ink" : "text-ink font-bold"}>
                 {item.read_at ? null : <span className="sr-only">Unread: </span>}
                 {words.text}
+                {ruleReason(item)}
               </p>
               <p className="text-small text-muted flex flex-wrap gap-3">
                 <span>{when(item.created_at)}</span>

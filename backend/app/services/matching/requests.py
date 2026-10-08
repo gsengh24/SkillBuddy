@@ -20,13 +20,14 @@ from app.core.errors import AppError, NotFoundError
 from app.jobs.queue import enqueue
 from app.jobs.tasks import MATCH_REQUEST
 from app.models import (
+    FlaggedItem,
     Match,
     MatchRequest,
     Profile,
     RequestStatus,
     User,
 )
-from app.services import app_settings, blocks
+from app.services import app_settings, blocks, content_rules
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import InvalidCursorError, decode_cursor, encode
 
@@ -95,6 +96,10 @@ class MatchRequestService:
         )
         self._db.add(request)
         await self._db.flush()
+        # Content rules (A7) only flag for a moderator; they never block the request.
+        await content_rules.flag(
+            self._db, user_id=user.id, item=FlaggedItem.REQUEST, item_id=request.id, text=raw_text
+        )
         await enqueue(self._db, MATCH_REQUEST, {"request_id": str(request.id)})
         await self._db.commit()
         await self._db.refresh(request)

@@ -277,3 +277,61 @@ export const settingsSchema = z.object({
 });
 export type AdminSettings = z.infer<typeof settingsSchema>;
 export type LimitState = AdminSettings["limits"][number];
+
+export const contentRulesSchema = z.object({
+  rules: z.array(z.object({ key: z.string(), on: z.boolean() })),
+});
+
+export const flagSchema = z.object({
+  id: z.string(),
+  rule: z.string(),
+  item_type: z.enum(["request", "profile", "intro"]),
+  item_id: z.string(),
+  user_id: z.string(),
+  email: z.string().nullable(),
+  flagged_text: z.string().nullable(),
+  created_at: z.string(),
+});
+export type Flag = z.infer<typeof flagSchema>;
+export const flagPageSchema = z.object({
+  items: z.array(flagSchema),
+  next_cursor: z.string().nullable(),
+});
+
+export const aiProviderSchema = z.object({
+  name: z.string(),
+  role: z.enum(["primary", "fallback"]),
+  on: z.boolean(),
+  status: z.enum(["ok", "degraded", "idle", "off"]),
+  p50_ms: z.number().nullable(),
+  p95_ms: z.number().nullable(),
+  calls_24h: z.number(),
+  error_rate: z.number().nullable(),
+  cost_today: z.number(),
+  cost_unit: z.string(),
+  daily_budget: z.number(),
+});
+export type AiProvider = z.infer<typeof aiProviderSchema>;
+
+export const aiOverviewSchema = z.object({
+  llm_enabled: z.boolean(),
+  providers: z.array(aiProviderSchema),
+  fallbacks_today: z.record(z.string(), z.number()),
+  quality: z.object({
+    days: z.number(),
+    intros_sent: z.number(),
+    accept_rate: z.number().nullable(),
+    ignore_rate: z.number().nullable(),
+    report_rate: z.number().nullable(),
+  }),
+  evals: z.object({
+    connected: z.boolean(),
+    labelled: z.number().nullable(),
+    total: z.number().nullable(),
+    latest_score: z.number().nullable(),
+  }),
+});
+export type AiOverview = z.infer<typeof aiOverviewSchema>;
+
+export const rerunQueuedSchema = z.object({ request_id: z.string(), status: z.literal("queued") });
+export const probeQueuedSchema = z.object({ queued: z.boolean() });

@@ -8,6 +8,7 @@ from app.api.v1 import (
     account,
     admin,
     admin_access,
+    admin_content,
     admin_overview,
     admin_portal,
     admin_safety,
@@ -48,6 +49,7 @@ api_router.include_router(admin_safety.router)
 api_router.include_router(admin_overview.router)
 api_router.include_router(admin_access.router)
 api_router.include_router(admin_settings.router)
+api_router.include_router(admin_content.router)
 api_router.include_router(features.router)
 api_router.include_router(appeals.router)
 api_router.include_router(jobs.router)

@@ -21,6 +21,7 @@ from app.models import EmailPurpose, InviteCode, OtpCode, SignupApplication, Use
 from app.services import appeals
 from app.services.auth.retention import hard_delete_due_accounts, purge_expired_auth_data
 from app.services.chat import purge_old_messages
+from app.services.content_rules import purge_flags
 from app.services.data_exports import build_export
 from app.services.data_exports import purge as purge_data_exports
 from app.services.email import build_email_sender
@@ -210,9 +211,11 @@ async def _purge_spaces(ctx: JobContext) -> None:
 
 
 async def _purge_moderation_log(ctx: JobContext) -> None:
-    """Daily: delete moderator actions older than MODERATION_LOG_RETENTION_DAYS."""
+    """Daily: delete moderator actions older than MODERATION_LOG_RETENTION_DAYS. Also
+    old content flags (A7)."""
     async with ctx.session_factory() as db:
         await purge_old_actions(db, ctx.settings, datetime.now(UTC))
+        await purge_flags(db, datetime.now(UTC))
 
 
 async def _purge_reports(ctx: JobContext) -> None:

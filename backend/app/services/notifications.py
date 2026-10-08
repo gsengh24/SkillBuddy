@@ -24,6 +24,7 @@ def add_notification(
     *,
     intro_id: uuid.UUID | None = None,
     request_id: uuid.UUID | None = None,
+    rule: str | None = None,
 ) -> Notification:
     """Add to the caller's transaction (the caller commits)."""
     notification = Notification(
@@ -32,6 +33,7 @@ def add_notification(
         kind=kind.value,
         intro_id=intro_id,
         request_id=request_id,
+        rule=rule,
     )
     db.add(notification)
     return notification

@@ -312,6 +312,22 @@ async def _target(
     return user
 
 
+async def clear_about_text(db: AsyncSession, user_id: uuid.UUID) -> bool:
+    """Remove someone's about text and what was read from it (False: no profile). Without
+    embeddings they leave matching until they write a new one. In the caller's transaction."""
+    profile = await db.get(Profile, user_id, with_for_update=True)
+    if profile is None:
+        return False
+    profile.raw_about_text = ""
+    profile.structured = {}
+    profile.parse_status = ParseStatus.EMPTY
+    profile.parse_source = None
+    profile.parsed_text_hash = None
+    profile.parsed_at = None
+    await db.execute(delete(ProfileEmbedding).where(ProfileEmbedding.user_id == user_id))
+    return True
+
+
 async def act(
     db: AsyncSession,
     settings: Settings,
@@ -348,18 +364,8 @@ async def act(
     elif action is UserAction.SIGN_OUT:
         await revoke_all_sessions(db, user.id)
     elif action is UserAction.CLEAR_BIO:
-        profile = await db.get(Profile, user.id, with_for_update=True)
-        if profile is None:
+        if not await clear_about_text(db, user.id):
             raise NoProfileError
-        # The text and what was read from it go; without embeddings they leave matching
-        # until they write a new one.
-        profile.raw_about_text = ""
-        profile.structured = {}
-        profile.parse_status = ParseStatus.EMPTY
-        profile.parse_source = None
-        profile.parsed_text_hash = None
-        profile.parsed_at = None
-        await db.execute(delete(ProfileEmbedding).where(ProfileEmbedding.user_id == user.id))
     elif action is UserAction.SCHEDULE_DELETION:
         if user.status == UserStatus.PENDING_DELETION:
             raise InvalidStatusChangeError

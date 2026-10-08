@@ -17,8 +17,9 @@ from app.core.config import Settings
 from app.core.errors import AppError, NotFoundError
 from app.jobs.queue import enqueue
 from app.jobs.tasks import EMBED_PROFILE, PARSE_PROFILE
-from app.models import ParseSource, ParseStatus, Profile, User
+from app.models import FlaggedItem, ParseSource, ParseStatus, Profile, User
 from app.schemas.profile import ProfileIn, ProfileSettingsIn, UnderstandingIn
+from app.services import content_rules
 from app.services.auth.rate_limit import RateLimiter
 from app.services.profile_parsing import text_hash
 
@@ -117,6 +118,16 @@ class ProfileService:
         profile.timezone = data.timezone
         profile.languages = list(data.languages)
         profile.visibility = data.visibility
+        if text_changed:
+            # Content rules (A7) only flag for a moderator; they never block the save.
+            await self._db.flush()
+            await content_rules.flag(
+                self._db,
+                user_id=user.id,
+                item=FlaggedItem.PROFILE,
+                item_id=user.id,
+                text=data.about_text,
+            )
         if text_changed or profile.parse_status == ParseStatus.EMPTY:
             profile.parse_status = ParseStatus.PENDING
             await self._db.flush()

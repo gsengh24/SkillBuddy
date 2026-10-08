@@ -31,6 +31,7 @@ from app.jobs.tasks import SEND_NOTIFICATION_EMAIL
 from app.models import (
     HIDDEN_STATUSES,
     Connection,
+    FlaggedItem,
     Intro,
     IntroStatus,
     Match,
@@ -42,7 +43,7 @@ from app.models import (
     User,
     UserStatus,
 )
-from app.services import app_settings, blocks
+from app.services import app_settings, blocks, content_rules
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 from app.services.notifications import add_notification
@@ -216,6 +217,10 @@ class IntroService:
         self._db.add(intro)
         match.status = MatchStatus.INTRO_SENT
         await self._db.flush()
+        # Content rules (A7) only flag for a moderator; they never block the intro.
+        await content_rules.flag(
+            self._db, user_id=user.id, item=FlaggedItem.INTRO, item_id=intro.id, text=note
+        )
         await self._notify(recipient.id, NotificationKind.INTRO_RECEIVED, intro.id)
         await self._db.commit()
         await self._db.refresh(intro)

@@ -102,6 +102,8 @@ class NotificationKind(StrEnum):
     MATCHES_READY = "matches_ready"
     # Someone you reported was reviewed (A3); it never says what was decided.
     REPORT_REVIEWED = "report_reviewed"
+    # A moderator removed text you wrote; ``rule`` names why (A7).
+    CONTENT_REMOVED = "content_removed"
 
 
 class Notification(UUIDPrimaryKeyMixin, Base):
@@ -119,5 +121,7 @@ class Notification(UUIDPrimaryKeyMixin, Base):
     request_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("match_requests.id", ondelete="CASCADE")
     )
+    # For content_removed: the content rule (a fixed name, never text).
+    rule: Mapped[str | None] = mapped_column(String(32))
     read_at: Mapped[datetime | None]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
