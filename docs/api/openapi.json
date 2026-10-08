@@ -117,6 +117,207 @@
         "title": "AccountOut",
         "type": "object"
       },
+      "AdminMeOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Permissions",
+            "type": "array"
+          },
+          "role": {
+            "enum": [
+              "owner",
+              "admin",
+              "moderator",
+              "readonly"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "name",
+          "role",
+          "permissions"
+        ],
+        "title": "AdminMeOut",
+        "type": "object"
+      },
+      "AdminSessionOut": {
+        "properties": {
+          "expires_at": {
+            "description": "Moves on with use; ends after 30 idle minutes.",
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "recovery_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only when two-step login was just turned on. Shown once: keep them safe.",
+            "title": "Recovery Codes"
+          }
+        },
+        "required": [
+          "expires_at"
+        ],
+        "title": "AdminSessionOut",
+        "type": "object"
+      },
+      "AuditEntryOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Id"
+          },
+          "actor_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Role"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Plain text written by the admin.",
+            "title": "Reason"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "target_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Type"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "actor_id",
+          "actor_role",
+          "action",
+          "target_type",
+          "target_id",
+          "reason",
+          "ip"
+        ],
+        "title": "AuditEntryOut",
+        "type": "object"
+      },
+      "AuditPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as `cursor` for older entries.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "AuditPage",
+        "type": "object"
+      },
       "AuthMethodsOut": {
         "description": "Which sign-in methods this server offers, so clients show only what works.",
         "properties": {
@@ -673,6 +874,39 @@
           "authorization_url"
         ],
         "title": "GoogleStartOut",
+        "type": "object"
+      },
+      "GrantIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "moderator",
+              "readonly"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "role",
+          "reason"
+        ],
+        "title": "GrantIn",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1666,6 +1900,69 @@
         "title": "ParseStatus",
         "type": "string"
       },
+      "PermissionRow": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "permission": {
+            "title": "Permission",
+            "type": "string"
+          },
+          "roles": {
+            "description": "The roles that have it.",
+            "items": {
+              "enum": [
+                "owner",
+                "admin",
+                "moderator",
+                "readonly"
+              ],
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "permission",
+          "label",
+          "roles"
+        ],
+        "title": "PermissionRow",
+        "type": "object"
+      },
+      "PermissionTable": {
+        "properties": {
+          "roles": {
+            "items": {
+              "enum": [
+                "owner",
+                "admin",
+                "moderator",
+                "readonly"
+              ],
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/PermissionRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "roles",
+          "rows"
+        ],
+        "title": "PermissionTable",
+        "type": "object"
+      },
       "PersonOut": {
         "description": "Someone else. ``display_name`` and ``links`` are set only once you're connected.",
         "properties": {
@@ -2476,6 +2773,22 @@
         "title": "ReadinessResponse",
         "type": "object"
       },
+      "ReasonIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ReasonIn",
+        "type": "object"
+      },
       "ReportIn": {
         "additionalProperties": false,
         "properties": {
@@ -3074,6 +3387,77 @@
         "title": "TableSize",
         "type": "object"
       },
+      "TeamMemberOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "from_environment": {
+            "description": "Owners come from ADMIN_OWNER_EMAILS.",
+            "title": "From Environment",
+            "type": "boolean"
+          },
+          "last_active_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Last admin session activity.",
+            "title": "Last Active At"
+          },
+          "role": {
+            "enum": [
+              "owner",
+              "admin",
+              "moderator",
+              "readonly"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "two_step_enabled": {
+            "title": "Two Step Enabled",
+            "type": "boolean"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "role",
+          "from_environment",
+          "two_step_enabled",
+          "last_active_at"
+        ],
+        "title": "TeamMemberOut",
+        "type": "object"
+      },
+      "TeamOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "TeamOut",
+        "type": "object"
+      },
       "TickOut": {
         "properties": {
           "already_enqueued": {
@@ -3104,6 +3488,69 @@
           "ticked_at"
         ],
         "title": "TickOut",
+        "type": "object"
+      },
+      "TwoStepCodeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "6 digits from the app, or a recovery code.",
+            "maxLength": 20,
+            "minLength": 6,
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "TwoStepCodeIn",
+        "type": "object"
+      },
+      "TwoStepSetupOut": {
+        "description": "Add this to an authenticator app. Shown once; the secret is stored encrypted.",
+        "properties": {
+          "otpauth_uri": {
+            "description": "An otpauth:// link for authenticator apps.",
+            "title": "Otpauth Uri",
+            "type": "string"
+          },
+          "secret": {
+            "description": "Base32, for typing in by hand.",
+            "title": "Secret",
+            "type": "string"
+          }
+        },
+        "required": [
+          "secret",
+          "otpauth_uri"
+        ],
+        "title": "TwoStepSetupOut",
+        "type": "object"
+      },
+      "TwoStepStatusOut": {
+        "properties": {
+          "role": {
+            "enum": [
+              "owner",
+              "admin",
+              "moderator",
+              "readonly"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "two_step_enabled": {
+            "description": "False until the first code is confirmed: then set it up first.",
+            "title": "Two Step Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "role",
+          "two_step_enabled"
+        ],
+        "title": "TwoStepStatusOut",
         "type": "object"
       },
       "UnderstandingIn": {
@@ -3396,6 +3843,140 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/audit": {
+      "get": {
+        "description": "Entries can't be edited or deleted (the database refuses).",
+        "operationId": "audit_api_v1_admin_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Action"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "target_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Target Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The audit log, newest first",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/jobs/tick": {
       "post": {
         "description": "Daily jobs are enqueued once per UTC day and hourly jobs once per UTC hour; the job\nrunner is woken to start on them. Returns at once; the jobs run in the background.",
@@ -3433,6 +4014,89 @@
           }
         },
         "summary": "Enqueue scheduled jobs that are due (called by the scheduler)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/me": {
+      "get": {
+        "operationId": "me_api_v1_admin_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          }
+        },
+        "summary": "The signed-in admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/permissions": {
+      "get": {
+        "description": "The permission table every admin route is checked against.",
+        "operationId": "permissions_api_v1_admin_permissions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionTable"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          }
+        },
+        "summary": "What each role may do",
         "tags": [
           "admin"
         ]
@@ -3637,6 +4301,41 @@
         ]
       }
     },
+    "/api/v1/admin/sign-out": {
+      "post": {
+        "description": "Ends only the admin session; the normal one stays.",
+        "operationId": "sign_out_api_v1_admin_sign_out_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          }
+        },
+        "summary": "End the admin session",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/storage": {
       "get": {
         "description": "Warns at 70% of the limit; at 90% sign-ups and non-essential writes are paused.",
@@ -3654,6 +4353,491 @@
           }
         },
         "summary": "Database size against the free-tier limit",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/team": {
+      "get": {
+        "operationId": "team_api_v1_admin_team_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          }
+        },
+        "summary": "Admin accounts",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "They need an account already. They set up two-step login the first time they open\nthe admin portal. Owners can only be set on the server.",
+        "operationId": "grant_api_v1_admin_team_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Give someone an admin role",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/team/{user_id}/remove": {
+      "post": {
+        "description": "Ends their admin sessions and removes their two-step set-up too.",
+        "operationId": "remove_api_v1_admin_team__user_id__remove_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Take someone's admin role away",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/two-step": {
+      "get": {
+        "operationId": "two_step_status_api_v1_admin_two_step_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoStepStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          }
+        },
+        "summary": "Is two-step login set up for me?",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/two-step/confirm": {
+      "post": {
+        "description": "Returns the recovery codes once, and starts an admin session.",
+        "operationId": "two_step_confirm_api_v1_admin_two_step_confirm_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoStepCodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Turn two-step login on with a first code",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/two-step/setup": {
+      "post": {
+        "description": "A new secret for an authenticator app, until the first code is confirmed.",
+        "operationId": "two_step_setup_api_v1_admin_two_step_setup_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoStepSetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Start setting up two-step login",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/two-step/verify": {
+      "post": {
+        "description": "A code from the app, or one unused recovery code. Non-browser clients send the\nreturned cookie's value as ``X-Admin-Session``.",
+        "operationId": "two_step_verify_api_v1_admin_two_step_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoStepCodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the two-step code is needed (`admin_two_step_required`)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not an admin (`not_admin`), or the role doesn't allow it (`admin_permission_denied`)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Pass the second step",
         "tags": [
           "admin"
         ]

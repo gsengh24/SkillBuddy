@@ -25,6 +25,12 @@ BLOCK_TABLES = {"blocks"}  # migration 0011
 MODERATION_TABLES = {"moderation_actions"}  # migration 0013
 SPACE_TABLES = {"space_goals", "space_skills", "progress_logs"}  # migration 0014
 EXPORT_TABLES = {"data_exports"}  # migration 0017
+ADMIN_TABLES = {
+    "admin_accounts",
+    "admin_recovery_codes",
+    "admin_sessions",
+    "admin_audit_log",
+}  # migration 0018
 ALL_TABLES = (
     PHASE_ZERO_TABLES
     | AUTH_TABLES
@@ -38,6 +44,7 @@ ALL_TABLES = (
     | MODERATION_TABLES
     | SPACE_TABLES
     | EXPORT_TABLES
+    | ADMIN_TABLES
 )
 
 
@@ -200,6 +207,7 @@ def test_chat_migration_keeps_connections_and_downgrades_to_0008(
         - MODERATION_TABLES
         - SPACE_TABLES
         - EXPORT_TABLES
+        - ADMIN_TABLES
     )
     assert not {"user_a_read_at", "user_b_read_at"} & _connection_columns(engine)
     with engine.connect() as connection:
@@ -276,7 +284,13 @@ def test_reports_migration_downgrades_to_0009_and_back(
 
     command.downgrade(config, "0009")
     assert _tables(engine) == (
-        ALL_TABLES - REPORT_TABLES - BLOCK_TABLES - MODERATION_TABLES - SPACE_TABLES - EXPORT_TABLES
+        ALL_TABLES
+        - REPORT_TABLES
+        - BLOCK_TABLES
+        - MODERATION_TABLES
+        - SPACE_TABLES
+        - EXPORT_TABLES
+        - ADMIN_TABLES
     )
 
     command.upgrade(config, "head")
@@ -313,7 +327,7 @@ def test_blocks_migration_keeps_connections_and_downgrades_to_0010(
 
     command.downgrade(config, "0010")
     assert _tables(engine) == (
-        ALL_TABLES - BLOCK_TABLES - MODERATION_TABLES - SPACE_TABLES - EXPORT_TABLES
+        ALL_TABLES - BLOCK_TABLES - MODERATION_TABLES - SPACE_TABLES - EXPORT_TABLES - ADMIN_TABLES
     )
     assert "ended_at" not in _connection_columns(engine)
     with engine.connect() as connection:
@@ -405,6 +419,25 @@ def test_account_controls_migration_downgrades_to_0016(
         statuses = set(connection.scalars(text("SELECT status FROM users")).all())
     assert statuses == {"active"}
     assert "data_exports" not in _tables(engine)
+    assert not ADMIN_TABLES & _tables(engine)
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
+
+
+def test_admin_migration_downgrades_to_0017(empty_database_url: str, engine: Engine) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(text("INSERT INTO admin_audit_log (action) VALUES ('admin.signed_in')"))
+
+    command.downgrade(config, "0017")
+    assert not ADMIN_TABLES & _tables(engine)
+    with engine.connect() as connection:
+        functions = connection.scalar(
+            text("SELECT count(*) FROM pg_proc WHERE proname = 'admin_audit_log_append_only'")
+        )
+    assert functions == 0
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES

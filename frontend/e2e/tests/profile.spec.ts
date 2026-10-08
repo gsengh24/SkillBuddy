@@ -147,4 +147,9 @@ test("create a profile, see what was understood, correct it, pause matching, edi
   await expectNoViolations(page);
   await page.getByRole("button", { name: "Resume" }).click();
   await expect(page.getByText("Pause my account")).toBeVisible();
+
+  // The admin portal (ADR 0015) turns a normal account away, accessibly.
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "No access" })).toBeVisible();
+  await expectNoViolations(page);
 });

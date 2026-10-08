@@ -472,17 +472,17 @@ dialog::backdrop{background:rgba(10,10,10,.45)}
     {n:'Rahul Bose',e:'rahul.bose@gmail.com',j:'18 Sep',la:'9 days ago',s:'banned',i:'Explore',r:5,m:0,fl:1,city:'Kolkata'}
   ];
   var audit=[
-    ['08 Oct 11:42','Jaspreet K.','Updated setting','Terms version','Set to 2026-10-08-draft'],
-    ['08 Oct 11:40','Jaspreet K.','Updated setting','APP_NAME','Renamed app to Cynergi'],
-    ['07 Oct 22:15','Jaspreet K.','Suspended user','Kabir Singh','Repeated spam intros, 3 reports'],
-    ['07 Oct 21:58','Jaspreet K.','Resolved report','RPT-1042','Message confirmed as harassment'],
-    ['07 Oct 18:30','Jaspreet K.','Created invite code','CYN-FRIENDS','Pilot group, limit 50'],
-    ['06 Oct 10:05','Jaspreet K.','Banned user','Rahul Bose','Harassment after final warning'],
-    ['05 Oct 16:20','Jaspreet K.','Turned off feature','Pair spaces','Paused during bug fix, turned back on'],
-    ['04 Oct 09:12','Jaspreet K.','Exported users','CSV job','Pilot analysis']
+    ['08 Oct 11:42','Owner','Updated setting','Terms version','Set to 2026-10-08-draft'],
+    ['08 Oct 11:40','Owner','Updated setting','APP_NAME','Renamed app to Cynergi'],
+    ['07 Oct 22:15','Owner','Suspended user','Kabir Singh','Repeated spam intros, 3 reports'],
+    ['07 Oct 21:58','Owner','Resolved report','RPT-1042','Message confirmed as harassment'],
+    ['07 Oct 18:30','Owner','Created invite code','CYN-FRIENDS','Pilot group, limit 50'],
+    ['06 Oct 10:05','Owner','Banned user','Rahul Bose','Harassment after final warning'],
+    ['05 Oct 16:20','Owner','Turned off feature','Pair spaces','Paused during bug fix, turned back on'],
+    ['04 Oct 09:12','Owner','Exported users','CSV job','Pilot analysis']
   ];
   var ipad=['10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12'];
-  function log(a,t,why){var d=new Date();audit.unshift(['08 Oct '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2),'Jaspreet K.',a,t,why]);ipad.unshift('10.0.0.12');renderAudit();renderFeed()}
+  function log(a,t,why){var d=new Date();audit.unshift(['08 Oct '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2),'Owner',a,t,why]);ipad.unshift('10.0.0.12');renderAudit();renderFeed()}
 
   /* ---------- nav ---------- */
   var pages=[
@@ -582,7 +582,7 @@ dialog::backdrop{background:rgba(10,10,10,.45)}
     +(u.s!=='banned'?'<button class="btn danger sm" data-a="ban">Ban</button>':'<button class="btn ghost sm" data-a="unban">Reverse ban</button>')
     +'<button class="btn ghost sm" data-a="logout">Force sign-out</button><button class="btn ghost sm" data-a="verify">Resend verification</button><button class="btn ghost sm" data-a="edit">Remove bio text</button><button class="btn danger sm" data-a="delete">Delete account</button></div>'
     +'<div class="lbl sec-t">Timeline</div><ul class="tl">'+tl.map(function(t){return '<li>'+t[0]+'<span>'+t[1]+'</span></li>'}).join('')+'</ul>'
-    +'<div class="lbl sec-t">Private notes</div><div id="nl">'+(notes[u.e]||[]).map(function(n){return '<div class="quote"><small>Jaspreet K. · now</small>'+esc(n)+'</div>'}).join('')+'</div><div class="f act"><textarea class="tx" id="nt" placeholder="Add a note only admins can see" style="min-height:64px"></textarea><button class="btn ghost sm" id="ntA" style="margin-top:8px">Add note</button></div>';
+    +'<div class="lbl sec-t">Private notes</div><div id="nl">'+(notes[u.e]||[]).map(function(n){return '<div class="quote"><small>Owner · now</small>'+esc(n)+'</div>'}).join('')+'</div><div class="f act"><textarea class="tx" id="nt" placeholder="Add a note only admins can see" style="min-height:64px"></textarea><button class="btn ghost sm" id="ntA" style="margin-top:8px">Add note</button></div>';
     openDrawer(u.n,h);
     var map={suspend:['Suspend '+u.n+'?','They are signed out and hidden from matching for 7 days.','Suspend','suspended','Suspended user'],unsuspend:['Unsuspend '+u.n+'?','They can sign in and appear in matches again.','Unsuspend','active','Unsuspended user'],ban:['Ban '+u.n+'?','Permanent. They are signed out and cannot create another account with this email.','Ban','banned','Banned user'],unban:['Reverse ban for '+u.n+'?','Account returns to active.','Reverse ban','active','Reversed ban']};
     $$('#drB [data-a]').forEach(function(b){b.addEventListener('click',function(){var a=b.dataset.a,m=map[a];
@@ -600,10 +600,10 @@ dialog::backdrop{background:rgba(10,10,10,.45)}
   function renderAppq(){$('#appq').innerHTML=applic.length?applic.map(function(a,i){return '<div class="hl-row"><div class="u grow"><i>'+ini(a[0])+'</i><div style="min-width:0"><b>'+a[0]+'</b><span>'+a[1]+' · '+a[2]+' · '+a[3]+'</span></div></div><span class="acts act"><button class="btn sm" data-ok="'+i+'">Approve</button><button class="btn ghost sm" data-no="'+i+'">Reject</button></span></div>'}).join(''):'<div class="empty">All caught up.</div>';
     $$('#appq [data-ok]').forEach(function(b){b.addEventListener('click',function(){var a=applic.splice(+b.dataset.ok,1)[0];log('Approved application',a[0],'Approved from queue');renderAppq();toast('Approved. Invite email queued.')})});
     $$('#appq [data-no]').forEach(function(b){b.addEventListener('click',function(){var a=applic[+b.dataset.no];act({title:'Reject '+a[0]+'?',confirm:'Reject',done:function(r){applic.splice(+b.dataset.no,1);log('Rejected application',a[0],r);renderAppq();toast('Rejected')}})})})}
-  var codes=[['CYN-FRIENDS','Jaspreet K.',37,50,'31 Oct','active'],['CYN-COLLEGE','Jaspreet K.',12,25,'15 Oct','active'],['CYN-BETA1','Jaspreet K.',20,20,'30 Sep','used up']];
+  var codes=[['CYN-FRIENDS','Owner',37,50,'31 Oct','active'],['CYN-COLLEGE','Owner',12,25,'15 Oct','active'],['CYN-BETA1','Owner',20,20,'30 Sep','used up']];
   function renderCodes(){$('#codes').innerHTML=T([{h:'Code',f:function(c){return '<b class="mono">'+c[0]+'</b>'}},{h:'Created by',f:function(c){return c[1]}},{h:'Used',f:function(c){return c[2]+' / '+c[3]}},{h:'Expires',f:function(c){return c[4]}},{h:'Status',f:function(c){return '<span class="b '+(c[5]==='active'?'ok':'')+'">'+c[5]+'</span>'}},{h:'',cls:'rt',f:function(c,i){return c[5]==='active'?'<button class="btn danger sm act" data-rv="'+i+'">Revoke</button>':''}}],codes);
     $$('#codes [data-rv]').forEach(function(b){b.addEventListener('click',function(){var c=codes[+b.dataset.rv];act({title:'Revoke '+c[0]+'?',desc:'The code stops working. People already in are not affected.',confirm:'Revoke',danger:true,done:function(r){c[5]='revoked';log('Revoked invite code',c[0],r);renderCodes();toast('Revoked')}})})})}
-  $('#newCode').addEventListener('click',function(){var c='CYN-'+Math.random().toString(36).slice(2,7).toUpperCase();codes.unshift([c,'Jaspreet K.',0,25,'31 Oct','active']);log('Created invite code',c,'Limit 25');renderCodes();toast('Created '+c)});
+  $('#newCode').addEventListener('click',function(){var c='CYN-'+Math.random().toString(36).slice(2,7).toUpperCase();codes.unshift([c,'Owner',0,25,'31 Oct','active']);log('Created invite code',c,'Limit 25');renderCodes();toast('Created '+c)});
   $('#inv10').addEventListener('click',function(){var n=$('#wl');n.textContent=+n.textContent-10;log('Invited from waitlist','10 people','Next 10 in queue');toast('10 invites queued')});
   $('#mode').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;$$('#mode button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');
     var t=b.textContent;$('#modeHint').textContent={Open:'Anyone can sign up.','Invite only':'New users need a valid invite code or an approved application.',Closed:'Nobody new can join. Existing users can still sign in.'}[t];log('Changed signup mode',t,'Set from Signup and access');toast('Signup mode: '+t)});
@@ -712,7 +712,7 @@ dialog::backdrop{background:rgba(10,10,10,.45)}
   $('#intAdd').addEventListener('click',function(){var v=$('#intIn').value.trim();if(!v)return;ints.push(v);$('#intIn').value='';log('Added intent',v,'New intent type');chipsInts()});
 
   /* ---------- TEAM ---------- */
-  var admins=[['Jaspreet K.','jaspreet.parvinder@gmail.com','Owner',1,'Now','active'],['Frontend contributor','contributor@example.com','Read-only',1,'2 days ago','active'],['Pending invite','helper@example.com','Moderator',0,'Never','pending']];
+  var admins=[['Owner','owner@example.com','Owner',1,'Now','active'],['Frontend contributor','contributor@example.com','Read-only',1,'2 days ago','active'],['Pending invite','helper@example.com','Moderator',0,'Never','pending']];
   function renderAdmins(){$('#admins').innerHTML=T([{h:'Admin',nolabel:1,f:function(a){return '<div class="u"><i>'+ini(a[0])+'</i><div style="min-width:0"><b>'+esc(a[0])+'</b><span>'+esc(a[1])+'</span></div></div>'}},{h:'Role',f:function(a){return '<span class="b dark">'+a[2]+'</span>'}},{h:'Two-step',f:function(a){return a[3]?'<span class="b ok">On</span>':'<span class="b warn">Not set up</span>'}},{h:'Last sign-in',f:function(a){return a[4]}},{h:'Status',f:function(a){return badge(a[5])}},{h:'',cls:'rt',f:function(a,i){return a[2]==='Owner'?'':'<button class="btn danger sm act" data-i="'+i+'">Remove</button>'}}],admins);
     $$('#admins [data-i]').forEach(function(b){b.addEventListener('click',function(){var a=admins[+b.dataset.i];act({title:'Remove '+a[0]+' as admin?',desc:'They lose access immediately and are signed out.',confirm:'Remove',danger:true,done:function(r){admins.splice(+b.dataset.i,1);log('Removed admin',a[1],r);renderAdmins();toast('Admin removed')}})})})}
   $('#invAdmin').addEventListener('click',function(){$('#invD').showModal()});$('#iNo').addEventListener('click',function(){$('#invD').close()});

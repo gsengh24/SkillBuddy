@@ -1,8 +1,9 @@
 """The scheduler's tick (ADR 0008): enqueue due scheduled jobs and wake the runner.
 
 Called by a Cloudflare Worker cron with the shared secret ``JOBS_TICK_TOKEN`` in the
-``X-Jobs-Tick-Token`` header. Disabled (404) unless the token is configured. Calling it
-twice in the same period enqueues nothing the second time.
+``X-Jobs-Tick-Token`` header (404 when none is configured, 403 when wrong); without the
+header only an admin allowed to change settings may call it (ADR 0015). Calling it twice
+in the same period enqueues nothing the second time.
 """
 
 from __future__ import annotations
@@ -14,30 +15,28 @@ from typing import Annotated, Final
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import SettingsDep
-from app.core.errors import NotFoundError, PermissionDeniedError
-from app.core.security import constant_time_equals
+from app.api.admin_deps import operator_or_admin
+from app.core.config import Settings
 from app.db.session import get_db_session
 from app.jobs.schedule import enqueue_due_jobs
 from app.schemas.admin import TickOut
 from app.schemas.errors import ErrorResponse
+from app.services.admin.permissions import Permission
 
 TICK_TOKEN_HEADER: Final = "X-Jobs-Tick-Token"  # noqa: S105  # a header name, not a secret
 
 
-async def require_tick_token(request: Request, settings: SettingsDep) -> None:
-    expected = settings.jobs_tick_token
-    if expected is None:
-        raise NotFoundError
-    supplied = request.headers.get(TICK_TOKEN_HEADER, "")
-    if not supplied or not constant_time_equals(supplied, expected.get_secret_value()):
-        raise PermissionDeniedError
+def _tick_token(settings: Settings) -> str | None:
+    return settings.jobs_tick_token.get_secret_value() if settings.jobs_tick_token else None
 
 
 router = APIRouter(
     prefix="/admin/jobs",
     tags=["admin"],
-    dependencies=[Depends(require_tick_token)],
+    # The scheduler sends the token; an admin allowed to change settings may tick by hand.
+    dependencies=[
+        Depends(operator_or_admin(Permission.MANAGE_SETTINGS, TICK_TOKEN_HEADER, _tick_token))
+    ],
     responses={
         HTTPStatus.FORBIDDEN.value: {"model": ErrorResponse},
         HTTPStatus.NOT_FOUND.value: {"model": ErrorResponse},

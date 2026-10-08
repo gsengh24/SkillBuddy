@@ -102,6 +102,15 @@ class Settings(BaseSettings):
     # Accounts that may use the moderation page and API (signed in as usual). Set it
     # only in the hosting dashboard.
     moderator_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    # Admin portal (ADR 0015). Owners come only from here; other admins are given a role by
+    # an owner. Empty means nobody is an admin. Set it only in the hosting dashboard.
+    admin_owner_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    # The admin session (after the two-step code) ends after this long without use, and
+    # never lasts longer than the maximum.
+    admin_session_idle_minutes: int = Field(default=30, ge=5, le=60)
+    admin_session_max_hours: int = Field(default=12, ge=1, le=24)
+    # Two-step code attempts per admin per 15 minutes.
+    admin_two_step_attempts: int = Field(default=5, ge=3, le=20)
 
     # --- Matching (ARCHITECTURE.md §3; ADR 0007) -------------------------------------
     # New match requests per user per UTC day, and open (pending or ready) at once.
@@ -320,6 +329,7 @@ class Settings(BaseSettings):
         "allowed_emails",
         "blocked_emails",
         "moderator_emails",
+        "admin_owner_emails",
         mode="before",
     )
     @classmethod

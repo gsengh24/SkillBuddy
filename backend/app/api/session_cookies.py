@@ -84,3 +84,32 @@ def clear_google_state_cookie(response: Response, settings: Settings) -> None:
         httponly=True,
         samesite="lax",
     )
+
+
+# Admin portal (ADR 0015): the second session after the two-step code. httpOnly, Strict:
+# it is only ever needed on this site's own pages and API calls.
+ADMIN_SESSION_COOKIE = "admin_session"
+
+
+def set_admin_session_cookie(response: Response, settings: Settings, token: str) -> None:
+    response.set_cookie(
+        ADMIN_SESSION_COOKIE,
+        token,
+        # The server ends it after ADMIN_SESSION_IDLE_MINUTES without use; the cookie
+        # never outlives the maximum.
+        max_age=settings.admin_session_max_hours * 3600,
+        path="/",
+        secure=settings.session_cookie_secure,
+        httponly=True,
+        samesite="strict",
+    )
+
+
+def clear_admin_session_cookie(response: Response, settings: Settings) -> None:
+    response.delete_cookie(
+        ADMIN_SESSION_COOKIE,
+        path="/",
+        secure=settings.session_cookie_secure,
+        httponly=True,
+        samesite="strict",
+    )

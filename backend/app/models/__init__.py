@@ -1,5 +1,15 @@
 """ORM models. Import every model here so ``Base.metadata`` is complete for Alembic."""
 
+from app.models.admin import (
+    AUDIT_REASON_MAX_LENGTH,
+    AUDIT_REASON_MIN_LENGTH,
+    GRANTABLE_ROLES,
+    AdminAccount,
+    AdminAuditEntry,
+    AdminRecoveryCode,
+    AdminRole,
+    AdminSession,
+)
 from app.models.auth import (
     AuthEvent,
     AuthEventType,
@@ -81,12 +91,15 @@ from app.models.user import (
 
 __all__ = [
     "ABOUT_TEXT_MAX_LENGTH",
+    "AUDIT_REASON_MAX_LENGTH",
+    "AUDIT_REASON_MIN_LENGTH",
     "CITY_MAX_LENGTH",
     "DISPLAY_NAME_MAX_LENGTH",
     "EMAIL_MAX_LENGTH",
     "EMBEDDING_DIMENSIONS",
     "GOAL_MAX_LENGTH",
     "GOAL_TITLE_MAX_LENGTH",
+    "GRANTABLE_ROLES",
     "HEADLINE_MAX_LENGTH",
     "INTENTS",
     "INTRO_NOTE_MAX_LENGTH",
@@ -104,6 +117,11 @@ __all__ = [
     "REQUEST_TEXT_MIN_LENGTH",
     "SIGNED_IN_STATUSES",
     "SKILL_NAME_MAX_LENGTH",
+    "AdminAccount",
+    "AdminAuditEntry",
+    "AdminRecoveryCode",
+    "AdminRole",
+    "AdminSession",
     "AuthEvent",
     "AuthEventType",
     "AuthIdentity",

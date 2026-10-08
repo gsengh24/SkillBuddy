@@ -24,6 +24,7 @@ export const config = {
     "/notifications/:path*",
     "/settings/:path*",
     "/you/:path*",
+    "/admin/:path*",
     "/moderation/:path*",
     "/spaces/:path*",
   ],
