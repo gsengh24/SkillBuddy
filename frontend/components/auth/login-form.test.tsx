@@ -218,4 +218,43 @@ describe("LoginForm", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't reach the server/);
   });
+
+  it("has no invite code field unless signups are invite only", () => {
+    render(<LoginForm nextPath="/home" />);
+    expect(screen.queryByLabelText(/Invite code/)).not.toBeInTheDocument();
+  });
+
+  it("sends the invite code with the sign-in when signups are invite only", async () => {
+    fetchMock.mockResolvedValueOnce(json(202, SENT)).mockResolvedValueOnce(json(200, USER));
+    const user = userEvent.setup();
+    render(<LoginForm nextPath="/home" inviteOnly />);
+    await user.type(screen.getByLabelText(/Invite code/), " cyn-friends ");
+    await fillFirstStep(user);
+
+    await user.type(await screen.findByLabelText("Sign-in code"), "123456");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    const [, init] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({
+      email: "ananya@example.com",
+      code: "123456",
+      age_confirmed: true,
+      accept_terms: true,
+      invite_code: "cyn-friends",
+    });
+  });
+
+  it("explains when an invite is needed", async () => {
+    fetchMock
+      .mockResolvedValueOnce(json(202, SENT))
+      .mockResolvedValueOnce(apiError(403, "invite_required"));
+    const user = userEvent.setup();
+    render(<LoginForm nextPath="/home" inviteOnly />);
+    await fillFirstStep(user);
+
+    await user.type(await screen.findByLabelText("Sign-in code"), "123456");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Enter an invite code/);
+  });
 });

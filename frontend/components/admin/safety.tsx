@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ds/button";
-import { Dialog } from "@/components/ds/dialog";
-import { InlineError, Select, Textarea } from "@/components/ds/fields";
+import { Select } from "@/components/ds/fields";
 import { appealSchema, queueItemSchema, type Case } from "@/lib/admin/schemas";
 import { browserApi } from "@/lib/api/browser";
-import { describeError } from "@/lib/auth/messages";
 
-const REASON_MIN = 10;
+import { ReasonDialog } from "./reason-dialog";
 
 const DECISIONS = [
   { value: "dismiss", label: "Dismiss" },
@@ -24,69 +22,6 @@ function when(iso: string | null): string {
   return iso
     ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
     : "";
-}
-
-function ReasonDialog({
-  open,
-  title,
-  onClose,
-  onSubmit,
-  children,
-  confirm,
-}: {
-  open: boolean;
-  title: string;
-  onClose: () => void;
-  onSubmit: (reason: string) => Promise<void>;
-  children?: React.ReactNode;
-  confirm: string;
-}) {
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await onSubmit(reason.trim());
-      setReason("");
-    } catch (caught) {
-      setError(describeError(caught));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} title={title}>
-      <form onSubmit={submit} className="flex flex-col gap-3">
-        {children}
-        <Textarea
-          label="Reason (recorded in the audit log)"
-          hint={`At least ${REASON_MIN} characters.`}
-          rows={3}
-          maxLength={500}
-          value={reason}
-          onChange={(event) => setReason(event.target.value)}
-        />
-        {error ? <InlineError announce>{error}</InlineError> : null}
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            type="submit"
-            disabled={busy || reason.trim().length < REASON_MIN}
-          >
-            {busy ? "Saving…" : confirm}
-          </Button>
-        </div>
-      </form>
-    </Dialog>
-  );
 }
 
 /**

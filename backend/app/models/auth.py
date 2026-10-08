@@ -17,6 +17,7 @@ from sqlalchemy.dialects.postgresql import CITEXT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from app.models.signup import INVITE_CODE_MAX_LENGTH
 
 # Column caps (storage rules): HMAC/SHA-256 hex digests, IPv6 text form, truncated UA.
 DIGEST_LENGTH = 64
@@ -130,6 +131,8 @@ class OAuthState(UUIDPrimaryKeyMixin, Base):
     next_path: Mapped[str] = mapped_column(String(NEXT_PATH_MAX_LENGTH))
     age_confirmed: Mapped[bool]
     accept_terms: Mapped[bool]
+    # An invite code typed on the sign-in page (A5), checked if this creates an account.
+    invite_code: Mapped[str | None] = mapped_column(String(INVITE_CODE_MAX_LENGTH))
     created_ip: Mapped[str | None] = mapped_column(String(IP_MAX_LENGTH))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(index=True)

@@ -5,6 +5,9 @@
   ``account_deleted`` event records that it happened.
 - Expired OTP codes and sessions are purged; audit events older than
   ``auth_event_retention_days`` are pruned.
+- Signup applications (A5) go 90 days after a decision, or 180 days after applying if never
+  decided (their one-use codes with them); shareable invite codes go 180 days after they
+  expire or are revoked.
 Both are idempotent and safe to run late or twice.
 """
 
@@ -21,10 +24,13 @@ from app.core.config import Settings
 from app.core.security import keyed_hash
 from app.models import (
     AdminSession,
+    ApplicationStatus,
     AuthEvent,
     AuthEventType,
+    InviteCode,
     OAuthState,
     OtpCode,
+    SignupApplication,
     User,
     UserSession,
     UserStatus,
@@ -33,6 +39,9 @@ from app.models import (
 logger = logging.getLogger(__name__)
 
 HARD_DELETE_BATCH_SIZE = 100
+APPLICATION_DECIDED_DAYS = 90
+APPLICATION_PENDING_DAYS = 180
+INVITE_CODE_ENDED_DAYS = 180
 
 
 @dataclass(frozen=True)
@@ -43,6 +52,8 @@ class PurgeResult:
     oauth_states: int = 0
     admin_sessions: int = 0
     suspensions_lifted: int = 0
+    signup_applications: int = 0
+    invite_codes: int = 0
 
 
 def _rowcount(result: object) -> int:
@@ -110,6 +121,25 @@ async def purge_expired_auth_data(
         )
         .values(status=UserStatus.ACTIVE, suspended_until=None)
     )
+    applications = await db.execute(
+        delete(SignupApplication).where(
+            (
+                (SignupApplication.status != ApplicationStatus.PENDING)
+                & (SignupApplication.decided_at < now - timedelta(days=APPLICATION_DECIDED_DAYS))
+            )
+            | (
+                (SignupApplication.status == ApplicationStatus.PENDING)
+                & (SignupApplication.created_at < now - timedelta(days=APPLICATION_PENDING_DAYS))
+            )
+        )
+    )
+    ended = now - timedelta(days=INVITE_CODE_ENDED_DAYS)
+    codes_ended = await db.execute(
+        delete(InviteCode).where(
+            InviteCode.application_id.is_(None),
+            (InviteCode.revoked_at < ended) | (InviteCode.expires_at < ended),
+        )
+    )
     await db.commit()
     result = PurgeResult(
         otp_codes=_rowcount(codes),
@@ -118,6 +148,8 @@ async def purge_expired_auth_data(
         oauth_states=_rowcount(states),
         admin_sessions=_rowcount(admin),
         suspensions_lifted=_rowcount(lifted),
+        signup_applications=_rowcount(applications),
+        invite_codes=_rowcount(codes_ended),
     )
     logger.info(
         "auth_data_purged",
@@ -128,6 +160,8 @@ async def purge_expired_auth_data(
             "oauth_states": result.oauth_states,
             "admin_sessions": result.admin_sessions,
             "suspensions_lifted": result.suspensions_lifted,
+            "signup_applications": result.signup_applications,
+            "invite_codes": result.invite_codes,
         },
     )
     return result

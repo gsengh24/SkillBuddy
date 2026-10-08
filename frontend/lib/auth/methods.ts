@@ -3,7 +3,12 @@ import "server-only";
 import { apiRequest } from "@/lib/api/client";
 import { authMethodsSchema, type AuthMethods } from "@/lib/api/schemas";
 
-const EMAIL_ONLY: AuthMethods = { email_code: true, google: false, google_domains: [] };
+const EMAIL_ONLY: AuthMethods = {
+  email_code: true,
+  google: false,
+  google_domains: [],
+  signup_mode: "open",
+};
 
 /** Which sign-in methods the API offers. If it can't be reached, show email codes only. */
 export async function getAuthMethods(): Promise<AuthMethods> {

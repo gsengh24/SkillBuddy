@@ -30,6 +30,8 @@ type LoginFormProps = {
   google?: { domains: string[] };
   /** A message to show at once, e.g. after Google sign-in sent the person back. */
   initialError?: string | null;
+  /** Signups are invite only (A5): show the invite code field. */
+  inviteOnly?: boolean;
 };
 
 /**
@@ -38,7 +40,12 @@ type LoginFormProps = {
  * code stays below it as the fallback. Uses native form controls, labelled fields, and
  * announces errors (role="alert") and progress (role="status") to assistive technology.
  */
-export function LoginForm({ nextPath, google, initialError = null }: LoginFormProps) {
+export function LoginForm({
+  nextPath,
+  google,
+  initialError = null,
+  inviteOnly = false,
+}: LoginFormProps) {
   const router = useRouter();
   const ids = useId();
   const [step, setStep] = useState<Step>("email");
@@ -46,6 +53,7 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [code, setCode] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(initialError);
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -54,6 +62,9 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
   const [now, setNow] = useState(() => Date.now());
   const codeInput = useRef<HTMLInputElement>(null);
   const emailInput = useRef<HTMLInputElement>(null);
+
+  // Sent only when signups are invite only; ignored for existing accounts.
+  const invite = () => (inviteOnly && inviteCode.trim() ? inviteCode.trim() : undefined);
 
   const secondsUntilResend = Math.max(0, Math.ceil((resendAt - now) / 1000));
   const errorId = `${ids}-error`;
@@ -117,7 +128,12 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
     try {
       const { authorization_url } = await browserApi("/auth/google/start", googleStartSchema, {
         method: "POST",
-        body: { age_confirmed: ageConfirmed, accept_terms: acceptTerms, next: nextPath },
+        body: {
+          age_confirmed: ageConfirmed,
+          accept_terms: acceptTerms,
+          next: nextPath,
+          invite_code: invite(),
+        },
       });
       setStatus("Taking you to Google…");
       window.location.assign(authorization_url);
@@ -142,7 +158,13 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
     try {
       await browserApi("/auth/otp/verify", userSchema, {
         method: "POST",
-        body: { email: email.trim(), code, age_confirmed: ageConfirmed, accept_terms: acceptTerms },
+        body: {
+          email: email.trim(),
+          code,
+          age_confirmed: ageConfirmed,
+          accept_terms: acceptTerms,
+          invite_code: invite(),
+        },
       });
       setStatus("You're signed in. Taking you there now…");
       router.replace(nextPath);
@@ -176,6 +198,21 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
     </p>
   ) : null;
   const appealForm = appealToken ? <AppealForm token={appealToken} /> : null;
+  const inviteField = inviteOnly ? (
+    <TextField
+      id={`${ids}-invite`}
+      label="Invite code (optional)"
+      hint="Not needed if your application was approved."
+      name="invite_code"
+      autoComplete="off"
+      autoCapitalize="characters"
+      spellCheck={false}
+      maxLength={32}
+      value={inviteCode}
+      onChange={(event) => setInviteCode(event.target.value)}
+      className="font-mono uppercase"
+    />
+  ) : null;
 
   return (
     <section className="flex w-full max-w-md flex-col gap-6" aria-labelledby={`${ids}-heading`}>
@@ -257,6 +294,8 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
                 aria-describedby={error ? errorId : undefined}
               />
 
+              {inviteField}
+
               <Button type="submit" disabled={submitting} className="self-start">
                 {submitting ? "Sending code…" : "Email me a code"}
               </Button>
@@ -282,6 +321,8 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? errorId : undefined}
               />
+
+              {inviteField}
 
               <fieldset className="flex flex-col gap-1">
                 <legend className="sr-only">Confirmations</legend>
@@ -350,6 +391,8 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
             aria-describedby={error ? errorId : undefined}
             className="font-mono text-[20px] tracking-[0.4em]"
           />
+
+          {inviteField}
 
           {errorMessage}
 

@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import RedirectResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
     AuthContext,
@@ -27,7 +28,10 @@ from app.api.session_cookies import (
     set_session_cookies,
 )
 from app.core.errors import AppError
+from app.db.session import get_db_session
 from app.schemas.auth import (
+    ApplicationIn,
+    ApplicationReceivedOut,
     AuthMethodsOut,
     GoogleStartIn,
     GoogleStartOut,
@@ -42,6 +46,7 @@ from app.schemas.errors import ErrorResponse
 from app.services.auth.events import ClientInfo
 from app.services.auth.service import OAUTH_STATE_TTL, AuthService
 from app.services.moderation import is_moderator
+from app.services.signup import signup_mode
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -97,6 +102,7 @@ async def verify_code(
         age_confirmed=body.age_confirmed,
         accept_terms=body.accept_terms,
         client=client,
+        invite_code=body.invite_code,
     )
     set_session_cookies(response, settings, result.token, result.session)
     return UserOut.from_user(result.user, is_moderator=is_moderator(settings, result.user))
@@ -192,12 +198,38 @@ LOGIN_PATH = "/login"
 
 
 @router.get("/methods", summary="Available sign-in methods")
-async def methods(settings: SettingsDep) -> AuthMethodsOut:
+async def methods(
+    settings: SettingsDep, db: Annotated[AsyncSession, Depends(get_db_session)]
+) -> AuthMethodsOut:
+    """Also the signup mode, so clients show the invite code field and the application
+    form only when signups are invite only."""
     available = settings.google_signin_available
     return AuthMethodsOut(
         google=available,
         google_domains=list(settings.allowed_email_domains) if available else [],
+        signup_mode=await signup_mode(db),
     )
+
+
+@router.post(
+    "/applications",
+    status_code=HTTPStatus.ACCEPTED,
+    summary="Apply to join (invite only)",
+    dependencies=[Depends(require_json)],
+    responses={
+        **_ERRORS,
+        HTTPStatus.FORBIDDEN.value: {"model": ErrorResponse},
+        HTTPStatus.CONFLICT.value: {"model": ErrorResponse},
+    },
+)
+async def apply_to_join(
+    body: ApplicationIn, service: AuthServiceDep, client: ClientDep
+) -> ApplicationReceivedOut:
+    """Join the approval queue while signups are invite only (A5). The same answer for
+    every address. 409 ``applications_closed`` in other modes; 403 ``email_not_allowed``
+    for a blocked or not-allowed domain. Rate-limited per address and per IP (429)."""
+    await service.apply_to_join(body.email, body.source, client)
+    return ApplicationReceivedOut()
 
 
 @router.post(
@@ -220,6 +252,7 @@ async def google_start(
         accept_terms=body.accept_terms,
         next_path=body.next,
         client=client,
+        invite_code=body.invite_code,
     )
     set_google_state_cookie(response, settings, start.state, int(OAUTH_STATE_TTL.total_seconds()))
     return GoogleStartOut(authorization_url=start.authorization_url)
