@@ -15,9 +15,9 @@ from app.api.deps import require_json
 from app.models import DomainKind
 from app.schemas.admin_access import (
     AccessOut,
+    ApplicationDecisionIn,
     ApplicationOut,
     ApplicationPage,
-    DecisionIn,
     DomainIn,
     DomainOut,
     InviteCodeIn,
@@ -89,7 +89,11 @@ async def list_applications(
     responses={**_NOT_FOUND, **_CONFLICT},
 )
 async def decide_application(
-    application_id: uuid.UUID, body: DecisionIn, request: Request, admin: Manager, db: DbDep
+    application_id: uuid.UUID,
+    body: ApplicationDecisionIn,
+    request: Request,
+    admin: Manager,
+    db: DbDep,
 ) -> None:
     """Approving lets the address create an account and emails it a one-use invite code
     (valid 14 days). 409 ``application_already_decided``."""

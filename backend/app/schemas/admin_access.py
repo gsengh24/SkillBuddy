@@ -59,7 +59,7 @@ class ApplicationPage(BaseModel):
     next_cursor: str | None
 
 
-class DecisionIn(BaseModel):
+class ApplicationDecisionIn(BaseModel):
     model_config = _REQUEST
 
     decision: Literal["approve", "reject"]
