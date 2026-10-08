@@ -15,7 +15,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.security import mask_email
-from app.models import EmailPurpose, Notification, NotificationKind, Profile, User, UserStatus
+from app.models import (
+    SIGNED_IN_STATUSES,
+    EmailPurpose,
+    Notification,
+    NotificationKind,
+    Profile,
+    User,
+)
 from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
 from app.services.email.templates import notification_email
@@ -34,7 +41,7 @@ async def send_notification_email(
         return False
     user = await db.get(User, notification.user_id)
     profile = await db.get(Profile, notification.user_id)
-    if user is None or user.status != UserStatus.ACTIVE:
+    if user is None or user.status not in SIGNED_IN_STATUSES:
         return False
     if profile is not None and not profile.email_notifications:
         return False

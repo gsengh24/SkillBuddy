@@ -14,6 +14,7 @@ from app.jobs.tasks import (
     MATCH_HOUSEKEEPING,
     PING,
     PURGE_AUTH_DATA,
+    PURGE_DATA_EXPORTS,
     PURGE_JOB_TABLES,
     PURGE_MESSAGES,
     PURGE_MODERATION_LOG,
@@ -60,6 +61,7 @@ def test_schedule_runs_retention_daily_and_job_table_purge_hourly() -> None:
         PURGE_REPORTS.kind: Period.DAY,
         PURGE_MODERATION_LOG.kind: Period.DAY,
         PURGE_SPACES.kind: Period.DAY,
+        PURGE_DATA_EXPORTS.kind: Period.DAY,
         PURGE_JOB_TABLES.kind: Period.HOUR,
         REPORT_ALERTS.kind: Period.HOUR,
     }

@@ -8,6 +8,7 @@ import { VisibilityToggle } from "@/components/profile/visibility-toggle";
 import { Overline } from "@/components/ui/overline";
 import { YouPage, YouWithoutProfile } from "@/components/you/you-page";
 import { withUser } from "@/lib/auth/with-user";
+import { getDataExports, getSessions } from "@/lib/account/server";
 import { getMyProfile } from "@/lib/profile/server";
 
 export const metadata: Metadata = { title: "You" };
@@ -16,25 +17,28 @@ export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ welcome?: string; review?: string }> };
 
 /**
- * You: profile and account settings in one page (design spec section 13). The session and
- * the profile load together. `?welcome=1` (onboarding step 2) and `?review=1` show what
+ * You: profile and account settings in one page (design spec section 13). The session,
+ * the profile, the devices and the data requests load together. `?welcome=1` (onboarding step 2) and `?review=1` show what
  * was understood from the description, to check and correct it.
  */
 export default async function You({ searchParams }: Props) {
-  const [{ user, data: profile }, { welcome, review }] = await Promise.all([
-    withUser("/login?next=/you", getMyProfile()),
+  const [{ user, data }, { welcome, review }] = await Promise.all([
+    withUser("/login?next=/you", Promise.all([getMyProfile(), getSessions(), getDataExports()])),
     searchParams,
   ]);
+  const [profile, sessions, exports] = data;
+  const account = {
+    email: user.email,
+    termsVersion: user.terms_version,
+    isModerator: user.is_moderator,
+    status: user.status,
+    sessions: sessions.items,
+    exports: exports.items,
+  };
   if (!profile) {
     // Onboarding's step 2 and the review need a profile; the account sections don't.
     if (welcome || review) redirect("/onboarding");
-    return (
-      <YouWithoutProfile
-        email={user.email}
-        termsVersion={user.terms_version}
-        isModerator={user.is_moderator}
-      />
-    );
+    return <YouWithoutProfile {...account} />;
   }
 
   if (welcome || review) {
@@ -60,12 +64,5 @@ export default async function You({ searchParams }: Props) {
     );
   }
 
-  return (
-    <YouPage
-      profile={profile}
-      email={user.email}
-      termsVersion={user.terms_version}
-      isModerator={user.is_moderator}
-    />
-  );
+  return <YouPage profile={profile} account={account} />;
 }

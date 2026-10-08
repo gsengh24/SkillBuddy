@@ -8,7 +8,8 @@ from typing import Annotated, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from app.models import EMAIL_MAX_LENGTH, User
+from app.models import EMAIL_MAX_LENGTH, User, UserSession, UserStatus
+from app.services.auth.devices import describe_device
 
 # Deliberately permissive: the real check is that the code arrives in that inbox.
 EMAIL_PATTERN: Final = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
@@ -61,6 +62,10 @@ class UserOut(BaseModel):
     last_login_at: datetime | None
     terms_version: str | None
     terms_accepted_at: datetime | None
+    status: Literal["active", "paused"] = Field(
+        default="active",
+        description="`paused`: hidden from matching and new intros; chats and sign-in carry on.",
+    )
     is_moderator: bool = Field(
         default=False, description="May use the moderation page and /api/v1/moderation."
     )
@@ -75,6 +80,8 @@ class UserOut(BaseModel):
             last_login_at=user.last_login_at,
             terms_version=user.terms_version,
             terms_accepted_at=user.terms_accepted_at,
+            # Only signed-in people read this, so the status is active or paused.
+            status="paused" if user.status == UserStatus.PAUSED else "active",
             is_moderator=is_moderator,
         )
 
@@ -122,3 +129,27 @@ class GoogleStartIn(BaseModel):
 
 class GoogleStartOut(BaseModel):
     authorization_url: str = Field(description="Send the browser here (Google's sign-in page).")
+
+
+class SessionOut(BaseModel):
+    """A signed-in device. Never its IP address or the full user agent."""
+
+    id: uuid.UUID
+    device: str = Field(description='A short summary, e.g. "Chrome on Windows".')
+    current: bool = Field(description="True for the device making this request.")
+    created_at: datetime = Field(description="When this device signed in.")
+    last_seen_at: datetime = Field(description="Last used (updated at most hourly).")
+
+    @classmethod
+    def from_session(cls, session: UserSession, *, current_id: uuid.UUID) -> SessionOut:
+        return cls(
+            id=session.id,
+            device=describe_device(session.user_agent),
+            current=session.id == current_id,
+            created_at=session.created_at,
+            last_seen_at=session.last_seen_at,
+        )
+
+
+class SessionList(BaseModel):
+    items: list[SessionOut] = Field(description="Most recently used first.")

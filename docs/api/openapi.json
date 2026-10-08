@@ -268,6 +268,95 @@
         "title": "ConnectionOut",
         "type": "object"
       },
+      "DataExportList": {
+        "properties": {
+          "items": {
+            "description": "The latest requests, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/DataExportOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "DataExportList",
+        "type": "object"
+      },
+      "DataExportOut": {
+        "properties": {
+          "downloaded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downloaded At"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the emailed link stops working.",
+            "title": "Expires At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ready_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ready At"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "status": {
+            "description": "`requested`: being built; `ready`: the link was emailed; `expired`: the link ran out; `failed`: it couldn't be built or emailed, ask again.",
+            "enum": [
+              "requested",
+              "ready",
+              "expired",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "requested_at",
+          "ready_at",
+          "expires_at",
+          "downloaded_at"
+        ],
+        "title": "DataExportOut",
+        "type": "object"
+      },
       "DeletionScheduledOut": {
         "properties": {
           "deletion_scheduled_for": {
@@ -2720,6 +2809,64 @@
         "title": "ResolveIn",
         "type": "object"
       },
+      "SessionList": {
+        "properties": {
+          "items": {
+            "description": "Most recently used first.",
+            "items": {
+              "$ref": "#/components/schemas/SessionOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SessionList",
+        "type": "object"
+      },
+      "SessionOut": {
+        "description": "A signed-in device. Never its IP address or the full user agent.",
+        "properties": {
+          "created_at": {
+            "description": "When this device signed in.",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current": {
+            "description": "True for the device making this request.",
+            "title": "Current",
+            "type": "boolean"
+          },
+          "device": {
+            "description": "A short summary, e.g. \"Chrome on Windows\".",
+            "title": "Device",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "description": "Last used (updated at most hourly).",
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "device",
+          "current",
+          "created_at",
+          "last_seen_at"
+        ],
+        "title": "SessionOut",
+        "type": "object"
+      },
       "SkillIn": {
         "additionalProperties": false,
         "properties": {
@@ -3122,6 +3269,16 @@
               }
             ],
             "title": "Last Login At"
+          },
+          "status": {
+            "default": "active",
+            "description": "`paused`: hidden from matching and new intros; chats and sign-in carry on.",
+            "enum": [
+              "active",
+              "paused"
+            ],
+            "title": "Status",
+            "type": "string"
           },
           "terms_accepted_at": {
             "anyOf": [
@@ -3690,6 +3847,30 @@
         ]
       }
     },
+    "/api/v1/auth/logout-others": {
+      "post": {
+        "operationId": "logout_others_api_v1_auth_logout_others_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "Sign out every other device",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/v1/auth/me": {
       "get": {
         "description": "Also re-issues the CSRF cookie, so a client that lost it can recover.",
@@ -3882,6 +4063,95 @@
           }
         },
         "summary": "Sign in with a code",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sessions": {
+      "get": {
+        "description": "Every device still signed in, most recently used first; ``current`` marks this one.",
+        "operationId": "sessions_api_v1_auth_sessions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "My signed-in devices",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sessions/{session_id}": {
+      "delete": {
+        "description": "Signing out the current device this way also clears its cookies, like ``/logout``.",
+        "operationId": "revoke_session_api_v1_auth_sessions__session_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not one of your devices, or already signed out (`session_not_found`)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sign out one device",
         "tags": [
           "auth"
         ]
@@ -5644,6 +5914,212 @@
         ]
       }
     },
+    "/api/v1/me/data-exports": {
+      "get": {
+        "operationId": "list_data_exports_api_v1_me_data_exports_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "My data download requests",
+        "tags": [
+          "account"
+        ]
+      },
+      "post": {
+        "description": "Builds the file in the background and emails a link that works for\n``DATA_EXPORT_LINK_HOURS``. The file has your account, profile, requests, intros,\nconnections and the messages you sent and received.",
+        "operationId": "request_data_export_api_v1_me_data_exports_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "One is being built, or one was asked for recently (`data_export_recent`)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Ask for a copy of my data",
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/v1/me/data-exports/{export_id}/download": {
+      "get": {
+        "description": "Needs both your session and the token from the emailed link.",
+        "operationId": "download_data_export_api_v1_me_data_exports__export_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Export Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "From the email.",
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "description": "From the email.",
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {}
+            },
+            "description": "The file, as a JSON attachment."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not one of your requests (`data_export_not_found`)."
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Expired, not ready or a wrong token (`data_export_unavailable`)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download my data",
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/v1/me/pause": {
+      "post": {
+        "description": "Hidden from matching and can't receive new intros. Sign-in and existing chats carry\non; ``/me/resume`` undoes it.",
+        "operationId": "pause_api_v1_me_pause_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Only an active account can be paused (`cannot_pause`)."
+          }
+        },
+        "summary": "Pause my account",
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/api/v1/me/profile": {
       "get": {
         "operationId": "get_profile_api_v1_me_profile_get",
@@ -5954,6 +6430,47 @@
         "summary": "Correct what was understood from my profile",
         "tags": [
           "profile"
+        ]
+      }
+    },
+    "/api/v1/me/resume": {
+      "post": {
+        "operationId": "resume_api_v1_me_resume_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The account isn't paused (`not_paused`)."
+          }
+        },
+        "summary": "Resume my paused account",
+        "tags": [
+          "account"
         ]
       }
     },

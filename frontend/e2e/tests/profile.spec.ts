@@ -1,7 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
-import { settleAnimations, signUp } from "./helpers";
+import { readFile } from "node:fs/promises";
+
+import { linkFromMailpit, settleAnimations, signUp } from "./helpers";
 
 async function expectNoViolations(page: Page) {
   await settleAnimations(page);
@@ -19,13 +21,13 @@ async function expectNoViolations(page: Page) {
  * Onboarding end to end: the stack runs with no AI keys, so the description is read by the
  * template fallback in the worker. Checked at phone size, where most students will use it.
  */
-test("create a profile, see what was understood, correct it, pause matching, edit it on You", async ({
+test("create a profile, see what was understood, correct it, pause matching, edit it on You, use the account controls", async ({
   page,
   request,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   await page.setViewportSize({ width: 390, height: 844 });
-  await signUp(page, request, "/onboarding");
+  const email = await signUp(page, request, "/onboarding");
   await expect(page.getByRole("heading", { name: "Tell us about you" })).toBeVisible();
   await expectNoViolations(page);
 
@@ -122,4 +124,27 @@ test("create a profile, see what was understood, correct it, pause matching, edi
   await expectNoViolations(page);
   await page.keyboard.press("Escape");
   await expect(confirm).toHaveCount(0);
+
+  // Account controls (Prompt 12C): this device is listed, the data file arrives by email
+  // and downloads, and the account pauses and resumes.
+  await expect(page.getByRole("list", { name: "Signed-in devices" })).toContainText("This device");
+  await page.getByRole("button", { name: "Request" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /email you a link/ })).toBeVisible();
+  const link = await linkFromMailpit(request, email, "data is ready");
+  await page.goto(link);
+  await expect(page.getByRole("heading", { name: "Download your data" })).toBeVisible();
+  await expectNoViolations(page);
+  const downloading = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Download the file" }).click();
+  const file = JSON.parse(await readFile(await (await downloading).path(), "utf8")) as {
+    account: { email: string };
+  };
+  expect(file.account.email).toBe(email);
+
+  await page.goto("/you#s-danger");
+  await page.getByRole("button", { name: "Pause" }).click();
+  await expect(page.getByText("Your account is paused")).toBeVisible();
+  await expectNoViolations(page);
+  await page.getByRole("button", { name: "Resume" }).click();
+  await expect(page.getByText("Pause my account")).toBeVisible();
 });

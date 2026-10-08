@@ -116,6 +116,7 @@ class RateLimitCounter(UUIDPrimaryKeyMixin, Base):
 class EmailPurpose(StrEnum):
     LOGIN_CODE = "login_code"
     NOTIFICATION = "notification"
+    DATA_EXPORT = "data_export"
 
 
 EMAIL_PURPOSES_SQL = ", ".join(f"'{purpose.value}'" for purpose in EmailPurpose)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from http import HTTPStatus
 from typing import Annotated, Any
 from urllib.parse import urlencode
@@ -33,6 +34,8 @@ from app.schemas.auth import (
     OtpRequestIn,
     OtpRequestOut,
     OtpVerifyIn,
+    SessionList,
+    SessionOut,
     UserOut,
 )
 from app.schemas.errors import ErrorResponse
@@ -129,6 +132,56 @@ async def logout_all(
 ) -> None:
     await service.logout_all(auth.user, client)
     clear_session_cookies(response, settings)
+
+
+_SESSION_ERRORS: dict[int | str, dict[str, Any]] = {
+    HTTPStatus.UNAUTHORIZED.value: {"model": ErrorResponse, "description": "Not signed in."},
+}
+
+
+@router.get("/sessions", summary="My signed-in devices", responses=_SESSION_ERRORS)
+async def sessions(auth: AuthDep, service: AuthServiceDep) -> SessionList:
+    """Every device still signed in, most recently used first; ``current`` marks this one."""
+    items = await service.sessions(auth.user)
+    return SessionList(
+        items=[SessionOut.from_session(item, current_id=auth.session.id) for item in items]
+    )
+
+
+@router.delete(
+    "/sessions/{session_id}",
+    status_code=HTTPStatus.NO_CONTENT,
+    summary="Sign out one device",
+    responses={
+        **_SESSION_ERRORS,
+        HTTPStatus.NOT_FOUND.value: {
+            "model": ErrorResponse,
+            "description": "Not one of your devices, or already signed out (`session_not_found`).",
+        },
+    },
+)
+async def revoke_session(
+    session_id: uuid.UUID,
+    auth: AuthDep,
+    response: Response,
+    service: AuthServiceDep,
+    client: ClientDep,
+    settings: SettingsDep,
+) -> None:
+    """Signing out the current device this way also clears its cookies, like ``/logout``."""
+    await service.revoke(auth.user, session_id, client)
+    if session_id == auth.session.id:
+        clear_session_cookies(response, settings)
+
+
+@router.post(
+    "/logout-others",
+    status_code=HTTPStatus.NO_CONTENT,
+    summary="Sign out every other device",
+    responses=_SESSION_ERRORS,
+)
+async def logout_others(auth: AuthDep, service: AuthServiceDep, client: ClientDep) -> None:
+    await service.logout_others(auth.user, auth.session, client)
 
 
 # --- Methods and Google sign-in (ADR 0011) --------------------------------------------------

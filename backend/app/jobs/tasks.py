@@ -20,6 +20,8 @@ from app.jobs.registry import JobContext, JobGroup, JobRegistry, JobSpec
 from app.models import EmailPurpose, OtpCode
 from app.services.auth.retention import hard_delete_due_accounts, purge_expired_auth_data
 from app.services.chat import purge_old_messages
+from app.services.data_exports import build_export
+from app.services.data_exports import purge as purge_data_exports
 from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
 from app.services.email.templates import login_code_email
@@ -218,6 +220,18 @@ async def _purge_reports(ctx: JobContext) -> None:
         await purge_resolved_reports(db, ctx.settings, datetime.now(UTC))
 
 
+async def _build_data_export(ctx: JobContext) -> None:
+    """Build someone's "Download my data" file and email them the link."""
+    async with ctx.session_factory() as db:
+        await build_export(db, ctx.settings, uuid.UUID(ctx.payload["export_id"]))
+
+
+async def _purge_data_exports(ctx: JobContext) -> None:
+    """Daily: drop expired export files and delete old export requests."""
+    async with ctx.session_factory() as db:
+        await purge_data_exports(db, ctx.settings)
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -318,6 +332,17 @@ SEND_NOTIFICATION_EMAIL = JobSpec(
     max_attempts=3,
     timeout_seconds=30,
 )
+# Someone asked and is waiting for an email, but no faster than notifications.
+BUILD_DATA_EXPORT = JobSpec(
+    kind="build_data_export",
+    handler=_build_data_export,
+    priority=60,
+    max_attempts=3,
+    timeout_seconds=120,
+)
+PURGE_DATA_EXPORTS = JobSpec(
+    kind="purge_data_exports", handler=_purge_data_exports, priority=200, timeout_seconds=240
+)
 
 ALL_JOBS = (
     PING,
@@ -338,6 +363,8 @@ ALL_JOBS = (
     PURGE_SPACES,
     AI_PROBE,
     SEND_NOTIFICATION_EMAIL,
+    BUILD_DATA_EXPORT,
+    PURGE_DATA_EXPORTS,
 )
 
 

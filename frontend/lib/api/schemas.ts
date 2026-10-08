@@ -46,8 +46,31 @@ export const userSchema = z.object({
   terms_accepted_at: z.string().nullable(),
   /** May use the moderation page (MODERATOR_EMAILS). Older APIs omit it. */
   is_moderator: z.boolean().default(false),
+  /** "paused": hidden from matching and new intros; older APIs omit it. */
+  status: z.enum(["active", "paused"]).default("active"),
 });
 export type User = z.infer<typeof userSchema>;
+
+export const sessionSchema = z.object({
+  id: z.string(),
+  device: z.string(),
+  current: z.boolean(),
+  created_at: z.string(),
+  last_seen_at: z.string(),
+});
+export type DeviceSession = z.infer<typeof sessionSchema>;
+export const sessionListSchema = z.object({ items: z.array(sessionSchema) });
+
+export const dataExportSchema = z.object({
+  id: z.string(),
+  status: z.enum(["requested", "ready", "expired", "failed"]),
+  requested_at: z.string(),
+  ready_at: z.string().nullable(),
+  expires_at: z.string().nullable(),
+  downloaded_at: z.string().nullable(),
+});
+export type DataExport = z.infer<typeof dataExportSchema>;
+export const dataExportListSchema = z.object({ items: z.array(dataExportSchema) });
 
 export const otpRequestResponseSchema = z.object({
   status: z.literal("sent"),

@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.errors import AppError, NotFoundError
 from app.models import (
+    SIGNED_IN_STATUSES,
     ModerationAction,
     ModerationActionKind,
     Profile,
@@ -98,7 +99,11 @@ async def suspend(
     user = await db.get(User, user_id, with_for_update=True)
     if user is None:
         raise AccountNotFoundError
-    if user.id == moderator.id or is_moderator(settings, user) or user.status != UserStatus.ACTIVE:
+    if (
+        user.id == moderator.id
+        or is_moderator(settings, user)
+        or user.status not in SIGNED_IN_STATUSES
+    ):
         raise CannotSuspendError
     user.status = UserStatus.SUSPENDED
     await revoke_all_sessions(db, user.id)

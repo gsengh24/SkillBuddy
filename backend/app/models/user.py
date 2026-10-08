@@ -28,16 +28,24 @@ class AuthProvider(StrEnum):
 
 class UserStatus(StrEnum):
     ACTIVE = "active"
+    # The person paused their account: hidden from matching and new intros; they still sign
+    # in, existing chats continue, and they can resume at any time.
+    PAUSED = "paused"
     SUSPENDED = "suspended"
     # Deletion requested; the account is hard-deleted at deletion_scheduled_for.
     PENDING_DELETION = "pending_deletion"
+
+
+# Who may sign in and use the app. Paused people still can; only matching treats them apart.
+SIGNED_IN_STATUSES = frozenset({UserStatus.ACTIVE, UserStatus.PAUSED})
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "users"
     __table_args__ = (
         CheckConstraint(
-            "status IN ('active', 'suspended', 'pending_deletion')", name="status_valid"
+            "status IN (" + ", ".join(f"'{status.value}'" for status in UserStatus) + ")",
+            name="status_valid",
         ),
         CheckConstraint(f"char_length(email) <= {EMAIL_MAX_LENGTH}", name="email_length"),
     )

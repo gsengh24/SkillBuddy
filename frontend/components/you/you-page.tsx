@@ -17,7 +17,13 @@ import { VisibilityToggle } from "@/components/profile/visibility-toggle";
 import { cx } from "@/components/ui/cx";
 import { TextLink } from "@/components/ui/text-link";
 import { browserApi } from "@/lib/api/browser";
-import { profileSchema, type Profile } from "@/lib/api/schemas";
+import {
+  profileSchema,
+  type DataExport,
+  type DeviceSession,
+  type Profile,
+  type User,
+} from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { brand } from "@/lib/brand";
 import { ABOUT_MAX, ABOUT_MIN, LANGUAGES, LINK_PATTERN, NAME_MAX } from "@/lib/profile/limits";
@@ -45,6 +51,7 @@ import {
   type SectionId,
 } from "@/lib/profile/you";
 
+import { DataDownload, DeviceList, PauseAccount } from "./account-controls";
 import { SectionNav } from "./section-nav";
 import { TagEditor } from "./tag-editor";
 
@@ -191,16 +198,25 @@ function PreviewCard({ draft, profile }: { draft: Draft; profile: Profile }) {
   );
 }
 
+/** What the account sections show (08 to 10), loaded by the page. */
+export type AccountProps = {
+  email: string;
+  termsVersion: string | null;
+  isModerator: boolean;
+  status: User["status"];
+  sessions: DeviceSession[];
+  exports: DataExport[];
+};
+
 /** Sections 08 to 10: they work before there is a profile, too. */
 function AccountSections({
   email,
   termsVersion,
   isModerator,
-}: {
-  email: string;
-  termsVersion: string | null;
-  isModerator: boolean;
-}) {
+  status,
+  sessions,
+  exports,
+}: AccountProps) {
   return (
     <>
       <Section id="s-security" intro="How you sign in.">
@@ -211,6 +227,7 @@ function AccountSections({
             readOnly
             className="read-only:bg-panel read-only:text-ink-2"
           />
+          <DeviceList initial={sessions} />
           <SignOutActions />
           {isModerator ? (
             <p>
@@ -222,6 +239,9 @@ function AccountSections({
 
       <Section id="s-data" intro="Read what you agreed to, and see who you've blocked.">
         <ul className="divide-line border-line flex flex-col divide-y border-t">
+          <li className="py-3.5">
+            <DataDownload initial={exports} />
+          </li>
           <li className="flex items-center justify-between gap-4 py-3.5">
             <div>
               <p className="font-semibold">Terms and privacy policy</p>
@@ -242,10 +262,15 @@ function AccountSections({
       </Section>
 
       <Section id="s-danger" danger>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="font-semibold">Delete account</p>
-          <DeleteAccount />
-        </div>
+        <ul className="divide-danger flex flex-col divide-y">
+          <li className="pb-3.5">
+            <PauseAccount initial={status} />
+          </li>
+          <li className="flex flex-wrap items-center justify-between gap-4 pt-3.5">
+            <p className="font-semibold">Delete account</p>
+            <DeleteAccount />
+          </li>
+        </ul>
       </Section>
     </>
   );
@@ -255,15 +280,7 @@ function AccountSections({
  * You before there is a profile: the account sections (sign out, terms, blocked people,
  * delete) and a way to create the profile.
  */
-export function YouWithoutProfile({
-  email,
-  termsVersion,
-  isModerator,
-}: {
-  email: string;
-  termsVersion: string | null;
-  isModerator: boolean;
-}) {
+export function YouWithoutProfile(account: AccountProps) {
   return (
     <div className="flex max-w-[760px] flex-col gap-4">
       <p className="text-mono-lg text-green font-mono uppercase">You</p>
@@ -277,24 +294,19 @@ export function YouWithoutProfile({
           Create your profile
         </ButtonLink>
       </section>
-      <AccountSections email={email} termsVersion={termsVersion} isModerator={isModerator} />
+      <AccountSections {...account} />
     </div>
   );
 }
 
-type Props = {
-  profile: Profile;
-  email: string;
-  termsVersion: string | null;
-  isModerator: boolean;
-};
+type Props = { profile: Profile; account: AccountProps };
 
 /**
  * The You page (design spec section 13, reference-you.html): profile and account settings
  * in ten sections. Most edits wait for the Save bar; the visibility and email switches,
  * signing out and deleting act at once, as before.
  */
-export function YouPage({ profile, email, termsVersion, isModerator }: Props) {
+export function YouPage({ profile, account }: Props) {
   const router = useRouter();
   const ids = useId();
   const [base, setBase] = useState<Draft>(() => draftFrom(profile));
@@ -761,7 +773,7 @@ export function YouPage({ profile, email, termsVersion, isModerator }: Props) {
             </div>
           </Section>
 
-          <AccountSections email={email} termsVersion={termsVersion} isModerator={isModerator} />
+          <AccountSections {...account} />
         </div>
       </div>
 

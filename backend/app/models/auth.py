@@ -81,6 +81,10 @@ class AuthEventType(StrEnum):
     LOGIN_REFUSED = "login_refused"
     LOGOUT = "logout"
     LOGOUT_ALL = "logout_all"
+    LOGOUT_OTHERS = "logout_others"
+    SESSION_REVOKED = "session_revoked"
+    ACCOUNT_PAUSED = "account_paused"
+    ACCOUNT_RESUMED = "account_resumed"
     DELETION_REQUESTED = "deletion_requested"
     ACCOUNT_DELETED = "account_deleted"
 

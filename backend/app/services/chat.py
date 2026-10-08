@@ -25,7 +25,7 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from app.core.config import Settings
 from app.core.errors import AppError, NotFoundError, RateLimitedError
-from app.models import Connection, Message, User, UserStatus
+from app.models import SIGNED_IN_STATUSES, Connection, Message, User
 from app.services import blocks
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
@@ -115,7 +115,8 @@ class ChatService:
         connection = await self._conversation(user, connection_id)
         from_a = connection.user_a == user.id
         other = await self._db.get(User, connection.user_b if from_a else connection.user_a)
-        if other is None or other.status != UserStatus.ACTIVE:
+        # A paused account still chats with the people it is connected to.
+        if other is None or other.status not in SIGNED_IN_STATUSES:
             raise ConversationClosedError
         await self._day.hit(f"message:{user.id}", limit=self._settings.messages_per_day)
         message = Message(id=uuid.uuid4(), connection_id=connection.id, from_a=from_a, body=body)

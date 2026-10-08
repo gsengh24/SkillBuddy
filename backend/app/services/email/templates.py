@@ -56,7 +56,7 @@ _NOTICE_HTML = """<!doctype html>
       <p style="margin:0 0 16px">{body}</p>
       {link}
       <p style="margin:16px 0 0;color:#475569;font-size:14px">
-        You can turn these emails off in {app}: Account settings, Emails.
+        You can turn these emails off in {app}: You, Alerts.
       </p>
     </div>
   </body>
@@ -67,7 +67,7 @@ _NOTICE_TEXT = """{headline}
 
 {body}
 {link}
-You can turn these emails off in {app}: Account settings, Emails.
+You can turn these emails off in {app}: You, Alerts.
 """
 
 _NOTICES = {
@@ -146,4 +146,42 @@ def report_alert_email(settings: Settings, to: str, count: int, open_total: int)
         subject=headline,
         text=_REPORT_ALERT_TEXT.format(headline=headline, **values),
         html=_REPORT_ALERT_HTML.format(headline=escape(headline), **values),
+    )
+
+
+_EXPORT_TEXT = """Your {app} data is ready
+
+Download it here (you'll be asked to sign in):
+{url}
+
+The link works for {hours} hours and only for your account. If you didn't ask for
+this, you can ignore this email; nothing is shared unless you sign in and download it.
+"""
+
+_EXPORT_HTML = """<!doctype html>
+<html lang="en">
+  <body
+    style="margin:0;padding:24px;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a"
+  >
+    <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:8px;padding:24px">
+      <p style="margin:0 0 16px;font-size:18px;font-weight:700">Your {app} data is ready</p>
+      <p style="margin:0 0 16px"><a href="{url}" style="color:#166534">Download your data</a>
+        (you'll be asked to sign in).</p>
+      <p style="margin:0;color:#475569;font-size:14px">
+        The link works for {hours} hours and only for your account. If you didn't ask for
+        this, you can ignore this email; nothing is shared unless you sign in and download it.
+      </p>
+    </div>
+  </body>
+</html>
+"""
+
+
+def data_export_email(settings: Settings, to: str, url: str, hours: int) -> EmailMessage:
+    """The "Download my data" link. The link carries a one-time token; never log it."""
+    return EmailMessage(
+        to=to,
+        subject=f"Your {settings.app_name} data is ready",
+        text=_EXPORT_TEXT.format(app=settings.app_name, url=url, hours=hours),
+        html=_EXPORT_HTML.format(app=escape(settings.app_name), url=escape(url), hours=hours),
     )
