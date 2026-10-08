@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 
-import { Button } from "@/components/ui/button";
-import { TextArea, TextField } from "@/components/ui/text-field";
+import { InlineError, Input, Textarea } from "@/components/ds/fields";
+import { Button } from "@/components/ds/button";
+
 import { browserApi } from "@/lib/api/browser";
 import { profileSchema, type Profile } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
@@ -117,7 +118,7 @@ export function ProfileForm({ profile, mode }: { profile: Profile | null; mode: 
         {status}
       </p>
 
-      <TextField
+      <Input
         id={`${ids}-name`}
         label="Your name"
         hint="Shown only to people you are introduced to. It is never sent to an AI."
@@ -128,7 +129,8 @@ export function ProfileForm({ profile, mode }: { profile: Profile | null; mode: 
         onChange={(event) => setName(event.target.value)}
       />
 
-      <TextArea
+      <Textarea
+        showCounter={false}
         id={`${ids}-about`}
         label="About you"
         hint={`What you're good at, what you'd like to learn or build, and when you're free. ${aboutLength}/${ABOUT_MAX} characters.`}
@@ -141,9 +143,9 @@ export function ProfileForm({ profile, mode }: { profile: Profile | null; mode: 
       />
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="text-small text-ink mb-1 font-semibold">Links (optional)</legend>
+        <legend className="text-meta-lg text-ink mb-1 font-semibold">Links (optional)</legend>
         {links.map((link, index) => (
-          <TextField
+          <Input
             key={index}
             id={`${ids}-link-${index}`}
             label={`Link ${index + 1}`}
@@ -162,7 +164,7 @@ export function ProfileForm({ profile, mode }: { profile: Profile | null; mode: 
       </fieldset>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-small text-ink mb-1 font-semibold">Languages you speak</legend>
+        <legend className="text-meta-lg text-ink mb-1 font-semibold">Languages you speak</legend>
         <div className="flex flex-wrap gap-x-5">
           {LANGUAGES.map((language) => (
             <label key={language.code} className="flex min-h-11 items-center gap-2">
@@ -170,42 +172,38 @@ export function ProfileForm({ profile, mode }: { profile: Profile | null; mode: 
                 type="checkbox"
                 checked={languages.includes(language.code)}
                 onChange={() => toggleLanguage(language.code)}
-                className="accent-green-base size-4 shrink-0"
+                className="accent-green size-4 shrink-0"
               />
               <span>{language.label}</span>
             </label>
           ))}
         </div>
         {profile?.timezone ? (
-          <p className="text-small text-muted">Time zone: {profile.timezone}</p>
+          <p className="text-meta-lg text-muted">Time zone: {profile.timezone}</p>
         ) : null}
       </fieldset>
 
       {needsConsent ? (
-        <label className="bg-green-tint rounded-why flex items-start gap-3 p-4">
+        <label className="bg-green-tint border-green-line rounded-card flex items-start gap-3 border p-4">
           <input
             type="checkbox"
             checked={consent}
             onChange={(event) => setConsent(event.target.checked)}
-            className="accent-green-base mt-1 size-4 shrink-0"
+            className="accent-green mt-1 size-4 shrink-0"
           />
-          <span className="text-small text-ink">
+          <span className="text-meta-lg text-ink">
             <AiConsentText />
           </span>
         </label>
       ) : null}
 
       {error ? (
-        <p
-          id={errorId}
-          role="alert"
-          className="rounded-why bg-coral-tint text-small text-coral-ink px-4 py-3 font-semibold"
-        >
+        <InlineError id={errorId} announce>
           {error}
-        </p>
+        </InlineError>
       ) : null}
 
-      <Button type="submit" disabled={submitting} className="self-start">
+      <Button variant="outline" type="submit" disabled={submitting} className="self-start">
         {submitting ? "Saving…" : mode === "onboarding" ? "Save and continue" : "Save changes"}
       </Button>
     </form>

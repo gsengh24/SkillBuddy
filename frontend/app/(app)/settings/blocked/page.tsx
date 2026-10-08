@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
+import { Panel } from "@/components/ds/surfaces";
 import { UnblockButton } from "@/components/safety/block-button";
-import { Card } from "@/components/ui/card";
 import { TextLink } from "@/components/ui/text-link";
 import { withUser } from "@/lib/auth/with-user";
 import { getBlocks } from "@/lib/safety/server";
@@ -16,10 +16,10 @@ export default async function BlockedPeoplePage() {
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <TextLink href="/settings/account" tone="muted" className="text-small self-start">
+        <TextLink href="/settings/account" tone="muted" className="text-meta-lg self-start">
           Account settings
         </TextLink>
-        <h1 className="text-h1">Blocked people</h1>
+        <h1 className="text-headline lg:text-headline-lg">Blocked people</h1>
         <p className="text-muted">
           You and the people here can&apos;t message each other, send intros or be matched. They
           aren&apos;t told.
@@ -29,16 +29,16 @@ export default async function BlockedPeoplePage() {
         <ul className="flex flex-col gap-4">
           {blocks.items.map(({ user_id, created_at, person }) => (
             <li key={user_id}>
-              <Card className="flex flex-col gap-3">
+              <Panel className="flex flex-col gap-3">
                 <p className="text-ink font-bold">{person.summary || "Someone you blocked"}</p>
-                <p className="text-small text-muted">
+                <p className="text-meta-lg text-muted">
                   Blocked on{" "}
                   <time dateTime={created_at} suppressHydrationWarning>
                     {new Date(created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}
                   </time>
                 </p>
                 <UnblockButton userId={user_id} />
-              </Card>
+              </Panel>
             </li>
           ))}
         </ul>

@@ -2,11 +2,11 @@
 
 import { useEffect, useId, useState, type FormEvent } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { InlineError, Input } from "@/components/ds/fields";
+import { Panel, TopicChip } from "@/components/ds/surfaces";
+import { Button } from "@/components/ds/button";
 import { Overline } from "@/components/ui/overline";
-import { Tag } from "@/components/ui/tag";
-import { TextField } from "@/components/ui/text-field";
+
 import { browserApi } from "@/lib/api/browser";
 import { profileSchema, type Profile, type Understanding } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
@@ -32,12 +32,12 @@ function toList(text: string): string[] {
 function PhraseRow({ label, items }: { label: string; items: string[] }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <dt className="text-small text-muted font-semibold">{label}</dt>
+      <dt className="text-meta-lg text-muted font-semibold">{label}</dt>
       <dd className="flex flex-wrap gap-2">
         {items.length ? (
-          items.map((item) => <Tag key={item}>{item}</Tag>)
+          items.map((item) => <TopicChip key={item}>{item}</TopicChip>)
         ) : (
-          <span className="text-small text-muted">Nothing yet</span>
+          <span className="text-meta-lg text-muted">Nothing yet</span>
         )}
       </dd>
     </div>
@@ -122,12 +122,15 @@ export function UnderstandingReview({ initial }: { initial: Profile }) {
   const understanding = profile.understanding;
 
   return (
-    <Card className="flex flex-col gap-4" aria-labelledby={`${ids}-heading`} role="region">
+    <Panel className="flex flex-col gap-4" aria-labelledby={`${ids}-heading`} role="region">
       <p role="status" aria-live="polite" className="sr-only">
         {status}
       </p>
       <Overline tone="green">What we understood</Overline>
-      <h2 id={`${ids}-heading`} className="text-section">
+      <h2
+        id={`${ids}-heading`}
+        className="font-display tracking-display text-[20px] leading-tight font-extrabold"
+      >
         {pending ? "Reading your description…" : "Here's how we'll describe you to the matcher"}
       </h2>
 
@@ -143,7 +146,7 @@ export function UnderstandingReview({ initial }: { initial: Profile }) {
       {understanding && !editing ? (
         <>
           {profile.parse_source ? (
-            <p className="text-small text-muted">{SOURCE_NOTE[profile.parse_source]}</p>
+            <p className="text-meta-lg text-muted">{SOURCE_NOTE[profile.parse_source]}</p>
           ) : null}
           {understanding.summary ? <p>{understanding.summary}</p> : null}
           <dl className="flex flex-col gap-4">
@@ -151,11 +154,16 @@ export function UnderstandingReview({ initial }: { initial: Profile }) {
             <PhraseRow label="You're looking for" items={understanding.seeks} />
             <PhraseRow label="Interests" items={understanding.interests} />
             <div className="flex flex-col gap-1.5">
-              <dt className="text-small text-muted font-semibold">Availability</dt>
+              <dt className="text-meta-lg text-muted font-semibold">Availability</dt>
               <dd>{understanding.availability || "Not mentioned"}</dd>
             </div>
           </dl>
-          <Button type="button" className="self-start" onClick={() => startEditing(understanding)}>
+          <Button
+            variant="outline"
+            type="button"
+            className="self-start"
+            onClick={() => startEditing(understanding)}
+          >
             Correct this
           </Button>
         </>
@@ -163,54 +171,52 @@ export function UnderstandingReview({ initial }: { initial: Profile }) {
 
       {understanding && editing ? (
         <form noValidate onSubmit={onSave} className="flex flex-col gap-5">
-          <TextField
+          <Input
             label="Summary"
             maxLength={200}
             value={draft.summary}
             onChange={(e) => setDraft({ ...draft, summary: e.target.value })}
           />
-          <TextField
+          <Input
             label="You offer"
             hint="Separate with commas."
             value={draft.offers}
             onChange={(e) => setDraft({ ...draft, offers: e.target.value })}
           />
-          <TextField
+          <Input
             label="You're looking for"
             hint="Separate with commas."
             value={draft.seeks}
             onChange={(e) => setDraft({ ...draft, seeks: e.target.value })}
           />
-          <TextField
+          <Input
             label="Interests"
             hint="Separate with commas."
             value={draft.interests}
             onChange={(e) => setDraft({ ...draft, interests: e.target.value })}
           />
-          <TextField
+          <Input
             label="Availability"
             maxLength={80}
             value={draft.availability}
             onChange={(e) => setDraft({ ...draft, availability: e.target.value })}
           />
-          {error ? (
-            <p
-              role="alert"
-              className="rounded-why bg-coral-tint text-small text-coral-ink px-4 py-3 font-semibold"
-            >
-              {error}
-            </p>
-          ) : null}
+          {error ? <InlineError announce>{error}</InlineError> : null}
           <div className="flex flex-wrap gap-3">
-            <Button type="submit" disabled={saving}>
+            <Button variant="outline" type="submit" disabled={saving}>
               {saving ? "Saving…" : "Save corrections"}
             </Button>
-            <Button type="button" onClick={() => setEditing(false)} disabled={saving}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setEditing(false)}
+              disabled={saving}
+            >
               Cancel
             </Button>
           </div>
         </form>
       ) : null}
-    </Card>
+    </Panel>
   );
 }
