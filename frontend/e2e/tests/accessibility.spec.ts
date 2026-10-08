@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+import { settleAnimations } from "./helpers";
+
 /**
  * Automated accessibility check (axe-core, WCAG 2.0/2.1 A and AA rules, including colour
  * contrast) on the style guide and the sign-in page, at desktop and phone sizes. The
@@ -12,6 +14,7 @@ const VIEWPORTS = [
 ];
 
 async function expectNoViolations(page: Page) {
+  await settleAnimations(page);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

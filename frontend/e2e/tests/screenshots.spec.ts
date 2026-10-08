@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
@@ -17,9 +17,30 @@ const WIDTHS = [
   { name: "1280", width: 1280, height: 900 },
 ];
 
+/*
+ * Every browser console warning and error, and every uncaught page error, on the pages
+ * captured here, written next to the screenshots (console.log in the artifact). It records
+ * only; it never fails the run. A clean run leaves it empty.
+ */
+test.beforeEach(({ page }, testInfo) => {
+  mkdirSync(OUT, { recursive: true });
+  const log = (line: string) => appendFileSync(`${OUT}/console.log`, `${line}\n`);
+  page.on("console", (message) => {
+    if (message.type() === "error" || message.type() === "warning") {
+      log(`[${testInfo.title}] ${message.type()} on ${page.url()}: ${message.text()}`);
+    }
+  });
+  page.on("pageerror", (error) => {
+    log(`[${testInfo.title}] pageerror on ${page.url()}: ${error.message}`);
+  });
+});
+
 async function shoot(page: Page, name: string) {
   mkdirSync(OUT, { recursive: true });
-  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true });
+  // caret "initial": Playwright otherwise hides the text cursor by writing an inline
+  // caret-color style onto every input. When the dev server has not hydrated the page yet,
+  // React then sees a server/client attribute mismatch and shows the "1 Issue" badge.
+  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true, caret: "initial" });
 }
 
 test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
