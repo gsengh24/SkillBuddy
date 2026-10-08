@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.config import Settings
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
-from app.models import REPORT_CONTEXT_MESSAGES
 from app.services import blocks
 from app.services.reports import purge_resolved_reports, send_report_alert
 from tests.conftest import SettingsFactory
@@ -68,7 +67,7 @@ async def report(
 # --- filing a report ----------------------------------------------------------------------
 
 
-async def test_report_keeps_a_copy_of_the_message_and_the_ten_before_it(
+async def test_report_keeps_a_copy_of_the_reported_message_only(
     settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
 ) -> None:
     url = migrated_database_url
@@ -93,11 +92,13 @@ async def test_report_keeps_a_copy_of_the_message_and_the_ten_before_it(
     assert mine["reporter_id"] == ravi.id
     assert mine["reported_id"] == asha.id
     assert mine["connection_id"] == connection
-    bodies = [item["body"] for item in mine["messages"]]
-    assert len(bodies) == REPORT_CONTEXT_MESSAGES + 1
-    assert bodies == [f"message {number}" for number in range(1, 12)]
-    assert mine["messages"][-1]["sender"] == "reported"
-    assert mine["messages"][-2]["sender"] == "reporter"
+    # Only what the reporter chose: the reported message, none of the ones before it (A3).
+    assert [item["body"] for item in mine["messages"]] == ["message 11"]
+    assert mine["messages"][0]["sender"] == "reported"
+    stored = run_sql(
+        url, "SELECT snapshot::text AS s FROM reports WHERE id = :r", r=filed.json()["id"]
+    )
+    assert "message 10" not in stored[0]["s"]
 
 
 async def test_report_rules(

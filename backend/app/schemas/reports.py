@@ -9,6 +9,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models import (
+    MAX_ATTACHED_MESSAGES,
     REPORT_DETAILS_MAX_LENGTH,
     REPORT_NOTE_MAX_LENGTH,
     Report,
@@ -24,6 +25,31 @@ class ReportIn(BaseModel):
     details: Annotated[
         str, StringConstraints(strip_whitespace=True, max_length=REPORT_DETAILS_MAX_LENGTH)
     ] = Field(default="", description="Optional: anything the moderator should know.")
+
+
+class PersonReportIn(ReportIn):
+    """Reporting someone, optionally from a chat with them."""
+
+    message_ids: list[uuid.UUID] = Field(
+        default_factory=list,
+        max_length=MAX_ATTACHED_MESSAGES,
+        description="Up to 5 messages of your chat with them to send with the report. Only "
+        "these are copied; the team sees no other message text.",
+    )
+
+
+def shown_messages(report: Report) -> list[dict[str, Any]]:
+    """What the team may see of a report's copy (A3): the messages the reporter attached
+    (for a message report, the reported message itself) and the labelled parts of an intro,
+    a profile or a pair-space entry. Reports filed before A3 also hold earlier messages as
+    context; those are never shown."""
+    return [
+        item
+        for item in report.snapshot
+        if item.get("label")
+        or item.get("attached")
+        or (report.target == ReportTarget.MESSAGE and item.get("id") == str(report.target_id))
+    ]
 
 
 class ReportReceipt(BaseModel):
@@ -62,7 +88,7 @@ class ReportOut(BaseModel):
     id: uuid.UUID
     reason: ReportReason
     details: str
-    status: Literal["open", "resolved"]
+    status: Literal["open", "in_review", "resolved"]
     reporter_id: uuid.UUID | None
     reported_id: uuid.UUID | None
     reported_status: (
@@ -91,7 +117,7 @@ class ReportOut(BaseModel):
             target=ReportTarget(report.target),
             target_id=report.target_id,
             message_id=report.target_id if report.target == ReportTarget.MESSAGE else None,
-            messages=[ReportedMessage.build(item) for item in report.snapshot],
+            messages=[ReportedMessage.build(item) for item in shown_messages(report)],
             created_at=report.created_at,
             resolved_at=report.resolved_at,
             resolution_note=report.resolution_note,

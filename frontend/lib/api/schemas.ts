@@ -262,7 +262,7 @@ export type MessageUpdates = z.infer<typeof messageUpdatesSchema>;
 
 export const notificationSchema = z.object({
   id: z.string(),
-  kind: z.enum(["intro_received", "intro_accepted", "matches_ready"]),
+  kind: z.enum(["intro_received", "intro_accepted", "matches_ready", "report_reviewed"]),
   intro_id: z.string().nullable(),
   request_id: z.string().nullable(),
   read_at: z.string().nullable(),

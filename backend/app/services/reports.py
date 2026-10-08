@@ -1,14 +1,17 @@
 """Reports of chat messages and the moderator's side of them (ARCHITECTURE.md §8).
 
 - Either person in a connection can report a message the *other* person sent; the report
-  keeps a frozen copy of it and the ``REPORT_CONTEXT_MESSAGES`` (10) before it.
+  keeps a frozen copy of that message only (A3: the team sees only messages the reporter
+  chose).
 - The recipient of an intro can report it (a copy of its request text and note).
 - Anyone who has had contact with someone in the app (a match, an intro or a connection)
   can report their profile (a copy of what they could see: name and links only if
-  connected).
+  connected). From a chat they may attach up to ``MAX_ATTACHED_MESSAGES`` (5) messages
+  of it, copied at that moment.
 - Either person in a pair space can report a goal or a progress note the other person
   wrote (a copy of its text), also after a block. All of these share REPORTS_PER_DAY.
-- The reporter learns nothing about what happens next, and the reported person is not told.
+- The reported person is not told who reported them. Once the team decides, the reporter
+  gets a "we reviewed your report" notice (never the outcome).
 - Reporting works even when a block exists (blocks hide the conversation, not the right to
   report it), and is never paused by the storage guard: it is a safety write.
 - The moderator reads reports through the admin API (``X-Admin-Token``). An hourly job
@@ -32,7 +35,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.errors import AppError, NotFoundError
 from app.models import (
-    REPORT_CONTEXT_MESSAGES,
+    MAX_ATTACHED_MESSAGES,
+    Appeal,
+    AppealStatus,
     Connection,
     EmailPurpose,
     Intro,
@@ -108,6 +113,18 @@ class ReportNotFoundError(NotFoundError):
     default_message = "That report doesn't exist."
 
 
+class TooManyAttachedMessagesError(AppError):
+    status_code = HTTPStatus.UNPROCESSABLE_ENTITY
+    code = "too_many_attached_messages"
+    default_message = f"Attach up to {MAX_ATTACHED_MESSAGES} messages."
+
+
+class AttachedMessageNotFoundError(AppError):
+    status_code = HTTPStatus.UNPROCESSABLE_ENTITY
+    code = "attached_message_not_found"
+    default_message = "You can only attach messages from your chat with this person."
+
+
 class ReportResolvedError(AppError):
     status_code = HTTPStatus.CONFLICT
     code = "report_already_resolved"
@@ -115,12 +132,14 @@ class ReportResolvedError(AppError):
 
 
 def _copy(message: Message, reporter_is_a: bool) -> dict[str, Any]:
+    """A chat message the reporter chose to send: the only message text the team sees."""
     from_reporter = message.from_a == reporter_is_a
     return {
         "id": str(message.id),
         "from": "reporter" if from_reporter else "reported",
         "body": message.body,
         "sent_at": message.created_at.isoformat(),
+        "attached": True,
     }
 
 
@@ -187,20 +206,6 @@ async def file_report(
     if message.from_a == reporter_is_a:
         raise OwnMessageError
 
-    earlier = list(
-        await db.scalars(
-            select(Message)
-            .where(
-                Message.connection_id == connection.id,
-                or_(
-                    Message.created_at < message.created_at,
-                    and_(Message.created_at == message.created_at, Message.id < message.id),
-                ),
-            )
-            .order_by(Message.created_at.desc(), Message.id.desc())
-            .limit(REPORT_CONTEXT_MESSAGES)
-        )
-    )
     return await _save(
         db,
         settings,
@@ -212,7 +217,7 @@ async def file_report(
         target_id=message.id,
         reason=reason,
         details=details,
-        snapshot=[_copy(m, reporter_is_a) for m in [*reversed(earlier), message]],
+        snapshot=[_copy(message, reporter_is_a)],
     )
 
 
@@ -266,8 +271,10 @@ async def report_person(
     person_id: uuid.UUID,
     reason: ReportReason,
     details: str,
+    message_ids: list[uuid.UUID] | None = None,
 ) -> Report:
-    """Report someone's profile, as you could see it (name and links only if connected)."""
+    """Report someone's profile, as you could see it (name and links only if connected),
+    with up to MAX_ATTACHED_MESSAGES messages of your chat with them, copied now."""
     if person_id == user.id or not await blocks.had_contact(db, user.id, person_id):
         raise PersonToReportNotFoundError
     profile = await db.get(Profile, person_id)
@@ -293,6 +300,7 @@ async def report_person(
     ]
     if connection is not None and profile is not None:
         parts = [("name", profile.display_name), ("links", ", ".join(profile.links)), *parts]
+    attached = await _attached(db, user.id, person_id, message_ids or [])
     return await _save(
         db,
         settings,
@@ -304,8 +312,39 @@ async def report_person(
         target_id=person_id,
         reason=reason,
         details=details,
-        snapshot=[_part(label, body) for label, body in parts if body],
+        snapshot=[*(_part(label, body) for label, body in parts if body), *attached],
     )
+
+
+async def _attached(
+    db: AsyncSession, user_id: uuid.UUID, person_id: uuid.UUID, message_ids: list[uuid.UUID]
+) -> list[dict[str, Any]]:
+    """Copies of the chosen messages, oldest first. Each must be from the chat between
+    the two (ended or not); anything else is refused, so nothing else can be attached."""
+    chosen = list(dict.fromkeys(message_ids))
+    if not chosen:
+        return []
+    if len(chosen) > MAX_ATTACHED_MESSAGES:
+        raise TooManyAttachedMessagesError
+    connection = await db.scalar(
+        select(Connection).where(
+            Connection.user_a == min(user_id, person_id),
+            Connection.user_b == max(user_id, person_id),
+        )
+    )
+    if connection is None:
+        raise AttachedMessageNotFoundError
+    messages = list(
+        await db.scalars(
+            select(Message)
+            .where(Message.id.in_(chosen), Message.connection_id == connection.id)
+            .order_by(Message.created_at, Message.id)
+        )
+    )
+    if len(messages) != len(chosen):
+        raise AttachedMessageNotFoundError
+    reporter_is_a = connection.user_a == user_id
+    return [_copy(message, reporter_is_a) for message in messages]
 
 
 async def _space_entry_connection(
@@ -500,6 +539,10 @@ async def purge_resolved_reports(db: AsyncSession, settings: Settings, now: date
     cutoff = now - timedelta(days=settings.report_retention_days)
     result = await db.execute(
         delete(Report).where(Report.status == ReportStatus.RESOLVED, Report.resolved_at < cutoff)
+    )
+    # Decided appeals go on the same schedule (A3).
+    await db.execute(
+        delete(Appeal).where(Appeal.status != AppealStatus.OPEN, Appeal.decided_at < cutoff)
     )
     await db.commit()
     deleted = int(getattr(result, "rowcount", 0) or 0)

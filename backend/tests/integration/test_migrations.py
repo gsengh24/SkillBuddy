@@ -31,6 +31,7 @@ ADMIN_TABLES = {
     "admin_sessions",
     "admin_audit_log",
     "admin_notes",  # migration 0019
+    "appeals",  # migration 0020
 }  # migration 0018
 ALL_TABLES = (
     PHASE_ZERO_TABLES
@@ -488,3 +489,24 @@ def test_the_migration_only_indexes_exist(migrated_database_url: str) -> None:
         engine.dispose()
     assert set(found) == MIGRATION_ONLY_INDEXES
     assert all("gin_trgm_ops" in definition for definition in found.values())
+
+
+def test_safety_migration_downgrades_to_0019(empty_database_url: str, engine: Engine) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO reports (target, target_id, reason, snapshot, status, decision) "
+                "VALUES ('profile', gen_random_uuid(), 'spam', '[]'::jsonb, 'in_review', NULL)"
+            )
+        )
+
+    command.downgrade(config, "0019")
+    with engine.connect() as connection:
+        statuses = set(connection.scalars(text("SELECT status FROM reports")).all())
+    assert statuses == {"open"}
+    assert "appeals" not in _tables(engine)
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES

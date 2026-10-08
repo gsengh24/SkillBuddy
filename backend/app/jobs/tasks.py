@@ -17,14 +17,15 @@ from app.ai.gateway import open_gateway
 from app.core.security import mask_email
 from app.jobs.queue import enqueue
 from app.jobs.registry import JobContext, JobGroup, JobRegistry, JobSpec
-from app.models import EmailPurpose, OtpCode
+from app.models import EmailPurpose, OtpCode, User
+from app.services import appeals
 from app.services.auth.retention import hard_delete_due_accounts, purge_expired_auth_data
 from app.services.chat import purge_old_messages
 from app.services.data_exports import build_export
 from app.services.data_exports import purge as purge_data_exports
 from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
-from app.services.email.templates import login_code_email
+from app.services.email.templates import login_code_email, safety_email
 from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
 from app.services.matching.engine import run_match_request
@@ -232,6 +233,34 @@ async def _purge_data_exports(ctx: JobContext) -> None:
         await purge_data_exports(db, ctx.settings)
 
 
+async def _send_safety_notice(ctx: JobContext) -> None:
+    """Email someone about a warning, suspension or ban (with a link to appeal), or about
+    their appeal's outcome (A3). Skipped, not failed, when only the code reserve is left."""
+    async with ctx.session_factory() as db:
+        user = await db.get(User, uuid.UUID(ctx.payload["user_id"]))
+        kind = str(ctx.payload["kind"])
+        if user is None or kind not in {"warn", "suspend", "ban", "upheld", "overturned"}:
+            return
+        if not await may_send(db, ctx.settings, EmailPurpose.SAFETY_NOTICE):
+            logger.warning("safety_notice_skipped", extra={"reason": "email_quota_reserve"})
+            return
+        appeal_url = None
+        if kind in {"suspend", "ban"} and ctx.settings.web_app_url:
+            token = appeals.make_token(ctx.settings, user.id, appeals.EMAIL_TOKEN_HOURS)
+            appeal_url = f"{ctx.settings.web_app_url.rstrip('/')}/appeal?token={token}"
+        sender = build_email_sender(ctx.settings)
+        message_id = await sender.send(safety_email(ctx.settings, user.email, kind, appeal_url))
+        await record_sent(
+            db,
+            ctx.settings,
+            purpose=EmailPurpose.SAFETY_NOTICE,
+            recipient=user.email,
+            provider=sender.provider,
+            message_id=message_id,
+        )
+        logger.info("safety_notice_sent", extra={"kind": kind, "email": mask_email(user.email)})
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -340,6 +369,13 @@ BUILD_DATA_EXPORT = JobSpec(
     max_attempts=3,
     timeout_seconds=120,
 )
+SEND_SAFETY_NOTICE = JobSpec(
+    kind="send_safety_notice",
+    handler=_send_safety_notice,
+    priority=50,
+    max_attempts=3,
+    timeout_seconds=30,
+)
 PURGE_DATA_EXPORTS = JobSpec(
     kind="purge_data_exports", handler=_purge_data_exports, priority=200, timeout_seconds=240
 )
@@ -365,6 +401,7 @@ ALL_JOBS = (
     SEND_NOTIFICATION_EMAIL,
     BUILD_DATA_EXPORT,
     PURGE_DATA_EXPORTS,
+    SEND_SAFETY_NOTICE,
 )
 
 

@@ -15,7 +15,7 @@ from app.api.deps import SettingsDep, require_json
 from app.api.v1.auth import AuthDep
 from app.db.session import get_db_session
 from app.schemas.errors import ErrorResponse
-from app.schemas.reports import ReportIn, ReportReceipt
+from app.schemas.reports import PersonReportIn, ReportReceipt
 from app.schemas.social import PersonOut
 from app.services import blocks, reports
 from app.services.auth.rate_limit import RateLimiter
@@ -123,17 +123,18 @@ async def unblock_person(user_id: uuid.UUID, auth: AuthDep, db: DbDep) -> None:
 )
 async def report_person(
     user_id: uuid.UUID,
-    body: ReportIn,
+    body: PersonReportIn,
     auth: AuthDep,
     request: Request,
     db: DbDep,
     settings: SettingsDep,
 ) -> ReportReceipt:
-    """The moderator sees a copy of their profile as you could see it. They are not told."""
+    """The team sees a copy of their profile as you could see it, and the messages you
+    attach (up to 5, from your chat with them). They are not told who reported them."""
     limiter = RateLimiter(
         request.app.state.session_factory, settings.secret_key, window_seconds=DAY_SECONDS
     )
     report = await reports.report_person(
-        db, settings, limiter, auth.user, user_id, body.reason, body.details
+        db, settings, limiter, auth.user, user_id, body.reason, body.details, body.message_ids
     )
     return ReportReceipt(id=report.id, created_at=report.created_at)

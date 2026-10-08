@@ -32,6 +32,7 @@ def test_metadata_contains_all_tables() -> None:
         "admin_sessions",
         "admin_audit_log",
         "admin_notes",
+        "appeals",
         "email_log",
         "match_requests",
         "matches",

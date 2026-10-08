@@ -12,6 +12,8 @@ import { ApiError } from "@/lib/api/errors";
 import { googleStartSchema, otpRequestResponseSchema, userSchema } from "@/lib/api/schemas";
 import { RESEND_COOLDOWN_SECONDS } from "@/lib/auth/constants";
 import { describeError } from "@/lib/auth/messages";
+
+import { AppealForm } from "./appeal-form";
 import { brand } from "@/lib/brand";
 
 import { GoogleButton } from "./google-button";
@@ -45,6 +47,7 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(initialError);
+  const [appealToken, setAppealToken] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resendAt, setResendAt] = useState(0);
@@ -147,6 +150,10 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
     } catch (caught) {
       setError(describeError(caught));
       if (caught instanceof ApiError && caught.code === "code_locked") setCode("");
+      // A suspended or banned account may appeal once (A3).
+      const token =
+        caught instanceof ApiError ? caught.body?.error.details?.[0]?.appeal_token : undefined;
+      setAppealToken(typeof token === "string" ? token : null);
       setSubmitting(false);
       codeInput.current?.focus();
     }
@@ -168,6 +175,7 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
       {error}
     </p>
   ) : null;
+  const appealForm = appealToken ? <AppealForm token={appealToken} /> : null;
 
   return (
     <section className="flex w-full max-w-md flex-col gap-6" aria-labelledby={`${ids}-heading`}>
@@ -368,6 +376,7 @@ export function LoginForm({ nextPath, google, initialError = null }: LoginFormPr
           </div>
         </form>
       )}
+      {step === "code" ? appealForm : null}
     </section>
   );
 }

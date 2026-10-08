@@ -117,6 +117,8 @@ class EmailPurpose(StrEnum):
     LOGIN_CODE = "login_code"
     NOTIFICATION = "notification"
     DATA_EXPORT = "data_export"
+    # A warning, suspension or ban, or an appeal's outcome (A3).
+    SAFETY_NOTICE = "safety_notice"
 
 
 EMAIL_PURPOSES_SQL = ", ".join(f"'{purpose.value}'" for purpose in EmailPurpose)

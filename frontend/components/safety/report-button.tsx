@@ -1,18 +1,21 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ds/button";
 import { Textarea } from "@/components/ds/fields";
 import { cx } from "@/components/ui/cx";
 import { browserApi } from "@/lib/api/browser";
-import { reportReceiptSchema } from "@/lib/api/schemas";
+import { messagePageSchema, reportReceiptSchema, type Message } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { REPORT_DETAILS_MAX_LENGTH, REPORT_REASONS, type ReportReason } from "@/lib/safety/reasons";
 
 import { BlockButton } from "./block-button";
 
 export type ReportKind = "message" | "intro" | "profile" | "goal" | "note";
+
+/** Messages a reporter may attach when reporting someone from a chat (A3). */
+export const MAX_ATTACHED = 5;
 
 const PATHS: Record<ReportKind, (id: string) => `/${string}`> = {
   message: (id) => `/messages/${id}/report`,
@@ -23,7 +26,7 @@ const PATHS: Record<ReportKind, (id: string) => `/${string}`> = {
 };
 
 const WHAT_IS_SEEN: Record<ReportKind, string> = {
-  message: "Our moderator will see a copy of this message and the 10 messages before it.",
+  message: "Our moderator will see a copy of this message.",
   intro: "Our moderator will see a copy of this intro: what they asked for and their note.",
   profile: "Our moderator will see a copy of their profile as you can see it.",
   goal: "Our moderator will see a copy of this goal.",
@@ -40,6 +43,7 @@ export function ReportButton({
   blockUserId,
   blockName = "this person",
   compact = false,
+  attachFrom,
 }: {
   kind: ReportKind;
   targetId: string;
@@ -48,6 +52,8 @@ export function ReportButton({
   blockName?: string;
   /** A small text button (under a chat message) instead of an outline button. */
   compact?: boolean;
+  /** Reporting someone from a chat: offer to attach up to 5 of its messages. */
+  attachFrom?: string;
 }) {
   const ids = useId();
   const [open, setOpen] = useState(false);
@@ -56,6 +62,34 @@ export function ReportButton({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [recent, setRecent] = useState<Message[] | null>(null);
+  const [attached, setAttached] = useState<string[]>([]);
+  const canAttach = kind === "profile" && Boolean(attachFrom);
+
+  useEffect(() => {
+    if (!open || !canAttach || recent !== null) return;
+    let cancelled = false;
+    browserApi(`/connections/${attachFrom}/messages?limit=20`, messagePageSchema)
+      .then((page) => {
+        if (!cancelled) setRecent([...page.items].reverse());
+      })
+      .catch(() => {
+        if (!cancelled) setRecent([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, canAttach, attachFrom, recent]);
+
+  function toggle(id: string) {
+    setAttached((current) =>
+      current.includes(id)
+        ? current.filter((value) => value !== id)
+        : current.length < MAX_ATTACHED
+          ? [...current, id]
+          : current,
+    );
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -65,7 +99,11 @@ export function ReportButton({
     try {
       await browserApi(PATHS[kind](targetId), reportReceiptSchema, {
         method: "POST",
-        body: { reason, details: details.trim() },
+        body: {
+          reason,
+          details: details.trim(),
+          ...(canAttach && attached.length ? { message_ids: attached } : {}),
+        },
       });
       setDone(true);
     } catch (caught) {
@@ -133,6 +171,39 @@ export function ReportButton({
           </label>
         ))}
       </fieldset>
+      {canAttach ? (
+        <fieldset className="flex flex-col gap-1">
+          <legend className="text-meta-lg text-ink mb-1 font-medium">
+            Attach messages (optional)
+          </legend>
+          <p className="text-meta text-muted">
+            Tick up to {MAX_ATTACHED} messages from your chat. Only the messages you tick are sent
+            to our moderator.
+          </p>
+          {recent === null ? (
+            <p className="text-meta text-muted">Loading your chat…</p>
+          ) : recent.length ? (
+            <ul className="flex max-h-56 flex-col gap-0.5 overflow-y-auto">
+              {recent.map((message) => (
+                <li key={message.id}>
+                  <label className="flex min-h-11 items-start gap-3 py-1 lg:pointer-fine:min-h-8">
+                    <input
+                      type="checkbox"
+                      checked={attached.includes(message.id)}
+                      disabled={!attached.includes(message.id) && attached.length >= MAX_ATTACHED}
+                      onChange={() => toggle(message.id)}
+                      className="accent-green mt-1 size-4 shrink-0"
+                    />
+                    <span className="text-meta-lg text-ink-2 line-clamp-2">{message.body}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-meta text-muted">No messages to attach.</p>
+          )}
+        </fieldset>
+      ) : null}
       <Textarea
         label="Anything else the moderator should know? (optional)"
         rows={2}

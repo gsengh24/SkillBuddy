@@ -134,12 +134,13 @@ export default function PrivacyPage() {
       <LegalSection id="reports" title="Reports, blocks and moderation">
         <p>
           You can report a message, an intro, a profile, or a goal or note in a pair space. If a
-          message is reported, we keep a copy of it and the 10 before it so our moderator can review
-          it. For an intro we keep its request and note; for a profile, what the person reporting
-          could see; for a goal or a note, its text. Only the moderator sees this copy. It is
-          deleted {retention.reportDaysAfterResolve} days after the report is resolved, even if the
-          account or the original messages were deleted sooner. The reported person isn&apos;t told
-          who reported them.
+          message is reported, we keep a copy of that message so our moderator can review it. When
+          you report someone from a chat, you can attach up to 5 messages from it, and we copy only
+          the ones you choose. For an intro we keep its request and note; for a profile, what the
+          person reporting could see; for a goal or a note, its text. Only the moderator sees this
+          copy. It is deleted {retention.reportDaysAfterResolve} days after the report is resolved,
+          even if the account or the original messages were deleted sooner. The reported person
+          isn&apos;t told who reported them.
         </p>
         <p>
           If you block someone, neither of you can message the other, and you won&apos;t be
@@ -159,6 +160,10 @@ export default function PrivacyPage() {
       <LegalSection id="emails" title="Emails we send">
         <ul className="flex list-disc flex-col gap-1 pl-5">
           <li>Sign-in codes, whenever you ask for one.</li>
+          <li>
+            If our moderator warns, suspends or bans your account after a report, we email you, with
+            a link to appeal a suspension or ban, and we email you the outcome of an appeal.
+          </li>
           <li>
             We email you when someone sends you an intro or accepts yours. This is on when you
             create your profile; turn it off in Settings (Account settings, Emails). You&apos;ll

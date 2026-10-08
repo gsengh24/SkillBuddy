@@ -98,6 +98,8 @@ class NotificationKind(StrEnum):
     INTRO_RECEIVED = "intro_received"
     INTRO_ACCEPTED = "intro_accepted"
     MATCHES_READY = "matches_ready"
+    # Someone you reported was reviewed (A3); it never says what was decided.
+    REPORT_REVIEWED = "report_reviewed"
 
 
 class Notification(UUIDPrimaryKeyMixin, Base):
