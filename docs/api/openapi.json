@@ -43,6 +43,41 @@
         "title": "AIStatusOut",
         "type": "object"
       },
+      "AccessOut": {
+        "properties": {
+          "allowed_domains": {
+            "description": "Empty: any domain may sign up.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Domains",
+            "type": "array"
+          },
+          "blocked_domains": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Blocked Domains",
+            "type": "array"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/SignupMode"
+          },
+          "waitlist": {
+            "description": "Applications waiting for a decision.",
+            "title": "Waitlist",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mode",
+          "waitlist",
+          "allowed_domains",
+          "blocked_domains"
+        ],
+        "title": "AccessOut",
+        "type": "object"
+      },
       "AccountList": {
         "properties": {
           "items": {
@@ -374,6 +409,137 @@
         "title": "AppealStatus",
         "type": "string"
       },
+      "ApplicationDecisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "reason"
+        ],
+        "title": "ApplicationDecisionIn",
+        "type": "object"
+      },
+      "ApplicationIn": {
+        "additionalProperties": false,
+        "description": "Ask to join while signups are invite only (A5).",
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ApplicationSource",
+            "description": "How they heard of the service."
+          }
+        },
+        "required": [
+          "email",
+          "source"
+        ],
+        "title": "ApplicationIn",
+        "type": "object"
+      },
+      "ApplicationOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ApplicationSource"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "source",
+          "created_at"
+        ],
+        "title": "ApplicationOut",
+        "type": "object"
+      },
+      "ApplicationPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "ApplicationPage",
+        "type": "object"
+      },
+      "ApplicationReceivedOut": {
+        "description": "Identical for every address, so it reveals nothing about who has applied.",
+        "properties": {
+          "status": {
+            "const": "received",
+            "default": "received",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ApplicationReceivedOut",
+        "type": "object"
+      },
+      "ApplicationSource": {
+        "description": "How they heard of the service: a fixed list, so no free text to moderate.",
+        "enum": [
+          "friend",
+          "college",
+          "social_media",
+          "search",
+          "event",
+          "other"
+        ],
+        "title": "ApplicationSource",
+        "type": "string"
+      },
       "AttachedMessage": {
         "description": "A chat message the reporter chose to attach (or, for an intro, profile or pair-space\nreport, a labelled part of what they reported). Nothing else from a chat is shown.",
         "properties": {
@@ -571,6 +737,11 @@
             },
             "title": "Google Domains",
             "type": "array"
+          },
+          "signup_mode": {
+            "$ref": "#/components/schemas/SignupMode",
+            "default": "open",
+            "description": "How new accounts are made (A5): `open`; `invite_only` (an invite code or an approved application); `closed`. Existing users can always sign in."
           }
         },
         "required": [
@@ -1014,6 +1185,50 @@
         "title": "DependencyCheck",
         "type": "object"
       },
+      "DomainIn": {
+        "additionalProperties": false,
+        "properties": {
+          "domain": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Domain",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain",
+          "reason"
+        ],
+        "title": "DomainIn",
+        "type": "object"
+      },
+      "DomainKind": {
+        "enum": [
+          "allowed",
+          "blocked"
+        ],
+        "title": "DomainKind",
+        "type": "string"
+      },
+      "DomainOut": {
+        "properties": {
+          "domain": {
+            "title": "Domain",
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain"
+        ],
+        "title": "DomainOut",
+        "type": "object"
+      },
       "ErrorDetail": {
         "properties": {
           "code": {
@@ -1259,6 +1474,19 @@
             "description": "As for /otp/verify: required for a new account or one without a recorded age confirmation (ADR 0009). Checked when Google sends the person back.",
             "title": "Age Confirmed",
             "type": "boolean"
+          },
+          "invite_code": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only when signups are invite only and this creates an account (A5); ignored otherwise. Not needed when the address's application was approved.",
+            "title": "Invite Code"
           },
           "next": {
             "anyOf": [
@@ -1532,6 +1760,183 @@
           "accept"
         ],
         "title": "IntroResponseIn",
+        "type": "object"
+      },
+      "InviteCodeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "4 to 32 letters, digits or hyphens (stored upper case). Empty: generated.",
+            "title": "Code"
+          },
+          "expires_in_days": {
+            "anyOf": [
+              {
+                "maximum": 365.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Empty: never expires.",
+            "title": "Expires In Days"
+          },
+          "max_uses": {
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Max Uses",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "max_uses",
+          "reason"
+        ],
+        "title": "InviteCodeIn",
+        "type": "object"
+      },
+      "InviteCodeOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The creating admin's email, if still known.",
+            "title": "Created By"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_uses": {
+            "title": "Max Uses",
+            "type": "integer"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "used_up",
+              "expired",
+              "revoked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "uses": {
+            "title": "Uses",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "uses",
+          "max_uses",
+          "expires_at",
+          "revoked_at",
+          "created_at",
+          "created_by",
+          "status"
+        ],
+        "title": "InviteCodeOut",
+        "type": "object"
+      },
+      "InviteCodePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InviteCodeOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "InviteCodePage",
+        "type": "object"
+      },
+      "InvitedOut": {
+        "properties": {
+          "invited": {
+            "description": "How many applications were approved (at most 10).",
+            "title": "Invited",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "invited"
+        ],
+        "title": "InvitedOut",
         "type": "object"
       },
       "KpiOut": {
@@ -2187,6 +2592,26 @@
         "title": "MessageUpdates",
         "type": "object"
       },
+      "ModeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/SignupMode"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "reason"
+        ],
+        "title": "ModeIn",
+        "type": "object"
+      },
       "NoteIn": {
         "additionalProperties": false,
         "properties": {
@@ -2414,6 +2839,19 @@
             "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
             "title": "Email",
             "type": "string"
+          },
+          "invite_code": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only when signups are invite only and this creates an account (A5); ignored otherwise. Not needed when the address's application was approved.",
+            "title": "Invite Code"
           }
         },
         "required": [
@@ -3995,6 +4433,15 @@
         "title": "SessionOut",
         "type": "object"
       },
+      "SignupMode": {
+        "enum": [
+          "open",
+          "invite_only",
+          "closed"
+        ],
+        "title": "SignupMode",
+        "type": "string"
+      },
       "SkillIn": {
         "additionalProperties": false,
         "properties": {
@@ -4953,6 +5400,735 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/access": {
+      "get": {
+        "operationId": "get_access_api_v1_admin_access_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Signup mode, waitlist size and email domains",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/access/applications": {
+      "get": {
+        "operationId": "list_applications_api_v1_admin_access_applications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The approval queue, oldest first",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/access/applications/invite-next": {
+      "post": {
+        "operationId": "invite_next_api_v1_admin_access_applications_invite_next_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve the 10 oldest applications",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/access/applications/{application_id}/decide": {
+      "post": {
+        "description": "Approving lets the address create an account and emails it a one-use invite code\n(valid 14 days). 409 ``application_already_decided``.",
+        "operationId": "decide_application_api_v1_admin_access_applications__application_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve or reject an application",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/access/codes": {
+      "get": {
+        "description": "Shareable codes only; approved applications' one-use codes are not listed.",
+        "operationId": "list_codes_api_v1_admin_access_codes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invite codes, newest first",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "409 ``invite_code_taken`` or ``invalid_invite_code_format``.",
+        "operationId": "create_code_api_v1_admin_access_codes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteCodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create an invite code",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/access/codes/{code_id}/revoke": {
+      "post": {
+        "description": "The code stops working; people who already joined with it are not affected.",
+        "operationId": "revoke_code_api_v1_admin_access_codes__code_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Code Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke an invite code",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/access/domains/{kind}": {
+      "post": {
+        "description": "For new accounts only. An empty allow list means any domain; blocked wins. 409\n``invalid_domain``, ``domain_already_listed`` or ``domain_list_full``.",
+        "operationId": "add_domain_api_v1_admin_access_domains__kind__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DomainKind"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add an allowed or blocked email domain",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/access/domains/{kind}/remove": {
+      "post": {
+        "operationId": "remove_domain_api_v1_admin_access_domains__kind__remove_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DomainKind"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove an allowed or blocked email domain",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/access/mode": {
+      "post": {
+        "description": "Applies to the next sign-up. Existing users can always sign in, whatever the mode.",
+        "operationId": "set_mode_api_v1_admin_access_mode_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change the signup mode",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/audit": {
       "get": {
         "description": "Entries can't be edited or deleted (the database refuses).",
@@ -7626,6 +8802,98 @@
         ]
       }
     },
+    "/api/v1/auth/applications": {
+      "post": {
+        "description": "Join the approval queue while signups are invite only (A5). The same answer for\nevery address. 409 ``applications_closed`` in other modes; 403 ``email_not_allowed``\nfor a blocked or not-allowed domain. Rate-limited per address and per IP (429).",
+        "operationId": "apply_to_join_api_v1_auth_applications_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationReceivedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Apply to join (invite only)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/v1/auth/google/callback": {
       "get": {
         "description": "Verifies the attempt and Google's ID token, then signs in (session cookie) and\nredirects to ``next``. Any failure redirects to ``/login?error=<code>`` with a stable\ncode (``google_state_invalid``, ``google_cancelled``, ``google_failed``,\n``email_not_allowed``, ``consent_required``, ...); details go to the audit log only.",
@@ -7862,6 +9130,7 @@
     },
     "/api/v1/auth/methods": {
       "get": {
+        "description": "Also the signup mode, so clients show the invite code field and the application\nform only when signups are invite only.",
         "operationId": "methods_api_v1_auth_methods_get",
         "responses": {
           "200": {

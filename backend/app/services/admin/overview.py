@@ -20,6 +20,7 @@ from app.ai.status import ai_status
 from app.core.config import Settings
 from app.models import (
     AdminAuditEntry,
+    ApplicationStatus,
     Connection,
     DataExport,
     DataExportStatus,
@@ -33,8 +34,8 @@ from app.models import (
     Message,
     Report,
     ReportStatus,
+    SignupApplication,
     User,
-    UserStatus,
 )
 from app.services.email.budget import remaining
 
@@ -45,6 +46,7 @@ EMAIL_JOBS: Final = (
     "send_notification_email",
     "build_data_export",
     "send_safety_notice",
+    "send_invite",
 )
 RECENT_ACTIVITY: Final = 6
 
@@ -149,8 +151,8 @@ async def build(db: AsyncSession, settings: Settings, days: int) -> Overview:
                 .where(Report.status.in_([ReportStatus.OPEN, ReportStatus.IN_REVIEW]))
                 .scalar_subquery(),
                 select(func.count())
-                .select_from(User)
-                .where(User.status == UserStatus.PENDING)
+                .select_from(SignupApplication)
+                .where(SignupApplication.status == ApplicationStatus.PENDING)
                 .scalar_subquery(),
                 select(func.count())
                 .select_from(DataExport)

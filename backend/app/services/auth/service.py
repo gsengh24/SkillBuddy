@@ -9,22 +9,26 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.security import constant_time_equals, generate_numeric_code, mask_email
 from app.models import (
     SIGNED_IN_STATUSES,
+    ApplicationSource,
     AuthEventType,
     AuthIdentity,
     AuthProvider,
     OAuthState,
     OtpCode,
+    SignupApplication,
+    SignupMode,
     User,
     UserSession,
     UserStatus,
 )
-from app.services import appeals
+from app.services import appeals, signup
 from app.services.auth.codes import (
     OTP_DIGITS,
     email_hash,
@@ -38,6 +42,7 @@ from app.services.auth.errors import (
     AccountPendingDeletionError,
     AccountPendingError,
     AccountSuspendedError,
+    ApplicationsClosedError,
     CannotPauseError,
     CodeLockedError,
     ConsentRequiredError,
@@ -46,9 +51,12 @@ from app.services.auth.errors import (
     GoogleSignInFailedError,
     GoogleSignInUnavailableError,
     InvalidCodeError,
+    InvalidInviteCodeError,
+    InviteRequiredError,
     NotPausedError,
     OAuthStateInvalidError,
     SessionNotFoundError,
+    SignupsClosedError,
 )
 from app.services.auth.events import ClientInfo, record_event
 from app.services.auth.google import GoogleOidcClient, GoogleSignInError
@@ -63,6 +71,13 @@ logger = logging.getLogger(__name__)
 # How long a "Continue with Google" attempt may take before its state expires.
 OAUTH_STATE_TTL = timedelta(minutes=10)
 DEFAULT_NEXT_PATH = "/home"
+# Refusals that only stop a new account (A5); the person can fix them and try again.
+SIGNUP_REFUSALS = (
+    EmailNotAllowedError,
+    SignupsClosedError,
+    InviteRequiredError,
+    InvalidInviteCodeError,
+)
 
 
 @dataclass(frozen=True)
@@ -173,6 +188,37 @@ class AuthService:
         await self._db.commit()
         logger.info("login_code_requested", extra={"email": mask_email(email)})
 
+    async def apply_to_join(
+        self, raw_email: str, source: ApplicationSource, client: ClientInfo
+    ) -> None:
+        """Join the approval queue while signups are invite only (A5).
+
+        The same answer whether the address is new, already queued or already decided, so
+        it reveals nothing. No email is sent until an admin approves.
+        """
+        email = normalise_email(raw_email)
+        await self._limit(
+            "apply",
+            email,
+            client,
+            per_email=self._settings.otp_request_limit_per_email,
+            per_ip=self._settings.otp_request_limit_per_ip,
+        )
+        if await signup.signup_mode(self._db) is not SignupMode.INVITE_ONLY:
+            raise ApplicationsClosedError
+        if not is_email_allowed(
+            self._settings, email, SignInMethod.EMAIL_CODE
+        ) or not await signup.domain_allowed(self._db, email):
+            raise EmailNotAllowedError
+        await self._storage.ensure_signups_allowed()
+        await self._db.execute(
+            insert(SignupApplication)
+            .values(email=email, source=source.value)
+            .on_conflict_do_nothing(index_elements=[SignupApplication.email])
+        )
+        await self._db.commit()
+        logger.info("signup_application_received", extra={"email": mask_email(email)})
+
     async def verify_code(
         self,
         raw_email: str,
@@ -181,8 +227,10 @@ class AuthService:
         age_confirmed: bool,
         accept_terms: bool,
         client: ClientInfo,
+        invite_code: str | None = None,
     ) -> SignInResult:
-        """Check a code; on success sign in (creating the account on first use)."""
+        """Check a code; on success sign in (creating the account on first use, if the
+        signup mode allows it; ``invite_code`` matters only then)."""
         email = normalise_email(raw_email)
         await self._limit(
             "otp-verify",
@@ -217,11 +265,21 @@ class AuthService:
         user = await self._db.scalar(select(User).where(User.email == email))
         try:
             await self._check_consent_and_capacity(
-                user, age_confirmed=age_confirmed, accept_terms=accept_terms
+                user,
+                age_confirmed=age_confirmed,
+                accept_terms=accept_terms,
+                email=email,
+                invite_code=invite_code,
+                now=now,
             )
-        except (ConsentRequiredError, SignupsPausedError):
-            # Keep the code usable so the person can tick the boxes and resubmit.
+        except (ConsentRequiredError, SignupsPausedError, *SIGNUP_REFUSALS) as refused:
+            # Keep the code usable so the person can tick the boxes (or add an invite code)
+            # and resubmit.
             await self._db.rollback()
+            if isinstance(refused, SIGNUP_REFUSALS):
+                await self._refuse(
+                    client, refused.code, method=SignInMethod.EMAIL_CODE, email=email
+                )
             raise
         otp.consumed_at = now
         return await self._finish_sign_in(
@@ -229,7 +287,14 @@ class AuthService:
         )
 
     async def _check_consent_and_capacity(
-        self, user: User | None, *, age_confirmed: bool, accept_terms: bool
+        self,
+        user: User | None,
+        *,
+        age_confirmed: bool,
+        accept_terms: bool,
+        email: str,
+        invite_code: str | None,
+        now: datetime,
     ) -> None:
         # 18+ by self-declaration (ADR 0009): new accounts confirm age and accept the terms;
         # an active account with no recorded age confirmation must confirm before signing in.
@@ -242,6 +307,9 @@ class AuthService:
         if user is None:
             # Near the free storage limit, refuse new accounts (existing users still sign in).
             await self._storage.ensure_signups_allowed()
+            # The signup mode, invite codes and email domains (A5): new accounts only. An
+            # invite code's use is counted here and commits with the new account.
+            await signup.ensure_can_create_account(self._db, email, invite_code, now)
 
     async def _finish_sign_in(
         self,
@@ -350,7 +418,13 @@ class AuthService:
             )
 
     async def start_google(
-        self, *, age_confirmed: bool, accept_terms: bool, next_path: str | None, client: ClientInfo
+        self,
+        *,
+        age_confirmed: bool,
+        accept_terms: bool,
+        next_path: str | None,
+        client: ClientInfo,
+        invite_code: str | None = None,
     ) -> GoogleStart:
         """Record a single-use attempt and return Google's URL to send the browser to."""
         google = self._google_client()
@@ -362,6 +436,7 @@ class AuthService:
                 next_path=next_path or DEFAULT_NEXT_PATH,
                 age_confirmed=age_confirmed,
                 accept_terms=accept_terms,
+                invite_code=(invite_code or "").strip() or None,
                 created_ip=client.ip,
                 expires_at=datetime.now(UTC) + OAUTH_STATE_TTL,
             )
@@ -428,9 +503,19 @@ class AuthService:
         )
         if user is None:
             user = await self._db.scalar(select(User).where(User.email == email))
-        await self._check_consent_and_capacity(
-            user, age_confirmed=attempt.age_confirmed, accept_terms=attempt.accept_terms
-        )
+        try:
+            await self._check_consent_and_capacity(
+                user,
+                age_confirmed=attempt.age_confirmed,
+                accept_terms=attempt.accept_terms,
+                email=email,
+                invite_code=attempt.invite_code,
+                now=now,
+            )
+        except SIGNUP_REFUSALS as refused:
+            await self._db.rollback()
+            await self._refuse(client, refused.code, method=method, email=email)
+            raise
         result = await self._finish_sign_in(
             user,
             user.email if user is not None else email,

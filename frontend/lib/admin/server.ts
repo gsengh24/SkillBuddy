@@ -20,6 +20,9 @@ import {
   queueSchema,
   healthSchema,
   overviewSchema,
+  accessSchema,
+  applicationPageSchema,
+  inviteCodePageSchema,
 } from "./schemas";
 
 async function adminGet<T extends z.ZodType>(path: string, schema: T): Promise<z.infer<T>> {
@@ -50,3 +53,8 @@ export const getBlockStats = () => adminGet("/safety/blocks", blockStatsSchema);
 
 export const getOverview = (days: number) => adminGet(`/overview?days=${days}`, overviewSchema);
 export const getHealth = () => adminGet("/health", healthSchema);
+
+export const getAccess = () => adminGet("/access", accessSchema);
+export const getApplications = () =>
+  adminGet("/access/applications?limit=50", applicationPageSchema);
+export const getInviteCodes = () => adminGet("/access/codes?limit=50", inviteCodePageSchema);

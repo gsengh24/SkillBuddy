@@ -257,3 +257,57 @@ def safety_email(
         text=_SAFETY_TEXT.format(headline=headline, body=body, appeal=appeal_text),
         html=_SAFETY_HTML.format(headline=escape(headline), body=escape(body), appeal=appeal_html),
     )
+
+
+_INVITE_TEXT = """You're invited to join {app}
+
+Your application was approved. Sign in with this email address to create your account.
+{link}
+If you're asked for an invite code, use: {code}
+It works once, until {until}.
+
+If you didn't apply to join {app}, you can ignore this email.
+"""
+
+_INVITE_HTML = """<!doctype html>
+<html lang="en">
+  <body
+    style="margin:0;padding:24px;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a"
+  >
+    <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:8px;padding:24px">
+      <p style="margin:0 0 16px;font-size:18px;font-weight:700">You're invited to join {app}</p>
+      <p style="margin:0 0 16px">
+        Your application was approved. Sign in with this email address to create your account.
+      </p>
+      {link}
+      <p style="margin:0 0 8px">If you're asked for an invite code, use:</p>
+      <p style="margin:0 0 16px;font-size:22px;font-weight:700;letter-spacing:2px">{code}</p>
+      <p style="margin:0 0 16px">It works once, until {until}.</p>
+      <p style="margin:0;color:#475569;font-size:14px">
+        If you didn't apply to join {app}, you can ignore this email.
+      </p>
+    </div>
+  </body>
+</html>
+"""
+
+
+def invite_email(
+    settings: Settings, to: str, code: str, until: str, login_url: str | None
+) -> EmailMessage:
+    """An approved application (A5): sign in with this address; the one-use code as backup."""
+    link_text = f"\n{login_url}\n" if login_url else ""
+    link_html = (
+        f'<p style="margin:0 0 16px"><a href="{escape(login_url)}" style="color:#166534">'
+        "Sign in</a></p>"
+        if login_url
+        else ""
+    )
+    return EmailMessage(
+        to=to,
+        subject=f"You're invited to join {settings.app_name}",
+        text=_INVITE_TEXT.format(app=settings.app_name, link=link_text, code=code, until=until),
+        html=_INVITE_HTML.format(
+            app=escape(settings.app_name), link=link_html, code=escape(code), until=escape(until)
+        ),
+    )

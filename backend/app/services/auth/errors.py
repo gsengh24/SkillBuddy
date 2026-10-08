@@ -107,3 +107,32 @@ class CannotPauseError(ConflictError):
 class NotPausedError(ConflictError):
     code = "not_paused"
     default_message = "Your account isn't paused."
+
+
+# --- Signup and access (A5): only new accounts; existing users always sign in -------------
+
+
+class SignupsClosedError(AppError):
+    status_code = HTTPStatus.FORBIDDEN
+    code = "signups_closed"
+    default_message = (
+        "We're not taking new sign-ups right now. If you already have an account, sign in with "
+        "the same email address."
+    )
+
+
+class InviteRequiredError(AppError):
+    status_code = HTTPStatus.FORBIDDEN
+    code = "invite_required"
+    default_message = "Joining is by invite right now. Enter an invite code, or apply to join."
+
+
+class InvalidInviteCodeError(AppError):
+    status_code = HTTPStatus.FORBIDDEN
+    code = "invalid_invite_code"
+    default_message = "That invite code doesn't work. It may have expired or been used up."
+
+
+class ApplicationsClosedError(ConflictError):
+    code = "applications_closed"
+    default_message = "Applications are only open while joining is by invite."

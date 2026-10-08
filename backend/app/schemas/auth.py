@@ -8,7 +8,15 @@ from typing import Annotated, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from app.models import EMAIL_MAX_LENGTH, User, UserSession, UserStatus
+from app.models import (
+    EMAIL_MAX_LENGTH,
+    ApplicationSource,
+    SignupMode,
+    User,
+    UserSession,
+    UserStatus,
+)
+from app.models.signup import INVITE_CODE_MAX_LENGTH
 from app.services.auth.devices import describe_device
 
 # Deliberately permissive: the real check is that the code arrives in that inbox.
@@ -21,6 +29,16 @@ Email = Annotated[
     ),
 ]
 _REQUEST = ConfigDict(extra="forbid")
+InviteCode = Annotated[
+    str | None,
+    Field(
+        max_length=INVITE_CODE_MAX_LENGTH,
+        description=(
+            "Only when signups are invite only and this creates an account (A5); ignored "
+            "otherwise. Not needed when the address's application was approved."
+        ),
+    ),
+]
 
 
 class OtpRequestIn(BaseModel):
@@ -52,6 +70,7 @@ class OtpVerifyIn(BaseModel):
     accept_terms: bool = Field(
         default=False, description="Required when creating an account: the user accepts the terms."
     )
+    invite_code: InviteCode = None
 
 
 class UserOut(BaseModel):
@@ -103,6 +122,13 @@ class AuthMethodsOut(BaseModel):
     google_domains: list[str] = Field(
         description="Email domains Google sign-in accepts (empty when Google is off)."
     )
+    signup_mode: SignupMode = Field(
+        default=SignupMode.OPEN,
+        description=(
+            "How new accounts are made (A5): `open`; `invite_only` (an invite code or an "
+            "approved application); `closed`. Existing users can always sign in."
+        ),
+    )
 
 
 # A path on this site, never another origin: "/profile" yes, "//evil.example" or "https://..." no.
@@ -125,6 +151,7 @@ class GoogleStartIn(BaseModel):
         pattern=NEXT_PATH_PATTERN,
         description="Path on this site to return to after signing in (default /home).",
     )
+    invite_code: InviteCode = None
 
 
 class GoogleStartOut(BaseModel):
@@ -153,3 +180,18 @@ class SessionOut(BaseModel):
 
 class SessionList(BaseModel):
     items: list[SessionOut] = Field(description="Most recently used first.")
+
+
+class ApplicationIn(BaseModel):
+    """Ask to join while signups are invite only (A5)."""
+
+    model_config = _REQUEST
+
+    email: Email
+    source: ApplicationSource = Field(description="How they heard of the service.")
+
+
+class ApplicationReceivedOut(BaseModel):
+    """Identical for every address, so it reveals nothing about who has applied."""
+
+    status: Literal["received"] = "received"

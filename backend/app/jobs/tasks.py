@@ -17,7 +17,7 @@ from app.ai.gateway import open_gateway
 from app.core.security import mask_email
 from app.jobs.queue import enqueue
 from app.jobs.registry import JobContext, JobGroup, JobRegistry, JobSpec
-from app.models import EmailPurpose, OtpCode, User
+from app.models import EmailPurpose, InviteCode, OtpCode, SignupApplication, User
 from app.services import appeals
 from app.services.auth.retention import hard_delete_due_accounts, purge_expired_auth_data
 from app.services.chat import purge_old_messages
@@ -25,7 +25,7 @@ from app.services.data_exports import build_export
 from app.services.data_exports import purge as purge_data_exports
 from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
-from app.services.email.templates import login_code_email, safety_email
+from app.services.email.templates import invite_email, login_code_email, safety_email
 from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
 from app.services.matching.engine import run_match_request
@@ -261,6 +261,49 @@ async def _send_safety_notice(ctx: JobContext) -> None:
         logger.info("safety_notice_sent", extra={"kind": kind, "email": mask_email(user.email)})
 
 
+async def _send_invite(ctx: JobContext) -> None:
+    """Email an approved application its invite (A5). Skipped, not failed, when the code
+    no longer works or only the login-code reserve is left: the approval alone still lets
+    the address create an account."""
+    async with ctx.session_factory() as db:
+        found = (
+            await db.execute(
+                select(InviteCode, SignupApplication.email)
+                .join(SignupApplication, SignupApplication.id == InviteCode.application_id)
+                .where(InviteCode.id == uuid.UUID(ctx.payload["invite_code_id"]))
+            )
+        ).first()
+        if found is None:
+            return
+        code, email = found
+        if (
+            code.revoked_at is not None
+            or code.uses >= code.max_uses
+            or (code.expires_at is not None and code.expires_at <= datetime.now(UTC))
+        ):
+            return
+        if not await may_send(db, ctx.settings, EmailPurpose.INVITE):
+            logger.warning("invite_skipped", extra={"reason": "email_quota_reserve"})
+            return
+        until = f"{code.expires_at:%d %B %Y}" if code.expires_at else "it is used"
+        login_url = (
+            f"{ctx.settings.web_app_url.rstrip('/')}/login" if ctx.settings.web_app_url else None
+        )
+        sender = build_email_sender(ctx.settings)
+        message_id = await sender.send(
+            invite_email(ctx.settings, email, code.code, until, login_url)
+        )
+        await record_sent(
+            db,
+            ctx.settings,
+            purpose=EmailPurpose.INVITE,
+            recipient=email,
+            provider=sender.provider,
+            message_id=message_id,
+        )
+        logger.info("invite_sent", extra={"email": mask_email(email)})
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -376,6 +419,13 @@ SEND_SAFETY_NOTICE = JobSpec(
     max_attempts=3,
     timeout_seconds=30,
 )
+SEND_INVITE = JobSpec(
+    kind="send_invite",
+    handler=_send_invite,
+    priority=50,
+    max_attempts=3,
+    timeout_seconds=30,
+)
 PURGE_DATA_EXPORTS = JobSpec(
     kind="purge_data_exports", handler=_purge_data_exports, priority=200, timeout_seconds=240
 )
@@ -402,6 +452,7 @@ ALL_JOBS = (
     BUILD_DATA_EXPORT,
     PURGE_DATA_EXPORTS,
     SEND_SAFETY_NOTICE,
+    SEND_INVITE,
 )
 
 

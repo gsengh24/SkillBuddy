@@ -216,3 +216,46 @@ export const healthSchema = z.object({
   checked_at: z.string(),
 });
 export type Health = z.infer<typeof healthSchema>;
+
+export const signupModeSchema = z.enum(["open", "invite_only", "closed"]);
+export type SignupMode = z.infer<typeof signupModeSchema>;
+
+export const accessSchema = z.object({
+  mode: signupModeSchema,
+  waitlist: z.number(),
+  allowed_domains: z.array(z.string()),
+  blocked_domains: z.array(z.string()),
+});
+export type Access = z.infer<typeof accessSchema>;
+
+export const applicationSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  source: z.string(),
+  created_at: z.string(),
+});
+export type Application = z.infer<typeof applicationSchema>;
+export const applicationPageSchema = z.object({
+  items: z.array(applicationSchema),
+  next_cursor: z.string().nullable(),
+});
+
+export const inviteCodeSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  uses: z.number(),
+  max_uses: z.number(),
+  expires_at: z.string().nullable(),
+  revoked_at: z.string().nullable(),
+  created_at: z.string(),
+  created_by: z.string().nullable(),
+  status: z.enum(["active", "used_up", "expired", "revoked"]),
+});
+export type InviteCode = z.infer<typeof inviteCodeSchema>;
+export const inviteCodePageSchema = z.object({
+  items: z.array(inviteCodeSchema),
+  next_cursor: z.string().nullable(),
+});
+
+export const invitedSchema = z.object({ invited: z.number() });
+export const domainSchema = z.object({ domain: z.string() });

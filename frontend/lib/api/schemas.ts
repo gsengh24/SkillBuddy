@@ -148,10 +148,13 @@ export const authMethodsSchema = z.object({
   email_code: z.boolean(),
   google: z.boolean(),
   google_domains: z.array(z.string()),
+  signup_mode: z.enum(["open", "invite_only", "closed"]).default("open"),
 });
 export type AuthMethods = z.infer<typeof authMethodsSchema>;
 
 export const googleStartSchema = z.object({ authorization_url: z.string().url() });
+
+export const applicationReceivedSchema = z.object({ status: z.literal("received") });
 
 export const matchRequestSchema = z.object({
   id: z.string(),

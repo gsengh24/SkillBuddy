@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ApplyForm } from "@/components/auth/apply-form";
 import { LoginForm } from "@/components/auth/login-form";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/ds/logo";
@@ -28,6 +29,7 @@ export default async function LoginPage({
   const methods = await getAuthMethods();
   // Google sign-in sends people back here with a stable error code (ADR 0011).
   const initialError = messageForCode(typeof error === "string" ? error : undefined);
+  const inviteOnly = methods.signup_mode === "invite_only";
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center gap-6 px-4 py-10">
@@ -39,8 +41,14 @@ export default async function LoginPage({
           nextPath={nextPath}
           google={methods.google ? { domains: methods.google_domains } : undefined}
           initialError={initialError}
+          inviteOnly={inviteOnly}
         />
       </Card>
+      {inviteOnly ? (
+        <Card className="p-6 sm:p-8">
+          <ApplyForm />
+        </Card>
+      ) : null}
       <TextLink href="/" tone="muted" className="text-small self-start">
         Back to {brand.name}
       </TextLink>
