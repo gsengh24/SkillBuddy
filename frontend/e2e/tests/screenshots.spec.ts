@@ -86,3 +86,30 @@ test("match, intro and chat screens, at 390 and 1280px", async ({ page }) => {
     await shoot(page, `screens-${name}`);
   }
 });
+
+test("the landing page and its reference, at 390 and 1280px", async ({ page }) => {
+  // Sections fade up as they scroll in; a full-page screenshot never scrolls, so show
+  // everything at once, as reduced motion does.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const { name, width, height } of WIDTHS) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await shoot(page, `landing-${name}`);
+    if (existsSync("/design/reference-landing.html")) {
+      await page.goto("file:///design/reference-landing.html");
+      await shoot(page, `reference-landing-${name}`);
+    }
+  }
+});
+
+test("the privacy and terms pages, at 390 and 1280px", async ({ page }) => {
+  for (const { name, width, height } of WIDTHS) {
+    await page.setViewportSize({ width, height });
+    for (const path of ["privacy", "terms"]) {
+      await page.goto(`/${path}`);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("Cynergi");
+      await shoot(page, `${path}-${name}`);
+    }
+  }
+});
