@@ -1,6 +1,44 @@
 {
   "components": {
     "schemas": {
+      "AIOverviewOut": {
+        "properties": {
+          "evals": {
+            "$ref": "#/components/schemas/EvalsOut"
+          },
+          "fallbacks_today": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Fallbacks Today",
+            "type": "object"
+          },
+          "llm_enabled": {
+            "description": "The server kill switch (AI_LLM_ENABLED).",
+            "title": "Llm Enabled",
+            "type": "boolean"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderOut"
+            },
+            "title": "Providers",
+            "type": "array"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/QualityOut"
+          }
+        },
+        "required": [
+          "llm_enabled",
+          "providers",
+          "fallbacks_today",
+          "quality",
+          "evals"
+        ],
+        "title": "AIOverviewOut",
+        "type": "object"
+      },
       "AIStatusOut": {
         "description": "Today's AI usage, from the gateway's counters. No keys, prompts or user data.",
         "properties": {
@@ -991,6 +1029,33 @@
         "title": "ConnectionOut",
         "type": "object"
       },
+      "ContentRule": {
+        "enum": [
+          "profanity",
+          "links_in_bios",
+          "contact_details",
+          "repeated_intros",
+          "prompt_injection"
+        ],
+        "title": "ContentRule",
+        "type": "string"
+      },
+      "ContentRulesOut": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleStateOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rules"
+        ],
+        "title": "ContentRulesOut",
+        "type": "object"
+      },
       "DataExportList": {
         "properties": {
           "items": {
@@ -1290,6 +1355,56 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "EvalsOut": {
+        "properties": {
+          "connected": {
+            "description": "False: the evaluation set isn't available to the API.",
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "labelled": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labelled"
+          },
+          "latest_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Score"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "connected",
+          "labelled",
+          "total",
+          "latest_score"
+        ],
+        "title": "EvalsOut",
+        "type": "object"
+      },
       "ExperienceLevel": {
         "enum": [
           "just_starting",
@@ -1373,6 +1488,133 @@
         ],
         "title": "FeaturesOut",
         "type": "object"
+      },
+      "FlagDecisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "keep",
+              "remove"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "reason"
+        ],
+        "title": "FlagDecisionIn",
+        "type": "object"
+      },
+      "FlagOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "flagged_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The text as it is now (plain text); null if the item no longer exists.",
+            "title": "Flagged Text"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "item_type": {
+            "$ref": "#/components/schemas/FlaggedItem"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/ContentRule"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rule",
+          "item_type",
+          "item_id",
+          "user_id",
+          "email",
+          "flagged_text",
+          "created_at"
+        ],
+        "title": "FlagOut",
+        "type": "object"
+      },
+      "FlagPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FlagOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "FlagPage",
+        "type": "object"
+      },
+      "FlaggedItem": {
+        "enum": [
+          "request",
+          "profile",
+          "intro"
+        ],
+        "title": "FlaggedItem",
+        "type": "string"
       },
       "FunnelStep": {
         "properties": {
@@ -2837,7 +3079,8 @@
               "intro_received",
               "intro_accepted",
               "matches_ready",
-              "report_reviewed"
+              "report_reviewed",
+              "content_removed"
             ],
             "title": "Kind",
             "type": "string"
@@ -2865,6 +3108,18 @@
               }
             ],
             "title": "Request Id"
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For `content_removed`: the content rule the text broke (A7).",
+            "title": "Rule"
           }
         },
         "required": [
@@ -3985,6 +4240,102 @@
         "title": "ProfileVisibility",
         "type": "string"
       },
+      "ProviderOut": {
+        "properties": {
+          "calls_24h": {
+            "title": "Calls 24H",
+            "type": "integer"
+          },
+          "cost_today": {
+            "title": "Cost Today",
+            "type": "integer"
+          },
+          "cost_unit": {
+            "title": "Cost Unit",
+            "type": "string"
+          },
+          "daily_budget": {
+            "title": "Daily Budget",
+            "type": "integer"
+          },
+          "error_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Failed calls / all calls, last 24 hours.",
+            "title": "Error Rate"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          },
+          "p50_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Median call time, last 24 hours.",
+            "title": "P50 Ms"
+          },
+          "p95_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Ms"
+          },
+          "role": {
+            "enum": [
+              "primary",
+              "fallback"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "degraded",
+              "idle",
+              "off"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "role",
+          "on",
+          "status",
+          "p50_ms",
+          "p95_ms",
+          "calls_24h",
+          "error_rate",
+          "cost_today",
+          "cost_unit",
+          "daily_budget"
+        ],
+        "title": "ProviderOut",
+        "type": "object"
+      },
       "ProviderStatusOut": {
         "properties": {
           "calls": {
@@ -4031,6 +4382,89 @@
           "probes"
         ],
         "title": "ProviderStatusOut",
+        "type": "object"
+      },
+      "ProviderSwitchIn": {
+        "additionalProperties": false,
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          },
+          "provider": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "on",
+          "reason"
+        ],
+        "title": "ProviderSwitchIn",
+        "type": "object"
+      },
+      "QualityOut": {
+        "properties": {
+          "accept_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accept Rate"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "ignore_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Intros that expired unanswered.",
+            "title": "Ignore Rate"
+          },
+          "intros_sent": {
+            "title": "Intros Sent",
+            "type": "integer"
+          },
+          "report_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Rate"
+          }
+        },
+        "required": [
+          "days",
+          "intros_sent",
+          "accept_rate",
+          "ignore_rate",
+          "report_rate"
+        ],
+        "title": "QualityOut",
         "type": "object"
       },
       "Queue": {
@@ -4502,6 +4936,49 @@
         "title": "RequestStatus",
         "type": "string"
       },
+      "RerunIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "reason"
+        ],
+        "title": "RerunIn",
+        "type": "object"
+      },
+      "RerunQueuedOut": {
+        "properties": {
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "queued",
+            "default": "queued",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "title": "RerunQueuedOut",
+        "type": "object"
+      },
       "ResolveIn": {
         "additionalProperties": false,
         "properties": {
@@ -4514,6 +4991,44 @@
           }
         },
         "title": "ResolveIn",
+        "type": "object"
+      },
+      "RuleIn": {
+        "additionalProperties": false,
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "reason"
+        ],
+        "title": "RuleIn",
+        "type": "object"
+      },
+      "RuleStateOut": {
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/ContentRule"
+          },
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "on"
+        ],
+        "title": "RuleStateOut",
         "type": "object"
       },
       "ServerSettingsOut": {
@@ -6336,6 +6851,256 @@
         ]
       }
     },
+    "/api/v1/admin/ai": {
+      "get": {
+        "operationId": "get_ai_api_v1_admin_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIOverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "AI providers, quality numbers and the evaluation set",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/ai/probe": {
+      "post": {
+        "description": "The same background test as the moderation AI page (PR 66): one short fixed prompt to\neach provider on its own. Limited to AI_PROBES_PER_DAY per admin.",
+        "operationId": "probe_api_v1_admin_ai_probe_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeQueued"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Test the AI providers (fixed prompt, no user data)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/ai/providers": {
+      "post": {
+        "description": "An off provider is skipped; the next one, or the rule-based fallback, answers.",
+        "operationId": "switch_provider_api_v1_admin_ai_providers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderSwitchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Switch an AI provider on or off",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/ai/rerun": {
+      "post": {
+        "description": "Their newest open request is matched again in the background. 409 ``no_open_request``\nor ``request_has_intros``. At most 10 an hour per admin.",
+        "operationId": "rerun_api_v1_admin_ai_rerun_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RerunIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RerunQueuedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Re-run matching for one person",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/audit": {
       "get": {
         "description": "Entries can't be edited or deleted (the database refuses).",
@@ -6465,6 +7230,281 @@
           }
         },
         "summary": "The audit log, newest first",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/content/flags": {
+      "get": {
+        "operationId": "list_flags_api_v1_admin_content_flags_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Flagged text waiting for a decision, oldest first",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/content/flags/{flag_id}/decide": {
+      "post": {
+        "description": "Remove clears that text (an empty bio, a closed request, an intro without a note) and\nsends the person an in-app notice naming the rule. 409 ``flag_already_decided``.",
+        "operationId": "decide_flag_api_v1_admin_content_flags__flag_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "flag_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Flag Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlagDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Keep the text, or remove it",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/content/rules": {
+      "get": {
+        "operationId": "get_rules_api_v1_admin_content_rules_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentRulesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Automatic content rules and whether each is on",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/content/rules/{rule}": {
+      "post": {
+        "description": "Rules only flag text for this queue; they never block or change what users see.",
+        "operationId": "set_rule_api_v1_admin_content_rules__rule__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ContentRule"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Turn a content rule on or off",
         "tags": [
           "admin"
         ]
