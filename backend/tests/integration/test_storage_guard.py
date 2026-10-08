@@ -51,7 +51,9 @@ async def test_storage_endpoint_requires_the_admin_token(
         missing, _ = await _get_report(client, None)
         wrong, _ = await _get_report(client, "x" * 40)
 
-    assert missing == wrong == 403
+    # No token and no session is anonymous (ADR 0015); a wrong token is refused.
+    assert missing == 401
+    assert wrong == 403
 
 
 async def test_storage_report_against_the_free_limit(

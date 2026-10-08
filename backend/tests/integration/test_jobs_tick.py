@@ -74,10 +74,14 @@ async def test_tick_rejects_calls_without_the_shared_secret(
         wrong = await _post_tick(client, TOKEN[:-1] + "y")
         admin_token = await client.post(TICK, headers={"X-Admin-Token": TOKEN})
 
-    for status, body in (missing, empty, wrong):
+    # No tick header and no session is anonymous (ADR 0015).
+    assert missing[0] == 401
+    assert missing[1]["error"]["code"] == "authentication_required"
+    for status, body in (empty, wrong):
         assert status == 403
         assert body["error"]["code"] == "permission_denied"
-    assert admin_token.status_code == 403  # the admin header is not the tick secret
+    # The admin header is not the tick secret: without the tick header it is anonymous.
+    assert admin_token.status_code == 401
     after = run_sql(migrated_database_url, "SELECT count(*) AS n FROM jobs")
     assert after == before  # nothing was enqueued
 

@@ -191,7 +191,8 @@ async def test_admin_reports_need_the_token(
         right = await client.get("/api/v1/admin/reports", headers=ADMIN)
 
     assert off.status_code == 404
-    assert missing.status_code == 403
+    # No token and no session is anonymous (ADR 0015); a wrong token is refused.
+    assert missing.status_code == 401
     assert wrong.status_code == 403
     assert right.status_code == 200
 

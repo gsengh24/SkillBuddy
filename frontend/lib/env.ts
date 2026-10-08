@@ -44,3 +44,11 @@ export function isStyleGuideEnabled(): boolean {
   if (!env.success) return false;
   return env.data.NODE_ENV === "development" || env.data.VERCEL_ENV === "preview";
 }
+
+/** The environment badge in the admin portal's top bar. */
+export function deploymentLabel(): "Development" | "Preview" | "Production" {
+  const env = deploymentSchema.safeParse(process.env);
+  if (env.success && env.data.NODE_ENV === "development") return "Development";
+  if (env.success && env.data.VERCEL_ENV === "preview") return "Preview";
+  return "Production";
+}

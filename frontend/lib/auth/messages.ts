@@ -2,6 +2,16 @@ import { ApiError } from "@/lib/api/errors";
 
 /** Plain-language messages for the backend's stable error codes (ADR 0006). */
 const MESSAGES: Record<string, string> = {
+  not_admin: "This page is for the team that runs the service.",
+  admin_permission_denied: "Your admin role doesn't allow this.",
+  admin_two_step_required: "Enter the code from your authenticator app to continue.",
+  two_step_already_enabled: "Two-step login is already set up for this account.",
+  two_step_not_set_up: "Set up two-step login first.",
+  invalid_two_step_code: "That code didn't work. Check your authenticator app and try again.",
+  user_not_found: "No account uses that email. They need to sign up first.",
+  cannot_change_owner: "Owners are set on the server (ADMIN_OWNER_EMAILS), not here.",
+  admin_not_found: "That person isn't an admin.",
+  reason_required: "Give a reason of at least 10 characters.",
   data_export_recent:
     "You asked for your data recently. Check your email for the link, or try again tomorrow.",
   data_export_unavailable: "This download link has expired or isn't valid. Ask for a new one.",

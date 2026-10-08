@@ -1,9 +1,9 @@
-"""Operator-only endpoints, protected by ADMIN_API_TOKEN (sent as X-Admin-Token).
+"""Operator endpoints: ADMIN_API_TOKEN (sent as X-Admin-Token), or an admin (ADR 0015).
 
-Disabled (404) unless the token is configured. Every request is rate-limited per IP
-(ADMIN_REQUESTS_PER_MINUTE) before the token is checked, the token is compared in constant
-time, and the header is never logged. A proper admin role arrives with the Admin/Trust
-module.
+With the header, the token is checked: 404 when none is configured, 403 when wrong. Every
+request is rate-limited per IP (ADMIN_REQUESTS_PER_MINUTE) first, the token is compared in
+constant time, and the header is never logged. Without it, the caller must be an admin
+past the two-step code with the route's permission, like every other /admin route.
 """
 
 from __future__ import annotations
@@ -14,15 +14,16 @@ from typing import Annotated, Any, Final
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.admin_deps import operator_or_admin
 from app.api.deps import SettingsDep, StorageMonitorDep, require_json
-from app.core.errors import NotFoundError, PermissionDeniedError
-from app.core.security import constant_time_equals
+from app.core.config import Settings
 from app.db.session import get_db_session
 from app.models import ReportStatus
 from app.schemas.admin import StorageReport, TableSize
 from app.schemas.errors import ErrorResponse
 from app.schemas.reports import ReportOut, ReportPage, ResolveIn
 from app.services import reports
+from app.services.admin.permissions import Permission
 from app.services.auth.rate_limit import RateLimiter
 from app.services.storage import checked_at
 
@@ -38,26 +39,29 @@ async def limit_admin_requests(request: Request, settings: SettingsDep) -> None:
     await limiter.hit(f"admin:ip:{ip}", limit=settings.admin_requests_per_minute)
 
 
-async def require_admin_token(request: Request, settings: SettingsDep) -> None:
-    expected = settings.admin_api_token
-    if expected is None:
-        raise NotFoundError
-    supplied = request.headers.get(ADMIN_TOKEN_HEADER, "")
-    if not supplied or not constant_time_equals(supplied, expected.get_secret_value()):
-        raise PermissionDeniedError
+def _admin_token(settings: Settings) -> str | None:
+    return settings.admin_api_token.get_secret_value() if settings.admin_api_token else None
+
+
+def _operator(permission: Permission) -> Any:
+    return Depends(operator_or_admin(permission, ADMIN_TOKEN_HEADER, _admin_token))
 
 
 router = APIRouter(
     prefix="/admin",
     tags=["admin"],
-    dependencies=[Depends(limit_admin_requests), Depends(require_admin_token)],
+    dependencies=[Depends(limit_admin_requests)],
 )
 
 DbDep = Annotated[AsyncSession, Depends(get_db_session)]
 _404: dict[str, Any] = {"model": ErrorResponse, "description": "`report_not_found`."}
 
 
-@router.get("/storage", summary="Database size against the free-tier limit")
+@router.get(
+    "/storage",
+    summary="Database size against the free-tier limit",
+    dependencies=[_operator(Permission.VIEW_DASHBOARDS)],
+)
 async def storage_report(monitor: StorageMonitorDep, settings: SettingsDep) -> StorageReport:
     """Warns at 70% of the limit; at 90% sign-ups and non-essential writes are paused."""
     status = await monitor.status()
@@ -75,7 +79,11 @@ async def storage_report(monitor: StorageMonitorDep, settings: SettingsDep) -> S
     )
 
 
-@router.get("/reports", summary="Reports of chat messages, oldest first")
+@router.get(
+    "/reports",
+    summary="Reports of chat messages, oldest first",
+    dependencies=[_operator(Permission.READ_REPORTED_MESSAGES)],
+)
 async def list_reports(
     db: DbDep,
     status: Annotated[ReportStatus, Query()] = ReportStatus.OPEN,
@@ -91,7 +99,12 @@ async def list_reports(
     )
 
 
-@router.get("/reports/{report_id}", summary="One report", responses={404: _404})
+@router.get(
+    "/reports/{report_id}",
+    summary="One report",
+    responses={404: _404},
+    dependencies=[_operator(Permission.READ_REPORTED_MESSAGES)],
+)
 async def get_report(report_id: uuid.UUID, db: DbDep) -> ReportOut:
     report = await reports.get_report(db, report_id)
     statuses = await reports.reported_statuses(db, [report])
@@ -101,7 +114,7 @@ async def get_report(report_id: uuid.UUID, db: DbDep) -> ReportOut:
 @router.post(
     "/reports/{report_id}/resolve",
     summary="Mark a report resolved",
-    dependencies=[Depends(require_json)],
+    dependencies=[Depends(require_json), _operator(Permission.HANDLE_REPORTS)],
     responses={
         404: _404,
         409: {"model": ErrorResponse, "description": "`report_already_resolved`."},

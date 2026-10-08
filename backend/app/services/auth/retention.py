@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.security import keyed_hash
 from app.models import (
+    AdminSession,
     AuthEvent,
     AuthEventType,
     OAuthState,
@@ -40,6 +41,7 @@ class PurgeResult:
     sessions: int
     auth_events: int
     oauth_states: int = 0
+    admin_sessions: int = 0
 
 
 def _rowcount(result: object) -> int:
@@ -90,12 +92,20 @@ async def purge_expired_auth_data(
     events = await db.execute(delete(AuthEvent).where(AuthEvent.created_at < cutoff))
     # Unfinished Google sign-in attempts (ADR 0011); finished ones are deleted on use.
     states = await db.execute(delete(OAuthState).where(OAuthState.expires_at < now))
+    # Admin sessions (ADR 0015) also end after their maximum, whatever their idle expiry.
+    admin = await db.execute(
+        delete(AdminSession).where(
+            (AdminSession.expires_at < now)
+            | (AdminSession.created_at < now - timedelta(hours=settings.admin_session_max_hours))
+        )
+    )
     await db.commit()
     result = PurgeResult(
         otp_codes=_rowcount(codes),
         sessions=_rowcount(sessions),
         auth_events=_rowcount(events),
         oauth_states=_rowcount(states),
+        admin_sessions=_rowcount(admin),
     )
     logger.info(
         "auth_data_purged",
@@ -104,6 +114,7 @@ async def purge_expired_auth_data(
             "sessions": result.sessions,
             "auth_events": result.auth_events,
             "oauth_states": result.oauth_states,
+            "admin_sessions": result.admin_sessions,
         },
     )
     return result

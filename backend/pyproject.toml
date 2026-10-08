@@ -17,6 +17,8 @@ dependencies = [
     "httpx>=0.28",
     # Google sign-in: ID token signature and claim checks (ADR 0011).
     "pyjwt[crypto]>=2.10",
+    # Two-step login for admins: TOTP codes (ADR 0015).
+    "pyotp>=2.9",
 ]
 
 [dependency-groups]
