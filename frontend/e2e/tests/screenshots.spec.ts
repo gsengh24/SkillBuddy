@@ -58,6 +58,9 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
       page.getByText("“A design partner for a small budgeting app, on weekends.”"),
     ).toBeVisible();
     await shoot(page, `home-request-open-${name}`);
+    await page.goto("/spaces");
+    await expect(page.getByRole("heading", { name: "Pair spaces", level: 1 })).toBeVisible();
+    await shoot(page, `spaces-${name}`);
     if (existsSync(REFERENCE)) {
       await page.goto(`file://${REFERENCE}`);
       await shoot(page, `reference-home-${name}`);

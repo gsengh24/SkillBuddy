@@ -3,11 +3,10 @@
 import { useState, type FormEvent } from "react";
 
 import { ReportButton } from "@/components/safety/report-button";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ds/button";
+import { InlineError, Input, Textarea } from "@/components/ds/fields";
+import { Panel, TopicChip } from "@/components/ds/surfaces";
 import { cx } from "@/components/ui/cx";
-import { Tag } from "@/components/ui/tag";
-import { TextArea, TextField } from "@/components/ui/text-field";
 import { browserApi } from "@/lib/api/browser";
 import {
   goalSchema,
@@ -20,7 +19,6 @@ import {
   type Space,
 } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
-import { personHue } from "@/lib/design/color";
 
 // The API's limits (GOAL_TITLE_MAX_LENGTH, SKILL_NAME_MAX_LENGTH, LOG_NOTE_MAX_LENGTH).
 const TITLE_MAX = 120;
@@ -28,16 +26,15 @@ const SKILL_MAX = 60;
 const NOTE_MAX = 500;
 
 const SELECT = cx(
-  "border-muted text-body text-ink min-h-11 w-full rounded-none border-0 border-b bg-transparent",
-  "hover:border-ink focus:border-green-base",
+  "rounded-input border-muted-2 bg-bg text-ink min-h-11 w-full border px-3 text-[16px] sm:text-body",
+  "focus:border-green",
 );
 
+/** Section headings in the display face, at the shared display tracking. */
+const SECTION_HEADING = "font-display tracking-display text-[20px] leading-tight font-extrabold";
+
 function Alert({ message }: { message: string | null }) {
-  return message ? (
-    <p role="alert" className="text-small text-coral-ink font-semibold">
-      {message}
-    </p>
-  ) : null;
+  return message ? <InlineError announce>{message}</InlineError> : null;
 }
 
 function when(iso: string) {
@@ -179,10 +176,10 @@ export function SpaceView({
   return (
     <div className="flex flex-col gap-6">
       <section aria-labelledby="goals-h" className="flex flex-col gap-3">
-        <h2 id="goals-h" className="text-section">
+        <h2 id="goals-h" className={SECTION_HEADING}>
           Shared goals
         </h2>
-        <Card className="flex flex-col gap-4">
+        <Panel className="flex flex-col gap-4">
           {ordered.length ? (
             <ul className="flex flex-col gap-2">
               {ordered.map((goal) => (
@@ -193,14 +190,14 @@ export function SpaceView({
                       checked={goal.status === "done"}
                       disabled={busy}
                       onChange={() => toggleGoal(goal)}
-                      className="accent-green-base size-4 shrink-0"
+                      className="accent-green size-4 shrink-0"
                     />
                     <span
                       className={goal.status === "done" ? "text-muted line-through" : "text-ink"}
                     >
                       {goal.title}
                       {goal.due_on ? (
-                        <span className="text-small text-muted"> · due {goal.due_on}</span>
+                        <span className="text-meta-lg text-muted"> · due {goal.due_on}</span>
                       ) : null}
                     </span>
                   </label>
@@ -214,7 +211,12 @@ export function SpaceView({
                         compact
                       />
                     ) : null}
-                    <Button tone="danger" disabled={busy} onClick={() => deleteGoal(goal)}>
+                    <Button
+                      variant="danger"
+                      size="compact"
+                      disabled={busy}
+                      onClick={() => deleteGoal(goal)}
+                    >
                       Delete
                     </Button>
                   </div>
@@ -225,40 +227,47 @@ export function SpaceView({
             <p className="text-muted">No goals yet. Add one you both want to reach.</p>
           )}
           <form onSubmit={addGoal} className="flex flex-col gap-3">
-            <TextField
+            <Input
               label="New goal"
               maxLength={TITLE_MAX}
               value={goalTitle}
               onChange={(event) => setGoalTitle(event.target.value)}
               placeholder="Ship the first version"
             />
-            <TextField
+            <Input
               label="Due date (optional)"
               type="date"
               value={goalDue}
               onChange={(event) => setGoalDue(event.target.value)}
             />
-            <Button type="submit" className="self-start" disabled={busy || !goalTitle.trim()}>
+            <Button
+              type="submit"
+              variant="outline"
+              className="self-start"
+              disabled={busy || !goalTitle.trim()}
+            >
               Add goal
             </Button>
           </form>
           <Alert message={errors.goals} />
-        </Card>
+        </Panel>
       </section>
 
       <section aria-labelledby="skills-h" className="flex flex-col gap-3">
-        <h2 id="skills-h" className="text-section">
+        <h2 id="skills-h" className={SECTION_HEADING}>
           Skills to grow
         </h2>
-        <Card className="flex flex-col gap-4">
+        <Panel className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <h3 className="text-ink font-bold">You</h3>
+            <h3 className="text-title text-ink">You</h3>
             {mySkills.length ? (
               <ul className="flex flex-wrap gap-2">
                 {mySkills.map((skill) => (
                   <li key={skill.id} className="flex items-center gap-1">
-                    <Tag hue={personHue(meId)}>{skill.name}</Tag>
+                    <TopicChip>{skill.name}</TopicChip>
                     <Button
+                      variant="ghost"
+                      size="compact"
                       disabled={busy}
                       onClick={() => removeSkill(skill)}
                       aria-label={`Remove ${skill.name}`}
@@ -269,54 +278,60 @@ export function SpaceView({
                 ))}
               </ul>
             ) : (
-              <p className="text-small text-muted">Add a skill you want to get better at.</p>
+              <p className="text-meta-lg text-muted">Add a skill you want to get better at.</p>
             )}
             <form onSubmit={addSkill} className="flex flex-col gap-3">
-              <TextField
+              <Input
                 label="A skill you want to grow"
                 maxLength={SKILL_MAX}
                 value={skillName}
                 onChange={(event) => setSkillName(event.target.value)}
                 placeholder="Public speaking"
               />
-              <Button type="submit" className="self-start" disabled={busy || !skillName.trim()}>
+              <Button
+                type="submit"
+                variant="outline"
+                className="self-start"
+                disabled={busy || !skillName.trim()}
+              >
                 Add skill
               </Button>
             </form>
           </div>
           <div className="flex flex-col gap-2">
-            <h3 className="text-ink font-bold">{otherName}</h3>
+            <h3 className="text-title text-ink">{otherName}</h3>
             {theirSkills.length ? (
               <ul className="flex flex-wrap gap-2">
                 {theirSkills.map((skill) => (
                   <li key={skill.id}>
-                    <Tag hue={personHue(otherId)}>{skill.name}</Tag>
+                    <TopicChip tone="soft">{skill.name}</TopicChip>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-small text-muted">No skills added yet.</p>
+              <p className="text-meta-lg text-muted">No skills added yet.</p>
             )}
           </div>
           <Alert message={errors.skills} />
-        </Card>
+        </Panel>
       </section>
 
       <section aria-labelledby="logs-h" className="flex flex-col gap-3">
-        <h2 id="logs-h" className="text-section">
+        <h2 id="logs-h" className={SECTION_HEADING}>
           Progress notes
         </h2>
-        <Card className="flex flex-col gap-4">
+        <Panel className="flex flex-col gap-4">
           <form onSubmit={addLog} className="flex flex-col gap-3">
-            <TextArea
+            <Textarea
               label="What did you do?"
               rows={2}
               maxLength={NOTE_MAX}
+              showCounter={false}
               value={note}
               onChange={(event) => setNote(event.target.value)}
             />
             <label className="flex flex-col gap-1">
-              <span className="text-small text-ink font-semibold">About (optional)</span>
+              <span className="text-meta-lg text-ink font-medium">About (optional)</span>
               <select
                 value={link}
                 onChange={(event) => setLink(event.target.value)}
@@ -338,10 +353,10 @@ export function SpaceView({
               </select>
             </label>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-small text-muted">
+              <p className="text-meta-lg text-muted">
                 Notes are deleted {space.retention_days} days after they&apos;re written.
               </p>
-              <Button type="submit" disabled={busy || !note.trim()}>
+              <Button type="submit" variant="outline" disabled={busy || !note.trim()}>
                 Add note
               </Button>
             </div>
@@ -358,7 +373,7 @@ export function SpaceView({
                     : undefined;
                 return (
                   <li key={log.id} className="border-line flex flex-col gap-1 border-b pb-3">
-                    <p className="text-small text-muted">
+                    <p className="text-meta-lg text-muted">
                       {mine ? "You" : otherName} ·{" "}
                       <time dateTime={log.created_at} suppressHydrationWarning>
                         {when(log.created_at)}
@@ -368,7 +383,8 @@ export function SpaceView({
                     <p className="text-ink break-words whitespace-pre-wrap">{log.note}</p>
                     {mine ? (
                       <Button
-                        tone="danger"
+                        variant="danger"
+                        size="compact"
                         className="self-start"
                         disabled={busy}
                         onClick={() => deleteLog(log)}
@@ -391,7 +407,7 @@ export function SpaceView({
           ) : (
             <p className="text-muted">No notes yet.</p>
           )}
-        </Card>
+        </Panel>
       </section>
     </div>
   );

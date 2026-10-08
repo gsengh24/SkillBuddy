@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/ds/avatar";
+import { ButtonLink } from "@/components/ds/button";
 import { withUser } from "@/lib/auth/with-user";
 import { getConnections } from "@/lib/social/server";
 
@@ -14,34 +14,43 @@ export default async function SpacesPage() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-h1">Pair spaces</h1>
-        <p className="text-muted">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-headline lg:text-headline-lg">Pair spaces</h1>
+        <p className="text-ink-2">
           A space with each person you&apos;re connected with: shared goals, skills you want to
           grow, and progress notes. Only the two of you can see it.
         </p>
       </header>
       {connections.items.length ? (
-        <ul className="flex flex-col gap-4">
-          {connections.items.map(({ id, person }) => (
-            <li key={id}>
-              <Card className="flex flex-col gap-3">
-                <h2 className="text-body text-ink font-bold break-words">
-                  {person.display_name ?? "Your connection"}
-                </h2>
-                {person.summary ? <p>{person.summary}</p> : null}
-                <ButtonLink href={`/spaces/${id}`} className="self-start">
+        <ul className="border-line border-t">
+          {connections.items.map(({ id, person }) => {
+            const name = person.display_name ?? "Your connection";
+            return (
+              <li key={id} className="border-line flex items-center gap-3 border-b py-3">
+                <Avatar userId={person.user_id} name={name} decorative />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-title truncate">{name}</h2>
+                  {person.summary ? (
+                    <p className="text-meta text-muted truncate">{person.summary}</p>
+                  ) : null}
+                </div>
+                <ButtonLink href={`/spaces/${id}`} variant="outline" size="compact">
                   Open pair space
                 </ButtonLink>
-              </Card>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       ) : (
-        <p className="text-muted">
-          No connections yet. When someone accepts your intro (or you accept theirs), you get a pair
-          space together.
-        </p>
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-muted">
+            No connections yet. When someone accepts your intro (or you accept theirs), you get a
+            pair space together.
+          </p>
+          <ButtonLink href="/home#new-request" variant="primary">
+            Find people
+          </ButtonLink>
+        </div>
       )}
     </div>
   );
