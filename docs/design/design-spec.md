@@ -31,7 +31,7 @@ Define once as CSS variables on `:root` (and mirror in the Tailwind or CSS confi
 | `--line-strong` | `#D9DBD6` | outer frames |
 | `--ink` | `#0A0A0A` | primary text, primary button |
 | `--ink-2` | `#4A4F4A` | body text |
-| `--muted` | `#6B6F6A` | muted text that must stay readable (4.5:1 on white) |
+| `--muted` | `#696D68` | muted text that must stay readable (4.5:1 on white and on the green tint) |
 | `--muted-2` | `#8A8F89` | second half of two-tone headlines and stat numerals, large bold text only (24px bold and up). NEVER for small text, times, counters, placeholders or labels: use `--muted` there |
 | `--faint` | `#B0B4AE` | section numerals 01, 02, 03: decorative, `aria-hidden`. If axe still flags them in Smoke, darken the colour until it passes, do not exempt them |
 | `--green` | `#0F4A34` | brand: links, outline buttons, eyebrows, CTA band |
@@ -86,7 +86,7 @@ Use contractions. Active voice. Button labels: verb first, 1 to 3 words, no full
 8. **Segmented control**: `--panel` track, white selected segment with 1px line. Used for All, Requests, Messages.
 9. **List row**: 34px leading icon or avatar, title 14px weight 600, one-line secondary text 12px, optional right-side badge or unread dot. Rows separated by 1px lines, not cards.
 10. **Avatar**: circle with initials, `--green` or `--ink` fill, white text. No photos.
-11. **Input and textarea**: white, 1px `--line`, radius 10px, 16px text on phone (prevents iOS zoom), green focus ring, character counter in mono.
+11. **Input and textarea**: white, 1px `--muted-2` border (the pale `--line` is too faint to be a field's only edge), radius 10px, 16px text on phone (prevents iOS zoom), green focus ring, character counter in mono.
 12. **Accordion** (FAQ): hairline rows, chevron rotates 180deg, height opens with `grid-template-rows` transition, one open at a time optional.
 13. **Skeleton**: `--panel` blocks with a slow opacity pulse, used by `loading.tsx` on every route.
 14. **Numbered feature row**: mono numeral in `--faint`, then the lead-word text.
@@ -154,7 +154,7 @@ Problems this version fixes: the right pane was a big empty space until somethin
 - Newest activity first. Times are mono, never wrap. Row title weight 600.
 
 **Rules**
-- Names and links stay hidden until the connection exists. Block, report, the "Staying safe" tips and "Open pair space" stay where they are, wording unchanged.
+- Names and links stay hidden until the connection exists. Block and Report live in a "…" menu in the chat header (accessible label "More actions for <name>", Escape closes it), the same on desktop and phone, wording unchanged. The "Staying safe" tips and "Open pair space" stay where they are.
 - Data comes from the existing endpoints only (`/auth/me`, `/me/profile`, `/requests`, `/intros?box=received`, `/connections`, `/messages/updates`, `/notifications/unread-count`), fetched in parallel. No new endpoint.
 - Empty state (no requests yet): the composer view is already the invitation; the list shows "No requests yet. Describe what you're building and we'll find people." Error state: one sentence and "Try again".
 
