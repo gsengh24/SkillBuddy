@@ -45,10 +45,11 @@ test("ask for matches from Discover and see the request finish", async ({ page, 
     expect((await tab.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   }
 
-  await page.getByRole("button", { name: /Build together/ }).click();
+  // On a phone the composer opens (and shows the intent chips) once the text has focus.
   await page
     .getByLabel("Describe it in your own words")
     .fill("A designer to build a small budgeting app with, on weekends.");
+  await page.getByRole("button", { name: /Build together/ }).click();
   await page.getByRole("button", { name: "Find matches" }).click();
 
   await expect(

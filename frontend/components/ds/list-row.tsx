@@ -59,7 +59,9 @@ export function ListRow({
           <span className="flex justify-between gap-2">
             <span className="text-title truncate">{title}</span>
             <span className="flex h-fit shrink-0 items-center gap-2">
-              {time ? <span className="text-mono text-muted font-mono">{time}</span> : null}
+              {time ? (
+                <span className="text-mono text-muted font-mono whitespace-nowrap">{time}</span>
+              ) : null}
               {badge}
               {unread ? (
                 <span className="bg-green inline-block size-2 shrink-0 rounded-full">

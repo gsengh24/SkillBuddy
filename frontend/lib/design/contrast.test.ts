@@ -1,11 +1,11 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import { contrastRatio, relativeLuminance } from "./color";
 import { COLOUR_PAIRS, MIN_RATIO } from "./pairs";
-import { badge, colors, greenSurfaces, HUE_NAMES, hues, neutrals } from "./tokens";
+import { badge, colors, displayTracking, greenSurfaces, HUE_NAMES, hues, neutrals } from "./tokens";
 
 describe("contrast", () => {
   it("matches known WCAG values", () => {
@@ -109,5 +109,40 @@ describe("tokens and CSS stay in sync", () => {
 
   it("declares no colour that is not a token", () => {
     expect([...themeColours.keys()].sort()).toEqual(Object.keys(expected).sort());
+  });
+});
+
+describe("display tracking", () => {
+  const css = readFileSync(resolve(process.cwd(), "app/globals.css"), "utf8");
+
+  it("is one token in tokens.ts and the CSS: -0.03em up to 52px, -0.04em from 56px", () => {
+    expect(displayTracking).toEqual({ upTo52px: "-0.03em", from56px: "-0.04em" });
+    expect(css).toContain(`--tracking-display: ${displayTracking.upTo52px};`);
+    expect(css).toContain(`--tracking-display-xl: ${displayTracking.from56px};`);
+  });
+
+  it("is what every display size uses", () => {
+    for (const size of ["hero", "headline", "headline-lg", "h1", "numeral"]) {
+      expect(css).toContain(`--text-${size}--letter-spacing: var(--tracking-display);`);
+    }
+    // 64px, the only display size from 56px up.
+    expect(css).toContain("--text-hero-lg--letter-spacing: var(--tracking-display-xl);");
+  });
+
+  it("is never tighter anywhere in the app (no -0.05em or -0.045em left)", () => {
+    const tooTight = /-0\.0(5|45)em/;
+    const hits: string[] = [];
+    function scan(dir: string) {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) scan(path);
+        else if (/\.(tsx?|css)$/.test(entry.name) && !entry.name.includes(".test.")) {
+          const text = readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+          if (tooTight.test(text)) hits.push(path);
+        }
+      }
+    }
+    for (const dir of ["app", "components", "lib"]) scan(resolve(process.cwd(), dir));
+    expect(hits).toEqual([]);
   });
 });

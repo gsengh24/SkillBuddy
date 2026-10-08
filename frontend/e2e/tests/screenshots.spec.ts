@@ -47,6 +47,12 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
     await page.goto("/home");
     await expect(page.getByRole("heading", { name: "Home", level: 1 })).toBeVisible();
     await shoot(page, `home-${name}`);
+    if (width < 1024) {
+      // Phones: the composer opens when its text gets focus.
+      await page.getByLabel("Describe it in your own words").focus();
+      await expect(page.getByRole("button", { name: /Build together/ })).toBeVisible();
+      await shoot(page, `home-composer-focused-${name}`);
+    }
     await page.goto(opened);
     await expect(
       page.getByText("“A design partner for a small budgeting app, on weekends.”"),

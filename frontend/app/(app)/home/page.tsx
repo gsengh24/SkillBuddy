@@ -10,7 +10,8 @@ import { ActivityList } from "@/components/home/activity-list";
 import { ChatDetail } from "@/components/home/chat-detail";
 import { Greeting } from "@/components/home/greeting";
 import { HomeComposer } from "@/components/home/home-composer";
-import { NotAvailable, SpacesBand, StartFirstRequest, SummaryStrip } from "@/components/home/parts";
+import { EscapeToComposer } from "@/components/home/escape-to-composer";
+import { NotAvailable, SpacesBand, SummaryStrip } from "@/components/home/parts";
 import { TryAgain } from "@/components/home/try-again";
 import { IntroCard } from "@/components/social/intro-card";
 import { TextLink } from "@/components/ui/text-link";
@@ -77,82 +78,66 @@ export default async function HomePage({ searchParams }: Props) {
 
   const lists = { requests: requests ?? [], intros: intros ?? [], connections: connections ?? [] };
   const rows = buildActivity(lists, new Date());
-  const firstRequestHref = profile ? "#new-request" : "/onboarding";
-
+  const composerHref = filter === "all" ? "/home" : `/home?filter=${filter}`;
   const detail = item ? await renderDetail(item, { user, ...lists, conversation }) : null;
+  const hasConnections = lists.connections.length > 0;
 
   return (
-    <div className="lg:grid lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-8">
-      <div
-        className={cx("lg:border-line flex flex-col lg:border-r lg:pr-8", item && "hidden lg:flex")}
-      >
-        <h1 className="font-display text-[24px] leading-none font-extrabold tracking-[-0.05em]">
-          Home
-        </h1>
-        <div className="pt-4 pb-4 lg:pt-0">
-          <Greeting className="text-mono text-muted font-mono uppercase" />
-          <TwoToneHeadline
-            as="h2"
-            lead="What are you building today?"
-            rest="Say it in a sentence."
-            size="greeting"
-            className="mt-1.5"
-          />
-        </div>
+    <div className="flex flex-col lg:grid lg:min-h-[calc(100dvh-8rem)] lg:grid-cols-[360px_minmax(0,1fr)]">
+      <h1 className="sr-only">Home</h1>
 
-        {profile ? (
-          <div id="new-request" className="scroll-mt-20">
-            <HomeComposer />
-          </div>
-        ) : (
-          <Panel tone="green" className="flex flex-col gap-2">
-            <TopicChip tone="soft" className="self-start">
-              Start here
-            </TopicChip>
-            <p className="text-title-lg">Tell us about you</p>
-            <p className="text-ink-2 max-w-md">
-              A few lines about what you do and what you&apos;re looking for. We use it to find
-              people worth meeting.
-            </p>
-            <ButtonLink href="/onboarding" variant="primary" className="self-start">
-              Create your profile
-            </ButtonLink>
-          </Panel>
+      <aside
+        aria-labelledby="inbox-h"
+        className={cx(
+          "lg:border-line order-2 flex flex-col pt-6 lg:order-1 lg:border-r lg:pt-0 lg:pr-6",
+          item && "hidden lg:flex",
         )}
-
-        <SummaryStrip counts={summaryCounts(lists)} />
-
+      >
+        <div className="mb-2.5 flex items-center justify-between gap-3">
+          <h2
+            id="inbox-h"
+            className="font-display tracking-display text-[18px] leading-none font-extrabold"
+          >
+            Inbox
+          </h2>
+          <span className="hidden lg:block">
+            <ButtonLink
+              href={`${composerHref}#new-request`}
+              variant="ghost"
+              size="compact"
+              className="border-line border"
+            >
+              New request
+            </ButtonLink>
+          </span>
+        </div>
         {failed ? (
           <TryAgain message="We couldn't load your activity just now." />
-        ) : rows.length === 0 && filter === "all" ? (
-          <StartFirstRequest href={firstRequestHref} className="lg:hidden" />
-        ) : null}
-        {failed ? null : (
+        ) : (
           <ActivityList
             rows={rows}
             initialFilter={filter}
             selectedKey={item ? `${item.type}-${item.id}` : null}
           />
         )}
-
-        {lists.connections.length ? <SpacesBand /> : null}
-
+        {hasConnections ? <SpacesBand className="lg:hidden" /> : null}
         <p className="text-meta-lg text-muted mt-6">
           You&apos;re signed in as <strong className="text-ink break-all">{user.email}</strong>.{" "}
           <TextLink href="/settings/account" tone="muted">
             Account settings
           </TextLink>
         </p>
-      </div>
+      </aside>
 
       <section
-        aria-label={item ? "Opened item" : "Details"}
-        className={cx("min-w-0", item ? "block" : "hidden lg:block")}
+        aria-label={item ? "Opened item" : "New request"}
+        className={cx("order-1 min-w-0 lg:order-2 lg:pl-8", item && "lg:pt-0")}
       >
         {item ? (
           <>
+            <EscapeToComposer href={composerHref} />
             <TextLink
-              href="/home"
+              href={composerHref}
               tone="muted"
               className="text-meta-lg mb-4 inline-flex min-h-11 items-center gap-1.5 lg:hidden"
             >
@@ -161,10 +146,43 @@ export default async function HomePage({ searchParams }: Props) {
             </TextLink>
             {detail}
           </>
-        ) : rows.length === 0 ? (
-          <StartFirstRequest href={firstRequestHref} />
         ) : (
-          <p className="text-muted py-6">Pick a request, an intro or a chat to open it here.</p>
+          <div id="new-request" className="mx-auto w-full max-w-[640px] scroll-mt-20 lg:pt-16">
+            <Greeting className="text-mono text-green font-mono uppercase" />
+            <TwoToneHeadline
+              as="h2"
+              lead="What are you building today?"
+              rest="Say it in a sentence."
+              size="greeting"
+              className="mt-2.5"
+            />
+            {profile ? (
+              <HomeComposer />
+            ) : (
+              <Panel tone="green" className="mt-4 flex flex-col gap-2 lg:mt-6">
+                <TopicChip tone="soft" className="self-start">
+                  Start here
+                </TopicChip>
+                <p className="text-title-lg">Tell us about you</p>
+                <p className="text-ink-2 max-w-md">
+                  A few lines about what you do and what you&apos;re looking for. We use it to find
+                  people worth meeting.
+                </p>
+                <ButtonLink href="/onboarding" variant="primary" className="self-start">
+                  Create your profile
+                </ButtonLink>
+              </Panel>
+            )}
+            <div
+              className={cx(
+                "mt-5 hidden gap-3 lg:grid",
+                hasConnections && "lg:grid-cols-[1.1fr_1fr]",
+              )}
+            >
+              <SummaryStrip counts={summaryCounts(lists)} />
+              {hasConnections ? <SpacesBand /> : null}
+            </div>
+          </div>
         )}
       </section>
     </div>
