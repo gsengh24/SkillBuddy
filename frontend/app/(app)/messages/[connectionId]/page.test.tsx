@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { apiRequest } from "@/lib/api/client";
@@ -54,7 +55,12 @@ describe("/messages/[connectionId]", () => {
       "href",
       "/spaces/conn-1",
     );
-    expect(screen.getByRole("button", { name: /Block/ })).toBeInTheDocument();
+    // Block and Report sit in the header's "⋯" menu.
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "More actions for Aarav R." }));
+    expect(screen.getByRole("button", { name: "Block" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Report" })).toBeInTheDocument();
   });
 
   it("is not found for a conversation you're not part of", async () => {

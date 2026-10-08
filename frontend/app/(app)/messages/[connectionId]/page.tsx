@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { Conversation } from "@/components/chat/conversation";
 import { Avatar } from "@/components/ds/avatar";
 import { ButtonLink } from "@/components/ds/button";
+import { MoreMenu } from "@/components/ds/more-menu";
 import { BlockButton } from "@/components/safety/block-button";
+import { ReportButton } from "@/components/safety/report-button";
 import { TextLink } from "@/components/ui/text-link";
 import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getConversation } from "@/lib/chat/server";
@@ -54,11 +56,19 @@ export default async function ConversationPage({
             <ButtonLink href={`/spaces/${connectionId}`} variant="outline" size="compact">
               Open pair space
             </ButtonLink>
-            <BlockButton
-              userId={connection.person.user_id}
-              name={name}
-              redirectTo="/home?filter=messages"
-            />
+            <MoreMenu label={`More actions for ${name}`}>
+              <ReportButton
+                kind="profile"
+                targetId={connection.person.user_id}
+                blockUserId={connection.person.user_id}
+                blockName={connection.person.display_name ?? "this person"}
+              />
+              <BlockButton
+                userId={connection.person.user_id}
+                name={name}
+                redirectTo="/home?filter=messages"
+              />
+            </MoreMenu>
           </div>
         </div>
       </header>
