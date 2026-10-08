@@ -11,6 +11,7 @@ export { InlineError, Input, Textarea, Toast } from "./fields";
 export * from "./icons";
 export { ListRow, RowTile } from "./list-row";
 export { Logo } from "./logo";
+export { MoreMenu } from "./more-menu";
 export { FadeUp, useInView, type InViewState } from "./motion";
 export { CtaBand, Footer, TopBar, TwoToneHeadline, type NavLink } from "./page-parts";
 export { PixelPattern } from "./pixel-pattern";

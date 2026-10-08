@@ -34,3 +34,19 @@ export async function signUp(page: Page, request: APIRequestContext, next = "/ho
   await page.getByRole("button", { name: "Sign in" }).click();
   return email;
 }
+
+/**
+ * Waits until one-off animations (fade-ups, the hero cells) have finished, so checks such as
+ * axe's colour contrast measure what people see, not a half-faded frame. Endless animations
+ * (the loading pulse) are not waited for.
+ */
+export async function settleAnimations(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  );
+}

@@ -31,8 +31,8 @@ Define once as CSS variables on `:root` (and mirror in the Tailwind or CSS confi
 | `--line-strong` | `#D9DBD6` | outer frames |
 | `--ink` | `#0A0A0A` | primary text, primary button |
 | `--ink-2` | `#4A4F4A` | body text |
-| `--muted` | `#6B6F6A` | muted text that must stay readable (4.5:1 on white) |
-| `--muted-2` | `#8A8F89` | second half of two-tone headlines and stat numerals, large bold text only (24px bold and up). NEVER for small text, times, counters, placeholders or labels: use `--muted` there |
+| `--muted` | `#696D68` | muted text that must stay readable: at least 4.5:1 on white, panel and green tint. (Was `#6B6F6A`, which is only 4.44:1 on green tint; owner-approved 2026-10-08.) |
+| `--muted-2` | `#8A8F89` | second half of two-tone headlines and stat numerals, large bold text only (24px bold and up), and the border of inputs and textareas (3:1). NEVER for small text, times, counters, placeholders or labels: use `--muted` there. On green tint the second half of a headline uses `--muted` (muted-2 is under 3:1 there). |
 | `--faint` | `#B0B4AE` | section numerals 01, 02, 03: decorative, `aria-hidden`. If axe still flags them in Smoke, darken the colour until it passes, do not exempt them |
 | `--green` | `#0F4A34` | brand: links, outline buttons, eyebrows, CTA band |
 | `--green-hover` | `#0B3828` | hover and pressed |
@@ -86,7 +86,7 @@ Use contractions. Active voice. Button labels: verb first, 1 to 3 words, no full
 8. **Segmented control**: `--panel` track, white selected segment with 1px line. Used for All, Requests, Messages.
 9. **List row**: 34px leading icon or avatar, title 14px weight 600, one-line secondary text 12px, optional right-side badge or unread dot. Rows separated by 1px lines, not cards.
 10. **Avatar**: circle with initials, `--green` or `--ink` fill, white text. No photos.
-11. **Input and textarea**: white, 1px `--line`, radius 10px, 16px text on phone (prevents iOS zoom), green focus ring, character counter in mono.
+11. **Input and textarea**: white, 1px `--muted-2` border (a field's only edge needs 3:1; `--line` is 1.26:1; owner-approved 2026-10-08), radius 10px, 16px text on phone (prevents iOS zoom), green focus ring, character counter in mono.
 12. **Accordion** (FAQ): hairline rows, chevron rotates 180deg, height opens with `grid-template-rows` transition, one open at a time optional.
 13. **Skeleton**: `--panel` blocks with a slow opacity pulse, used by `loading.tsx` on every route.
 14. **Numbered feature row**: mono numeral in `--faint`, then the lead-word text.
@@ -154,7 +154,8 @@ Problems this version fixes: the right pane was a big empty space until somethin
 - Newest activity first. Times are mono, never wrap. Row title weight 600.
 
 **Rules**
-- Names and links stay hidden until the connection exists. Block, report, the "Staying safe" tips and "Open pair space" stay where they are, wording unchanged.
+- Names and links stay hidden until the connection exists. The "Staying safe" tips and "Open pair space" stay where they are, wording unchanged.
+- Chat header (Home's chat pane and `/messages/[id]`, desktop and phone): avatar, name, "Open pair space", and a "⋯" button (accessible name "More actions for {name}") that opens a small panel with **Report** and **Block**, the same flows and wording as before. Escape closes it and returns focus to the button (owner decision 2026-10-08). Report under each message stays where it is.
 - Data comes from the existing endpoints only (`/auth/me`, `/me/profile`, `/requests`, `/intros?box=received`, `/connections`, `/messages/updates`, `/notifications/unread-count`), fetched in parallel. No new endpoint.
 - Empty state (no requests yet): the composer view is already the invitation; the list shows "No requests yet. Describe what you're building and we'll find people." Error state: one sentence and "Try again".
 

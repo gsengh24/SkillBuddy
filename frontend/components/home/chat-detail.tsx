@@ -1,6 +1,7 @@
 import { Conversation } from "@/components/chat/conversation";
 import { Avatar } from "@/components/ds/avatar";
 import { ButtonLink } from "@/components/ds/button";
+import { MoreMenu } from "@/components/ds/more-menu";
 import { BlockButton } from "@/components/safety/block-button";
 import { ReportButton } from "@/components/safety/report-button";
 import { Tag } from "@/components/ui/tag";
@@ -12,8 +13,8 @@ import { personHue } from "@/lib/design/color";
 export const AFTER_BLOCK = "/home?filter=messages";
 
 /**
- * A chat in Home's detail pane. The header has the person, "Open pair space", and block
- * and report exactly as the old Messages card had them (same components, same wording).
+ * A chat in Home's detail pane. The header has the person, "Open pair space" and a "⋯" menu
+ * with Report and Block (the same components and wording the old Messages card had).
  * What the old card showed about the person (summary, offers, links once connected)
  * follows, then the conversation itself, unchanged.
  */
@@ -41,6 +42,19 @@ export function ChatDetail({
         <ButtonLink href={`/spaces/${connection.id}`} variant="outline" size="compact">
           Open pair space
         </ButtonLink>
+        <MoreMenu label={`More actions for ${name}`}>
+          <ReportButton
+            kind="profile"
+            targetId={person.user_id}
+            blockUserId={person.user_id}
+            blockName={person.display_name ?? "this person"}
+          />
+          <BlockButton
+            userId={person.user_id}
+            name={person.display_name ?? "this person"}
+            redirectTo={AFTER_BLOCK}
+          />
+        </MoreMenu>
       </header>
 
       <div className="flex flex-col gap-3">
@@ -63,19 +77,6 @@ export function ChatDetail({
             ))}
           </ul>
         ) : null}
-        <div className="flex flex-wrap items-start gap-3">
-          <ReportButton
-            kind="profile"
-            targetId={person.user_id}
-            blockUserId={person.user_id}
-            blockName={person.display_name ?? "this person"}
-          />
-          <BlockButton
-            userId={person.user_id}
-            name={person.display_name ?? "this person"}
-            redirectTo={AFTER_BLOCK}
-          />
-        </div>
       </div>
 
       <Conversation
