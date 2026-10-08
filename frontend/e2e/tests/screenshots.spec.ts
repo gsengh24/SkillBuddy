@@ -102,3 +102,14 @@ test("the landing page and its reference, at 390 and 1280px", async ({ page }) =
     }
   }
 });
+
+test("the privacy and terms pages, at 390 and 1280px", async ({ page }) => {
+  for (const { name, width, height } of WIDTHS) {
+    await page.setViewportSize({ width, height });
+    for (const path of ["privacy", "terms"]) {
+      await page.goto(`/${path}`);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("Cynergi");
+      await shoot(page, `${path}-${name}`);
+    }
+  }
+});

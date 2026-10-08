@@ -9,9 +9,9 @@ export const legal = {
   /** Where people send privacy requests and complaints. PLACEHOLDER: replace before launch. */
   contactEmail: "privacy-contact@example.com",
   /** Shown as "Last updated" on both pages. */
-  updated: "5 October 2026",
+  updated: "8 October 2026",
   /** Keep equal to the API's TERMS_VERSION (recorded on each account at sign-up). */
-  version: "2026-10-05-draft",
+  version: "2026-10-08-draft",
 } as const;
 
 /**

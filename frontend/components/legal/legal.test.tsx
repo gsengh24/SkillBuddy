@@ -90,3 +90,27 @@ describe("EmailToggle", () => {
     expect(toggle).toBeChecked();
   });
 });
+
+describe("the product name on the legal pages", () => {
+  it.each([
+    ["privacy", PrivacyPage],
+    ["terms", TermsPage],
+  ])("the %s page says Cynergi and never the old name", (_name, Page) => {
+    const { container } = render(<Page />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("Cynergi");
+    expect(text).not.toMatch(/Skill ?Buddy|skill-buddy|skillbuddy/i);
+  });
+
+  it("keeps a table of contents that points at every section", () => {
+    for (const Page of [PrivacyPage, TermsPage]) {
+      const { container, unmount } = render(<Page />);
+      const toc = screen.getByRole("navigation", { name: "On this page" });
+      for (const link of toc.querySelectorAll("a")) {
+        const id = link.getAttribute("href")?.slice(1) ?? "";
+        expect(container.querySelector(`section#${id}`)).not.toBeNull();
+      }
+      unmount();
+    }
+  });
+});

@@ -1,55 +1,47 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
-import { DraftNotice } from "@/components/legal/draft-notice";
+import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { textLinkClasses } from "@/components/ui/text-link";
 import { brand } from "@/lib/brand";
 import { legal, retention } from "@/lib/legal";
 
 export const metadata: Metadata = { title: "Terms (draft)" };
 
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-  return (
-    <section id={id} aria-labelledby={`${id}-h`} className="flex scroll-mt-6 flex-col gap-2">
-      <h2 id={`${id}-h`} className="text-section">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
+const TOC = [
+  { id: "who", title: `Who can use ${brand.displayName}` },
+  { id: "service", title: `What the service does` },
+  { id: "conduct", title: `How to behave` },
+  { id: "blocking", title: `Blocking` },
+  { id: "reporting", title: `Reporting and moderation` },
+  { id: "ending", title: `Ending your account` },
+  { id: "changes", title: `Changes and contact` },
+];
 
 export default function TermsPage() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-12">
-      <h1 className="text-h1">{brand.name} Terms (draft)</h1>
-      <p className="text-small text-muted">
-        Last updated {legal.updated} (version {legal.version}).
-      </p>
-      <DraftNotice />
-
-      <Section id="who" title={`Who can use ${brand.name}`}>
+    <LegalPage title={`${brand.displayName} Terms (draft)`} toc={TOC}>
+      <LegalSection id="who" title={`Who can use ${brand.displayName}`}>
         <p>
           You must be 18 or older to use the platform. You confirm this with a tick box when you
           create your account; we do not verify it.
         </p>
-      </Section>
+      </LegalSection>
 
-      <Section id="service" title="What the service does">
+      <LegalSection id="service" title="What the service does">
         <p>
-          {brand.name} suggests people you might want to build, learn or talk with, and explains
-          why. Nobody is contacted unless both people agree to the introduction. Once you are
-          connected, you can chat and share a pair space (goals, skills to grow and progress notes).
-          Chat messages are deleted {retention.messageDays} days after they are sent, and progress
-          notes {retention.spaceDays} days after they are written.
+          {brand.displayName} suggests people you might want to build, learn or talk with, and
+          explains why. Nobody is contacted unless both people agree to the introduction. Once you
+          are connected, you can chat and share a pair space (goals, skills to grow and progress
+          notes). Chat messages are deleted {retention.messageDays} days after they are sent, and
+          progress notes {retention.spaceDays} days after they are written.
         </p>
-      </Section>
+      </LegalSection>
 
-      <Section id="conduct" title="How to behave">
+      <LegalSection id="conduct" title="How to behave">
         <p>
-          Be honest in what you write and respect the people you meet. Don&apos;t use {brand.name}{" "}
-          for anything unlawful, and in particular don&apos;t:
+          Be honest in what you write and respect the people you meet. Don&apos;t use{" "}
+          {brand.displayName} for anything unlawful, and in particular don&apos;t:
         </p>
         <ul className="flex list-disc flex-col gap-1 pl-5">
           <li>harass or bully anyone;</li>
@@ -59,18 +51,18 @@ export default function TermsPage() {
           <li>threaten anyone, or put anyone&apos;s safety at risk;</li>
           <li>use the service if you are under 18.</li>
         </ul>
-      </Section>
+      </LegalSection>
 
-      <Section id="blocking" title="Blocking">
+      <LegalSection id="blocking" title="Blocking">
         <p>
           You can block anyone you have matched with, had an intro with or connected with. After a
           block, neither of you can message the other, your chat closes for both of you, and you
           won&apos;t be suggested to each other. They aren&apos;t told. You can unblock in Settings,
           but the old chat stays closed: to talk again, one of you needs to send a new intro.
         </p>
-      </Section>
+      </LegalSection>
 
-      <Section id="reporting" title="Reporting and moderation">
+      <LegalSection id="reporting" title="Reporting and moderation">
         <p>
           You can report a message, an intro, a profile, or a goal or note in a pair space. Our
           moderator reviews reports, using only the copy kept with each report, never whole
@@ -82,16 +74,16 @@ export default function TermsPage() {
           </Link>
           .
         </p>
-      </Section>
+      </LegalSection>
 
-      <Section id="ending" title="Ending your account">
+      <LegalSection id="ending" title="Ending your account">
         <p>
           You can delete your account at any time from Account settings. It is permanently deleted{" "}
           {retention.deletionGraceDays} days after you ask.
         </p>
-      </Section>
+      </LegalSection>
 
-      <Section id="changes" title="Changes and contact">
+      <LegalSection id="changes" title="Changes and contact">
         <p>
           These terms will change before public launch. Questions:{" "}
           <a href={`mailto:${legal.contactEmail}`} className={textLinkClasses()}>
@@ -99,7 +91,7 @@ export default function TermsPage() {
           </a>
           .
         </p>
-      </Section>
+      </LegalSection>
 
       <p>
         See also the{" "}
@@ -108,6 +100,6 @@ export default function TermsPage() {
         </Link>
         .
       </p>
-    </main>
+    </LegalPage>
   );
 }
