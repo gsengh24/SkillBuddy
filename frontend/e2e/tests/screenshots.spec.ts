@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
@@ -16,6 +16,24 @@ const WIDTHS = [
   { name: "390", width: 390, height: 844 },
   { name: "1280", width: 1280, height: 900 },
 ];
+
+/*
+ * Every browser console warning and error, and every uncaught page error, on the pages
+ * captured here, written next to the screenshots (console.log in the artifact). It records
+ * only; it never fails the run. It is how the dev server's "1 Issue" badge gets identified.
+ */
+test.beforeEach(({ page }, testInfo) => {
+  mkdirSync(OUT, { recursive: true });
+  const log = (line: string) => appendFileSync(`${OUT}/console.log`, `${line}\n`);
+  page.on("console", (message) => {
+    if (message.type() === "error" || message.type() === "warning") {
+      log(`[${testInfo.title}] ${message.type()} on ${page.url()}: ${message.text()}`);
+    }
+  });
+  page.on("pageerror", (error) => {
+    log(`[${testInfo.title}] pageerror on ${page.url()}: ${error.message}`);
+  });
+});
 
 async function shoot(page: Page, name: string) {
   mkdirSync(OUT, { recursive: true });
