@@ -20,7 +20,7 @@ const WIDTHS = [
 /*
  * Every browser console warning and error, and every uncaught page error, on the pages
  * captured here, written next to the screenshots (console.log in the artifact). It records
- * only; it never fails the run. It is how the dev server's "1 Issue" badge gets identified.
+ * only; it never fails the run. A clean run leaves it empty.
  */
 test.beforeEach(({ page }, testInfo) => {
   mkdirSync(OUT, { recursive: true });
@@ -37,7 +37,10 @@ test.beforeEach(({ page }, testInfo) => {
 
 async function shoot(page: Page, name: string) {
   mkdirSync(OUT, { recursive: true });
-  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true });
+  // caret "initial": Playwright otherwise hides the text cursor by writing an inline
+  // caret-color style onto every input. When the dev server has not hydrated the page yet,
+  // React then sees a server/client attribute mismatch and shows the "1 Issue" badge.
+  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true, caret: "initial" });
 }
 
 test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
