@@ -38,6 +38,8 @@ def settings(
         admin_requests_per_minute=600,
         admin_two_step_attempts=20,
         ai_llm_enabled=False,
+        # The suspend and ban test signs the same person in several times.
+        otp_request_limit_per_email=10,
     )
 
 
