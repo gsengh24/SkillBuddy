@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { Button, ButtonLink } from "@/components/ds/button";
 import { InlineError, Textarea } from "@/components/ds/fields";
@@ -31,6 +31,20 @@ export function SendIntro({
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  const openRef = useRef<HTMLButtonElement>(null);
+  // Set by Cancel, so focus goes back to "Send intro" (not on first render).
+  const cancelled = useRef(false);
+
+  // Keyboard and screen-reader users land in the note when the form opens, and back on
+  // "Send intro" after Cancel.
+  useEffect(() => {
+    if (stage === "writing") noteRef.current?.focus();
+    else if (stage === "idle" && cancelled.current) {
+      cancelled.current = false;
+      openRef.current?.focus();
+    }
+  }, [stage]);
 
   if (match.status === "accepted") {
     return (
@@ -54,6 +68,7 @@ export function SendIntro({
   if (stage === "idle") {
     return (
       <Button
+        ref={openRef}
         type="button"
         variant="outline"
         onClick={() => setStage("writing")}
@@ -93,6 +108,7 @@ export function SendIntro({
       </p>
       <Textarea
         id={`${ids}-note`}
+        ref={noteRef}
         label="A short hello (optional)"
         hint={`${note.trim().length}/${NOTE_MAX} characters`}
         rows={3}
@@ -111,7 +127,15 @@ export function SendIntro({
         <Button type="submit" variant="primary" disabled={sending}>
           {sending ? "Sending…" : "Send intro"}
         </Button>
-        <Button type="button" variant="ghost" onClick={() => setStage("idle")} disabled={sending}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            cancelled.current = true;
+            setStage("idle");
+          }}
+          disabled={sending}
+        >
           Cancel
         </Button>
       </div>
