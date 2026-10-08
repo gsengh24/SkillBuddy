@@ -211,6 +211,10 @@
       },
       "AdminBannerOut": {
         "properties": {
+          "announcement": {
+            "title": "Announcement",
+            "type": "string"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -251,15 +255,11 @@
           "live": {
             "title": "Live",
             "type": "boolean"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
           }
         },
         "required": [
           "id",
-          "message",
+          "announcement",
           "kind",
           "created_at",
           "ends_at",
@@ -852,6 +852,12 @@
       "BannerIn": {
         "additionalProperties": false,
         "properties": {
+          "announcement": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Announcement",
+            "type": "string"
+          },
           "ends_at": {
             "anyOf": [
               {
@@ -868,12 +874,6 @@
           "kind": {
             "$ref": "#/components/schemas/BannerKind"
           },
-          "message": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Message",
-            "type": "string"
-          },
           "reason": {
             "maxLength": 500,
             "minLength": 10,
@@ -882,7 +882,7 @@
           }
         },
         "required": [
-          "message",
+          "announcement",
           "kind",
           "reason"
         ],
@@ -900,6 +900,11 @@
       },
       "BannerOut": {
         "properties": {
+          "announcement": {
+            "description": "Plain text, at most 160 characters.",
+            "title": "Announcement",
+            "type": "string"
+          },
           "ends_at": {
             "anyOf": [
               {
@@ -919,16 +924,11 @@
           },
           "kind": {
             "$ref": "#/components/schemas/BannerKind"
-          },
-          "message": {
-            "description": "Plain text, at most 160 characters.",
-            "title": "Message",
-            "type": "string"
           }
         },
         "required": [
           "id",
-          "message",
+          "announcement",
           "kind",
           "ends_at"
         ],
