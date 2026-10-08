@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { apiRequest } from "@/lib/api/client";
@@ -137,8 +138,12 @@ describe("Home", () => {
       "href",
       "/spaces/conn-1",
     );
-    expect(within(pane).getByRole("button", { name: /Block/ })).toBeInTheDocument();
-    expect(within(pane).getByRole("button", { name: /Report/ })).toBeInTheDocument();
+    // Block and Report sit in the header's "⋯" menu.
+    await userEvent
+      .setup()
+      .click(within(pane).getByRole("button", { name: "More actions for Aarav R." }));
+    expect(within(pane).getByRole("button", { name: "Block" })).toBeInTheDocument();
+    expect(within(pane).getByRole("button", { name: "Report" })).toBeInTheDocument();
     expect(new Set(calledPaths())).toEqual(
       new Set([
         ...LIST_CALLS,
