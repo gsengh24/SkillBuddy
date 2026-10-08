@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { InlineError } from "@/components/ds/fields";
+import { Button } from "@/components/ds/button";
 import { browserApi } from "@/lib/api/browser";
 import { probeQueuedSchema, type AIStatus } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
@@ -58,7 +58,7 @@ export function AIStatusView({ status }: { status: AIStatus }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <p className={status.enabled ? "text-ink" : "text-coral-ink font-semibold"}>
+      <p className={status.enabled ? "text-ink" : "text-danger font-medium"}>
         {status.enabled
           ? "AI is switched on."
           : "AI is switched off (AI_LLM_ENABLED=false): every answer uses the template."}{" "}
@@ -66,24 +66,27 @@ export function AIStatusView({ status }: { status: AIStatus }) {
       </p>
 
       <section aria-labelledby="providers-h" className="flex flex-col gap-3">
-        <h2 id="providers-h" className="text-section">
+        <h2
+          id="providers-h"
+          className="font-display tracking-display text-[20px] leading-tight font-extrabold"
+        >
           Providers, in fallback order
         </h2>
         {status.providers.length ? (
-          <ul className="flex flex-col gap-4">
+          <ul className="border-line border-t">
             {status.providers.map((provider) => (
               <li key={provider.name}>
-                <Card className="flex flex-col gap-1">
+                <div className="border-line flex flex-col gap-1 border-b py-3">
                   <p className="text-ink font-mono font-bold break-all">{provider.name}</p>
                   <p>Real calls today: {counts(provider.calls, OUTCOMES)}.</p>
                   <p>Tests today: {counts(provider.probes, OUTCOMES)}.</p>
                   {provider.daily_budget ? (
-                    <p className="text-small text-muted">
+                    <p className="text-meta-lg text-muted">
                       {provider.used_today.toLocaleString()} of{" "}
                       {provider.daily_budget.toLocaleString()} {provider.unit} used today.
                     </p>
                   ) : null}
-                </Card>
+                </div>
               </li>
             ))}
           </ul>
@@ -95,33 +98,35 @@ export function AIStatusView({ status }: { status: AIStatus }) {
       </section>
 
       <section aria-labelledby="fallback-h" className="flex flex-col gap-2">
-        <h2 id="fallback-h" className="text-section">
+        <h2
+          id="fallback-h"
+          className="font-display tracking-display text-[20px] leading-tight font-extrabold"
+        >
           Template answers today
         </h2>
         <p>{counts(status.fallbacks, REASONS)}.</p>
       </section>
 
       <section aria-labelledby="test-h" className="flex flex-col gap-3">
-        <h2 id="test-h" className="text-section">
+        <h2
+          id="test-h"
+          className="font-display tracking-display text-[20px] leading-tight font-extrabold"
+        >
           Test the providers
         </h2>
-        <p className="text-small">
+        <p className="text-meta-lg">
           Sends one short, fixed test message (no user data) to each provider on its own, so the
           backup is tested too. It uses a little of each provider&apos;s daily budget.
         </p>
-        <Button onClick={probe} disabled={busy} className="self-start">
+        <Button variant="outline" onClick={probe} disabled={busy} className="self-start">
           {busy ? "Queuing…" : "Test the AI providers"}
         </Button>
         {message ? (
-          <p role="status" className="text-small text-ink">
+          <p role="status" className="text-meta-lg text-ink">
             {message}
           </p>
         ) : null}
-        {error ? (
-          <p role="alert" className="text-small text-coral-ink font-semibold">
-            {error}
-          </p>
-        ) : null}
+        {error ? <InlineError announce>{error}</InlineError> : null}
       </section>
     </div>
   );

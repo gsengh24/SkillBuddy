@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { InlineError, Textarea } from "@/components/ds/fields";
+import { Panel, TopicChip } from "@/components/ds/surfaces";
+import { Button } from "@/components/ds/button";
 import { cx } from "@/components/ui/cx";
-import { Tag } from "@/components/ui/tag";
-import { TextArea } from "@/components/ui/text-field";
+
 import { browserApi } from "@/lib/api/browser";
 import {
   moderationAccountSchema,
@@ -84,16 +84,18 @@ export function ReportReview({ report }: { report: ModerationReport }) {
   }
 
   return (
-    <Card className="flex flex-col gap-4">
+    <Panel className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Tag hue="coral">{reason ?? report.reason}</Tag>
-        <Tag hue="blue">{WHAT[report.target]}</Tag>
-        {report.reported_status === "suspended" ? <Tag hue="amber">Account suspended</Tag> : null}
-        {report.reported_id === null ? <Tag hue="blue">Account deleted</Tag> : null}
+        <TopicChip>{reason ?? report.reason}</TopicChip>
+        <TopicChip tone="soft">{WHAT[report.target]}</TopicChip>
+        {report.reported_status === "suspended" ? (
+          <TopicChip tone="soft">Account suspended</TopicChip>
+        ) : null}
+        {report.reported_id === null ? <TopicChip tone="soft">Account deleted</TopicChip> : null}
         <time
           dateTime={report.created_at}
           suppressHydrationWarning
-          className="text-small text-muted"
+          className="text-meta-lg text-muted"
         >
           Reported {when(report.created_at)}
         </time>
@@ -114,11 +116,11 @@ export function ReportReview({ report }: { report: ModerationReport }) {
               key={`${part.id ?? part.label ?? "part"}-${index}`}
               className={cx(
                 "rounded-card border px-4 py-2",
-                reported ? "border-coral-edge bg-coral-tint" : "border-line bg-paper",
-                last && "ring-coral-ink ring-1",
+                reported ? "border-danger bg-bg" : "border-line bg-panel",
+                last && "ring-danger ring-1",
               )}
             >
-              <p className="text-small text-muted">
+              <p className="text-meta-lg text-muted">
                 {part.label
                   ? (PART[part.label] ?? part.label)
                   : reported
@@ -139,7 +141,7 @@ export function ReportReview({ report }: { report: ModerationReport }) {
       </ol>
 
       {!open ? (
-        <p className="text-small text-muted">
+        <p className="text-meta-lg text-muted">
           Resolved {when(report.resolved_at)}
           {report.resolution_note ? `: ${report.resolution_note}` : ""}
         </p>
@@ -147,9 +149,11 @@ export function ReportReview({ report }: { report: ModerationReport }) {
 
       {open && action === null ? (
         <div className="flex flex-wrap gap-3">
-          <Button onClick={() => setAction("resolve")}>Resolve</Button>
+          <Button variant="outline" onClick={() => setAction("resolve")}>
+            Resolve
+          </Button>
           {canSuspend ? (
-            <Button tone="danger" onClick={() => setAction("suspend")}>
+            <Button variant="danger" onClick={() => setAction("suspend")}>
               Suspend this account
             </Button>
           ) : null}
@@ -159,18 +163,19 @@ export function ReportReview({ report }: { report: ModerationReport }) {
       {action ? (
         <div className="border-line rounded-card flex flex-col gap-3 border p-4">
           {action === "suspend" ? (
-            <p className="text-small">
+            <p className="text-meta-lg">
               <strong className="text-ink">Suspend this account?</strong> They are signed out at
               once and can&apos;t sign in. People can&apos;t message them and they won&apos;t be
               shown in matches. You can unsuspend later under Suspended accounts. The report stays
               open until you resolve it.
             </p>
           ) : (
-            <p className="text-small">
+            <p className="text-meta-lg">
               Resolving closes this report. It and its copy are deleted 180 days later.
             </p>
           )}
-          <TextArea
+          <Textarea
+            showCounter={false}
             label="Note for your records (optional)"
             rows={2}
             maxLength={REPORT_DETAILS_MAX_LENGTH}
@@ -179,16 +184,20 @@ export function ReportReview({ report }: { report: ModerationReport }) {
             error={error}
           />
           <div className="flex flex-wrap gap-3">
-            <Button tone={action === "suspend" ? "danger" : "ink"} disabled={busy} onClick={run}>
+            <Button
+              variant={action === "suspend" ? "danger" : "primary"}
+              disabled={busy}
+              onClick={run}
+            >
               {busy ? "Saving…" : action === "suspend" ? "Suspend" : "Resolve"}
             </Button>
-            <Button disabled={busy} onClick={() => setAction(null)}>
+            <Button variant="outline" disabled={busy} onClick={() => setAction(null)}>
               Cancel
             </Button>
           </div>
         </div>
       ) : null}
-    </Card>
+    </Panel>
   );
 }
 
@@ -214,20 +223,21 @@ export function UnsuspendButton({ userId }: { userId: string }) {
     }
   }
 
-  if (!confirming) return <Button onClick={() => setConfirming(true)}>Unsuspend</Button>;
+  if (!confirming)
+    return (
+      <Button variant="outline" onClick={() => setConfirming(true)}>
+        Unsuspend
+      </Button>
+    );
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-small">They can sign in again and be matched and messaged.</p>
-      {error ? (
-        <p role="alert" className="text-small text-coral-ink font-semibold">
-          {error}
-        </p>
-      ) : null}
+      <p className="text-meta-lg">They can sign in again and be matched and messaged.</p>
+      {error ? <InlineError announce>{error}</InlineError> : null}
       <div className="flex flex-wrap gap-3">
-        <Button disabled={busy} onClick={confirm}>
+        <Button variant="outline" disabled={busy} onClick={confirm}>
           {busy ? "Saving…" : "Unsuspend"}
         </Button>
-        <Button disabled={busy} onClick={() => setConfirming(false)}>
+        <Button variant="outline" disabled={busy} onClick={() => setConfirming(false)}>
           Cancel
         </Button>
       </div>

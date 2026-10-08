@@ -19,10 +19,10 @@ export default async function AIStatusPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <TextLink href="/moderation" tone="muted" className="text-small self-start">
+        <TextLink href="/moderation" tone="muted" className="text-meta-lg self-start">
           Moderation
         </TextLink>
-        <h1 className="text-h1">AI status</h1>
+        <h1 className="text-headline lg:text-headline-lg">AI status</h1>
         <p className="text-muted">
           Which AI provider answered today, and how often the template answered instead. Counts
           only: no keys, no messages, no user data.
