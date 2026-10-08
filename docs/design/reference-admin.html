@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>cynergi: Admin portal reference</title>
+<style>
+:root{
+  --bg:#fff;--panel:#F6F7F5;--line:#E4E6E2;--ink:#0A0A0A;--ink-2:#4A4F4A;--muted:#696D68;--muted-2:#8A8F89;--faint:#B0B4AE;
+  --green:#0F4A34;--green-tint:#E8F1EC;--green-line:#B9D3C5;--mint:#7BE0A8;--mint-text:#9FD1B6;
+  --red:#9B1C1C;--red-tint:#FDF1F1;--red-line:#E8B9B9;--amber:#7A4F00;--amber-tint:#FFF6E5;--amber-line:#EBCB8B;
+  --display:"Inter Tight","Geist","Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono","Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--panel);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--green)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.mono{font-family:var(--mono)}
+.display{font-family:var(--display);font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* shell */
+.app{min-height:100vh}
+.side{position:fixed;inset:0 auto 0 0;width:264px;background:#fff;border-right:1px solid var(--line);z-index:60;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .25s ease}
+.side.open{transform:none}
+.scrim{position:fixed;inset:0;background:rgba(10,10,10,.4);z-index:55;display:none}
+.scrim.show{display:block}
+.s-top{display:flex;align-items:center;gap:8px;height:60px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;letter-spacing:-.03em;font-size:18px}
+.tagc{font-family:var(--mono);font-size:10px;text-transform:uppercase;background:var(--ink);color:#fff;border-radius:4px;padding:2px 6px}
+.nav{padding:12px 10px;overflow-y:auto;flex:1}
+.grp{margin:14px 8px 6px}
+.nav a{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border-radius:8px;color:var(--ink-2);font-size:13px;border-left:2px solid transparent}
+.nav a:hover{background:var(--panel)}
+.nav a.on{background:var(--panel);color:var(--ink);font-weight:500;border-left-color:var(--green)}
+.nav a .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--ink);color:#fff;border-radius:99px;padding:1px 7px}
+.s-foot{padding:12px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.main{min-width:0}
+.top{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--line);height:60px;display:flex;align-items:center;gap:10px;padding:0 12px}
+.menu{width:40px;height:40px;border:1px solid var(--line);background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.search{flex:1;min-width:0;position:relative;display:none}
+.search input{width:100%;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:0 12px 0 34px;font-size:13px}
+.search svg{position:absolute;left:11px;top:10px;color:var(--muted)}
+.env{font-family:var(--mono);font-size:10px;text-transform:uppercase;border:1px dashed var(--amber-line);background:var(--amber-tint);color:var(--amber);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.who{display:flex;align-items:center;gap:8px;margin-left:auto}
+.who select{height:36px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 8px;font-size:12px}
+.circ{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--ink);color:#fff;font-size:12px;font-weight:500;flex:none}
+.pad{padding:16px 12px 80px;max-width:1280px;margin:0 auto}
+.page{display:none}
+.page.on{display:block;animation:up .35s ease both}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ph{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.ph h1{margin:0;font-size:30px}
+.ph h1 span{color:var(--muted-2)}
+.ph p{margin:4px 0 0;color:var(--ink-2);font-size:13px;max-width:640px}
+.pa{display:flex;gap:8px;flex-wrap:wrap}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 14px;border-radius:10px;border:1px solid transparent;background:var(--ink);color:#fff;font-size:13px;font-weight:500;white-space:nowrap;transition:transform .15s}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn.sm{height:32px;padding:0 10px;font-size:12px}
+.btn.danger{background:#fff;color:var(--red);border-color:var(--red-line)}
+.btn.dsolid{background:var(--red);color:#fff}
+.btn.green{background:var(--green)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.in,.sel,.tx{width:100%;border:1px solid var(--muted-2);border-radius:10px;background:#fff;padding:0 12px;height:40px;font-size:14px}
+.tx{height:auto;min-height:88px;padding:10px 12px;line-height:1.45;resize:vertical}
+.seg{display:inline-flex;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px;flex-wrap:wrap}
+.seg button{border:1px solid transparent;background:transparent;border-radius:8px;min-height:32px;padding:0 12px;font-size:12px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:#fff;border-color:var(--line);color:var(--ink);font-weight:500}
+.sw{width:44px;height:26px;border-radius:99px;border:1px solid var(--muted-2);background:var(--panel);position:relative;flex:none;transition:background .2s;padding:0}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted-2);transition:transform .2s,background .2s}
+.sw[aria-checked="true"]{background:var(--green);border-color:var(--green)}
+.sw[aria-checked="true"]::after{transform:translateX(18px);background:#fff}
+.f label,.f .l{display:block;font-size:12px;font-weight:500;margin-bottom:6px}
+
+/* cards */
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{margin:0 0 2px;font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:-.02em}
+.card .sub{margin:0 0 12px;color:var(--muted);font-size:12px}
+.grid{display:grid;gap:12px}
+.g2,.g3{grid-template-columns:minmax(0,1fr)}
+.grid>*{min-width:0}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:14px}
+.kpi b{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.03em;line-height:1}
+.delta{font-family:var(--mono);font-size:10px;color:var(--green)}
+.delta.dn{color:var(--red)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.hl-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.hl-row:last-child{border-bottom:0;padding-bottom:0}
+.hl-row:first-of-type{padding-top:0}
+.hl-row .grow{flex:1;min-width:0}
+.hl-row b{font-weight:600}
+.hl-row span.s{display:block;font-size:12px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--green);flex:none}
+.dot.warn{background:#C98A00}.dot.bad{background:var(--red)}
+.num{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.03em;min-width:34px;color:var(--ink)}
+
+/* badges */
+.b{display:inline-flex;align-items:center;font-family:var(--mono);font-size:10px;text-transform:uppercase;border-radius:4px;padding:2px 6px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);white-space:nowrap}
+.b.ok{background:var(--green-tint);border-color:var(--green-line);color:var(--green)}
+.b.warn{background:var(--amber-tint);border-color:var(--amber-line);color:var(--amber)}
+.b.bad{background:var(--red-tint);border-color:var(--red-line);color:var(--red)}
+.b.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* tables */
+.tw{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+.t th{font-family:var(--mono);font-size:10px;font-weight:400;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:10px 12px;background:var(--panel);border-bottom:1px solid var(--line);white-space:nowrap}
+.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.t tr:last-child td{border-bottom:0}
+.t tbody tr.click{cursor:pointer}
+.t tbody tr.click:hover td{background:#FAFBFA}
+.u{display:flex;align-items:center;gap:10px;min-width:0}
+.u i{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;font-style:normal;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex:none}
+.u b{display:block;font-weight:600;line-height:1.2}
+.u span{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt{text-align:right}
+.tool{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tool .in,.tool .sel{width:auto;flex:1;min-width:140px}
+.pager{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.pager div{display:flex;gap:6px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+/* mobile table -> cards */
+@media (max-width:759px){
+  table.t thead{display:none}
+  table.t,.t tbody,.t tr{display:block}
+  .t tr{padding:10px 12px;border-bottom:1px solid var(--line)}
+  .t tr:last-child{border-bottom:0}
+  .t td{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:4px 0;border:0;text-align:right}
+  .t td::before{content:attr(data-label);font-family:var(--mono);font-size:10px;text-transform:uppercase;color:var(--muted);text-align:left;flex:none}
+  .t td.nolabel::before{display:none}
+  .t td.nolabel{justify-content:flex-start;text-align:left}
+  .t td.chk{display:none}
+}
+
+/* chart */
+.chart svg{width:100%;height:auto;display:block}
+.fun{display:flex;flex-direction:column;gap:10px}
+.fun div{display:grid;grid-template-columns:110px 1fr 56px;gap:10px;align-items:center;font-size:12px}
+.fun i{display:block;height:10px;border-radius:99px;background:var(--green)}
+.fun .tr{background:var(--line);border-radius:99px;height:10px;overflow:hidden}
+.fun b{font-family:var(--mono);font-weight:500;text-align:right}
+
+/* drawer */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:560px;background:#fff;border-left:1px solid var(--line);z-index:80;transform:translateX(100%);transition:transform .28s ease;display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.dr-h{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dr-h h3{margin:0;font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.02em;flex:1;min-width:0}
+.dr-b{padding:16px;overflow-y:auto;flex:1}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;font-size:13px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.sec-t{margin:18px 0 8px}
+.tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:1px solid var(--line)}
+.tl li{position:relative;padding:0 0 12px 12px;font-size:13px}
+.tl li::before{content:"";position:absolute;left:-18px;top:6px;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.tl li span{display:block;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.quote{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:6px}
+.quote small{display:block;color:var(--muted);font-family:var(--mono);font-size:10px;margin-bottom:2px}
+.note{border:1px solid var(--green-line);background:var(--green-tint);color:var(--green);border-radius:10px;padding:10px 12px;font-size:12px}
+.note.w{border-color:var(--amber-line);background:var(--amber-tint);color:var(--amber)}
+
+/* dialog */
+dialog{border:1px solid var(--line);border-radius:16px;padding:0;width:min(460px,calc(100vw - 32px));box-shadow:0 20px 60px rgba(0,0,0,.2)}
+dialog::backdrop{background:rgba(10,10,10,.45)}
+.dlg{padding:20px}
+.dlg h4{margin:0 0 6px;font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.02em}
+.dlg p{margin:0 0 14px;color:var(--ink-2);font-size:13px}
+.dlg .dact{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;border-radius:99px;padding:9px 18px;font-size:13px;opacity:0;transition:all .3s;z-index:120;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* misc */
+.lrow{display:flex;gap:14px;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.lrow:last-child{border-bottom:0}
+.lrow b{display:block;font-weight:600}
+.lrow span.s{display:block;font-size:12px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--green-line);background:var(--green-tint);color:var(--green);border-radius:99px;padding:0 4px 0 11px;min-height:30px;font-size:12px;font-weight:500}
+.chip.bad{background:var(--red-tint);border-color:var(--red-line);color:var(--red)}
+.chip button{border:0;background:transparent;width:22px;height:22px;border-radius:50%;color:inherit;font-size:15px;line-height:1}
+.prog{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:8px 0}
+.prog i{display:block;height:100%;background:var(--green);border-radius:99px}
+.banner{border-radius:10px;padding:10px 14px;font-size:13px;border:1px solid var(--green-line);background:var(--green-tint);color:var(--green)}
+.banner.warning{background:var(--amber-tint);border-color:var(--amber-line);color:var(--amber)}
+.banner.maint{background:var(--ink);border-color:var(--ink);color:#fff}
+.mx td,.mx th{text-align:center}
+.mx td:first-child,.mx th:first-child{text-align:left}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:rot .7s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.read-only .act{display:none!important}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (min-width:760px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:1fr 1fr}
+  .ph{flex-direction:row;justify-content:space-between;align-items:flex-end}
+  .ph h1{font-size:38px}
+  .search{display:block}
+}
+@media (min-width:1024px){
+  .side{transform:none}
+  .scrim{display:none!important}
+  .menu{display:none}
+  .main{margin-left:264px}
+  .top{padding:0 24px;height:64px}
+  .pad{padding:28px 32px 80px}
+  .kpis{grid-template-columns:repeat(6,1fr)}
+  .kpi b{font-size:26px}
+  .g3{grid-template-columns:2fr 1fr}
+  .ph h1{font-size:44px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-over" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c.8-3.5 3.5-5 7-5s6.2 1.5 7 5"/><path d="M16 5a3.5 3.5 0 010 7M18 15c2 .6 3.4 2 4 5"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2 4 2 4H5"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-set" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+</svg>
+
+<div class="app" id="app">
+  <aside class="side" id="side" aria-label="Admin navigation">
+    <div class="s-top"><span class="brand"><svg class="ico" viewBox="0 0 24 24" style="color:var(--green);width:22px;height:22px"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12L4 7.5M12 12v9"/></svg>cynergi</span><span class="tagc">Admin</span></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="s-foot">Build 2026.10.08 · API healthy</div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="top">
+      <button class="menu" id="menuBtn" aria-label="Open menu"><svg class="ico"><use href="#i-menu"/></svg></button>
+      <label class="search"><span class="sr">Search users</span><svg class="ico"><use href="#i-search"/></svg><input id="gsearch" placeholder="Search users by name or email" autocomplete="off"></label>
+      <span class="env">Staging</span>
+      <div class="who">
+        <label class="sr" for="roleSel">View as role</label>
+        <select id="roleSel"><option value="owner">Owner</option><option value="admin">Admin</option><option value="moderator">Moderator</option><option value="readonly">Read-only</option></select>
+        <span class="circ" aria-hidden="true">JK</span>
+      </div>
+    </header>
+
+    <main class="pad">
+
+      <!-- OVERVIEW -->
+      <section class="page" id="p-overview">
+        <div class="ph"><div><div class="lbl" style="color:var(--green)">Thursday 8 October 2026</div><h1 class="display">Overview.<br><span>What needs you today.</span></h1></div>
+          <div class="seg" id="range" role="group" aria-label="Date range"><button aria-pressed="false" data-d="7">7 days</button><button aria-pressed="true" data-d="30">30 days</button><button aria-pressed="false" data-d="90">90 days</button></div></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="grid g3" style="margin-top:12px">
+          <div class="card chart"><h2>New sign-ups</h2><p class="sub" id="chartSub">Per day, last 30 days</p><div id="chart"></div></div>
+          <div class="card"><h2>Needs attention</h2><p class="sub">Open items across the portal</p><div id="attn"></div></div>
+        </div>
+        <div class="grid g2" style="margin-top:12px">
+          <div class="card"><h2>From request to chat</h2><p class="sub">How far people get, last 30 days</p><div class="fun" id="funnel"></div></div>
+          <div class="card"><h2>System health</h2><p class="sub">Live checks every minute</p><div id="health"></div></div>
+        </div>
+        <div class="card" style="margin-top:12px"><h2>Recent admin activity</h2><p class="sub">Last 6 entries from the audit log</p><div id="feed"></div></div>
+      </section>
+
+      <!-- USERS -->
+      <section class="page" id="p-users">
+        <div class="ph"><div><h1 class="display">Users.<br><span>Everyone on Cynergi.</span></h1><p>Search, review and act on any account. Every action needs a reason and is recorded.</p></div>
+          <div class="pa"><button class="btn ghost" id="exportUsers">Export CSV</button></div></div>
+        <div class="tool">
+          <input class="in" id="uq" placeholder="Search name or email" aria-label="Search users">
+          <select class="sel" id="ust" aria-label="Status"><option value="">All statuses</option><option>active</option><option>pending</option><option>suspended</option><option>banned</option></select>
+          <select class="sel" id="uin" aria-label="Intent"><option value="">All intents</option><option>Build together</option><option>Skill exchange</option><option>Interest buddy</option><option>Accountability</option><option>Mentor</option><option>Explore</option></select>
+          <div class="seg"><button id="uflag" aria-pressed="false">Flagged only</button></div>
+        </div>
+        <div class="tw" id="utable"></div>
+      </section>
+
+      <!-- ACCESS -->
+      <section class="page" id="p-access">
+        <div class="ph"><div><h1 class="display">Signup and access.<br><span>Who gets in.</span></h1><p>Choose how people join, approve applications and manage invite codes.</p></div></div>
+        <div class="card"><h2>Signup mode</h2><p class="sub">Applies immediately to new visitors. Existing users are not affected.</p>
+          <div class="seg act" id="mode"><button aria-pressed="false">Open</button><button aria-pressed="true">Invite only</button><button aria-pressed="false">Closed</button></div>
+          <p class="sub" id="modeHint" style="margin:10px 0 0">New users need a valid invite code or an approved application.</p></div>
+        <div class="grid g2" style="margin-top:12px">
+          <div class="card"><h2>Approval queue</h2><p class="sub">People waiting to join</p><div id="appq"></div></div>
+          <div class="card"><h2>Waitlist</h2><p class="sub">Interested people not yet invited</p>
+            <div class="num" style="font-size:40px" id="wl">312</div>
+            <div class="prog"><i style="width:34%"></i></div>
+            <p class="sub">34% from invite links, 66% from the landing page.</p>
+            <button class="btn act" id="inv10">Invite next 10</button></div>
+        </div>
+        <div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:8px"><div><h2>Invite codes</h2><p class="sub" style="margin:0">Create limited codes to share with groups</p></div><button class="btn act" id="newCode">Create code</button></div><div class="tw" id="codes"></div></div>
+        <div class="grid g2" style="margin-top:12px">
+          <div class="card"><h2>Allowed email domains</h2><p class="sub">Leave empty to allow any domain.</p><div class="chips" id="allow"></div>
+            <div style="display:flex;gap:8px;margin-top:10px"><input class="in" id="allowIn" placeholder="example.edu" aria-label="Add allowed domain"><button class="btn ghost act" id="allowAdd">Add</button></div></div>
+          <div class="card"><h2>Blocked email domains</h2><p class="sub">Disposable and abusive domains.</p><div class="chips" id="block"></div>
+            <div style="display:flex;gap:8px;margin-top:10px"><input class="in" id="blockIn" placeholder="mailinator.com" aria-label="Add blocked domain"><button class="btn ghost act" id="blockAdd">Add</button></div></div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section class="page" id="p-reports">
+        <div class="ph"><div><h1 class="display">Reports and safety.<br><span>Review, decide, record.</span></h1><p>Review the report, the messages the reporter attached, and both users' history. Then decide.</p></div></div>
+        <div class="seg" id="rtabs" style="margin-bottom:12px"></div>
+        <div id="rbody"></div>
+      </section>
+
+      <!-- CONTENT -->
+      <section class="page" id="p-content">
+        <div class="ph"><div><h1 class="display">Content moderation.<br><span>Catch it early.</span></h1><p>Automatic rules flag requests, bios and intro messages. A person makes the final call.</p></div></div>
+        <div class="card"><h2>Flagged content</h2><p class="sub">Newest first</p><div id="flagq"></div></div>
+        <div class="card" style="margin-top:12px"><h2>Automatic rules</h2><p class="sub">Matches are flagged, not removed, unless set to auto-hide.</p><div id="rules"></div></div>
+      </section>
+
+      <!-- AI -->
+      <section class="page" id="p-ai">
+        <div class="ph"><div><h1 class="display">Matching and AI.<br><span>Quality and cost.</span></h1><p>Provider status, match results and the evaluation set used to check changes.</p></div>
+          <div class="pa"><button class="btn act" id="testAI">Test the AI providers</button></div></div>
+        <div class="kpis" id="aik" style="grid-template-columns:repeat(2,1fr)"></div>
+        <div class="card" style="margin-top:12px"><h2>Providers</h2><p class="sub">Primary is used first. Fallback takes over on errors.</p><div class="tw" id="prov"></div><div id="testOut" style="margin-top:10px"></div></div>
+        <div class="grid g2" style="margin-top:12px">
+          <div class="card"><h2>Evaluation set</h2><p class="sub">Labelled pairs used to score matching changes</p>
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="num" style="font-size:34px">74<span style="color:var(--muted-2)"> / 101</span></span><span class="b ok">Latest precision@5: 0.71</span></div>
+            <div class="prog"><i style="width:73%"></i></div>
+            <p class="sub">27 pairs still need a label. Scores are only trusted at 101.</p>
+            <button class="btn ghost act" id="label">Open labelling</button></div>
+          <div class="card"><h2>Re-run matching</h2><p class="sub">For one user at a time. Limited to 10 per hour.</p>
+            <div class="f"><label for="rrq">User email</label><input class="in" id="rrq" placeholder="name@example.com"></div>
+            <button class="btn act" id="rr" style="margin-top:10px">Re-run for this user</button></div>
+        </div>
+      </section>
+
+      <!-- COMMS -->
+      <section class="page" id="p-comms">
+        <div class="ph"><div><h1 class="display">Communication.<br><span>Say it once, clearly.</span></h1><p>Announcements, email templates, delivery and support.</p></div></div>
+        <div class="grid g2">
+          <div class="card"><h2>New announcement</h2><p class="sub">Shows as a banner at the top of the app.</p>
+            <div class="stack">
+              <div class="f"><label for="anT">Message</label><textarea class="tx" id="anT" maxlength="160">Cynergi will be briefly unavailable on Sunday 11 Oct, 2:00 to 2:30 AM IST.</textarea></div>
+              <div class="f"><span class="l">Type</span><div class="seg" id="anType"><button aria-pressed="false">Info</button><button aria-pressed="false">Warning</button><button aria-pressed="true">Maintenance</button></div></div>
+              <div class="f"><span class="l">Preview</span><div class="banner maint" id="anP"></div></div>
+              <button class="btn act" id="anGo">Publish banner</button>
+            </div></div>
+          <div class="card"><h2>Active banners</h2><p class="sub">Users can dismiss them.</p><div id="anList"></div>
+            <h2 style="margin-top:18px">Email templates</h2><p class="sub">Sent from Gmail with the Cynergi name</p><div id="tpl"></div></div>
+        </div>
+        <div class="card" style="margin-top:12px"><h2>Send log</h2><p class="sub">Last 24 hours</p><div class="tw" id="mlog"></div></div>
+        <div class="card" style="margin-top:12px"><h2>Support inbox</h2><p class="sub">Messages to the contact address</p><div id="supp"></div></div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="page" id="p-settings">
+        <div class="ph"><div><h1 class="display">Settings.<br><span>Turn things on and off.</span></h1><p>Changes apply within a minute without a deploy. Each change is recorded.</p></div></div>
+        <div class="grid g2">
+          <div class="card"><h2>App</h2><p class="sub">Set on the server</p>
+            <dl class="kv"><dt>App name</dt><dd>Cynergi <span class="b">APP_NAME</span></dd><dt>Terms version</dt><dd>2026-10-08-draft <span class="b">TERMS_VERSION</span></dd><dt>Environment</dt><dd>Staging</dd></dl></div>
+          <div class="card"><h2>Limits</h2><p class="sub">Per user</p><div class="stack" id="limits"></div></div>
+        </div>
+        <div class="card" style="margin-top:12px"><h2>Feature switches</h2><p class="sub">Turn a feature off for everyone if something goes wrong.</p><div id="flags"></div></div>
+        <div class="card" style="margin-top:12px"><h2>Intent types</h2><p class="sub">Shown on the Home composer and on profiles.</p><div class="chips" id="intentsL"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;max-width:420px"><input class="in" id="intIn" placeholder="New intent" aria-label="New intent"><button class="btn ghost act" id="intAdd">Add</button></div></div>
+      </section>
+
+      <!-- TEAM -->
+      <section class="page" id="p-team">
+        <div class="ph"><div><h1 class="display">Team and audit.<br><span>Who can do what.</span></h1><p>Admin accounts, roles and the record of everything done in this portal.</p></div>
+          <div class="pa"><button class="btn act" id="invAdmin">Invite admin</button></div></div>
+        <div class="card"><h2>Admin accounts</h2><p class="sub">Two-step login is required for every admin.</p><div class="tw" id="admins"></div></div>
+        <div class="grid g2" style="margin-top:12px">
+          <div class="card"><h2>What each role can do</h2><p class="sub">Checked on the server for every request</p><div class="tw" id="matrix"></div></div>
+          <div class="card"><h2>Security policy</h2><p class="sub">Applies to all admins</p>
+            <div class="lrow"><div><b>Require two-step login</b><span class="s">Admins cannot sign in without it.</span></div><button class="sw act" role="switch" aria-checked="true" aria-label="Require two-step login"></button></div>
+            <div class="lrow"><div><b>Session timeout</b><span class="s">Sign out after inactivity.</span></div><select class="sel act" style="width:120px" aria-label="Session timeout"><option>15 min</option><option selected>30 min</option><option>60 min</option></select></div>
+            <div class="lrow"><div><b>Limit to trusted IPs</b><span class="s">Only listed addresses can reach admin.</span></div><button class="sw act" role="switch" aria-checked="false" aria-label="Limit to trusted IPs"></button></div>
+            <div class="lrow"><div><b>Reason required for sensitive actions</b><span class="s">Ban, delete, remove content.</span></div><button class="sw" role="switch" aria-checked="true" aria-disabled="true" aria-label="Reason required" style="opacity:.6;cursor:not-allowed"></button></div></div>
+        </div>
+        <div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:8px"><div><h2>Audit log</h2><p class="sub" style="margin:0">Entries cannot be edited or deleted.</p></div><button class="btn ghost sm" id="expAudit">Export CSV</button></div>
+          <div class="tool"><input class="in" id="aq" placeholder="Filter by admin, action or target" aria-label="Filter audit log"></div>
+          <div class="tw" id="audit"></div></div>
+      </section>
+
+      <!-- DATA -->
+      <section class="page" id="p-data">
+        <div class="ph"><div><h1 class="display">Data and compliance.<br><span>Handled on time.</span></h1><p>Requests from users, retention rules, consent and backups.</p></div></div>
+        <div class="card"><h2>User data requests</h2><p class="sub">Export and delete requests. Aim to finish within the deadline shown.</p><div class="tw" id="dreq"></div></div>
+        <div class="grid g2" style="margin-top:12px">
+          <div class="card"><h2>Retention rules</h2><p class="sub">Old data is removed automatically.</p><div id="ret"></div></div>
+          <div class="card"><h2>Consent</h2><p class="sub">Who accepted the current terms</p>
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="num" style="font-size:34px">96%</span><span class="b">Version 2026-10-08-draft</span></div>
+            <div class="prog"><i style="width:96%"></i></div>
+            <p class="sub">51 users are on an older version and will be asked on next sign-in.</p>
+            <button class="btn ghost act" id="remind">Show them the new terms</button></div>
+        </div>
+        <div class="grid g2" style="margin-top:12px">
+          <div class="card"><h2>Backups</h2><p class="sub">Daily, kept 7 days</p>
+            <dl class="kv"><dt>Last backup</dt><dd>Today 03:00 IST <span class="b ok">OK</span></dd><dt>Size</dt><dd>212 MB</dd><dt>Last restore test</dt><dd>2 Oct 2026 <span class="b ok">Passed</span></dd></dl>
+            <h2 style="margin-top:16px;font-size:15px">Restore checklist</h2><div id="chk"></div></div>
+          <div class="card"><h2>Export jobs</h2><p class="sub">Large files are built in the background so the site stays fast.</p><div class="tw" id="jobs"></div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <aside class="drawer" id="drawer" aria-label="Details" aria-hidden="true">
+    <div class="dr-h"><h3 id="drT"></h3><button class="btn ghost sm" id="drX" aria-label="Close details"><svg class="ico"><use href="#i-x"/></svg></button></div>
+    <div class="dr-b" id="drB"></div>
+  </aside>
+</div>
+
+<dialog id="actD"><div class="dlg">
+  <h4 id="aT"></h4><p id="aP"></p>
+  <div id="aExtra"></div>
+  <div class="f"><label for="aR">Reason (recorded in the audit log)</label><textarea class="tx" id="aR" placeholder="At least 10 characters"></textarea></div>
+  <div class="dact"><button class="btn ghost" id="aNo">Cancel</button><button class="btn" id="aYes" disabled>Confirm</button></div>
+</div></dialog>
+<dialog id="invD"><div class="dlg">
+  <h4>Invite an admin</h4><p>They get an email to set up two-step login.</p>
+  <div class="stack"><div class="f"><label for="ie">Email</label><input class="in" id="ie" placeholder="name@example.com"></div>
+  <div class="f"><label for="ir">Role</label><select class="sel" id="ir"><option>Admin</option><option>Moderator</option><option>Read-only</option></select></div></div>
+  <div class="dact"><button class="btn ghost" id="iNo">Cancel</button><button class="btn" id="iYes">Send invite</button></div>
+</div></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function fmt(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+  function toast(t){var e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(function(){e.classList.remove('show')},2400)}
+  function ini(n){return n.split(/\s+/).map(function(w){return w[0]}).slice(0,2).join('').toUpperCase()}
+  function rnd(seed){var s=seed;return function(){s=(s*9301+49297)%233280;return s/233280}}
+  function badge(v){var m={active:'ok',pending:'warn',suspended:'warn',banned:'bad',open:'warn',review:'dark',resolved:'ok',high:'bad',medium:'warn',low:'',operational:'ok',degraded:'warn',down:'bad',delivered:'ok',bounced:'bad',failed:'bad',ready:'ok',running:'warn',queued:''};return '<span class="b '+(m[v]||'')+'">'+esc(v)+'</span>'}
+  function T(cols,rows,o){o=o||{};
+    if(!rows.length)return '<div class="empty">'+(o.empty||'Nothing here.')+'</div>';
+    var h='<table class="t"><thead><tr>'+cols.map(function(c){return '<th class="'+(c.cls||'')+'">'+c.h+'</th>'}).join('')+'</tr></thead><tbody>';
+    rows.forEach(function(r,i){h+='<tr class="'+(o.click?'click':'')+'" data-i="'+i+'">'+cols.map(function(c){return '<td class="'+(c.cls||'')+(c.nolabel?' nolabel':'')+'" data-label="'+esc(c.h)+'">'+c.f(r,i)+'</td>'}).join('')+'</tr>'});
+    return h+'</tbody></table>'+(o.foot||'');
+  }
+
+  /* ---------- state ---------- */
+  var role='owner';
+  var users=[
+    {n:'Meera Iyer',e:'meera.iyer@gmail.com',j:'2 Oct',la:'2 min ago',s:'active',i:'Build together',r:0,m:6,fl:0,city:'Bengaluru'},
+    {n:'Arjun Rao',e:'arjun.rao@outlook.com',j:'1 Oct',la:'1 h ago',s:'active',i:'Skill exchange',r:0,m:4,fl:0,city:'Hyderabad'},
+    {n:'Priya Nair',e:'priya.nair@gmail.com',j:'30 Sep',la:'3 h ago',s:'active',i:'Mentor',r:0,m:9,fl:0,city:'Kochi'},
+    {n:'Rohan Gupta',e:'rohan.g@gmail.com',j:'29 Sep',la:'Yesterday',s:'active',i:'Accountability',r:1,m:2,fl:0,city:'Delhi'},
+    {n:'Ananya Das',e:'ananya.das@gmail.com',j:'28 Sep',la:'Yesterday',s:'active',i:'Explore',r:0,m:5,fl:0,city:'Kolkata'},
+    {n:'Kabir Singh',e:'kabir.s@yahoo.com',j:'27 Sep',la:'4 days ago',s:'suspended',i:'Build together',r:3,m:1,fl:1,city:'Chandigarh'},
+    {n:'Sana Khan',e:'sana.khan@gmail.com',j:'26 Sep',la:'5 h ago',s:'active',i:'Interest buddy',r:2,m:7,fl:1,city:'Mumbai'},
+    {n:'Vikram Joshi',e:'v.joshi@gmail.com',j:'25 Sep',la:'2 days ago',s:'active',i:'Skill exchange',r:0,m:3,fl:0,city:'Pune'},
+    {n:'Isha Patel',e:'isha.patel@gmail.com',j:'24 Sep',la:'6 h ago',s:'active',i:'Mentor',r:0,m:8,fl:0,city:'Ahmedabad'},
+    {n:'Dev Malhotra',e:'dev.m@protonmail.com',j:'8 Oct',la:'Never',s:'pending',i:'Explore',r:0,m:0,fl:0,city:'Delhi'},
+    {n:'Neha Kulkarni',e:'neha.k@gmail.com',j:'22 Sep',la:'1 day ago',s:'active',i:'Build together',r:0,m:5,fl:0,city:'Nagpur'},
+    {n:'Aditya Verma',e:'aditya.v@gmail.com',j:'21 Sep',la:'3 days ago',s:'active',i:'Accountability',r:0,m:2,fl:0,city:'Jaipur'},
+    {n:'Tara Menon',e:'tara.menon@gmail.com',j:'20 Sep',la:'12 min ago',s:'active',i:'Skill exchange',r:0,m:6,fl:0,city:'Chennai'},
+    {n:'Rahul Bose',e:'rahul.bose@gmail.com',j:'18 Sep',la:'9 days ago',s:'banned',i:'Explore',r:5,m:0,fl:1,city:'Kolkata'}
+  ];
+  var audit=[
+    ['08 Oct 11:42','Jaspreet K.','Updated setting','Terms version','Set to 2026-10-08-draft'],
+    ['08 Oct 11:40','Jaspreet K.','Updated setting','APP_NAME','Renamed app to Cynergi'],
+    ['07 Oct 22:15','Jaspreet K.','Suspended user','Kabir Singh','Repeated spam intros, 3 reports'],
+    ['07 Oct 21:58','Jaspreet K.','Resolved report','RPT-1042','Message confirmed as harassment'],
+    ['07 Oct 18:30','Jaspreet K.','Created invite code','CYN-FRIENDS','Pilot group, limit 50'],
+    ['06 Oct 10:05','Jaspreet K.','Banned user','Rahul Bose','Harassment after final warning'],
+    ['05 Oct 16:20','Jaspreet K.','Turned off feature','Pair spaces','Paused during bug fix, turned back on'],
+    ['04 Oct 09:12','Jaspreet K.','Exported users','CSV job','Pilot analysis']
+  ];
+  var ipad=['10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12','10.0.0.12'];
+  function log(a,t,why){var d=new Date();audit.unshift(['08 Oct '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2),'Jaspreet K.',a,t,why]);ipad.unshift('10.0.0.12');renderAudit();renderFeed()}
+
+  /* ---------- nav ---------- */
+  var pages=[
+    ['Monitor',[['overview','Overview','i-over',0]]],
+    ['People',[['users','Users','i-users',0],['access','Signup and access','i-key',4]]],
+    ['Safety',[['reports','Reports and safety','i-flag',6],['content','Content moderation','i-doc',3]]],
+    ['Platform',[['ai','Matching and AI','i-spark',0],['comms','Communication','i-mail',0],['settings','Settings','i-set',0]]],
+    ['Admin',[['team','Team and audit','i-shield',0],['data','Data and compliance','i-db',2]]]
+  ];
+  var allow={owner:['overview','users','access','reports','content','ai','comms','settings','team','data'],
+    admin:['overview','users','access','reports','content','ai','comms','settings','data'],
+    moderator:['overview','users','reports','content'],
+    readonly:['overview','users','reports','content']};
+  function drawNav(){
+    var h='';pages.forEach(function(g){var items=g[1].filter(function(p){return allow[role].indexOf(p[0])>=0});if(!items.length)return;
+      h+='<div class="grp lbl">'+g[0]+'</div>'+items.map(function(p){return '<a href="#'+p[0]+'" data-p="'+p[0]+'"><svg class="ico"><use href="#'+p[2]+'"/></svg>'+p[1]+(p[3]?'<span class="cnt">'+p[3]+'</span>':'')+'</a>'}).join('')});
+    $('#nav').innerHTML=h;route();
+  }
+  function route(){
+    var id=(location.hash||'#overview').slice(1);if(allow[role].indexOf(id)<0)id='overview';
+    $$('.page').forEach(function(p){p.classList.toggle('on',p.id==='p-'+id)});
+    $$('#nav a').forEach(function(a){a.classList.toggle('on',a.dataset.p===id)});
+    $('#side').classList.remove('open');$('#scrim').classList.remove('show');window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange',route);
+  $('#menuBtn').addEventListener('click',function(){$('#side').classList.add('open');$('#scrim').classList.add('show')});
+  $('#scrim').addEventListener('click',function(){$('#side').classList.remove('open');$('#scrim').classList.remove('show')});
+  $('#roleSel').addEventListener('change',function(){role=this.value;document.body.classList.toggle('read-only',role==='readonly');drawNav();toast('Viewing as '+this.options[this.selectedIndex].text+(role==='owner'?'':'. Some pages and actions are hidden.'))});
+
+  /* ---------- action dialog ---------- */
+  var actCb=null;
+  function act(o){
+    $('#aT').textContent=o.title;$('#aP').textContent=o.desc||'';$('#aExtra').innerHTML=o.extra||'';$('#aR').value='';
+    var y=$('#aYes');y.textContent=o.confirm||'Confirm';y.className='btn'+(o.danger?' dsolid':'');y.disabled=true;
+    actCb=o.done;$('#actD').showModal();setTimeout(function(){$('#aR').focus()},50);
+  }
+  $('#aR').addEventListener('input',function(){$('#aYes').disabled=this.value.trim().length<10});
+  $('#aNo').addEventListener('click',function(){$('#actD').close()});
+  $('#aYes').addEventListener('click',function(){var r=$('#aR').value.trim();$('#actD').close();if(actCb)actCb(r)});
+
+  /* ---------- OVERVIEW ---------- */
+  var days=30;
+  function kpis(){
+    var f=days/30,k=[['New sign-ups',Math.round(184*f),'+12%'],['Active users',Math.round(612*(0.5+f/2)),'+8%'],['New requests',Math.round(436*f),'+5%'],['Matches made',Math.round(1290*f),'+17%'],['Intro accept rate','58%','+3 pts'],['Messages sent',fmt(Math.round(5240*f)),'-2%']];
+    $('#kpis').innerHTML=k.map(function(x){var dn=x[2][0]==='-';return '<div class="kpi"><span class="lbl">'+x[0]+'</span><b>'+(typeof x[1]==='number'?fmt(x[1]):x[1])+'</b><span class="delta'+(dn?' dn':'')+'">'+x[2]+' vs previous</span></div>'}).join('');
+    var r=rnd(7+days),v=[],i;for(i=0;i<days;i++)v.push(Math.round(4+r()*9+i*0.09*(30/days)*2));
+    var W=600,H=170,pad=24,bw=(W-pad)/v.length,mx=Math.max.apply(null,v)+2,s='<svg viewBox="0 0 '+W+' '+(H+22)+'" role="img" aria-label="Sign-ups per day">';
+    [0,.5,1].forEach(function(t){var y=H-t*(H-10);s+='<line x1="'+pad+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="#E4E6E2"/><text x="0" y="'+(y+4)+'" font-size="10" fill="#696D68" font-family="monospace">'+Math.round(mx*t)+'</text>'});
+    v.forEach(function(n,i){var h=n/mx*(H-10),x=pad+i*bw+1;s+='<rect x="'+x+'" y="'+(H-h)+'" width="'+Math.max(bw-2,2)+'" height="'+h+'" rx="2" fill="'+(i===v.length-1?'#7BE0A8':'#0F4A34')+'"/>'});
+    s+='<text x="'+pad+'" y="'+(H+16)+'" font-size="10" fill="#696D68" font-family="monospace">'+days+' days ago</text><text x="'+W+'" y="'+(H+16)+'" font-size="10" fill="#696D68" font-family="monospace" text-anchor="end">Today</text></svg>';
+    $('#chart').innerHTML=s;$('#chartSub').textContent='Per day, last '+days+' days';
+    var base=[['Requests',436],['Matches',380],['Intros sent',214],['Intros accepted',124],['Chats started',97]];
+    $('#funnel').innerHTML=base.map(function(b){var val=Math.round(b[1]*f);return '<div><span>'+b[0]+'</span><span class="tr"><i style="width:'+Math.round(b[1]/436*100)+'%"></i></span><b>'+fmt(val)+'</b></div>'}).join('');
+  }
+  $('#range').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;$$('#range button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');days=+b.dataset.d;kpis()});
+  function drawAttn(){
+    var a=[['bad','6','open reports, 2 high priority','reports'],['warn','4','people waiting for approval','access'],['warn','1','AI provider degraded','ai'],['warn','2','data requests due in 3 days','data'],['bad','3','emails failed to send','comms']];
+    $('#attn').innerHTML=a.map(function(x){return '<a class="hl-row" href="#'+x[3]+'"><span class="dot '+x[0]+'"></span><span class="num">'+x[1]+'</span><span class="grow">'+x[2]+'</span><span class="lbl">Open ></span></a>'}).join('');
+    var h=[['API','Operational','p95 310 ms','ok'],['Database (Neon)','Operational','Awake, 41 ms','ok'],['AI: Groq','Operational','p95 1.8 s','ok'],['AI: Cloudflare','Degraded','Error rate 6%','warn'],['Email (Gmail)','Operational','3 failed today','ok']];
+    $('#health').innerHTML=h.map(function(x){return '<div class="hl-row"><span class="dot '+(x[3]==='warn'?'warn':'')+'"></span><span class="grow"><b>'+x[0]+'</b><span class="s">'+x[2]+'</span></span>'+badge(x[1].toLowerCase())+'</div>'}).join('');
+  }
+  function renderFeed(){$('#feed').innerHTML=audit.slice(0,6).map(function(a){return '<div class="hl-row"><span class="lbl" style="min-width:92px">'+a[0]+'</span><span class="grow"><b>'+esc(a[2])+'</b> · '+esc(a[3])+'<span class="s">'+esc(a[4])+'</span></span></div>'}).join('')}
+
+  /* ---------- USERS ---------- */
+  var flagOnly=false;
+  function filtered(){var q=$('#uq').value.toLowerCase(),s=$('#ust').value,i=$('#uin').value;
+    return users.filter(function(u){return (!q||u.n.toLowerCase().indexOf(q)>=0||u.e.toLowerCase().indexOf(q)>=0)&&(!s||u.s===s)&&(!i||u.i===i)&&(!flagOnly||u.fl)})}
+  function renderUsers(){
+    var rows=filtered();
+    var cols=[{h:'User',nolabel:1,f:function(u){return '<div class="u"><i>'+ini(u.n)+'</i><div style="min-width:0"><b>'+esc(u.n)+'</b><span>'+esc(u.e)+'</span></div></div>'}},
+      {h:'Status',f:function(u){return badge(u.s)}},{h:'Intent',f:function(u){return esc(u.i)}},{h:'Joined',f:function(u){return u.j}},{h:'Last active',f:function(u){return u.la}},
+      {h:'Reports',cls:'rt',f:function(u){return u.r?'<b style="color:var(--red)">'+u.r+'</b>':'0'}},{h:'Matches',cls:'rt',f:function(u){return u.m}}];
+    $('#utable').innerHTML=T(cols,rows,{click:1,empty:'No users match these filters.',foot:'<div class="pager"><span>1 to '+rows.length+' of 1,284 users</span><div><button class="btn ghost sm" disabled>Previous</button><button class="btn ghost sm" id="nextP">Next</button></div></div>'});
+    $$('#utable tbody tr').forEach(function(tr){tr.addEventListener('click',function(){openUser(rows[+tr.dataset.i])})});
+    var nb=$('#nextP');if(nb)nb.addEventListener('click',function(e){e.stopPropagation();toast('Demo shows the first page only. The real list loads 25 per page.')});
+  }
+  ['#uq','#ust','#uin'].forEach(function(s){$(s).addEventListener('input',renderUsers)});
+  $('#uflag').addEventListener('click',function(){flagOnly=!flagOnly;this.setAttribute('aria-pressed',flagOnly);renderUsers()});
+  $('#gsearch').addEventListener('input',function(){location.hash='#users';$('#uq').value=this.value;renderUsers()});
+  $('#exportUsers').addEventListener('click',function(){addJob('Users CSV','queued');toast('Export queued. See Data and compliance.');log('Exported users','CSV job','Requested from Users page')});
+
+  function openDrawer(title,html){$('#drT').textContent=title;$('#drB').innerHTML=html;$('#drawer').classList.add('open');$('#drawer').setAttribute('aria-hidden','false');$('#drB').scrollTop=0}
+  function closeDrawer(){$('#drawer').classList.remove('open');$('#drawer').setAttribute('aria-hidden','true')}
+  $('#drX').addEventListener('click',closeDrawer);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDrawer()});
+
+  var notes={};
+  function openUser(u){
+    var tl=[['Joined via invite code CYN-FRIENDS',u.j],['Completed profile','1 day later'],[u.m+(u.m===1?' match':' matches')+' generated','Ongoing']];
+    if(u.r)tl.push([u.r+' report'+(u.r>1?'s':'')+' received','See Reports']);
+    if(u.s==='suspended')tl.push(['Suspended for 7 days','7 Oct']);
+    if(u.s==='banned')tl.push(['Banned','6 Oct']);
+    var h='<div class="u" style="margin-bottom:14px"><i style="width:48px;height:48px;font-size:15px">'+ini(u.n)+'</i><div><b style="font-size:16px">'+esc(u.n)+'</b><span>'+esc(u.e)+'</span></div><span style="margin-left:auto">'+badge(u.s)+'</span></div>'
+    +'<dl class="kv"><dt>City</dt><dd>'+esc(u.city)+'</dd><dt>Intent</dt><dd>'+esc(u.i)+'</dd><dt>Joined</dt><dd>'+u.j+' 2026 · Google sign-in</dd><dt>Last active</dt><dd>'+u.la+'</dd><dt>Matches</dt><dd>'+u.m+'</dd><dt>Reports against</dt><dd>'+u.r+'</dd><dt>Email</dt><dd>Verified</dd></dl>'
+    +'<div class="lbl sec-t">Actions</div><div class="acts act">'
+    +(u.s==='suspended'?'<button class="btn ghost sm" data-a="unsuspend">Unsuspend</button>':u.s==='banned'?'':'<button class="btn ghost sm" data-a="suspend">Suspend</button>')
+    +(u.s!=='banned'?'<button class="btn danger sm" data-a="ban">Ban</button>':'<button class="btn ghost sm" data-a="unban">Reverse ban</button>')
+    +'<button class="btn ghost sm" data-a="logout">Force sign-out</button><button class="btn ghost sm" data-a="verify">Resend verification</button><button class="btn ghost sm" data-a="edit">Remove bio text</button><button class="btn danger sm" data-a="delete">Delete account</button></div>'
+    +'<div class="lbl sec-t">Timeline</div><ul class="tl">'+tl.map(function(t){return '<li>'+t[0]+'<span>'+t[1]+'</span></li>'}).join('')+'</ul>'
+    +'<div class="lbl sec-t">Private notes</div><div id="nl">'+(notes[u.e]||[]).map(function(n){return '<div class="quote"><small>Jaspreet K. · now</small>'+esc(n)+'</div>'}).join('')+'</div><div class="f act"><textarea class="tx" id="nt" placeholder="Add a note only admins can see" style="min-height:64px"></textarea><button class="btn ghost sm" id="ntA" style="margin-top:8px">Add note</button></div>';
+    openDrawer(u.n,h);
+    var map={suspend:['Suspend '+u.n+'?','They are signed out and hidden from matching for 7 days.','Suspend','suspended','Suspended user'],unsuspend:['Unsuspend '+u.n+'?','They can sign in and appear in matches again.','Unsuspend','active','Unsuspended user'],ban:['Ban '+u.n+'?','Permanent. They are signed out and cannot create another account with this email.','Ban','banned','Banned user'],unban:['Reverse ban for '+u.n+'?','Account returns to active.','Reverse ban','active','Reversed ban']};
+    $$('#drB [data-a]').forEach(function(b){b.addEventListener('click',function(){var a=b.dataset.a,m=map[a];
+      if(m)act({title:m[0],desc:m[1],confirm:m[2],danger:a==='ban',done:function(r){u.s=m[3];log(m[4],u.n,r);renderUsers();openUser(u);toast(m[4]+'. Recorded in the audit log.')}});
+      else if(a==='logout')act({title:'Sign '+u.n+' out everywhere?',confirm:'Sign out',done:function(r){log('Forced sign-out',u.n,r);toast('Signed out on all devices')}});
+      else if(a==='verify')act({title:'Resend verification email?',confirm:'Send',done:function(r){log('Resent verification',u.n,r);toast('Verification email queued')}});
+      else if(a==='edit')act({title:'Remove bio text for '+u.n+'?',desc:'The bio is cleared and the user is told why.',confirm:'Clear bio',done:function(r){log('Cleared bio',u.n,r);toast('Bio cleared')}});
+      else if(a==='delete')act({title:'Delete '+u.n+'?',desc:'Permanent after 14 days. This cannot be undone once the period ends.',confirm:'Delete',danger:true,done:function(r){log('Scheduled deletion',u.n,r);toast('Deletion scheduled in 14 days')}});
+    })});
+    var na=$('#ntA');if(na)na.addEventListener('click',function(){var v=$('#nt').value.trim();if(!v)return;(notes[u.e]=notes[u.e]||[]).push(v);log('Added note',u.n,'Private note');openUser(u)});
+  }
+
+  /* ---------- ACCESS ---------- */
+  var applic=[['Dev Malhotra','dev.m@protonmail.com','Friend invite','Today'],['Ritu Sharma','ritu.sh@gmail.com','Landing page','Today'],['Faisal Ahmed','faisal.a@gmail.com','Landing page','Yesterday'],['Lakshmi Rao','lakshmi.r@gmail.com','Invite link','Yesterday']];
+  function renderAppq(){$('#appq').innerHTML=applic.length?applic.map(function(a,i){return '<div class="hl-row"><div class="u grow"><i>'+ini(a[0])+'</i><div style="min-width:0"><b>'+a[0]+'</b><span>'+a[1]+' · '+a[2]+' · '+a[3]+'</span></div></div><span class="acts act"><button class="btn sm" data-ok="'+i+'">Approve</button><button class="btn ghost sm" data-no="'+i+'">Reject</button></span></div>'}).join(''):'<div class="empty">All caught up.</div>';
+    $$('#appq [data-ok]').forEach(function(b){b.addEventListener('click',function(){var a=applic.splice(+b.dataset.ok,1)[0];log('Approved application',a[0],'Approved from queue');renderAppq();toast('Approved. Invite email queued.')})});
+    $$('#appq [data-no]').forEach(function(b){b.addEventListener('click',function(){var a=applic[+b.dataset.no];act({title:'Reject '+a[0]+'?',confirm:'Reject',done:function(r){applic.splice(+b.dataset.no,1);log('Rejected application',a[0],r);renderAppq();toast('Rejected')}})})})}
+  var codes=[['CYN-FRIENDS','Jaspreet K.',37,50,'31 Oct','active'],['CYN-COLLEGE','Jaspreet K.',12,25,'15 Oct','active'],['CYN-BETA1','Jaspreet K.',20,20,'30 Sep','used up']];
+  function renderCodes(){$('#codes').innerHTML=T([{h:'Code',f:function(c){return '<b class="mono">'+c[0]+'</b>'}},{h:'Created by',f:function(c){return c[1]}},{h:'Used',f:function(c){return c[2]+' / '+c[3]}},{h:'Expires',f:function(c){return c[4]}},{h:'Status',f:function(c){return '<span class="b '+(c[5]==='active'?'ok':'')+'">'+c[5]+'</span>'}},{h:'',cls:'rt',f:function(c,i){return c[5]==='active'?'<button class="btn danger sm act" data-rv="'+i+'">Revoke</button>':''}}],codes);
+    $$('#codes [data-rv]').forEach(function(b){b.addEventListener('click',function(){var c=codes[+b.dataset.rv];act({title:'Revoke '+c[0]+'?',desc:'The code stops working. People already in are not affected.',confirm:'Revoke',danger:true,done:function(r){c[5]='revoked';log('Revoked invite code',c[0],r);renderCodes();toast('Revoked')}})})})}
+  $('#newCode').addEventListener('click',function(){var c='CYN-'+Math.random().toString(36).slice(2,7).toUpperCase();codes.unshift([c,'Jaspreet K.',0,25,'31 Oct','active']);log('Created invite code',c,'Limit 25');renderCodes();toast('Created '+c)});
+  $('#inv10').addEventListener('click',function(){var n=$('#wl');n.textContent=+n.textContent-10;log('Invited from waitlist','10 people','Next 10 in queue');toast('10 invites queued')});
+  $('#mode').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;$$('#mode button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');
+    var t=b.textContent;$('#modeHint').textContent={Open:'Anyone can sign up.','Invite only':'New users need a valid invite code or an approved application.',Closed:'Nobody new can join. Existing users can still sign in.'}[t];log('Changed signup mode',t,'Set from Signup and access');toast('Signup mode: '+t)});
+  var al=['gmail.com','outlook.com','iitb.ac.in'],bl=['mailinator.com','tempmail.dev','10minutemail.com'];
+  function chips(id,arr,bad){$(id).innerHTML=arr.map(function(d,i){return '<span class="chip '+(bad?'bad':'')+'">'+esc(d)+'<button class="act" data-i="'+i+'" aria-label="Remove '+esc(d)+'">×</button></span>'}).join('')||'<span class="s" style="color:var(--muted)">None</span>';
+    $$(id+' button').forEach(function(b){b.addEventListener('click',function(){var r=arr.splice(+b.dataset.i,1)[0];log('Removed domain',r,bad?'Unblocked':'No longer allowed');chips(id,arr,bad)})})}
+  function bindDom(addB,inp,arr,id,bad){$(addB).addEventListener('click',function(){var v=$(inp).value.trim().toLowerCase();if(!v)return;arr.push(v);$(inp).value='';log('Added domain',v,bad?'Blocked':'Allowed');chips(id,arr,bad)})}
+  bindDom('#allowAdd','#allowIn',al,'#allow',false);bindDom('#blockAdd','#blockIn',bl,'#block',true);
+
+  /* ---------- REPORTS ---------- */
+  var reports=[
+    {id:'RPT-1051',a:'Sana Khan',b:'Kabir Singh',why:'Harassment',sev:'high',age:'2 h',st:'open',msgs:['You are wasting everyone time, quit.','Reply or I will keep messaging you.','Why are you ignoring me???']},
+    {id:'RPT-1050',a:'Priya Nair',b:'Dev Malhotra',why:'Spam',sev:'medium',age:'5 h',st:'open',msgs:['Check my crypto course, link in bio!!','Join now: bit.ly/xxxx']},
+    {id:'RPT-1049',a:'Isha Patel',b:'Rohan Gupta',why:'Inappropriate',sev:'high',age:'8 h',st:'open',msgs:['Send me your number.','Why not? Come on.']},
+    {id:'RPT-1048',a:'Arjun Rao',b:'Aditya Verma',why:'Fake profile',sev:'low',age:'1 d',st:'open',msgs:['Profile photo and bio look copied.']},
+    {id:'RPT-1047',a:'Tara Menon',b:'Neha Kulkarni',why:'Spam',sev:'low',age:'1 d',st:'open',msgs:['Same message sent to many people.']},
+    {id:'RPT-1046',a:'Vikram Joshi',b:'Ananya Das',why:'Other',sev:'medium',age:'2 d',st:'review',msgs:['Asked to move to another app immediately.']},
+    {id:'RPT-1042',a:'Sana Khan',b:'Rahul Bose',why:'Harassment',sev:'high',age:'3 d',st:'resolved',msgs:['(resolved: ban)']}
+  ];
+  var appeals=[['Rahul Bose','Banned','"I was joking and did not know it was upsetting. Please give me another chance."','6 Oct'],['Kabir Singh','Suspended 7 days','"The reports are from one person who is angry at me."','7 Oct']];
+  var rtab='open';
+  function drawRTabs(){var c=function(s){return reports.filter(function(r){return r.st===s}).length};
+    var tabs=[['open','Open ('+c('open')+')'],['review','In review ('+c('review')+')'],['resolved','Resolved'],['appeals','Appeals ('+appeals.length+')'],['blocks','Blocks']];
+    $('#rtabs').innerHTML=tabs.map(function(t){return '<button data-t="'+t[0]+'" aria-pressed="'+(rtab===t[0])+'">'+t[1]+'</button>'}).join('');drawRBody()}
+  $('#rtabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;rtab=b.dataset.t;drawRTabs()});
+  function drawRBody(){
+    var el=$('#rbody');
+    if(rtab==='appeals'){el.innerHTML='<div class="card">'+(appeals.length?appeals.map(function(a,i){return '<div class="lrow" style="align-items:flex-start"><div><b>'+a[0]+' <span class="b">'+a[1]+'</span></b><span class="s" style="margin-top:4px;color:var(--ink-2)">'+esc(a[2])+'</span><span class="s">Appealed '+a[3]+'</span></div><span class="acts act"><button class="btn ghost sm" data-up="'+i+'">Uphold</button><button class="btn sm" data-ov="'+i+'">Overturn</button></span></div>'}).join(''):'<div class="empty">No open appeals.</div>')+'</div>';
+      $$('#rbody [data-up]').forEach(function(b){b.addEventListener('click',function(){var a=appeals[+b.dataset.up];act({title:'Uphold decision for '+a[0]+'?',confirm:'Uphold',done:function(r){appeals.splice(+b.dataset.up,1);log('Upheld decision',a[0],r);drawRTabs();toast('Decision upheld. User notified.')}})})});
+      $$('#rbody [data-ov]').forEach(function(b){b.addEventListener('click',function(){var a=appeals[+b.dataset.ov];act({title:'Overturn decision for '+a[0]+'?',desc:'The account is restored.',confirm:'Overturn',done:function(r){appeals.splice(+b.dataset.ov,1);log('Overturned decision',a[0],r);drawRTabs();toast('Decision overturned')}})})});return}
+    if(rtab==='blocks'){var bl=[['Kabir Singh',7],['Dev Malhotra',5],['Rahul Bose',4],['Aditya Verma',2]];
+      el.innerHTML='<div class="grid g2"><div class="card"><h2>Most blocked</h2><p class="sub">Blocks in the last 30 days</p>'+bl.map(function(b){return '<div class="hl-row"><div class="u grow"><i>'+ini(b[0])+'</i><b>'+b[0]+'</b></div><span class="num">'+b[1]+'</span></div>'}).join('')+'</div><div class="card"><h2>Totals</h2><p class="sub">Last 30 days</p><dl class="kv"><dt>New blocks</dt><dd>38</dd><dt>People blocked</dt><dd>21</dd><dt>Blocked 3+ times</dt><dd>4 <span class="b warn">Review</span></dd></dl></div></div>';return}
+    var rows=reports.filter(function(r){return r.st===rtab});
+    el.innerHTML='<div class="tw">'+T([{h:'Case',f:function(r){return '<b class="mono">'+r.id+'</b>'}},{h:'Reported',f:function(r){return '<b>'+r.b+'</b>'}},{h:'By',f:function(r){return r.a}},{h:'Reason',f:function(r){return r.why}},{h:'Priority',f:function(r){return badge(r.sev)}},{h:'Age',f:function(r){return r.age}}],rows,{click:1,empty:'No cases here.'})+'</div>';
+    $$('#rbody tbody tr').forEach(function(tr){tr.addEventListener('click',function(){openCase(rows[+tr.dataset.i])})});
+  }
+  function openCase(r){
+    var rep=users.filter(function(u){return u.n===r.b})[0]||{};
+    var h='<div class="acts" style="margin-bottom:12px">'+badge(r.sev)+badge(r.st)+'<span class="b">'+r.why+'</span></div>'
+    +'<dl class="kv"><dt>Reported user</dt><dd><b>'+r.b+'</b> ('+(rep.s||'active')+', '+(rep.r||0)+' reports)</dd><dt>Reported by</dt><dd>'+r.a+'</dd><dt>Opened</dt><dd>'+r.age+' ago</dd></dl>'
+    +'<div class="lbl sec-t">Messages attached by the reporter</div>'+r.msgs.map(function(m,i){return '<div class="quote"><small>'+esc(r.b)+' · message '+(i+1)+'</small>'+esc(m)+'</div>'}).join('')
+    +'<div class="lbl sec-t">History of reported user</div><ul class="tl"><li>Joined '+(rep.j||'Sep')+'<span>Account</span></li><li>'+(rep.r||0)+' reports received<span>All time</span></li><li>'+(rep.m||0)+' matches<span>Activity</span></li></ul>'
+    +(r.st==='resolved'?'':'<div class="lbl sec-t">Decision</div><div class="acts act"><button class="btn ghost sm" data-d="dismiss">Dismiss</button><button class="btn ghost sm" data-d="warn">Warn user</button><button class="btn ghost sm" data-d="suspend">Suspend 7 days</button><button class="btn danger sm" data-d="ban">Ban</button></div>');
+    openDrawer(r.id,h);
+    $$('#drB [data-d]').forEach(function(b){b.addEventListener('click',function(){var d=b.dataset.d,nm={dismiss:'Dismissed report',warn:'Warned user',suspend:'Suspended user',ban:'Banned user'}[d];
+      act({title:{dismiss:'Dismiss this report?',warn:'Send a warning to '+r.b+'?',suspend:'Suspend '+r.b+' for 7 days?',ban:'Ban '+r.b+'?'}[d],desc:'The reporter is told the case was reviewed.',confirm:{dismiss:'Dismiss',warn:'Send warning',suspend:'Suspend',ban:'Ban'}[d],danger:d==='ban',
+        done:function(why){r.st='resolved';if(rep.n&&d==='suspend')rep.s='suspended';if(rep.n&&d==='ban')rep.s='banned';log(nm,r.id+' · '+r.b,why);closeDrawer();drawRTabs();renderUsers();toast(nm+'. Recorded in the audit log.')}})})});
+  }
+
+  /* ---------- CONTENT ---------- */
+  var flags=[['Request','"Looking for a cofounder, text me on 98xxxxxx12"','Phone number in text','Meera Iyer'],['Bio','"Earn 50k a week from home, DM me"','Spam pattern','Dev Malhotra'],['Intro','"Hey hey hey hey hey hey hey hey"','Repeated words','Kabir Singh']];
+  function renderFlags(){$('#flagq').innerHTML=flags.length?flags.map(function(f,i){return '<div class="lrow" style="align-items:flex-start"><div><b>'+f[3]+' <span class="b">'+f[0]+'</span> <span class="b warn">'+f[2]+'</span></b><span class="s" style="color:var(--ink-2);margin-top:4px">'+esc(f[1])+'</span></div><span class="acts act"><button class="btn ghost sm" data-ok="'+i+'">Keep</button><button class="btn danger sm" data-rm="'+i+'">Remove</button></span></div>'}).join(''):'<div class="empty">Queue is clear.</div>';
+    $$('#flagq [data-ok]').forEach(function(b){b.addEventListener('click',function(){var f=flags.splice(+b.dataset.ok,1)[0];log('Kept flagged content',f[3]+' '+f[0],'Reviewed, fine');renderFlags();toast('Kept')})});
+    $$('#flagq [data-rm]').forEach(function(b){b.addEventListener('click',function(){var f=flags[+b.dataset.rm];act({title:'Remove this '+f[0].toLowerCase()+'?',desc:'The user is told which rule it broke.',confirm:'Remove',danger:true,done:function(r){flags.splice(+b.dataset.rm,1);log('Removed content',f[3]+' '+f[0],r);renderFlags();toast('Removed')}})})})}
+  var rules=[['Profanity list','Flag words from the list',1],['Links in bios','Flag short links and unknown domains',1],['Contact details in text','Phone numbers and emails in requests and bios',1],['Repeated intros','Same message sent to many people',1],['Prompt injection','Text that tries to instruct the AI',0]];
+  function renderRules(){$('#rules').innerHTML=rules.map(function(r,i){return '<div class="lrow"><div><b>'+r[0]+'</b><span class="s">'+r[1]+'</span></div><button class="sw act" role="switch" aria-checked="'+!!r[2]+'" data-i="'+i+'" aria-label="'+r[0]+'"></button></div>'}).join('');
+    $$('#rules .sw').forEach(function(s){s.addEventListener('click',function(){var r=rules[+s.dataset.i];r[2]=r[2]?0:1;s.setAttribute('aria-checked',!!r[2]);log('Changed rule',r[0],r[2]?'Turned on':'Turned off')})})}
+
+  /* ---------- AI ---------- */
+  function renderAI(){
+    var k=[['Accept rate','58%'],['Ignored','31%'],['Reported','0.7%'],['AI cost today','$0.84']];
+    $('#aik').innerHTML=k.map(function(x){return '<div class="kpi"><span class="lbl">'+x[0]+'</span><b>'+x[1]+'</b></div>'}).join('');
+    var p=[['Groq','primary','operational','420 ms','1.8 s','0.4%','$0.31',1],['Cloudflare Workers AI','fallback','degraded','610 ms','4.2 s','6.0%','$0.53',1]];
+    $('#prov').innerHTML=T([{h:'Provider',f:function(x){return '<b>'+x[0]+'</b>'}},{h:'Role',f:function(x){return '<span class="b">'+x[1]+'</span>'}},{h:'Status',f:function(x){return badge(x[2])}},{h:'p50',cls:'rt',f:function(x){return x[3]}},{h:'p95',cls:'rt',f:function(x){return x[4]}},{h:'Errors',cls:'rt',f:function(x){return x[5]}},{h:'Cost today',cls:'rt',f:function(x){return x[6]}},{h:'On',cls:'rt',f:function(x,i){return '<button class="sw act" role="switch" aria-checked="'+!!x[7]+'" data-i="'+i+'" aria-label="Enable '+x[0]+'"></button>'}}],p);
+    $$('#prov .sw').forEach(function(s){s.addEventListener('click',function(){var x=p[+s.dataset.i];x[7]=x[7]?0:1;s.setAttribute('aria-checked',!!x[7]);log('Toggled AI provider',x[0],x[7]?'Turned on':'Turned off')})});
+  }
+  $('#testAI').addEventListener('click',function(){var o=$('#testOut');o.innerHTML='<div class="note"><span class="spin"></span> Testing Groq…</div>';
+    setTimeout(function(){o.innerHTML='<div class="note"><span class="spin"></span> Testing Cloudflare…</div>'},900);
+    setTimeout(function(){o.innerHTML='<div class="banner"><b>Groq:</b> OK, 412 ms. &nbsp; <b>Cloudflare:</b> OK, 640 ms but 1 retry. Both can serve requests.</div>';log('Tested AI providers','Groq, Cloudflare','Manual check');toast('Provider test finished')},1900)});
+  $('#label').addEventListener('click',function(){toast('Opens the labelling tool in the full build')});
+  $('#rr').addEventListener('click',function(){var v=$('#rrq').value.trim();if(!v)return toast('Enter a user email first');act({title:'Re-run matching for '+v+'?',confirm:'Re-run',done:function(r){log('Re-ran matching',v,r);toast('Queued. Takes under a minute.')}})});
+
+  /* ---------- COMMS ---------- */
+  var ann=[['Welcome to the Cynergi staging preview.','Info','Until 31 Oct']];
+  function anPrev(){var t=$$('#anType button').filter(function(b){return b.getAttribute('aria-pressed')==='true'})[0].textContent;var c=t==='Info'?'':t==='Warning'?' warning':' maint';$('#anP').className='banner'+c;$('#anP').textContent=$('#anT').value||'Your message appears here.'}
+  $('#anT').addEventListener('input',anPrev);
+  $('#anType').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;$$('#anType button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');anPrev()});
+  function renderAnn(){$('#anList').innerHTML=ann.map(function(a,i){return '<div class="lrow"><div><b>'+esc(a[0])+'</b><span class="s">'+a[1]+' · '+a[2]+'</span></div><button class="btn danger sm act" data-i="'+i+'">End</button></div>'}).join('')||'<div class="empty">No active banners.</div>';
+    $$('#anList [data-i]').forEach(function(b){b.addEventListener('click',function(){var a=ann.splice(+b.dataset.i,1)[0];log('Ended banner',a[0].slice(0,32),'Ended early');renderAnn();toast('Banner ended')})})}
+  $('#anGo').addEventListener('click',function(){var t=$$('#anType button').filter(function(b){return b.getAttribute('aria-pressed')==='true'})[0].textContent;act({title:'Publish this banner to all users?',confirm:'Publish',done:function(r){ann.unshift([$('#anT').value,t,'Until ended']);log('Published banner',t,r);renderAnn();toast('Banner is live')}})});
+  var tpl=[['Welcome','2 Oct'],['Intro received','2 Oct'],['Daily digest','28 Sep'],['Account paused','28 Sep'],['Deletion scheduled','28 Sep']];
+  function renderTpl(){$('#tpl').innerHTML=tpl.map(function(t,i){return '<div class="lrow"><div><b>'+t[0]+'</b><span class="s">Updated '+t[1]+'</span></div><span class="acts"><button class="btn ghost sm" data-t="'+i+'">Send test</button><button class="btn ghost sm act" data-e="'+i+'">Edit</button></span></div>'}).join('');
+    $$('#tpl [data-t]').forEach(function(b){b.addEventListener('click',function(){toast('Test email sent to you')})});$$('#tpl [data-e]').forEach(function(b){b.addEventListener('click',function(){toast('Template editor opens in the full build')})})}
+  var mails=[['10:42','meera.iyer@gmail.com','Welcome','delivered'],['10:31','arjun.rao@outlook.com','Intro received','delivered'],['10:12','dev.m@protonmail.com','Welcome','bounced'],['09:55','priya.nair@gmail.com','Daily digest','delivered'],['09:20','kabir.s@yahoo.com','Account paused','failed'],['08:47','tara.menon@gmail.com','Intro received','failed']];
+  function renderMail(){$('#mlog').innerHTML=T([{h:'Time',f:function(m){return '<span class="mono">'+m[0]+'</span>'}},{h:'To',f:function(m){return esc(m[1])}},{h:'Template',f:function(m){return m[2]}},{h:'Status',f:function(m){return badge(m[3])}},{h:'',cls:'rt',f:function(m,i){return m[3]==='failed'?'<button class="btn ghost sm act" data-r="'+i+'">Retry</button>':''}}],mails);
+    $$('#mlog [data-r]').forEach(function(b){b.addEventListener('click',function(){mails[+b.dataset.r][3]='delivered';log('Retried email',mails[+b.dataset.r][1],'Retry after failure');renderMail();toast('Delivered')})})}
+  var supp=[['Cannot sign in with Google','rohan.g@gmail.com','New','Today'],['How do I delete my account?','ananya.das@gmail.com','Open','Yesterday'],['Report a bug on the chat page','neha.k@gmail.com','Open','2 days ago'],['Thank you!','isha.patel@gmail.com','Closed','3 days ago']];
+  function renderSupp(){$('#supp').innerHTML=supp.map(function(s){return '<div class="lrow"><div><b>'+s[0]+'</b><span class="s">'+s[1]+' · '+s[3]+'</span></div><span class="b '+(s[2]==='New'?'dark':s[2]==='Open'?'warn':'')+'">'+s[2]+'</span></div>'}).join('')}
+
+  /* ---------- SETTINGS ---------- */
+  var fl=[['Open signups','Let new people join (see Signup and access)',1],['Intro requests','Users can send intros',1],['Chats','Users can message after an intro is accepted',1],['AI matching','Use AI to suggest matches',1],['Pair spaces','Shared goal spaces for two people',1],['Email notifications','Send digests and intro emails',1]];
+  function renderFlags2(){$('#flags').innerHTML=fl.map(function(f,i){return '<div class="lrow"><div><b>'+f[0]+'</b><span class="s">'+f[1]+'</span></div><button class="sw act" role="switch" aria-checked="'+!!f[2]+'" data-i="'+i+'" aria-label="'+f[0]+'"></button></div>'}).join('');
+    $$('#flags .sw').forEach(function(s){s.addEventListener('click',function(){var f=fl[+s.dataset.i],on=!f[2];act({title:(on?'Turn on ':'Turn off ')+f[0]+'?',desc:on?'Takes effect within a minute.':'Users lose this feature within a minute.',confirm:on?'Turn on':'Turn off',danger:!on,done:function(r){f[2]=on?1:0;s.setAttribute('aria-checked',on);log(on?'Turned on feature':'Turned off feature',f[0],r);toast(f[0]+(on?' is on':' is off'))}})})})}
+  function renderLimits(){var L=[['Requests per day',5],['Intros per day',10],['Pending intros at once',20],['Max message length',2000]];
+    $('#limits').innerHTML=L.map(function(l,i){return '<div class="f" style="display:flex;justify-content:space-between;gap:12px;align-items:center"><label for="lm'+i+'" style="margin:0">'+l[0]+'</label><input class="in act" id="lm'+i+'" type="number" value="'+l[1]+'" style="width:100px" data-n="'+l[0]+'"></div>'}).join('');
+    $$('#limits input').forEach(function(x){x.addEventListener('change',function(){log('Changed limit',x.dataset.n,'Set to '+x.value);toast('Limit saved')})})}
+  var ints=['Build together','Skill exchange','Interest buddy','Accountability','Mentor','Explore'];
+  function renderInts(){chips('#intentsL',ints,false)}
+  $('#intAdd').addEventListener('click',function(){var v=$('#intIn').value.trim();if(!v)return;ints.push(v);$('#intIn').value='';log('Added intent',v,'New intent type');renderInts()});
+
+  /* chips() used for ints needs its own remove handler tied to ints array */
+  function chipsInts(){$('#intentsL').innerHTML=ints.map(function(d,i){return '<span class="chip">'+esc(d)+'<button class="act" data-i="'+i+'" aria-label="Remove '+esc(d)+'">×</button></span>'}).join('');
+    $$('#intentsL button').forEach(function(b){b.addEventListener('click',function(){var r=ints.splice(+b.dataset.i,1)[0];log('Removed intent',r,'Removed intent type');chipsInts()})})}
+  renderInts=chipsInts;
+  $('#intAdd').replaceWith($('#intAdd').cloneNode(true));
+  $('#intAdd').addEventListener('click',function(){var v=$('#intIn').value.trim();if(!v)return;ints.push(v);$('#intIn').value='';log('Added intent',v,'New intent type');chipsInts()});
+
+  /* ---------- TEAM ---------- */
+  var admins=[['Jaspreet K.','jaspreet.parvinder@gmail.com','Owner',1,'Now','active'],['Frontend contributor','contributor@example.com','Read-only',1,'2 days ago','active'],['Pending invite','helper@example.com','Moderator',0,'Never','pending']];
+  function renderAdmins(){$('#admins').innerHTML=T([{h:'Admin',nolabel:1,f:function(a){return '<div class="u"><i>'+ini(a[0])+'</i><div style="min-width:0"><b>'+esc(a[0])+'</b><span>'+esc(a[1])+'</span></div></div>'}},{h:'Role',f:function(a){return '<span class="b dark">'+a[2]+'</span>'}},{h:'Two-step',f:function(a){return a[3]?'<span class="b ok">On</span>':'<span class="b warn">Not set up</span>'}},{h:'Last sign-in',f:function(a){return a[4]}},{h:'Status',f:function(a){return badge(a[5])}},{h:'',cls:'rt',f:function(a,i){return a[2]==='Owner'?'':'<button class="btn danger sm act" data-i="'+i+'">Remove</button>'}}],admins);
+    $$('#admins [data-i]').forEach(function(b){b.addEventListener('click',function(){var a=admins[+b.dataset.i];act({title:'Remove '+a[0]+' as admin?',desc:'They lose access immediately and are signed out.',confirm:'Remove',danger:true,done:function(r){admins.splice(+b.dataset.i,1);log('Removed admin',a[1],r);renderAdmins();toast('Admin removed')}})})})}
+  $('#invAdmin').addEventListener('click',function(){$('#invD').showModal()});$('#iNo').addEventListener('click',function(){$('#invD').close()});
+  $('#iYes').addEventListener('click',function(){var e=$('#ie').value.trim();if(!e)return;admins.push(['Pending invite',e,$('#ir').value,0,'Never','pending']);$('#invD').close();log('Invited admin',e,'Role '+$('#ir').value);renderAdmins();toast('Invite sent')});
+  function renderMatrix(){var c=['Owner','Admin','Moderator','Read-only'],p=[['View dashboards',1,1,1,1],['View users',1,1,1,1],['Suspend / ban users',1,1,1,0],['Handle reports',1,1,1,0],['Read messages attached to reports',1,1,1,0],['Signup and invites',1,1,0,0],['Settings and switches',1,1,0,0],['AI and matching',1,1,0,0],['Manage admins',1,0,0,0],['Delete users and data',1,1,0,0]];
+    $('#matrix').innerHTML='<table class="t mx"><thead><tr><th>Permission</th>'+c.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr></thead><tbody>'+p.map(function(r){return '<tr><td>'+r[0]+'</td>'+r.slice(1).map(function(v){return '<td>'+(v?'<span style="color:var(--green);font-weight:600">Yes</span>':'<span style="color:var(--muted)">No</span>')+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table>'}
+  function renderAudit(){var q=($('#aq').value||'').toLowerCase();var rows=audit.map(function(a,i){return a.concat([ipad[i]])}).filter(function(a){return !q||a.join(' ').toLowerCase().indexOf(q)>=0});
+    $('#audit').innerHTML=T([{h:'When',f:function(a){return '<span class="mono">'+a[0]+'</span>'}},{h:'Admin',f:function(a){return a[1]}},{h:'Action',f:function(a){return '<b>'+esc(a[2])+'</b>'}},{h:'Target',f:function(a){return esc(a[3])}},{h:'Reason',f:function(a){return '<span style="color:var(--ink-2)">'+esc(a[4])+'</span>'}},{h:'IP',f:function(a){return '<span class="mono">'+a[5]+'</span>'}}],rows,{empty:'No entries match.'})}
+  $('#aq').addEventListener('input',renderAudit);
+  $('#expAudit').addEventListener('click',function(){addJob('Audit log CSV','queued');toast('Export queued');});
+
+  /* ---------- DATA ---------- */
+  var dreq=[['Export','ananya.das@gmail.com','6 Oct','1 day left','warn'],['Delete','rohan.g@gmail.com','5 Oct','2 days left','warn'],['Export','tara.menon@gmail.com','8 Oct','13 days left','']];
+  function renderDreq(){$('#dreq').innerHTML=T([{h:'Type',f:function(d){return '<span class="b '+(d[0]==='Delete'?'bad':'')+'">'+d[0]+'</span>'}},{h:'User',f:function(d){return esc(d[1])}},{h:'Requested',f:function(d){return d[2]}},{h:'Deadline',f:function(d){return '<span class="b '+d[4]+'">'+d[3]+'</span>'}},{h:'',cls:'rt',f:function(d,i){return '<button class="btn sm act" data-i="'+i+'">Process</button>'}}],dreq,{empty:'No open requests.'});
+    $$('#dreq [data-i]').forEach(function(b){b.addEventListener('click',function(){var d=dreq[+b.dataset.i];act({title:d[0]+' data for '+d[1]+'?',desc:d[0]==='Delete'?'Starts the 14 day deletion. The user is emailed.':'Builds a file and emails a download link.',confirm:'Process',danger:d[0]==='Delete',done:function(r){dreq.splice(+b.dataset.i,1);log(d[0]+' data request',d[1],r);renderDreq();toast('Done')}})})})}
+  var rt=[['Messages after account deletion','12 months'],['Audit log','24 months'],['AI call records','30 days'],['Closed reports','24 months'],['Deleted accounts (grace period)','14 days']];
+  function renderRet(){$('#ret').innerHTML=rt.map(function(r,i){return '<div class="lrow"><div><b>'+r[0]+'</b></div><span class="b">'+r[1]+'</span></div>'}).join('')}
+  var jobs=[['Users CSV','ready','2 Oct'],['Audit log CSV','ready','4 Oct']];
+  function addJob(n,s){jobs.unshift([n,s,'Today']);renderJobs();if(s==='queued'){var j=jobs[0];setTimeout(function(){j[1]='running';renderJobs()},1000);setTimeout(function(){j[1]='ready';renderJobs()},2800)}}
+  function renderJobs(){$('#jobs').innerHTML=T([{h:'Job',f:function(j){return '<b>'+j[0]+'</b>'}},{h:'Status',f:function(j){return badge(j[1])}},{h:'Created',f:function(j){return j[2]}},{h:'',cls:'rt',f:function(j){return j[1]==='ready'?'<button class="btn ghost sm dl">Download</button>':''}}],jobs);
+    $$('#jobs .dl').forEach(function(b){b.addEventListener('click',function(){toast('Download starts (demo)')})})}
+  var chk=['Pick the latest backup','Restore into a test database','Check user and message counts','Open the app against the test database','Delete the test database'],cs=[1,1,1,0,0];
+  function renderChk(){$('#chk').innerHTML=chk.map(function(c,i){return '<label class="lrow" style="cursor:pointer"><span>'+c+'</span><input type="checkbox" '+(cs[i]?'checked':'')+' data-i="'+i+'" class="act" style="width:18px;height:18px;accent-color:#0F4A34"></label>'}).join('')}
+  $('#remind').addEventListener('click',function(){act({title:'Ask 51 users to accept the new terms?',desc:'They see the terms on next sign-in.',confirm:'Confirm',done:function(r){log('Prompted terms acceptance','51 users',r);toast('Done')}})});
+
+  /* ---------- init ---------- */
+  kpis();drawAttn();renderFeed();renderUsers();renderAppq();renderCodes();chips('#allow',al,false);chips('#block',bl,true);
+  drawRTabs();renderFlags();renderRules();renderAI();anPrev();renderAnn();renderTpl();renderMail();renderSupp();
+  renderFlags2();renderLimits();chipsInts();renderAdmins();renderMatrix();renderAudit();renderDreq();renderRet();renderJobs();renderChk();drawNav();
+})();
+</script>
+</body>
+</html>
