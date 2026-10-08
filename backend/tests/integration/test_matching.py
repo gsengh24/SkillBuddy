@@ -172,6 +172,7 @@ async def test_build_together_ranks_by_offer_and_applies_hard_filters(
     best = person(url, model=model, offer=unit((axis, 1.0)))
     good = person(url, model=model, offer=unit((axis, 0.8), (axis + 2, 0.6)))
     paused = person(url, model=model, offer=unit((axis, 1.0)), visibility="paused")
+    after_intro = person(url, model=model, offer=unit((axis, 1.0)), visibility="after_intro")
     suspended = person(url, model=model, offer=unit((axis, 1.0)), status="suspended")
     stale_model = person(url, offer=unit((axis, 1.0)), model="old-model@0")
     request = new_request(
@@ -183,7 +184,7 @@ async def test_build_together_ranks_by_offer_and_applies_hard_filters(
     found = [row["candidate_id"] for row in matches(url, request)]
     assert found[:2] == [best, good]
     assert me not in found
-    for excluded in (paused, suspended, stale_model):
+    for excluded in (paused, after_intro, suspended, stale_model):
         assert excluded not in found
     state = run_sql(
         url,

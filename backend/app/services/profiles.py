@@ -42,6 +42,36 @@ class ProfileTextRequiredError(AppError):
     default_message = "Add a description before correcting what was understood from it."
 
 
+# PATCH fields that stay as they are when sent as null (the column can't be empty) ...
+_KEPT_ON_NULL = (
+    "display_name",
+    "visibility",
+    "links",
+    "languages",
+    "email_notifications",
+    "city",
+    "headline",
+    "intents",
+    "goal",
+    "available_days",
+    "location_precision",
+    "show_last_active",
+    "intros_only_from_strong_matches",
+    "email_daily_digest",
+    "email_match_suggestions",
+    "email_product_updates",
+)
+# ... and those that a null clears.
+_CLEARED_ON_NULL = (
+    "timezone",
+    "experience_level",
+    "working_style",
+    "weekly_hours",
+    "available_from",
+    "available_until",
+)
+
+
 class ProfileService:
     def __init__(self, db: AsyncSession, settings: Settings, limiter: RateLimiter) -> None:
         self._db = db
@@ -102,11 +132,12 @@ class ProfileService:
         if profile is None:
             raise ProfileNotFoundError
         changes = data.model_dump(exclude_unset=True)
-        for field in ("display_name", "visibility", "links", "languages", "email_notifications"):
+        for field in _KEPT_ON_NULL:
             if changes.get(field) is not None:
                 setattr(profile, field, changes[field])
-        if "timezone" in changes:
-            profile.timezone = changes["timezone"]
+        for field in _CLEARED_ON_NULL:
+            if field in changes:
+                setattr(profile, field, changes[field])
         await self._db.commit()
         await self._db.refresh(profile)
         return profile

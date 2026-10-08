@@ -39,6 +39,9 @@ class PersonOut(BaseModel):
     interests: list[str]
     availability: str
     languages: list[str]
+    location: str | None = Field(
+        description="The city, if the person shares it (their location precision)."
+    )
 
     @classmethod
     def build(cls, user_id: uuid.UUID, profile: Profile | None, *, connected: bool) -> PersonOut:
@@ -58,6 +61,7 @@ class PersonOut(BaseModel):
             interests=items("interests"),
             availability=str(data.get("availability", "")),
             languages=list(profile.languages) if profile else [],
+            location=profile.shown_location() if profile else None,
         )
 
 

@@ -82,7 +82,7 @@ export const profileSchema = z.object({
   links: z.array(z.string()),
   timezone: z.string().nullable(),
   languages: z.array(z.string()),
-  visibility: z.enum(["matchable", "paused"]),
+  visibility: z.enum(["matchable", "after_intro", "paused"]),
   /** Emails about intros (on by default); older APIs omit it. */
   email_notifications: z.boolean().default(true),
   parse_status: z.enum(["empty", "pending", "parsed"]),

@@ -89,6 +89,9 @@ class MatchCandidateOut(BaseModel):
     interests: list[str]
     availability: str
     languages: list[str]
+    location: str | None = Field(
+        description="The city, if the person shares it (their location precision)."
+    )
 
 
 class MatchOut(BaseModel):
@@ -119,6 +122,7 @@ class MatchOut(BaseModel):
                 interests=items("interests"),
                 availability=str(data.get("availability", "")),
                 languages=list(profile.languages) if profile else [],
+                location=profile.shown_location() if profile else None,
             ),
         )
 
