@@ -6,7 +6,7 @@ import { Panel } from "@/components/ds/surfaces";
 import { UnderstandingReview } from "@/components/profile/understanding-review";
 import { VisibilityToggle } from "@/components/profile/visibility-toggle";
 import { Overline } from "@/components/ui/overline";
-import { YouPage } from "@/components/you/you-page";
+import { YouPage, YouWithoutProfile } from "@/components/you/you-page";
 import { withUser } from "@/lib/auth/with-user";
 import { getMyProfile } from "@/lib/profile/server";
 
@@ -25,7 +25,17 @@ export default async function You({ searchParams }: Props) {
     withUser("/login?next=/you", getMyProfile()),
     searchParams,
   ]);
-  if (!profile) redirect("/onboarding");
+  if (!profile) {
+    // Onboarding's step 2 and the review need a profile; the account sections don't.
+    if (welcome || review) redirect("/onboarding");
+    return (
+      <YouWithoutProfile
+        email={user.email}
+        termsVersion={user.terms_version}
+        isModerator={user.is_moderator}
+      />
+    );
+  }
 
   if (welcome || review) {
     return (

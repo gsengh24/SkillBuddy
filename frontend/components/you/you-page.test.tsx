@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { profileSchema } from "@/lib/api/schemas";
 
-import { YouPage } from "./you-page";
+import { YouPage, YouWithoutProfile } from "./you-page";
 
 const router = { replace: vi.fn(), refresh: vi.fn(), push: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
@@ -277,5 +277,18 @@ describe("YouPage", () => {
     await user.tab();
     expect(screen.getByRole("link", { name: /Skills/ })).toHaveFocus();
     expect(first).toHaveAttribute("aria-current", "location");
+  });
+
+  it("still offers the account sections before there is a profile", () => {
+    render(<YouWithoutProfile email="new@example.com" termsVersion={null} isModerator={false} />);
+    expect(screen.getByRole("link", { name: "Create your profile" })).toHaveAttribute(
+      "href",
+      "/onboarding",
+    );
+    expect(screen.getByRole("heading", { name: "Account and security" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Blocked people" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete my account…" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Unsaved changes" })).not.toBeInTheDocument();
   });
 });

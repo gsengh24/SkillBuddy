@@ -5,7 +5,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 
 import { DeleteAccount, SignOutActions } from "@/components/auth/account-actions";
 import { Avatar } from "@/components/ds/avatar";
-import { Button } from "@/components/ds/button";
+import { Button, ButtonLink } from "@/components/ds/button";
 import { Dialog } from "@/components/ds/dialog";
 import { Input, Select, Textarea } from "@/components/ds/fields";
 import { TwoToneHeadline } from "@/components/ds/page-parts";
@@ -74,7 +74,7 @@ function Section({
       <div className="mb-4 flex items-start gap-3">
         <span
           aria-hidden
-          className="font-display tracking-display text-faint min-w-9 text-[28px] leading-none font-extrabold"
+          className="font-display tracking-display text-muted-2 min-w-9 text-[28px] leading-none font-extrabold"
         >
           {String(index + 1).padStart(2, "0")}
         </span>
@@ -187,6 +187,97 @@ function PreviewCard({ draft, profile }: { draft: Draft; profile: Profile }) {
       {languages.length ? (
         <p className="text-meta-lg text-ink-2">Speaks {languages.join(", ")}</p>
       ) : null}
+    </div>
+  );
+}
+
+/** Sections 08 to 10: they work before there is a profile, too. */
+function AccountSections({
+  email,
+  termsVersion,
+  isModerator,
+}: {
+  email: string;
+  termsVersion: string | null;
+  isModerator: boolean;
+}) {
+  return (
+    <>
+      <Section id="s-security" intro="How you sign in.">
+        <div className="flex flex-col gap-4">
+          <Input
+            label="Email"
+            value={email}
+            readOnly
+            className="read-only:bg-panel read-only:text-ink-2"
+          />
+          <SignOutActions />
+          {isModerator ? (
+            <p>
+              <TextLink href="/moderation">Moderation</TextLink>
+            </p>
+          ) : null}
+        </div>
+      </Section>
+
+      <Section id="s-data" intro="Read what you agreed to, and see who you've blocked.">
+        <ul className="divide-line border-line flex flex-col divide-y border-t">
+          <li className="flex items-center justify-between gap-4 py-3.5">
+            <div>
+              <p className="font-semibold">Terms and privacy policy</p>
+              {termsVersion ? (
+                <p className="text-meta text-muted">You accepted version {termsVersion}.</p>
+              ) : null}
+            </div>
+            <p className="flex shrink-0 gap-4">
+              <TextLink href="/terms">Terms</TextLink>
+              <TextLink href="/privacy">Privacy policy</TextLink>
+            </p>
+          </li>
+          <li className="flex items-center justify-between gap-4 py-3.5">
+            <p className="font-semibold">People you&apos;ve blocked</p>
+            <TextLink href="/settings/blocked">Blocked people</TextLink>
+          </li>
+        </ul>
+      </Section>
+
+      <Section id="s-danger" danger>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p className="font-semibold">Delete account</p>
+          <DeleteAccount />
+        </div>
+      </Section>
+    </>
+  );
+}
+
+/**
+ * You before there is a profile: the account sections (sign out, terms, blocked people,
+ * delete) and a way to create the profile.
+ */
+export function YouWithoutProfile({
+  email,
+  termsVersion,
+  isModerator,
+}: {
+  email: string;
+  termsVersion: string | null;
+  isModerator: boolean;
+}) {
+  return (
+    <div className="flex max-w-[760px] flex-col gap-4">
+      <p className="text-mono-lg text-green font-mono uppercase">You</p>
+      <TwoToneHeadline as="h1" lead="Your profile." rest="Be easy to find." />
+      <section
+        aria-label="Profile summary"
+        className="bg-panel border-line rounded-panel flex flex-col items-start gap-3 border p-4 lg:px-6 lg:py-5"
+      >
+        <p className="text-ink">You haven&apos;t made your profile yet. It takes a minute.</p>
+        <ButtonLink href="/onboarding" variant="primary">
+          Create your profile
+        </ButtonLink>
+      </section>
+      <AccountSections email={email} termsVersion={termsVersion} isModerator={isModerator} />
     </div>
   );
 }
@@ -670,50 +761,7 @@ export function YouPage({ profile, email, termsVersion, isModerator }: Props) {
             </div>
           </Section>
 
-          <Section id="s-security" intro="How you sign in.">
-            <div className="flex flex-col gap-4">
-              <Input
-                label="Email"
-                value={email}
-                readOnly
-                className="read-only:bg-panel read-only:text-ink-2"
-              />
-              <SignOutActions />
-              {isModerator ? (
-                <p>
-                  <TextLink href="/moderation">Moderation</TextLink>
-                </p>
-              ) : null}
-            </div>
-          </Section>
-
-          <Section id="s-data" intro="Read what you agreed to, and see who you've blocked.">
-            <ul className="divide-line border-line flex flex-col divide-y border-t">
-              <li className="flex items-center justify-between gap-4 py-3.5">
-                <div>
-                  <p className="font-semibold">Terms and privacy policy</p>
-                  {termsVersion ? (
-                    <p className="text-meta text-muted">You accepted version {termsVersion}.</p>
-                  ) : null}
-                </div>
-                <p className="flex shrink-0 gap-4">
-                  <TextLink href="/terms">Terms</TextLink>
-                  <TextLink href="/privacy">Privacy policy</TextLink>
-                </p>
-              </li>
-              <li className="flex items-center justify-between gap-4 py-3.5">
-                <p className="font-semibold">People you&apos;ve blocked</p>
-                <TextLink href="/settings/blocked">Blocked people</TextLink>
-              </li>
-            </ul>
-          </Section>
-
-          <Section id="s-danger" danger>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <p className="font-semibold">Delete account</p>
-              <DeleteAccount />
-            </div>
-          </Section>
+          <AccountSections email={email} termsVersion={termsVersion} isModerator={isModerator} />
         </div>
       </div>
 
