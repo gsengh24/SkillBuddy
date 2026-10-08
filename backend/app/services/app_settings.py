@@ -17,7 +17,7 @@ from enum import StrEnum
 from http import HTTPStatus
 from typing import Any, Final
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -27,6 +27,10 @@ from app.models import MESSAGE_MAX_LENGTH, AppSetting
 CACHE_SECONDS: Final = 60.0
 FEATURE_PREFIX: Final = "feature:"
 LIMIT_PREFIX: Final = "limit:"
+# On/off rows for other admin pages (A7): content rules and AI providers.
+RULE_PREFIX: Final = "modrule:"
+PROVIDER_PREFIX: Final = "provider:"
+_PREFIXES: Final = (FEATURE_PREFIX, LIMIT_PREFIX, RULE_PREFIX, PROVIDER_PREFIX)
 
 
 class Feature(StrEnum):
@@ -82,12 +86,18 @@ class FeatureOffError(AppError):
 class Snapshot:
     features: dict[Feature, bool]
     limits: dict[Limit, int]  # only the stored ones
+    # Other stored on/off rows by full key ("modrule:...", "provider:...").
+    switches: dict[str, bool]
 
 
 def _parse(rows: list[tuple[str, Any]]) -> Snapshot:
     features: dict[Feature, bool] = {}
     limits: dict[Limit, int] = {}
+    switches: dict[str, bool] = {}
     for key, value in rows:
+        if key.startswith((RULE_PREFIX, PROVIDER_PREFIX)) and isinstance(value, bool):
+            switches[key] = value
+            continue
         if key.startswith(FEATURE_PREFIX) and isinstance(value, bool):
             try:
                 features[Feature(key.removeprefix(FEATURE_PREFIX))] = value
@@ -103,7 +113,7 @@ def _parse(rows: list[tuple[str, Any]]) -> Snapshot:
             spec = LIMITS[limit]
             if spec.minimum <= value <= spec.maximum:
                 limits[limit] = value
-    return Snapshot(features=features, limits=limits)
+    return Snapshot(features=features, limits=limits, switches=switches)
 
 
 class _Cache:
@@ -123,8 +133,7 @@ class _Cache:
             rows = (
                 await db.execute(
                     select(AppSetting.key, AppSetting.value).where(
-                        AppSetting.key.startswith(FEATURE_PREFIX)
-                        | AppSetting.key.startswith(LIMIT_PREFIX)
+                        or_(*(AppSetting.key.startswith(prefix) for prefix in _PREFIXES))
                     )
                 )
             ).all()
@@ -158,3 +167,8 @@ async def all_features(db: AsyncSession) -> dict[Feature, bool]:
 async def all_limits(db: AsyncSession, settings: Settings) -> dict[Limit, int]:
     snapshot = await cache.get(db)
     return {which: snapshot.limits.get(which, LIMITS[which].default(settings)) for which in Limit}
+
+
+async def switch(db: AsyncSession, key: str, default: bool) -> bool:
+    """A stored on/off row by full key (``"modrule:profanity"``), or ``default``."""
+    return (await cache.get(db)).switches.get(key, default)

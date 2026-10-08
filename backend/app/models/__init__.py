@@ -21,6 +21,7 @@ from app.models.auth import (
     UserSession,
 )
 from app.models.chat import MESSAGE_MAX_LENGTH, Message
+from app.models.content import AiCall, ContentFlag, ContentRule, FlaggedItem, FlagStatus
 from app.models.data_export import DataExport, DataExportStatus
 from app.models.jobs import EmailLog, EmailPurpose, Job, JobStatus, RateLimitCounter
 from app.models.matching import (
@@ -143,6 +144,7 @@ __all__ = [
     "AdminRecoveryCode",
     "AdminRole",
     "AdminSession",
+    "AiCall",
     "AppSetting",
     "Appeal",
     "AppealStatus",
@@ -154,6 +156,8 @@ __all__ = [
     "AuthProvider",
     "Block",
     "Connection",
+    "ContentFlag",
+    "ContentRule",
     "DataExport",
     "DataExportStatus",
     "DomainKind",
@@ -161,6 +165,8 @@ __all__ = [
     "EmailPurpose",
     "EmbeddingFacet",
     "ExperienceLevel",
+    "FlagStatus",
+    "FlaggedItem",
     "GoalStatus",
     "Intro",
     "IntroStatus",

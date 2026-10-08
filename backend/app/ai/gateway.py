@@ -34,7 +34,7 @@ import httpx
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.ai import budget
+from app.ai import budget, call_log
 from app.ai.privacy import find_leaks, redact
 from app.ai.providers import (
     ChatProvider,
@@ -193,6 +193,11 @@ class AIGateway:
             for provider in self._providers:
                 if self._clock() < self._cooling_until.get(provider.name, 0.0):
                     continue
+                # Switched off on the admin Matching and AI page (A7).
+                if not await app_settings.switch(
+                    db, f"{app_settings.PROVIDER_PREFIX}{provider.name}", True
+                ):
+                    continue
                 units_key = f"ai:provider:{provider.name}:{provider.cost.unit}"
                 if await budget.used(db, units_key) >= provider.cost.daily_budget:
                     continue
@@ -222,8 +227,18 @@ class AIGateway:
         started = self._clock()
         details = log | {"provider": provider.name, "attempt": attempt}
 
-        async def count(outcome: str) -> None:
+        async def count(outcome: str, units: int | None = None) -> None:
             await budget.add(db, f"{record}{provider.name}:{outcome}", 1)
+            # The call log (A7): metadata only, never the prompt or the answer.
+            await call_log.record(
+                db,
+                provider=provider.name,
+                kind=str(log.get("task", "probe")),
+                outcome=outcome,
+                duration_ms=round((self._clock() - started) * 1000),
+                cost_units=units,
+                cost_unit=provider.cost.unit if units is not None else None,
+            )
 
         try:
             result = await asyncio.wait_for(
@@ -259,10 +274,10 @@ class AIGateway:
             # One retry, then fail loudly (CLAUDE.md rule 5); the caller moves on.
             level = logging.ERROR if attempt > 1 else logging.WARNING
             logger.log(level, "ai_call_failed", extra=details | metrics | {"outcome": "invalid"})
-            await count("invalid")
+            await count("invalid", units)
             return "invalid"
         logger.info("ai_call", extra=details | metrics | {"outcome": "ok"})
-        await count("ok")
+        await count("ok", units)
         return value
 
     async def _fallback(
