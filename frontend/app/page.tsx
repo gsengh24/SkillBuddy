@@ -120,8 +120,8 @@ export default function LandingPage() {
               </ButtonLink>
             </div>
           </div>
-          <div aria-hidden>
-            <HeroGrid>
+          <div aria-hidden className="lg:h-full">
+            <HeroGrid className="lg:h-full">
               <HeroCell index={0}>
                 <TopicChip>cybersecurity</TopicChip>
               </HeroCell>
