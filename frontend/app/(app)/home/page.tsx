@@ -100,14 +100,16 @@ export default async function HomePage({ searchParams }: Props) {
           >
             Inbox
           </h2>
-          <ButtonLink
-            href={`${composerHref}#new-request`}
-            variant="ghost"
-            size="compact"
-            className="border-line hidden border lg:inline-flex"
-          >
-            New request
-          </ButtonLink>
+          <span className="hidden lg:block">
+            <ButtonLink
+              href={`${composerHref}#new-request`}
+              variant="ghost"
+              size="compact"
+              className="border-line border"
+            >
+              New request
+            </ButtonLink>
+          </span>
         </div>
         {failed ? (
           <TryAgain message="We couldn't load your activity just now." />
