@@ -290,7 +290,7 @@ upload a logo or want the app's branding shown. So:
    - Never add billing or a card; nothing here needs it.
 2. **Consent screen.**
    - Menu ☰ → **Google Auth Platform** → **Get started**.
-   - App name: the platform name (today `Skill Buddy`). User support email: yours → **Next**.
+   - App name: the platform name (now `Cynergi`; it was `Skill Buddy`). User support email: yours → **Next**.
    - **Audience: External** → **Next**. (Internal is only possible for a Workspace you
      administer; Thapar's isn't yours.)
    - Contact email: yours → **Next** → tick the policy agreement → **Continue** → **Create**.

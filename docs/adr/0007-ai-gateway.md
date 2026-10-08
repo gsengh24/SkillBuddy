@@ -1,5 +1,7 @@
 # 7. AI gateway: free LLM providers, local embeddings, LLM-first matching with a fallback
 
+> The product was renamed from Skill Buddy to Cynergi in October 2026 ([docs/rename.md](../rename.md)). This record keeps the name it was written with.
+
 - **Status:** Accepted
 - **Date:** 2026-10-01
 - **Supersedes:** part of ADR 0004, decision 2 (see "Relation to ADR 0004")

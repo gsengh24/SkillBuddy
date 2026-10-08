@@ -1,5 +1,7 @@
 # 8. Background jobs, scheduling and email on the free runtime
 
+> The product was renamed from Skill Buddy to Cynergi in October 2026 ([docs/rename.md](../rename.md)). This record keeps the name it was written with.
+
 - **Status:** Accepted
 - **Date:** 2026-10-01
 - **Supersedes:**

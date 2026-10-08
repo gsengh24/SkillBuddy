@@ -233,7 +233,7 @@ describe("Badge", () => {
 describe("Logo", () => {
   it("shows the product name with decorative rings", () => {
     const { container } = render(<Logo />);
-    expect(screen.getByText("Skill Buddy")).toBeInTheDocument();
+    expect(screen.getByText("Cynergi")).toBeInTheDocument();
     expect(container.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 });
