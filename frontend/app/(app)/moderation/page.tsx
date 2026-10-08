@@ -25,7 +25,7 @@ export default async function ModerationPage({
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-h1">Moderation</h1>
+        <h1 className="text-headline lg:text-headline-lg">Moderation</h1>
         <p className="text-muted">
           You see only the copy each report kept, never whole conversations. Every action is logged.
         </p>
@@ -39,7 +39,9 @@ export default async function ModerationPage({
           <TextLink href="/moderation/ai">AI status</TextLink>
         </nav>
       </header>
-      <h2 className="text-section">{resolved ? "Resolved reports" : "Open reports"}</h2>
+      <h2 className="font-display tracking-display text-[20px] leading-tight font-extrabold">
+        {resolved ? "Resolved reports" : "Open reports"}
+      </h2>
       {page.items.length ? (
         <ul className="flex flex-col gap-6">
           {page.items.map((report) => (
@@ -52,7 +54,9 @@ export default async function ModerationPage({
         <p className="text-muted">{resolved ? "No resolved reports." : "No open reports."}</p>
       )}
       {page.next_cursor ? (
-        <p className="text-small text-muted">Showing the first 50. Resolve some to see the rest.</p>
+        <p className="text-meta-lg text-muted">
+          Showing the first 50. Resolve some to see the rest.
+        </p>
       ) : null}
     </div>
   );

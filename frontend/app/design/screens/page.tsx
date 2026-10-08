@@ -4,9 +4,11 @@ import type { ReactNode } from "react";
 
 import { Conversation } from "@/components/chat/conversation";
 import { MatchCard } from "@/components/discover/match-card";
+import { AIStatusView } from "@/components/moderation/ai-status";
+import { ReportReview } from "@/components/moderation/report-review";
 import { IntroCard } from "@/components/social/intro-card";
 import { SpaceView } from "@/components/spaces/space-view";
-import type { Intro, Match, Message, Space } from "@/lib/api/schemas";
+import type { AIStatus, Intro, Match, Message, ModerationReport, Space } from "@/lib/api/schemas";
 import { isStyleGuideEnabled } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -122,6 +124,63 @@ const SPACE: Space = {
   max_skills_per_person: 10,
 };
 
+const REPORT: ModerationReport = {
+  id: "sample-report-1",
+  reason: "harassment",
+  details: "Sample note from the person reporting.",
+  status: "open",
+  reporter_id: ME,
+  reported_id: THEM,
+  reported_status: "active",
+  connection_id: "sample-connection",
+  target: "message",
+  target_id: "sample-message-2",
+  messages: [
+    {
+      id: "sample-message-1",
+      label: null,
+      sender: "reporter",
+      body: "Sample message.",
+      sent_at: "2026-10-07T10:00:00Z",
+    },
+    {
+      id: "sample-message-2",
+      label: null,
+      sender: "reported",
+      body: "The sample reported message.",
+      sent_at: "2026-10-07T10:01:00Z",
+    },
+  ],
+  created_at: "2026-10-07T10:05:00Z",
+  resolved_at: null,
+  resolution_note: "",
+};
+
+const AI_STATUS: AIStatus = {
+  enabled: true,
+  providers: [
+    {
+      name: "groq",
+      unit: "tokens",
+      daily_budget: 400000,
+      used_today: 1200,
+      calls: { ok: 12 },
+      probes: { ok: 1 },
+    },
+    {
+      name: "cloudflare",
+      unit: "neurons",
+      daily_budget: 9000,
+      used_today: 0,
+      calls: {},
+      probes: {},
+    },
+  ],
+  fallbacks: { quota: 0 },
+  global_calls_today: 12,
+  global_cap: 2000,
+};
+
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-4">
@@ -169,6 +228,12 @@ export default function ScreensPage() {
       <Section id="screens-space" title="A pair space">
         <div className="max-w-3xl">
           <SpaceView space={SPACE} meId={ME} otherId={THEM} otherName="Aarav R." />
+        </div>
+      </Section>
+      <Section id="screens-moderation" title="Moderation">
+        <div className="flex max-w-3xl flex-col gap-6">
+          <ReportReview report={REPORT} />
+          <AIStatusView status={AI_STATUS} />
         </div>
       </Section>
     </main>
