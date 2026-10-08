@@ -60,6 +60,7 @@ class MatchRequest(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "match_requests"
     __table_args__ = (
+        Index("ix_match_requests_created_at_brin", "created_at", postgresql_using="brin"),
         CheckConstraint(f"status IN ({_in(tuple(RequestStatus))})", name="status_valid"),
         CheckConstraint(f"intent IS NULL OR intent IN ({_in(INTENTS)})", name="intent_valid"),
         CheckConstraint(
@@ -99,6 +100,8 @@ class Match(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "matches"
     __table_args__ = (
+        # Admin Overview counts by period (A4); BRIN suits an append-mostly table.
+        Index("ix_matches_created_at_brin", "created_at", postgresql_using="brin"),
         UniqueConstraint("request_id", "candidate_id"),
         CheckConstraint(f"status IN ({_in(tuple(MatchStatus))})", name="status_valid"),
         CheckConstraint("rank >= 1", name="rank_positive"),

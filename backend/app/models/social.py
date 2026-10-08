@@ -48,6 +48,7 @@ class Intro(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "intros"
     __table_args__ = (
+        Index("ix_intros_created_at_brin", "created_at", postgresql_using="brin"),
         CheckConstraint(f"status IN ({_in(tuple(IntroStatus))})", name="status_valid"),
         CheckConstraint(f"char_length(note) <= {INTRO_NOTE_MAX_LENGTH}", name="note_length"),
         CheckConstraint("sender_id <> recipient_id", name="not_self"),
@@ -75,6 +76,7 @@ class Connection(UUIDPrimaryKeyMixin, Base):
 
     __tablename__ = "connections"
     __table_args__ = (
+        Index("ix_connections_created_at_brin", "created_at", postgresql_using="brin"),
         UniqueConstraint("user_a", "user_b"),
         CheckConstraint("user_a < user_b", name="ordered_pair"),
     )

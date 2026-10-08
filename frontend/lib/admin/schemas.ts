@@ -199,3 +199,20 @@ export const blockStatsSchema = z.object({
   ),
 });
 export type BlockStats = z.infer<typeof blockStatsSchema>;
+
+export const overviewSchema = z.object({
+  days: z.number(),
+  generated_at: z.string(),
+  kpis: z.array(z.object({ key: z.string(), value: z.number(), previous: z.number() })),
+  signups_by_day: z.array(z.object({ day: z.string(), count: z.number() })),
+  funnel: z.array(z.object({ step: z.string(), count: z.number() })),
+  attention: z.record(z.string(), z.number()),
+  activity: z.array(auditEntrySchema),
+});
+export type Overview = z.infer<typeof overviewSchema>;
+
+export const healthSchema = z.object({
+  checks: z.array(z.object({ name: z.string(), status: z.string(), detail: z.string() })),
+  checked_at: z.string(),
+});
+export type Health = z.infer<typeof healthSchema>;

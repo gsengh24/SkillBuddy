@@ -909,6 +909,25 @@
         "title": "DataExportOut",
         "type": "object"
       },
+      "DayCount": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "count"
+        ],
+        "title": "DayCount",
+        "type": "object"
+      },
       "DecisionIn": {
         "additionalProperties": false,
         "properties": {
@@ -1065,6 +1084,24 @@
         ],
         "title": "ExperienceLevel",
         "type": "string"
+      },
+      "FunnelStep": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "count"
+        ],
+        "title": "FunnelStep",
+        "type": "object"
       },
       "GoalIn": {
         "additionalProperties": false,
@@ -1300,6 +1337,52 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HealthCheck": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "description": "\"ok\", \"warn\" or \"down\".",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "detail"
+        ],
+        "title": "HealthCheck",
+        "type": "object"
+      },
+      "HealthOut": {
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/HealthCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "checks",
+          "checked_at"
+        ],
+        "title": "HealthOut",
+        "type": "object"
+      },
       "Intent": {
         "enum": [
           "build_together",
@@ -1449,6 +1532,31 @@
           "accept"
         ],
         "title": "IntroResponseIn",
+        "type": "object"
+      },
+      "KpiOut": {
+        "properties": {
+          "key": {
+            "description": "new_signups, active_users, new_requests, matches_made, intro_accept_rate (percent) or messages_sent (a count; never their text).",
+            "title": "Key",
+            "type": "string"
+          },
+          "previous": {
+            "description": "The same length of time just before.",
+            "title": "Previous",
+            "type": "number"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "previous"
+        ],
+        "title": "KpiOut",
         "type": "object"
       },
       "LivenessResponse": {
@@ -2313,6 +2421,68 @@
           "code"
         ],
         "title": "OtpVerifyIn",
+        "type": "object"
+      },
+      "OverviewOut": {
+        "properties": {
+          "activity": {
+            "description": "The latest admin actions.",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryOut"
+            },
+            "title": "Activity",
+            "type": "array"
+          },
+          "attention": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "open_reports, pending_applications, degraded_ai_providers, due_data_requests, failed_emails.",
+            "title": "Attention",
+            "type": "object"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "funnel": {
+            "items": {
+              "$ref": "#/components/schemas/FunnelStep"
+            },
+            "title": "Funnel",
+            "type": "array"
+          },
+          "generated_at": {
+            "description": "Cached for up to 60 seconds.",
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/KpiOut"
+            },
+            "title": "Kpis",
+            "type": "array"
+          },
+          "signups_by_day": {
+            "items": {
+              "$ref": "#/components/schemas/DayCount"
+            },
+            "title": "Signups By Day",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "generated_at",
+          "kpis",
+          "signups_by_day",
+          "funnel",
+          "attention",
+          "activity"
+        ],
+        "title": "OverviewOut",
         "type": "object"
       },
       "ParseSource": {
@@ -4917,6 +5087,48 @@
         ]
       }
     },
+    "/api/v1/admin/health": {
+      "get": {
+        "description": "API, database, AI providers (from today's recorded calls) and email. Cached for 60\nseconds; no AI provider is called.",
+        "operationId": "get_health_api_v1_admin_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "System health",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/jobs/tick": {
       "post": {
         "description": "Daily jobs are enqueued once per UTC day and hourly jobs once per UTC hour; the job\nrunner is woken to start on them. Returns at once; the jobs run in the background.",
@@ -4995,6 +5207,75 @@
           }
         },
         "summary": "The signed-in admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/overview": {
+      "get": {
+        "description": "KPIs against the previous period, sign-ups by day, the funnel, what needs attention\nand recent admin activity. Counts only; cached for 60 seconds per range.",
+        "operationId": "get_overview_api_v1_admin_overview_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "enum": [
+                7,
+                30,
+                90
+              ],
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The admin Overview",
         "tags": [
           "admin"
         ]

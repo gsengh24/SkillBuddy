@@ -57,6 +57,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         CheckConstraint(f"char_length(email) <= {EMAIL_MAX_LENGTH}", name="email_length"),
         # The admin Users page lists newest first with keyset paging.
         Index("ix_users_created_at_id", "created_at", "id"),
+        # Active users on the admin Overview (A4).
+        Index("ix_users_last_login_at", "last_login_at"),
     )
 
     # CITEXT makes uniqueness and lookups case-insensitive without lower() everywhere.

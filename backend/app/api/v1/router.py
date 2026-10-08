@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     account,
     admin,
+    admin_overview,
     admin_portal,
     admin_safety,
     admin_users,
@@ -41,5 +42,6 @@ api_router.include_router(admin.router)
 api_router.include_router(admin_portal.router)
 api_router.include_router(admin_users.router)
 api_router.include_router(admin_safety.router)
+api_router.include_router(admin_overview.router)
 api_router.include_router(appeals.router)
 api_router.include_router(jobs.router)

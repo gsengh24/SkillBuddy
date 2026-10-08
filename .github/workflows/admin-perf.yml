@@ -9,6 +9,7 @@ on:
     paths:
       - "backend/scripts/seed_perf.py"
       - "backend/app/services/admin/users.py"
+      - "backend/app/services/admin/overview.py"
       - ".github/workflows/admin-perf.yml"
   workflow_dispatch:
 
