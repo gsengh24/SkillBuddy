@@ -450,13 +450,19 @@ async def test_team_changes_need_a_reason_and_are_audited_with_keyset_paging(
             json={"reason": "Finished helping this term."},
             headers=owner.headers,
         )
+        # Other tests share the log, so page through this owner's entries only.
+        owner_id = (await client.get(f"{ADMIN}/me", headers=owner.headers)).json()["user_id"]
         first = (
-            await client.get(f"{ADMIN}/audit", params={"limit": 2}, headers=owner.headers)
+            await client.get(
+                f"{ADMIN}/audit",
+                params={"limit": 2, "actor_id": owner_id},
+                headers=owner.headers,
+            )
         ).json()
         second = (
             await client.get(
                 f"{ADMIN}/audit",
-                params={"limit": 2, "cursor": first["next_cursor"]},
+                params={"limit": 2, "cursor": first["next_cursor"], "actor_id": owner_id},
                 headers=owner.headers,
             )
         ).json()
@@ -479,9 +485,16 @@ async def test_team_changes_need_a_reason_and_are_audited_with_keyset_paging(
     ]
     assert removed.status_code == 204
     assert error_code(removed_again) == "admin_not_found"
-    assert first["items"][0]["action"] == "admin.role_removed"
+    assert [item["action"] for item in first["items"]] == [
+        "admin.role_removed",
+        "admin.role_granted.moderator",
+    ]
     assert first["items"][0]["reason"] == "Finished helping this term."
-    assert second["items"][0]["action"] == "admin.role_granted.moderator"
+    # Turning two-step on and the first sign-in share one transaction (one timestamp).
+    assert {item["action"] for item in second["items"]} == {
+        "admin.two_step_enabled",
+        "admin.signed_in",
+    }
     assert {item["id"] for item in first["items"]}.isdisjoint(
         item["id"] for item in second["items"]
     )
