@@ -479,7 +479,7 @@ def test_the_migration_only_indexes_exist(migrated_database_url: str) -> None:
     engine = create_engine(migrated_database_url)
     try:
         with engine.connect() as connection:
-            found = dict(
+            found: dict[str, str] = dict(
                 connection.execute(
                     text("SELECT indexname, indexdef FROM pg_indexes WHERE indexname = ANY(:n)"),
                     {"n": list(MIGRATION_ONLY_INDEXES)},
