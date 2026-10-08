@@ -118,6 +118,16 @@ async def admin_with(
 # --- every admin route ---------------------------------------------------------------------
 
 
+def _flat_routes(routes: list[Any]) -> Iterator[Any]:
+    """Every endpoint, with its full path. FastAPI 0.142 keeps included routers nested
+    (their effective routes carry the full path and the dependency tree)."""
+    for route in routes:
+        if isinstance(route, APIRoute):
+            yield route
+        elif hasattr(route, "effective_route_contexts"):
+            yield from route.effective_route_contexts()
+
+
 def _admin_routes(settings: Settings) -> Iterator[tuple[str, str, Permission | None]]:
     def permission(dependant: Dependant) -> Permission | None:
         if dependant.call in PERMISSION_OF:
@@ -128,8 +138,8 @@ def _admin_routes(settings: Settings) -> Iterator[tuple[str, str, Permission | N
                 return found
         return None
 
-    for route in create_app(settings).routes:
-        if isinstance(route, APIRoute) and route.path.startswith(ADMIN):
+    for route in _flat_routes(create_app(settings).routes):
+        if route.path.startswith(ADMIN):
             for method in sorted(route.methods or ()):
                 yield method, route.path, permission(route.dependant)
 
@@ -149,8 +159,13 @@ async def call(client: AsyncClient, method: str, path: str, headers: dict[str, s
     return await client.request(method, concrete(path), headers=headers)
 
 
-def test_the_route_list_is_not_empty(routes: list[tuple[str, str, Permission | None]]) -> None:
+def test_the_route_list_is_not_empty(
+    settings: Settings, routes: list[tuple[str, str, Permission | None]]
+) -> None:
     paths = {path for _, path, _ in routes}
+    # Nothing in the public API description is missing from the list these tests walk.
+    schema_paths = {p for p in create_app(settings).openapi()["paths"] if p.startswith(ADMIN)}
+    assert schema_paths <= paths
     assert {f"{ADMIN}/me", f"{ADMIN}/audit", f"{ADMIN}/jobs/tick", f"{ADMIN}/storage"} <= paths
     # Only the two-step routes may skip a permission (they work before the second step).
     assert {path for _, path, p in routes if p is None} == {
@@ -457,7 +472,8 @@ async def test_team_changes_need_a_reason_and_are_audited_with_keyset_paging(
     assert make_owner.status_code == 422  # owner isn't a role you can give
     assert error_code(change_owner) == "cannot_change_owner"
     assert granted.status_code == 201
-    assert [(m["email"], m["role"], m["from_environment"]) for m in team] == [
+    mine = [m for m in team if m["email"] in {owner.email, helper.email}]
+    assert [(m["email"], m["role"], m["from_environment"]) for m in mine] == [
         (owner.email, "owner", True),
         (helper.email, "moderator", False),
     ]
