@@ -75,6 +75,11 @@ const FAQ = [
     answer:
       "Neither of you can message the other, and you won't be suggested to each other. They aren't told.",
   },
+  {
+    id: "free",
+    question: `Is ${brand.name} free?`,
+    answer: `Yes. ${brand.name} is free to use.`,
+  },
 ];
 
 /** The public landing page (design spec 6.1, reference-landing.html). */

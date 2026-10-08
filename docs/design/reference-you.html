@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>cynergi: You page reference</title>
+<style>
+:root{
+  --bg:#fff;--panel:#F6F7F5;--line:#E4E6E2;--ink:#0A0A0A;--ink-2:#4A4F4A;--muted:#696D68;--muted-2:#8A8F89;--faint:#B0B4AE;
+  --green:#0F4A34;--green-tint:#E8F1EC;--green-line:#B9D3C5;--green-soft:#F3F9F5;--mint:#7BE0A8;--mint-text:#9FD1B6;--red:#9B1C1C;--red-tint:#FDF1F1;--red-line:#E8B9B9;
+  --display:"Inter Tight","Geist","Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono","Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:120px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--green)}
+.mono{font-family:var(--mono)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.display{font-family:var(--display);font-weight:800;letter-spacing:-.03em;line-height:1.02}
+.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+/* top bar (same as Home) */
+.bar{display:flex;align-items:center;justify-content:space-between;height:60px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:30}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;letter-spacing:-.03em;font-size:18px}
+.topnav{display:none}
+.circ{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:#fff}
+.circ.dark{background:var(--ink);color:#fff;border-color:var(--ink);font-size:13px;font-weight:500}
+.bnav{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding:8px 6px calc(10px + env(safe-area-inset-bottom));text-align:center;font-size:10px;color:var(--muted);position:fixed;left:0;right:0;bottom:0;background:#fff;z-index:30}
+.bnav a{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:44px;justify-content:center}
+.bnav a[aria-current="page"]{color:var(--green);font-weight:500}
+
+/* page */
+.wrap{max-width:1160px;margin:0 auto;padding:20px 16px 150px}
+.hl{margin:10px 0 0;font-size:30px}
+.hl span{display:block;color:var(--muted-2)}
+.eyebrow{color:var(--green)}
+
+/* identity card */
+.id{margin-top:20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:16px;display:flex;flex-direction:column;gap:16px}
+.id-top{display:flex;gap:14px;align-items:center}
+.avatar{width:64px;height:64px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:22px;flex:none;letter-spacing:-.02em}
+.id h2{margin:0;font-family:var(--display);font-weight:800;letter-spacing:-.02em;font-size:22px;line-height:1.1}
+.id p{margin:2px 0 0;color:var(--ink-2);font-size:13px}
+.id-actions{display:flex;gap:8px;flex-wrap:wrap}
+.meter{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.meter-top{display:flex;justify-content:space-between;align-items:baseline}
+.meter b{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.03em}
+.track{height:6px;border-radius:9px;background:var(--line);margin:8px 0 10px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--green);border-radius:9px;transition:width .4s ease}
+.todo{display:flex;flex-wrap:wrap;gap:6px}
+.todo a{border:1px dashed var(--green);color:var(--green);border-radius:99px;font-size:12px;padding:3px 10px}
+.todo .done{display:none}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 16px;border-radius:10px;border:1px solid transparent;background:var(--ink);color:#fff;font-size:13px;font-weight:500;transition:transform .15s}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn.sm{height:34px;padding:0 12px;font-size:12px}
+.btn.danger{background:#fff;color:var(--red);border-color:var(--red-line)}
+.btn.danger-solid{background:var(--red);color:#fff}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* layout + section nav */
+.layout{margin-top:20px}
+.side{position:sticky;top:60px;z-index:20;margin:0 -16px;padding:8px 16px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.side::-webkit-scrollbar{display:none}
+.side a{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;margin-right:4px;border-radius:99px;border:1px solid var(--line);font-size:12px;color:var(--ink-2)}
+.side a .n{font-family:var(--mono);font-size:10px;color:var(--muted-2);display:none}
+.side a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.content{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+
+/* sections */
+.sec{border:1px solid var(--line);border-radius:16px;padding:18px 16px;background:#fff;scroll-margin-top:120px}
+.sec-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+.sec-h .num{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-.03em;color:var(--faint);line-height:1;min-width:36px}
+.sec h3{margin:0;font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.02em;line-height:1.15}
+.sec-h p{margin:4px 0 0;color:var(--ink-2);font-size:13px}
+.grid{display:grid;gap:14px}
+.f label,.f .l{display:block;font-size:12px;font-weight:500;margin-bottom:6px}
+.f .hint{font-size:12px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;gap:8px}
+.in,.sel,.tx{width:100%;border:1px solid var(--muted-2);border-radius:10px;background:#fff;padding:0 12px;height:44px;font-size:16px}
+.tx{height:auto;min-height:120px;padding:12px;resize:vertical;line-height:1.5}
+.in:focus-visible,.tx:focus-visible,.sel:focus-visible{border-color:var(--green)}
+.in[readonly]{background:var(--panel);color:var(--ink-2)}
+
+/* tags */
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--green-line);background:var(--green-tint);color:var(--green);border-radius:99px;padding:0 4px 0 12px;min-height:32px;font-size:13px;font-weight:500}
+.tag.learn{background:#fff;border-style:dashed;border-color:var(--green)}
+.tag button{border:0;background:transparent;width:24px;height:24px;border-radius:50%;color:var(--green);font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}
+.tag button:hover{background:rgba(15,74,52,.1)}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sugg button{border:1px solid var(--line);background:#fff;border-radius:99px;min-height:30px;padding:0 10px;font-size:12px;color:var(--ink-2)}
+.sugg button::before{content:"+ "}
+
+/* chips (intents) */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.ch{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--green-line);background:#fff;border-radius:99px;padding:0 12px;min-height:38px;font-size:13px;font-weight:500;transition:background .15s,color .15s}
+.ch::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.ch[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
+.ch[aria-pressed="true"]::before{background:var(--mint)}
+
+/* segmented */
+.seg{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{flex:1;border:1px solid transparent;background:transparent;border-radius:8px;min-height:36px;font-size:12px;color:var(--muted);padding:0 8px}
+.seg button[aria-pressed="true"]{background:#fff;border-color:var(--line);color:var(--ink);font-weight:500}
+
+/* days */
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.days button{border:1px solid var(--line);background:#fff;border-radius:10px;min-height:44px;font-size:12px;color:var(--ink-2)}
+.days button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* rows with toggles */
+.rows{border-top:1px solid var(--line)}
+.row{display:flex;gap:16px;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row b{display:block;font-weight:600;font-size:14px}
+.row span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.sw{width:46px;height:28px;border-radius:99px;border:1px solid var(--muted-2);background:var(--panel);position:relative;flex:none;transition:background .2s,border-color .2s;padding:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted-2);transition:transform .2s,background .2s}
+.sw[aria-checked="true"]{background:var(--green);border-color:var(--green)}
+.sw[aria-checked="true"]::after{transform:translateX(18px);background:#fff}
+.verified{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;text-transform:uppercase;color:var(--green);background:var(--green-tint);border:1px solid var(--green-line);border-radius:4px;padding:2px 6px}
+.unver{color:var(--muted);background:var(--panel);border-color:var(--line)}
+
+/* link rows */
+.link{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center}
+.link .tile{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;text-transform:uppercase;color:var(--ink-2)}
+
+/* sessions */
+.sess{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.sess:last-child{border-bottom:0}
+.sess b{font-weight:600;display:block}
+.sess span{font-size:12px;color:var(--muted)}
+.cur{font-family:var(--mono);font-size:10px;color:var(--green);text-transform:uppercase}
+
+/* danger */
+.sec.danger{border-color:var(--red-line);background:var(--red-tint)}
+.sec.danger .num{color:var(--red-line)}
+.sec.danger .row{border-color:var(--red-line)}
+
+/* save bar */
+.save{position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom));background:var(--ink);color:#fff;border-radius:14px;padding:10px 10px 10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:40;transform:translateY(160%);opacity:0;transition:transform .3s ease,opacity .3s ease;pointer-events:none}
+.save.show{transform:none;opacity:1;pointer-events:auto}
+.save .btn{background:#fff;color:var(--ink);height:36px}
+.save .btn.q{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--green);color:#fff;border-radius:99px;padding:8px 16px;font-size:13px;opacity:0;transition:all .3s;z-index:50;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:16px;padding:0;width:min(440px,calc(100vw - 32px));box-shadow:0 20px 60px rgba(0,0,0,.18)}
+dialog::backdrop{background:rgba(10,10,10,.45)}
+.dlg{padding:20px}
+.dlg h4{margin:0 0 6px;font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.02em}
+.dlg p{margin:0 0 14px;color:var(--ink-2);font-size:13px}
+.dlg .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.pv{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--panel)}
+.pv-top{display:flex;gap:12px;align-items:center}
+.pv .avatar{width:48px;height:48px;font-size:17px}
+.pv h5{margin:0;font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.02em}
+.pv p{margin:2px 0 0;font-size:13px;color:var(--ink-2)}
+.pv .lbl{margin:14px 0 6px}
+.pv .tags{margin:0}
+.pv .tag{padding-right:12px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+@media (min-width:640px){.hl{font-size:40px}.two{gap:14px}}
+
+@media (min-width:1024px){
+  .bar{height:68px;padding:0 32px}
+  .topnav{display:flex;gap:28px;font-size:13px;color:var(--muted)}
+  .topnav a{padding:6px 0;border-bottom:2px solid transparent}
+  .topnav a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--green);font-weight:500}
+  .bnav{display:none}
+  .wrap{padding:32px 32px 120px}
+  .hl{font-size:52px;letter-spacing:-.03em}
+  .id{flex-direction:row;align-items:center;justify-content:space-between;padding:20px 24px;gap:32px}
+  .id-top{flex:1}
+  .avatar{width:80px;height:80px;font-size:28px}
+  .id h2{font-size:28px}
+  .id-actions{flex-direction:column;align-items:stretch}
+  .meter{width:340px;flex:none}
+  .layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:48px;margin-top:32px}
+  .side{position:sticky;top:92px;margin:0;padding:0;border:0;overflow:visible;white-space:normal;display:flex;flex-direction:column;gap:2px;align-self:start;background:transparent}
+  .side a{border:0;border-radius:8px;border-left:2px solid transparent;padding:0 10px;min-height:38px;margin:0;font-size:13px}
+  .side a .n{display:inline}
+  .side a.on{background:var(--panel);color:var(--ink);border-left-color:var(--green);font-weight:500}
+  .content{margin-top:0;max-width:760px}
+  .sec{padding:24px}
+  .grid.c2{grid-template-columns:1fr 1fr}
+  .grid .full{grid-column:1/-1}
+  .save{left:50%;right:auto;width:560px;margin-left:-100px;bottom:24px}
+  .toast{bottom:90px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+</svg>
+
+<header class="bar">
+  <a class="brand" href="#"><svg class="ico" viewBox="0 0 24 24" style="color:var(--green)"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12L4 7.5M12 12v9"/></svg>cynergi</a>
+  <nav class="topnav" aria-label="Main"><a href="#">Home</a><a href="#">Spaces</a><a href="#">Saved</a><a href="#" aria-current="page">You</a></nav>
+  <span class="circ dark" aria-hidden="true">MI</span>
+</header>
+
+<main class="wrap">
+  <div class="lbl eyebrow">You</div>
+  <h1 class="display hl">Your profile.<span>Be easy to find.</span></h1>
+
+  <section class="id" aria-label="Profile summary">
+    <div class="id-top">
+      <div class="avatar" id="av">MI</div>
+      <div>
+        <h2 id="idName">Meera Iyer</h2>
+        <p id="idHead">Product designer learning to code</p>
+        <p class="lbl" style="margin-top:6px" id="idLoc">Bengaluru · IST</p>
+      </div>
+    </div>
+    <div class="meter" aria-live="polite">
+      <div class="meter-top"><span class="lbl">Profile strength</span><b id="pct">0%</b></div>
+      <div class="track"><i id="bar" style="width:0"></i></div>
+      <div class="todo" id="todo"></div>
+    </div>
+    <div class="id-actions">
+      <button class="btn" id="previewBtn"><svg class="ico" style="width:16px;height:16px"><use href="#i-eye"/></svg>See how others see you</button>
+    </div>
+  </section>
+
+  <div class="layout">
+    <nav class="side" id="side" aria-label="Sections">
+      <a href="#s-basics" class="on"><span class="n">01</span>Basics</a>
+      <a href="#s-skills"><span class="n">02</span>Skills</a>
+      <a href="#s-looking"><span class="n">03</span>Looking for</a>
+      <a href="#s-avail"><span class="n">04</span>Availability</a>
+      <a href="#s-links"><span class="n">05</span>Links</a>
+      <a href="#s-privacy"><span class="n">06</span>Privacy</a>
+      <a href="#s-alerts"><span class="n">07</span>Alerts</a>
+      <a href="#s-security"><span class="n">08</span>Security</a>
+      <a href="#s-data"><span class="n">09</span>Your data</a>
+      <a href="#s-danger"><span class="n">10</span>Danger zone</a>
+    </nav>
+
+    <div class="content" id="content">
+
+      <section class="sec" id="s-basics">
+        <div class="sec-h"><div class="num">01</div><div><h3>Basics</h3><p>What people see first when you appear in their matches.</p></div></div>
+        <div class="grid c2">
+          <div class="f"><label for="name">Display name</label><input class="in" id="name" value="Meera Iyer" autocomplete="name"></div>
+          <div class="f"><label for="loc">City</label><input class="in" id="loc" value="Bengaluru" autocomplete="address-level2"></div>
+          <div class="f full"><label for="head">Headline</label><input class="in" id="head" maxlength="80" value="Product designer learning to code"><div class="hint"><span>One line that says what you do or want to do.</span><span class="mono" id="headC">0/80</span></div></div>
+          <div class="f full"><label for="bio">About you</label><textarea class="tx" id="bio" maxlength="500">I design mobile apps for a living and want to ship something of my own. Looking for a developer to pair with on weekends, and happy to trade design reviews for help with React.</textarea><div class="hint"><span>What you do, what you are working on, how you like to work.</span><span class="mono" id="bioC">0/500</span></div></div>
+          <div class="f"><label for="lang">Languages</label><input class="in" id="lang" value="English, Hindi, Tamil"></div>
+          <div class="f"><label for="exp">Experience level</label>
+            <select class="sel" id="exp"><option>Just starting</option><option>1 to 3 years</option><option selected>3 to 7 years</option><option>7+ years</option></select></div>
+        </div>
+      </section>
+
+      <section class="sec" id="s-skills">
+        <div class="sec-h"><div class="num">02</div><div><h3>Skills</h3><p>What you can offer, and what you want to learn. Matching uses both.</p></div></div>
+        <div class="grid">
+          <div class="f"><span class="l">I can help with</span>
+            <div class="tags" id="offer"></div>
+            <input class="in" id="offerIn" placeholder="Add a skill and press Enter" aria-label="Add a skill you can offer">
+            <div class="sugg" id="offerS"></div></div>
+          <div class="f"><span class="l">I want to learn</span>
+            <div class="tags" id="learn"></div>
+            <input class="in" id="learnIn" placeholder="Add a topic and press Enter" aria-label="Add something you want to learn">
+            <div class="sugg" id="learnS"></div></div>
+        </div>
+      </section>
+
+      <section class="sec" id="s-looking">
+        <div class="sec-h"><div class="num">03</div><div><h3>Looking for</h3><p>Pick what you want from Cynergi. You can change this any time.</p></div></div>
+        <div class="grid">
+          <div class="f"><span class="l">Intent</span>
+            <div class="chips" id="intents"></div></div>
+          <div class="f"><label for="goal">Your goal right now</label><textarea class="tx" id="goal" maxlength="300" style="min-height:84px">Ship a small habit-tracking app by December.</textarea><div class="hint"><span>Shown to people you match with.</span><span class="mono" id="goalC">0/300</span></div></div>
+          <div class="f"><span class="l">Working style</span>
+            <div class="seg" id="style" role="group" aria-label="Working style">
+              <button aria-pressed="false">Async</button><button aria-pressed="true">Mix</button><button aria-pressed="false">Live sessions</button></div></div>
+          <div class="f"><label for="hrs">Time you can give each week</label>
+            <select class="sel" id="hrs"><option>1 to 3 hours</option><option selected>4 to 6 hours</option><option>7 to 10 hours</option><option>10+ hours</option></select></div>
+        </div>
+      </section>
+
+      <section class="sec" id="s-avail">
+        <div class="sec-h"><div class="num">04</div><div><h3>Availability</h3><p>So people know when to reach you.</p></div></div>
+        <div class="grid">
+          <div class="f"><span class="l">Days</span>
+            <div class="days" id="days"></div></div>
+          <div class="two">
+            <div class="f"><label for="from">From</label><select class="sel" id="from"><option>8:00 AM</option><option>10:00 AM</option><option selected>6:00 PM</option><option>8:00 PM</option></select></div>
+            <div class="f"><label for="to">Until</label><select class="sel" id="to"><option>12:00 PM</option><option>6:00 PM</option><option>9:00 PM</option><option selected>10:30 PM</option></select></div>
+          </div>
+          <div class="f"><label for="tz">Time zone</label><select class="sel" id="tz"><option selected>India Standard Time (IST, UTC+5:30)</option><option>Singapore Time (UTC+8)</option><option>Greenwich Mean Time (UTC+0)</option></select></div>
+        </div>
+      </section>
+
+      <section class="sec" id="s-links">
+        <div class="sec-h"><div class="num">05</div><div><h3>Links</h3><p>Show your work. Links are optional and shown after an intro is accepted.</p></div></div>
+        <div class="grid">
+          <div class="link"><div class="tile">Web</div><div class="f"><label class="sr" for="l1">Portfolio</label><input class="in" id="l1" placeholder="Portfolio or website" value="https://meera.design"></div></div>
+          <div class="link"><div class="tile">Git</div><div class="f"><label class="sr" for="l2">GitHub</label><input class="in" id="l2" placeholder="GitHub profile"></div></div>
+          <div class="link"><div class="tile">In</div><div class="f"><label class="sr" for="l3">LinkedIn</label><input class="in" id="l3" placeholder="LinkedIn profile"></div></div>
+        </div>
+      </section>
+
+      <section class="sec" id="s-privacy">
+        <div class="sec-h"><div class="num">06</div><div><h3>Privacy and visibility</h3><p>You decide who sees what. Nothing here is shared with advertisers.</p></div></div>
+        <div class="grid">
+          <div class="f"><span class="l">Who can find you</span>
+            <div class="seg" role="group" aria-label="Visibility" id="vis">
+              <button aria-pressed="true">Matches</button><button aria-pressed="false">After intro</button><button aria-pressed="false">Hidden</button></div>
+            <div class="hint"><span id="visHint">Your profile appears in matches for people whose goals fit yours.</span></div></div>
+          <div class="f"><span class="l">Location shown as</span>
+            <div class="seg" role="group" aria-label="Location precision" id="locp">
+              <button aria-pressed="true">City</button><button aria-pressed="false">Country</button><button aria-pressed="false">Hidden</button></div></div>
+        </div>
+        <div class="rows" style="margin-top:14px">
+          <div class="row"><div><b>Show when I was last active</b><span>Helps people know if you will reply soon.</span></div><button class="sw" role="switch" aria-checked="true" aria-label="Show last active"></button></div>
+          <div class="row"><div><b>Intros only from strong matches</b><span>Block intro requests that score low.</span></div><button class="sw" role="switch" aria-checked="false" aria-label="Intros only from strong matches"></button></div>
+        </div>
+      </section>
+
+      <section class="sec" id="s-alerts">
+        <div class="sec-h"><div class="num">07</div><div><h3>Alerts</h3><p>Email only. You can turn all of these off.</p></div></div>
+        <div class="rows">
+          <div class="row"><div><b>New intro requests</b><span>When someone asks to connect.</span></div><button class="sw" role="switch" aria-checked="true" aria-label="New intro requests"></button></div>
+          <div class="row"><div><b>Unread message digest</b><span>One email a day, only if you have unread messages.</span></div><button class="sw" role="switch" aria-checked="true" aria-label="Unread message digest"></button></div>
+          <div class="row"><div><b>New match suggestions</b><span>A weekly email with your best new matches.</span></div><button class="sw" role="switch" aria-checked="false" aria-label="New match suggestions"></button></div>
+          <div class="row"><div><b>Product updates</b><span>Occasional news about Cynergi.</span></div><button class="sw" role="switch" aria-checked="false" aria-label="Product updates"></button></div>
+        </div>
+      </section>
+
+      <section class="sec" id="s-security">
+        <div class="sec-h"><div class="num">08</div><div><h3>Account and security</h3><p>How you sign in and where you are signed in.</p></div></div>
+        <div class="grid">
+          <div class="f"><label for="email">Email</label><input class="in" id="email" value="meera.iyer@gmail.com" readonly><div class="hint"><span><span class="verified"><svg class="ico" style="width:11px;height:11px"><use href="#i-check"/></svg>Verified</span></span><span>Signed in with Google</span></div></div>
+        </div>
+        <div style="margin-top:14px">
+          <div class="lbl" style="margin-bottom:4px">Signed-in devices</div>
+          <div id="sessions">
+            <div class="sess"><div><b>Chrome on Windows</b><span>Bengaluru · active now</span></div><span class="cur">This device</span></div>
+            <div class="sess"><div><b>Safari on iPhone</b><span>Bengaluru · 2 days ago</span></div><button class="btn ghost sm out">Sign out</button></div>
+            <div class="sess"><div><b>Chrome on Android</b><span>Chennai · 11 days ago</span></div><button class="btn ghost sm out">Sign out</button></div>
+          </div>
+          <button class="btn ghost sm" id="outAll" style="margin-top:10px">Sign out of all other devices</button>
+        </div>
+      </section>
+
+      <section class="sec" id="s-data">
+        <div class="sec-h"><div class="num">09</div><div><h3>Your data</h3><p>It is yours. Download it or read what you agreed to.</p></div></div>
+        <div class="rows">
+          <div class="row"><div><b>Download my data</b><span>A file with your profile, requests, intros and messages. We email a link when it is ready.</span></div><button class="btn ghost sm" id="exp-btn">Request</button></div>
+          <div class="row"><div><b>Terms and privacy policy</b><span>You accepted version 2026-10-08-draft.</span></div><a class="btn ghost sm" href="#">Read</a></div>
+          <div class="row"><div><b>Blocked people</b><span>2 people. They cannot see you or contact you.</span></div><a class="btn ghost sm" href="#">Manage</a></div>
+        </div>
+      </section>
+
+      <section class="sec danger" id="s-danger">
+        <div class="sec-h"><div class="num">10</div><div><h3>Danger zone</h3><p>Pause if you just need a break. Delete is permanent.</p></div></div>
+        <div class="rows">
+          <div class="row"><div><b>Pause my account</b><span>Hides you from matching. Messages stay. Come back any time.</span></div><button class="btn danger sm" id="pauseBtn">Pause</button></div>
+          <div class="row"><div><b>Delete my account</b><span>Removes your profile, requests and messages after 14 days.</span></div><button class="btn danger sm" id="delBtn">Delete</button></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<nav class="bnav" aria-label="Main">
+  <a href="#"><svg class="ico"><use href="#i-home"/></svg>Home</a>
+  <a href="#"><svg class="ico"><use href="#i-grid"/></svg>Spaces</a>
+  <a href="#"><svg class="ico"><use href="#i-mark"/></svg>Saved</a>
+  <a href="#" aria-current="page"><svg class="ico"><use href="#i-user"/></svg>You</a>
+</nav>
+
+<div class="save" id="save" role="status"><span>You have unsaved changes</span><span style="display:flex;gap:6px"><button class="btn q" id="discard">Discard</button><button class="btn" id="saveBtn">Save changes</button></span></div>
+<div class="toast" id="toast" role="status"></div>
+
+<dialog id="pvD"><div class="dlg">
+  <h4>How others see you</h4><p>This is your card in someone else's matches.</p>
+  <div class="pv" id="pv"></div>
+  <div class="acts"><button class="btn" id="pvClose">Close</button></div>
+</div></dialog>
+
+<dialog id="delD"><div class="dlg">
+  <h4>Delete your account?</h4>
+  <p>Your profile, requests and messages will be removed after 14 days. You can cancel by signing in again before then. Type <b>DELETE</b> to confirm.</p>
+  <label class="sr" for="delIn">Type DELETE</label><input class="in" id="delIn" placeholder="DELETE" autocomplete="off">
+  <div class="acts"><button class="btn ghost" id="delNo">Keep my account</button><button class="btn danger-solid" id="delYes" disabled>Delete account</button></div>
+</div></dialog>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  var dirty=false,saveBar=$('#save'),toastEl=$('#toast');
+  function markDirty(){dirty=true;saveBar.classList.add('show')}
+  function toast(t){toastEl.textContent=t;toastEl.classList.add('show');setTimeout(function(){toastEl.classList.remove('show')},2200)}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+  /* tags */
+  var offer=['UI design','Figma','Branding'],learn=['React','Python','APIs'];
+  var offerS=['Prototyping','User research','Illustration','Copywriting'],learnS=['TypeScript','SQL','Next.js','Marketing'];
+  function drawTags(id,arr,cls,sugg,suggId){
+    var h='';arr.forEach(function(t,i){h+='<span class="tag '+cls+'">'+esc(t)+'<button type="button" data-i="'+i+'" aria-label="Remove '+esc(t)+'">×</button></span>'});
+    $(id).innerHTML=h;
+    var s='';sugg.forEach(function(t){if(arr.indexOf(t)<0)s+='<button type="button">'+esc(t)+'</button>'});
+    $(suggId).innerHTML=s;
+  }
+  function renderTags(){drawTags('#offer',offer,'',offerS,'#offerS');drawTags('#learn',learn,'learn',learnS,'#learnS');score();}
+  function bindTags(id,inId,sId,arr){
+    $(id).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;arr.splice(+b.dataset.i,1);renderTags();markDirty()});
+    $(sId).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;arr.push(b.textContent.replace(/^\+ /,''));renderTags();markDirty()});
+    $(inId).addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();var v=this.value.trim();if(v&&arr.indexOf(v)<0&&arr.length<12){arr.push(v);this.value='';renderTags();markDirty()}}});
+  }
+  bindTags('#offer','#offerIn','#offerS',offer);bindTags('#learn','#learnIn','#learnS',learn);
+
+  /* intents */
+  var intents=['Build together','Skill exchange','Interest buddy','Accountability','Mentor','Explore'],picked=['Build together','Skill exchange'];
+  function drawIntents(){$('#intents').innerHTML=intents.map(function(t){return '<button type="button" class="ch" aria-pressed="'+(picked.indexOf(t)>=0)+'">'+t+'</button>'}).join('');score()}
+  $('#intents').addEventListener('click',function(e){var b=e.target.closest('.ch');if(!b)return;var t=b.textContent,i=picked.indexOf(t);if(i>=0)picked.splice(i,1);else picked.push(t);drawIntents();markDirty()});
+
+  /* days */
+  var dn=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],dsel=[0,0,0,0,0,1,1];
+  function drawDays(){$('#days').innerHTML=dn.map(function(d,i){return '<button type="button" aria-pressed="'+!!dsel[i]+'">'+d+'</button>'}).join('');score()}
+  $('#days').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var i=dn.indexOf(b.textContent);dsel[i]=dsel[i]?0:1;drawDays();markDirty()});
+
+  /* segmented */
+  $$('.seg').forEach(function(g){g.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;$$('button',g).forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');markDirty();
+    if(g.id==='vis'){$('#visHint').textContent=['Your profile appears in matches for people whose goals fit yours.','People see you only after you accept their intro.','You are paused from matching. Existing chats continue.'][$$('button',g).indexOf(b)]}})});
+  /* switches */
+  $$('.sw').forEach(function(s){s.addEventListener('click',function(){s.setAttribute('aria-checked',s.getAttribute('aria-checked')==='true'?'false':'true');markDirty()})});
+
+  /* counters + live header */
+  function count(id,cid){var el=$(id),c=$(cid);function u(){c.textContent=el.value.length+'/'+el.maxLength}el.addEventListener('input',function(){u();markDirty();score();head()});u()}
+  count('#head','#headC');count('#bio','#bioC');count('#goal','#goalC');
+  ['#name','#loc','#exp','#hrs','#from','#to','#tz','#lang','#l1','#l2','#l3'].forEach(function(s){$(s).addEventListener('input',function(){markDirty();score();head()});$(s).addEventListener('change',function(){markDirty();score();head()})});
+  function head(){var n=$('#name').value.trim()||'Your name';$('#idName').textContent=n;$('#idHead').textContent=$('#head').value||'Add a headline';$('#idLoc').textContent=($('#loc').value||'Add your city')+' · IST';
+    $('#av').textContent=n.split(/\s+/).map(function(w){return w[0]}).slice(0,2).join('').toUpperCase()}
+
+  /* profile strength */
+  function score(){
+    var items=[
+      ['Add a headline',$('#head').value.trim().length>=10,'#s-basics'],
+      ['Write a longer bio',$('#bio').value.trim().length>=120,'#s-basics'],
+      ['Add 3 skills you offer',offer.length>=3,'#s-skills'],
+      ['Add something to learn',learn.length>=1,'#s-skills'],
+      ['Pick an intent',picked.length>=1,'#s-looking'],
+      ['Pick available days',dsel.some(Boolean),'#s-avail'],
+      ['Add a link',[$('#l1'),$('#l2'),$('#l3')].some(function(x){return x.value.trim()}),'#s-links'],
+      ['Share your goal',$('#goal').value.trim().length>=20,'#s-looking']
+    ];
+    var d=items.filter(function(i){return i[1]}).length,p=Math.round(d/items.length*100);
+    $('#pct').textContent=p+'%';$('#bar').style.width=p+'%';
+    var t=items.filter(function(i){return !i[1]}).map(function(i){return '<a href="'+i[2]+'">+ '+i[0]+'</a>'}).join('');
+    $('#todo').innerHTML=t||'<span class="lbl" style="color:var(--green)">Complete. You look great.</span>';
+  }
+
+  /* preview */
+  function preview(){
+    var n=$('#name').value||'Your name',init=n.split(/\s+/).map(function(w){return w[0]}).slice(0,2).join('').toUpperCase();
+    var lp=$$('#locp button').filter(function(b){return b.getAttribute('aria-pressed')==='true'})[0].textContent;
+    var loc=lp==='City'?$('#loc').value+', India':lp==='Country'?'India':'';
+    $('#pv').innerHTML='<div class="pv-top"><div class="avatar">'+esc(init)+'</div><div><h5>'+esc(n)+'</h5><p>'+esc($('#head').value)+'</p>'+(loc?'<p class="lbl" style="margin-top:4px">'+esc(loc)+'</p>':'')+'</div></div>'
+    +'<div class="lbl">Can help with</div><div class="tags">'+offer.map(function(t){return '<span class="tag">'+esc(t)+'</span>'}).join('')+'</div>'
+    +'<div class="lbl">Wants to learn</div><div class="tags">'+learn.map(function(t){return '<span class="tag learn">'+esc(t)+'</span>'}).join('')+'</div>'
+    +'<div class="lbl">Looking for</div><div class="tags">'+picked.map(function(t){return '<span class="tag">'+esc(t)+'</span>'}).join('')+'</div>'
+    +'<div class="lbl">Goal</div><p>'+esc($('#goal').value)+'</p>';
+  }
+  $('#previewBtn').addEventListener('click',function(){preview();$('#pvD').showModal()});
+  $('#pvClose').addEventListener('click',function(){$('#pvD').close()});
+
+  /* save / discard */
+  $('#saveBtn').addEventListener('click',function(){dirty=false;saveBar.classList.remove('show');toast('Saved')});
+  $('#discard').addEventListener('click',function(){location.reload()});
+
+  /* sessions */
+  $$('.out').forEach(function(b){b.addEventListener('click',function(){b.closest('.sess').remove();toast('Signed out')})});
+  $('#outAll').addEventListener('click',function(){$$('.out').forEach(function(b){var s=b.closest('.sess');if(s)s.remove()});toast('Signed out of other devices')});
+  $('#exp-btn').addEventListener('click',function(){this.textContent='Requested';this.disabled=true;toast('We will email you a link')});
+  $('#pauseBtn').addEventListener('click',function(){this.textContent='Paused';toast('Your account is paused')});
+
+  /* delete dialog */
+  $('#delBtn').addEventListener('click',function(){$('#delIn').value='';$('#delYes').disabled=true;$('#delD').showModal()});
+  $('#delIn').addEventListener('input',function(){$('#delYes').disabled=this.value!=='DELETE'});
+  $('#delNo').addEventListener('click',function(){$('#delD').close()});
+  $('#delYes').addEventListener('click',function(){$('#delD').close();toast('Deletion scheduled in 14 days')});
+
+  /* scroll spy */
+  var links=$$('#side a'),secs=links.map(function(a){return $(a.getAttribute('href'))});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var i=secs.indexOf(e.target);links.forEach(function(l){l.classList.remove('on')});links[i].classList.add('on');
+      if(window.innerWidth<1024)links[i].scrollIntoView({inline:'center',block:'nearest'})}})},{rootMargin:'-130px 0px -65% 0px'});
+    secs.forEach(function(s){io.observe(s)});
+  }
+  renderTags();drawIntents();drawDays();head();score();
+})();
+</script>
+</body>
+</html>

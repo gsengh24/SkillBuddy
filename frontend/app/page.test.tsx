@@ -63,6 +63,15 @@ describe("landing page", () => {
     );
   });
 
+  it("answers whether it is free", async () => {
+    render(<LandingPage />);
+    const question = screen.getByRole("button", { name: "Is Cynergi free?" });
+    await userEvent.setup().click(question);
+    expect(screen.getByRole("region", { name: "Is Cynergi free?" })).toHaveTextContent(
+      "Yes. Cynergi is free to use.",
+    );
+  });
+
   it("keeps the copy within what the privacy page says", () => {
     const { container } = render(<LandingPage />);
     const text = container.textContent ?? "";

@@ -31,8 +31,8 @@ Define once as CSS variables on `:root` (and mirror in the Tailwind or CSS confi
 | `--line-strong` | `#D9DBD6` | outer frames |
 | `--ink` | `#0A0A0A` | primary text, primary button |
 | `--ink-2` | `#4A4F4A` | body text |
-| `--muted` | `#696D68` | muted text that must stay readable: at least 4.5:1 on white, panel and green tint. (Was `#6B6F6A`, which is only 4.44:1 on green tint; owner-approved 2026-10-08.) |
-| `--muted-2` | `#8A8F89` | second half of two-tone headlines and stat numerals, large bold text only (24px bold and up), and the border of inputs and textareas (3:1). NEVER for small text, times, counters, placeholders or labels: use `--muted` there. On green tint the second half of a headline uses `--muted` (muted-2 is under 3:1 there). |
+| `--muted` | `#6B6F6A` | muted text that must stay readable (4.5:1 on white) |
+| `--muted-2` | `#8A8F89` | second half of two-tone headlines and stat numerals, large bold text only (24px bold and up). NEVER for small text, times, counters, placeholders or labels: use `--muted` there |
 | `--faint` | `#B0B4AE` | section numerals 01, 02, 03: decorative, `aria-hidden`. If axe still flags them in Smoke, darken the colour until it passes, do not exempt them |
 | `--green` | `#0F4A34` | brand: links, outline buttons, eyebrows, CTA band |
 | `--green-hover` | `#0B3828` | hover and pressed |
@@ -86,7 +86,7 @@ Use contractions. Active voice. Button labels: verb first, 1 to 3 words, no full
 8. **Segmented control**: `--panel` track, white selected segment with 1px line. Used for All, Requests, Messages.
 9. **List row**: 34px leading icon or avatar, title 14px weight 600, one-line secondary text 12px, optional right-side badge or unread dot. Rows separated by 1px lines, not cards.
 10. **Avatar**: circle with initials, `--green` or `--ink` fill, white text. No photos.
-11. **Input and textarea**: white, 1px `--muted-2` border (a field's only edge needs 3:1; `--line` is 1.26:1; owner-approved 2026-10-08), radius 10px, 16px text on phone (prevents iOS zoom), green focus ring, character counter in mono.
+11. **Input and textarea**: white, 1px `--line`, radius 10px, 16px text on phone (prevents iOS zoom), green focus ring, character counter in mono.
 12. **Accordion** (FAQ): hairline rows, chevron rotates 180deg, height opens with `grid-template-rows` transition, one open at a time optional.
 13. **Skeleton**: `--panel` blocks with a slow opacity pulse, used by `loading.tsx` on every route.
 14. **Numbered feature row**: mono numeral in `--faint`, then the lead-word text.
@@ -154,8 +154,7 @@ Problems this version fixes: the right pane was a big empty space until somethin
 - Newest activity first. Times are mono, never wrap. Row title weight 600.
 
 **Rules**
-- Names and links stay hidden until the connection exists. The "Staying safe" tips and "Open pair space" stay where they are, wording unchanged.
-- Chat header (Home's chat pane and `/messages/[id]`, desktop and phone): avatar, name, "Open pair space", and a "⋯" button (accessible name "More actions for {name}") that opens a small panel with **Report** and **Block**, the same flows and wording as before. Escape closes it and returns focus to the button (owner decision 2026-10-08). Report under each message stays where it is.
+- Names and links stay hidden until the connection exists. Block, report, the "Staying safe" tips and "Open pair space" stay where they are, wording unchanged.
 - Data comes from the existing endpoints only (`/auth/me`, `/me/profile`, `/requests`, `/intros?box=received`, `/connections`, `/messages/updates`, `/notifications/unread-count`), fetched in parallel. No new endpoint.
 - Empty state (no requests yet): the composer view is already the invitation; the list shows "No requests yet. Describe what you're building and we'll find people." Error state: one sentence and "Try again".
 
@@ -208,3 +207,22 @@ Matches and the intro form, chat, Pair spaces list, a pair space, Profile, Setti
 3. Keyboard and reduced-motion checked.
 4. Bundle size per page reported.
 5. Legal-sensitive PRs stop for the owner.
+
+## 13. You page (profile and account settings in one page)
+Visual source of truth: `reference-you.html`. Replaces the separate Profile and Settings pages (`/profile` and `/settings` redirect to `/you`). Backend changes are allowed for this page (see the prompts), unlike sections 1 to 12.
+- Header card: avatar (initials), name, headline, city, a "profile strength" meter with the list of missing items as links, and a "See how others see you" button that opens a preview of the card others see.
+- Ten sections in this order: 01 Basics, 02 Skills, 03 Looking for, 04 Availability, 05 Links, 06 Privacy and visibility, 07 Alerts, 08 Account and security, 09 Your data, 10 Danger zone (red tint).
+- Desktop: sticky section list on the left (numbered, active item has a green left bar). Phone: the same list as a sticky row of chips under the top bar. The active chip follows scroll.
+- Fields: display name, city, headline (80), about (500), languages, experience level; skills offered and skills to learn (tags with add-by-Enter and suggestions); intents (same six as Home), goal (300), working style, weekly hours; days, from, until, time zone; up to three links; visibility, location precision, show last active, intros only from strong matches; four email alert switches; email (read-only, verified), signed-in devices with sign out; download my data, terms version accepted, blocked people; pause account, delete account (type DELETE).
+- A Save / Discard bar appears only when something changed. Counters for limited fields. Field borders use `--muted-2`.
+- Only fields the backend stores are shown as editable. Anything not built yet is left out of the UI, not shown disabled.
+
+## 14. Admin portal
+Visual source of truth: `reference-admin.html`. Desktop first, but it works on a phone (tables become cards, the menu slides in). Same tokens and components as the app, denser.
+- Lives under `/admin` with its own layout, `noindex`, not in the sitemap, not linked from the public app. Backend under `/api/v1/admin/*`.
+- Roles: Owner, Admin, Moderator, Read-only. Checked on the server for every request. The role table in the reference is the contract.
+- Pages: Overview, Users, Signup and access, Reports and safety, Content moderation, Matching and AI, Communication, Settings, Team and audit, Data and compliance.
+- Every state-changing action asks for a reason (10+ characters) and writes an audit entry. The audit log cannot be edited or deleted.
+- Admins can see users, requests, matches, intros, connections, reports and blocks. Admins never see message text. A report shows only the messages the reporter chose to attach.
+- Lists are paginated (at most 50), searched through indexes, and counts are cached. Nothing in admin may slow the public app.
+- Admin content from users is always shown as plain text.
