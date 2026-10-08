@@ -70,7 +70,7 @@ function sentBody(call = 0): Record<string, unknown> {
 
 describe("ProfileForm", () => {
   it("shows the AI consent line and requires it on the first save", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<ProfileForm profile={null} mode="onboarding" />);
 
     expect(screen.getByText(/read by AI to find and explain your matches/)).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe("ProfileForm", () => {
   });
 
   it("checks length and links before calling the API", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<ProfileForm profile={null} mode="onboarding" />);
     await user.type(screen.getByLabelText("Your name"), "Ananya");
     await user.type(screen.getByLabelText("About you"), "Too short");
@@ -102,7 +102,7 @@ describe("ProfileForm", () => {
   });
 
   it("saves with consent, then goes to the review step", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     fetchMock.mockResolvedValueOnce(json(200, { ...PROFILE, parse_status: "pending" }));
     render(<ProfileForm profile={null} mode="onboarding" />);
 
@@ -127,7 +127,7 @@ describe("ProfileForm", () => {
   });
 
   it("does not ask again while consent is current, and shows API errors", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     fetchMock.mockResolvedValueOnce(apiError(429, "rate_limited"));
     render(<ProfileForm profile={PROFILE} mode="edit" />);
 
@@ -162,7 +162,7 @@ describe("UnderstandingReview", () => {
   });
 
   it("saves a correction", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const corrected = {
       ...PROFILE,
       parse_source: "user",
@@ -186,7 +186,7 @@ describe("UnderstandingReview", () => {
 
 describe("VisibilityToggle", () => {
   it("pauses and resumes matching with a PATCH", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     fetchMock.mockResolvedValueOnce(json(200, { ...PROFILE, visibility: "paused" }));
     render(<VisibilityToggle initial="matchable" />);
 
@@ -203,7 +203,7 @@ describe("VisibilityToggle", () => {
 
 describe("VisibilityToggle errors", () => {
   it("puts the switch back when the save fails", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     fetchMock.mockResolvedValueOnce(apiError(503, "service_unavailable"));
     render(<VisibilityToggle initial="matchable" />);
 
