@@ -38,14 +38,14 @@ INSERT INTO profiles (user_id, display_name, raw_about_text, intents, created_at
 SELECT u.id, 'Person ' || substr(u.email, 6, length(u.email) - 17),
        'I build things and want to learn more. Synthetic profile for timing only.',
        ARRAY[(ARRAY['build_together','skill_exchange','interest_buddy','accountability',
-                    'mentor','explore'])[1 + (abs(hashtext(u.email)) % 6)]]::varchar[],
+                    'mentor','explore'])[1 + (abs(hashtext(u.email)::bigint) % 6)]]::varchar[],
        now(), now()
 FROM users u WHERE u.email LIKE 'perf-%@example.com';
 
 INSERT INTO match_requests (id, user_id, raw_text, status, created_at, updated_at, expires_at)
 SELECT gen_random_uuid(), u.id, 'Looking for someone to build an app with.', 'ready',
        now(), now(), now() + interval '30 days'
-FROM users u WHERE u.email LIKE 'perf-%@example.com' AND abs(hashtext(u.email)) % 5 = 0;
+FROM users u WHERE u.email LIKE 'perf-%@example.com' AND abs(hashtext(u.email)::bigint) % 5 = 0;
 
 INSERT INTO matches (id, request_id, candidate_id, rank, score, reason, status,
                      created_at, updated_at)
@@ -53,14 +53,15 @@ SELECT gen_random_uuid(), r.id, c.id, g.rank, 0.5, 'Both build apps.', 'shown', 
 FROM match_requests r
 CROSS JOIN LATERAL generate_series(1, 5) AS g(rank)
 CROSS JOIN LATERAL (
-    SELECT id FROM users WHERE email = 'perf-' || (1 + abs(hashtext(r.id::text || g.rank)) % :users)
-    || '@example.com'
+    -- A different person for each of a request's five ranks (7919 is prime).
+    SELECT id FROM users WHERE email = 'perf-'
+        || (1 + (abs(hashtext(r.id::text)::bigint) + g.rank * 7919) % :users) || '@example.com'
 ) AS c
 WHERE r.raw_text = 'Looking for someone to build an app with.';
 
 INSERT INTO reports (id, reported_id, target, target_id, reason, snapshot, status, created_at)
 SELECT gen_random_uuid(), u.id, 'profile', u.id, 'spam', '[]'::jsonb, 'open', now()
-FROM users u WHERE u.email LIKE 'perf-%@example.com' AND abs(hashtext(u.email)) % 50 = 0;
+FROM users u WHERE u.email LIKE 'perf-%@example.com' AND abs(hashtext(u.email)::bigint) % 50 = 0;
 
 ANALYZE;
 """
@@ -136,10 +137,8 @@ def main() -> int:
     with engine.connect() as connection:
         for name, filters in CASES.items():
             sql, params = _compiled(filters, engine.dialect)
-            plan = (
-                connection.exec_driver_sql("EXPLAIN (ANALYZE, BUFFERS) " + sql, params)
-                .scalars()
-                .all()
+            plan: list[str] = list(
+                connection.exec_driver_sql("EXPLAIN (ANALYZE, BUFFERS) " + sql, params).scalars()
             )
             median = _time(connection, sql, params)
             _say(f"## {name}: median {median:.1f} ms over 5 runs")
