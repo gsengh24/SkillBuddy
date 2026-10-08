@@ -209,6 +209,221 @@
         "title": "AdminSessionOut",
         "type": "object"
       },
+      "AppealDecisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "enum": [
+              "uphold",
+              "overturn"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "reason"
+        ],
+        "title": "AppealDecisionIn",
+        "type": "object"
+      },
+      "AppealIn": {
+        "additionalProperties": false,
+        "properties": {
+          "appeal": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Appeal",
+            "type": "string"
+          },
+          "token": {
+            "maxLength": 300,
+            "minLength": 10,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "appeal"
+        ],
+        "title": "AppealIn",
+        "type": "object"
+      },
+      "AppealOut": {
+        "properties": {
+          "against": {
+            "description": "\"suspended\" or \"banned\".",
+            "title": "Against",
+            "type": "string"
+          },
+          "appeal": {
+            "description": "What they wrote. Plain text.",
+            "title": "Appeal",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "person": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "open",
+              "upheld",
+              "overturned"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "person",
+          "against",
+          "appeal",
+          "status",
+          "created_at",
+          "decided_at"
+        ],
+        "title": "AppealOut",
+        "type": "object"
+      },
+      "AppealPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AppealOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "AppealPage",
+        "type": "object"
+      },
+      "AppealReceipt": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at"
+        ],
+        "title": "AppealReceipt",
+        "type": "object"
+      },
+      "AppealStatus": {
+        "enum": [
+          "open",
+          "upheld",
+          "overturned"
+        ],
+        "title": "AppealStatus",
+        "type": "string"
+      },
+      "AttachedMessage": {
+        "description": "A chat message the reporter chose to attach (or, for an intro, profile or pair-space\nreport, a labelled part of what they reported). Nothing else from a chat is shown.",
+        "properties": {
+          "body": {
+            "description": "Plain text.",
+            "title": "Body",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set for non-chat parts, e.g. \"summary\", \"note\".",
+            "title": "Label"
+          },
+          "sender": {
+            "enum": [
+              "reporter",
+              "reported"
+            ],
+            "title": "Sender",
+            "type": "string"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          }
+        },
+        "required": [
+          "label",
+          "sender",
+          "body",
+          "sent_at"
+        ],
+        "title": "AttachedMessage",
+        "type": "object"
+      },
       "AuditEntryOut": {
         "properties": {
           "action": {
@@ -396,6 +611,33 @@
         "title": "BlockList",
         "type": "object"
       },
+      "BlockStats": {
+        "properties": {
+          "last_30_days": {
+            "title": "Last 30 Days",
+            "type": "integer"
+          },
+          "most_blocked": {
+            "description": "Last 30 days, most first (10).",
+            "items": {
+              "$ref": "#/components/schemas/BlockedPerson"
+            },
+            "title": "Most Blocked",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "last_30_days",
+          "most_blocked"
+        ],
+        "title": "BlockStats",
+        "type": "object"
+      },
       "BlockedOut": {
         "description": "Someone you blocked. No name or links: blocking ends the connection.",
         "properties": {
@@ -421,6 +663,35 @@
         "title": "BlockedOut",
         "type": "object"
       },
+      "BlockedPerson": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "times": {
+            "title": "Times",
+            "type": "integer"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "status",
+          "times"
+        ],
+        "title": "BlockedPerson",
+        "type": "object"
+      },
       "Box": {
         "enum": [
           "received",
@@ -428,6 +699,67 @@
         ],
         "title": "Box",
         "type": "string"
+      },
+      "CaseOut": {
+        "properties": {
+          "attached": {
+            "items": {
+              "$ref": "#/components/schemas/AttachedMessage"
+            },
+            "title": "Attached",
+            "type": "array"
+          },
+          "details": {
+            "description": "What the reporter wrote. Plain text.",
+            "title": "Details",
+            "type": "string"
+          },
+          "report": {
+            "$ref": "#/components/schemas/QueueItem"
+          },
+          "reported_history": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "reports_against, reports_filed, times_blocked, upheld_reports.",
+            "title": "Reported History",
+            "type": "object"
+          },
+          "reporter_history": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Reporter History",
+            "type": "object"
+          },
+          "resolution_note": {
+            "title": "Resolution Note",
+            "type": "string"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          }
+        },
+        "required": [
+          "report",
+          "details",
+          "attached",
+          "resolution_note",
+          "resolved_at",
+          "reported_history",
+          "reporter_history"
+        ],
+        "title": "CaseOut",
+        "type": "object"
       },
       "ConnectionList": {
         "properties": {
@@ -575,6 +907,33 @@
           "downloaded_at"
         ],
         "title": "DataExportOut",
+        "type": "object"
+      },
+      "DecisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "dismiss",
+              "warn",
+              "suspend",
+              "ban"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "reason"
+        ],
+        "title": "DecisionIn",
         "type": "object"
       },
       "DeletionScheduledOut": {
@@ -1803,7 +2162,8 @@
             "enum": [
               "intro_received",
               "intro_accepted",
-              "matches_ready"
+              "matches_ready",
+              "report_reviewed"
             ],
             "title": "Kind",
             "type": "string"
@@ -2037,6 +2397,30 @@
         "title": "PermissionTable",
         "type": "object"
       },
+      "Person": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "status"
+        ],
+        "title": "Person",
+        "type": "object"
+      },
       "PersonOut": {
         "description": "Someone else. ``display_name`` and ``links`` are set only once you're connected.",
         "properties": {
@@ -2132,6 +2516,37 @@
           "location"
         ],
         "title": "PersonOut",
+        "type": "object"
+      },
+      "PersonReportIn": {
+        "additionalProperties": false,
+        "description": "Reporting someone, optionally from a chat with them.",
+        "properties": {
+          "details": {
+            "default": "",
+            "description": "Optional: anything the moderator should know.",
+            "maxLength": 500,
+            "title": "Details",
+            "type": "string"
+          },
+          "message_ids": {
+            "description": "Up to 5 messages of your chat with them to send with the report. Only these are copied; the team sees no other message text.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Message Ids",
+            "type": "array"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/ReportReason"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "PersonReportIn",
         "type": "object"
       },
       "PingResponse": {
@@ -2869,6 +3284,110 @@
         "title": "ProviderStatusOut",
         "type": "object"
       },
+      "Queue": {
+        "properties": {
+          "items": {
+            "description": "Oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/QueueItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Queue",
+        "type": "object"
+      },
+      "QueueItem": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "reported": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reporter": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "open",
+              "in_review",
+              "resolved"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target": {
+            "description": "What was reported: message, intro, profile, goal, note.",
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "reason",
+          "target",
+          "created_at",
+          "decision",
+          "reported",
+          "reporter"
+        ],
+        "title": "QueueItem",
+        "type": "object"
+      },
       "ReadinessResponse": {
         "properties": {
           "checks": {
@@ -3045,6 +3564,7 @@
           "status": {
             "enum": [
               "open",
+              "in_review",
               "resolved"
             ],
             "title": "Status",
@@ -3145,6 +3665,7 @@
       "ReportStatus": {
         "enum": [
           "open",
+          "in_review",
           "resolved"
         ],
         "title": "ReportStatus",
@@ -3406,6 +3927,22 @@
           "max_skills_per_person"
         ],
         "title": "SpaceOut",
+        "type": "object"
+      },
+      "StartReviewIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "StartReviewIn",
         "type": "object"
       },
       "StorageReport": {
@@ -4699,6 +5236,586 @@
           }
         },
         "summary": "Mark a report resolved",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/safety/appeals": {
+      "get": {
+        "operationId": "appeal_queue_api_v1_admin_safety_appeals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AppealStatus",
+              "default": "open"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Appeals",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/safety/appeals/{appeal_id}/decide": {
+      "post": {
+        "description": "Overturning lifts the suspension or ban. The person is emailed either way.",
+        "operationId": "decide_appeal_api_v1_admin_safety_appeals__appeal_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appeal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Appeal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Uphold or overturn an appeal",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/safety/blocks": {
+      "get": {
+        "description": "Aggregates only: totals and the most blocked people in the last 30 days.",
+        "operationId": "blocks_api_v1_admin_safety_blocks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockStats"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Block counts",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/safety/reports": {
+      "get": {
+        "description": "No message text here; open a case for what the reporter attached.",
+        "operationId": "report_queue_api_v1_admin_safety_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReportStatus",
+              "default": "open"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Queue"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The report queue",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/safety/reports/{report_id}": {
+      "get": {
+        "description": "The reported person, the reporter, the reason, the messages the reporter attached and\nboth people's history counts. No other message text, and no chat view.",
+        "operationId": "report_case_api_v1_admin_safety_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "One case",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/safety/reports/{report_id}/decide": {
+      "post": {
+        "description": "Dismiss, warn, suspend for 7 days, or ban. The reporter gets an in-app notice (never\nthe outcome); the reported person is emailed for a warning, suspension or ban.",
+        "operationId": "decide_api_v1_admin_safety_reports__report_id__decide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueItem"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide a report",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/safety/reports/{report_id}/start-review": {
+      "post": {
+        "operationId": "start_review_api_v1_admin_safety_reports__report_id__start_review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartReviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueItem"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark a report as in review",
         "tags": [
           "admin"
         ]
@@ -6153,6 +7270,78 @@
         "summary": "Lift a suspension",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/appeals": {
+      "post": {
+        "description": "The token comes with a refused sign-in (an hour) or in the notice email (7 days).",
+        "operationId": "appeal_api_v1_appeals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has expired or isn't valid (`invalid_appeal_link`)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`nothing_to_appeal` or `appeal_exists` (one per suspension or ban)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Appeal a suspension or ban",
+        "tags": [
+          "account"
         ]
       }
     },
@@ -9964,7 +11153,7 @@
     },
     "/api/v1/people/{user_id}/report": {
       "post": {
-        "description": "The moderator sees a copy of their profile as you could see it. They are not told.",
+        "description": "The team sees a copy of their profile as you could see it, and the messages you\nattach (up to 5, from your chat with them). They are not told who reported them.",
         "operationId": "report_person_api_v1_people__user_id__report_post",
         "parameters": [
           {
@@ -9982,7 +11171,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReportIn"
+                "$ref": "#/components/schemas/PersonReportIn"
               }
             }
           },
