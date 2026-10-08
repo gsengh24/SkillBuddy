@@ -78,7 +78,7 @@ async def test_refreshes_a_token_once_and_sends_a_mime_message(gmail_settings: S
     assert mail["To"] == "ananya@thapar.edu"
     assert mail["Subject"] == "Your code"
     assert "skillbuddy.mail@gmail.com" in mail["From"]
-    assert "Skill Buddy" in mail["From"]
+    assert "Cynergi" in mail["From"]
     assert SECRET not in send.content.decode()
     assert REFRESH not in send.content.decode()
 
