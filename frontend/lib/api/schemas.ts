@@ -407,3 +407,16 @@ export const aiStatusSchema = z.object({
 export type AIStatus = z.infer<typeof aiStatusSchema>;
 
 export const probeQueuedSchema = z.object({ queued: z.boolean() });
+
+/** GET /api/v1/features (A6): what's switched on, so the app hides what's paused. */
+export const featuresSchema = z.object({
+  features: z.object({
+    intro_requests: z.boolean(),
+    chats: z.boolean(),
+    ai_matching: z.boolean(),
+    pair_spaces: z.boolean(),
+    email_notifications: z.boolean(),
+  }),
+  message_max_length: z.number(),
+});
+export type Features = z.infer<typeof featuresSchema>;

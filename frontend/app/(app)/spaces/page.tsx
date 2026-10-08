@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 
 import { Avatar } from "@/components/ds/avatar";
 import { ButtonLink } from "@/components/ds/button";
+import { SpacesPaused } from "@/components/spaces/spaces-paused";
 import { withUser } from "@/lib/auth/with-user";
+import { getFeatures } from "@/lib/features";
 import { getConnections } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Pair spaces" };
@@ -10,7 +12,9 @@ export const dynamic = "force-dynamic";
 
 /** Every connection has a pair space: pick one. */
 export default async function SpacesPage() {
+  const featuresCall = getFeatures();
   const { data: connections } = await withUser("/login?next=/spaces", getConnections());
+  if (!(await featuresCall).features.pair_spaces) return <SpacesPaused />;
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">

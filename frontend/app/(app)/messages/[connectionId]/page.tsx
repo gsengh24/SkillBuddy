@@ -5,11 +5,13 @@ import { Conversation } from "@/components/chat/conversation";
 import { Avatar } from "@/components/ds/avatar";
 import { ButtonLink } from "@/components/ds/button";
 import { MoreMenu } from "@/components/ds/more-menu";
+import { FeaturePaused } from "@/components/feature-paused";
 import { BlockButton } from "@/components/safety/block-button";
 import { ReportButton } from "@/components/safety/report-button";
 import { TextLink } from "@/components/ui/text-link";
 import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getConversation } from "@/lib/chat/server";
+import { getFeatures } from "@/lib/features";
 import { getConnections } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Chat" };
@@ -24,6 +26,7 @@ export default async function ConversationPage({
   const { connectionId } = await params;
   // Three things at once: the session, the connections and the conversation. The
   // conversation keeps its own order (polling cursor first, then the messages).
+  const featuresCall = getFeatures();
   const conversation = startEarly(getConversation(connectionId));
   const { user, data: connections } = await withUser(
     `/login?next=/messages/${encodeURIComponent(connectionId)}`,
@@ -31,6 +34,15 @@ export default async function ConversationPage({
   );
   const connection = connections.items.find((item) => item.id === connectionId);
   if (!connection) notFound();
+  const { features, message_max_length } = await featuresCall;
+  if (!features.chats) {
+    return (
+      <FeaturePaused title="Chats are paused">
+        Chats are switched off for everyone for a while. Your messages are kept. Please check back
+        later.
+      </FeaturePaused>
+    );
+  }
   const { page, cursor } = await conversation;
   const name = connection.person.display_name ?? "Your connection";
 
@@ -53,9 +65,11 @@ export default async function ConversationPage({
             </div>
           </div>
           <div className="flex flex-wrap items-start gap-3">
-            <ButtonLink href={`/spaces/${connectionId}`} variant="outline" size="compact">
-              Open pair space
-            </ButtonLink>
+            {features.pair_spaces ? (
+              <ButtonLink href={`/spaces/${connectionId}`} variant="outline" size="compact">
+                Open pair space
+              </ButtonLink>
+            ) : null}
             <MoreMenu label={`More actions for ${name}`}>
               <ReportButton
                 kind="profile"
@@ -83,6 +97,7 @@ export default async function ConversationPage({
           cursor={cursor}
           retentionDays={page.retention_days}
           hasUnread={connection.unread_messages > 0}
+          maxLength={message_max_length}
         />
       </div>
     </div>

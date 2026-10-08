@@ -259,3 +259,21 @@ export const inviteCodePageSchema = z.object({
 
 export const invitedSchema = z.object({ invited: z.number() });
 export const domainSchema = z.object({ domain: z.string() });
+
+export const settingsSchema = z.object({
+  server: z.object({ app_name: z.string(), terms_version: z.string(), environment: z.string() }),
+  signup_mode: signupModeSchema,
+  features: z.array(z.object({ key: z.string(), on: z.boolean() })),
+  limits: z.array(
+    z.object({
+      key: z.string(),
+      value: z.number(),
+      default: z.number(),
+      minimum: z.number(),
+      maximum: z.number(),
+    }),
+  ),
+  intents: z.array(z.string()),
+});
+export type AdminSettings = z.infer<typeof settingsSchema>;
+export type LimitState = AdminSettings["limits"][number];

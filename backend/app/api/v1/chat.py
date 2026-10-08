@@ -9,13 +9,13 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import SettingsDep, require_json, require_storage_capacity
+from app.api.deps import SettingsDep, require_feature, require_json, require_storage_capacity
 from app.api.v1.auth import AuthDep
 from app.db.session import get_db_session
 from app.schemas.chat import MessageIn, MessageOut, MessagePage, MessageUpdates
 from app.schemas.errors import ErrorResponse
 from app.schemas.reports import ReportIn, ReportReceipt
-from app.services import reports
+from app.services import app_settings, reports
 from app.services.auth.rate_limit import RateLimiter
 from app.services.chat import ChatService
 from app.services.matching.requests import DAY_SECONDS
@@ -23,6 +23,9 @@ from app.services.matching.requests import DAY_SECONDS
 router = APIRouter(tags=["chat"])
 
 DbDep = Annotated[AsyncSession, Depends(get_db_session)]
+# Chats can be switched off on the admin Settings page (A6): 503 `feature_off`.
+ChatsOn = Depends(require_feature(app_settings.Feature.CHATS))
+_503: dict[str, Any] = {"model": ErrorResponse, "description": "`feature_off`: chats are paused."}
 
 
 def get_chat_service(request: Request, db: DbDep, settings: SettingsDep) -> ChatService:
@@ -48,7 +51,8 @@ _429: dict[str, Any] = {"model": ErrorResponse, "description": "Rate limited (se
 @router.get(
     "/connections/{connection_id}/messages",
     summary="Messages in one conversation, newest first",
-    responses={401: _401, 404: _404},
+    dependencies=[ChatsOn],
+    responses={401: _401, 404: _404, 503: _503},
 )
 async def list_messages(
     connection_id: uuid.UUID,
@@ -70,7 +74,7 @@ async def list_messages(
     "/connections/{connection_id}/messages",
     status_code=HTTPStatus.CREATED,
     summary="Send a message",
-    dependencies=[Depends(require_json), Depends(require_storage_capacity)],
+    dependencies=[Depends(require_json), Depends(require_storage_capacity), ChatsOn],
     responses={
         401: _401,
         404: _404,
@@ -78,8 +82,12 @@ async def list_messages(
             "model": ErrorResponse,
             "description": "`conversation_closed`: the other person's account is not active.",
         },
-        422: {"model": ErrorResponse, "description": "Validation failed."},
+        422: {
+            "model": ErrorResponse,
+            "description": "Validation failed, or `message_too_long` (the length limit).",
+        },
         429: _429,
+        503: _503,
     },
 )
 async def send_message(
@@ -94,7 +102,8 @@ async def send_message(
     "/connections/{connection_id}/read",
     status_code=HTTPStatus.NO_CONTENT,
     summary="Mark a conversation read",
-    responses={401: _401, 404: _404},
+    dependencies=[ChatsOn],
+    responses={401: _401, 404: _404, 503: _503},
 )
 async def mark_conversation_read(
     connection_id: uuid.UUID, auth: AuthDep, service: ServiceDep

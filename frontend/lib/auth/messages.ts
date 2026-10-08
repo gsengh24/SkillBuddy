@@ -102,6 +102,10 @@ export function describeError(error: unknown): string {
         ? `Too many attempts. Please wait about ${minutes} minute${minutes === 1 ? "" : "s"} and try again.`
         : "Too many attempts. Please wait a few minutes and try again.";
     }
+    // A feature switched off by an admin (A6): the server says which, in plain words.
+    if (error.code === "feature_off" && error.body) {
+      return error.body.error.message;
+    }
     // The server's message names the scheduled deletion date, so show it as is.
     if (error.code === "account_pending_deletion" && error.body) {
       return error.body.error.message;

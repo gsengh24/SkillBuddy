@@ -9,7 +9,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import SettingsDep, require_json, require_storage_capacity
+from app.api.deps import SettingsDep, require_feature, require_json, require_storage_capacity
 from app.api.v1.auth import AuthDep
 from app.db.session import get_db_session
 from app.schemas.errors import ErrorResponse
@@ -27,7 +27,7 @@ from app.schemas.social import (
     NotificationPage,
     UnreadCount,
 )
-from app.services import chat, notifications, reports
+from app.services import app_settings, chat, notifications, reports
 from app.services.auth.rate_limit import RateLimiter
 from app.services.intros import Box, IntroService
 from app.services.matching.requests import DAY_SECONDS
@@ -55,7 +55,12 @@ _409: dict[str, Any] = {"model": ErrorResponse, "description": "`intro_not_pendi
     "/matches/{match_id}/intro",
     status_code=HTTPStatus.CREATED,
     summary="Send an intro to a match",
-    dependencies=[Depends(require_json), Depends(require_storage_capacity)],
+    dependencies=[
+        Depends(require_json),
+        Depends(require_storage_capacity),
+        # Can be switched off on the admin Settings page (A6).
+        Depends(require_feature(app_settings.Feature.INTRO_REQUESTS)),
+    ],
     responses={
         401: _401,
         404: {"model": ErrorResponse, "description": "`match_not_found` (or not yours)."},
@@ -66,6 +71,7 @@ _409: dict[str, Any] = {"model": ErrorResponse, "description": "`intro_not_pendi
         },
         422: {"model": ErrorResponse, "description": "Validation failed."},
         429: {"model": ErrorResponse, "description": "Daily intro limit reached."},
+        503: {"model": ErrorResponse, "description": "`feature_off`: intros are paused."},
     },
 )
 async def send_intro(

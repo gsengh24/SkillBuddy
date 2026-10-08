@@ -26,7 +26,7 @@ from app.models import (
     RequestStatus,
     User,
 )
-from app.services import blocks
+from app.services import app_settings, blocks
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import InvalidCursorError, decode_cursor, encode
 
@@ -81,9 +81,10 @@ class MatchRequestService:
         )
         if (open_count or 0) >= self._settings.max_open_match_requests:
             raise TooManyOpenRequestsError
-        await self._limiter.hit(
-            f"match-request:{user.id}", limit=self._settings.match_requests_per_day
+        daily = await app_settings.limit(
+            self._db, self._settings, app_settings.Limit.MATCH_REQUESTS_PER_DAY
         )
+        await self._limiter.hit(f"match-request:{user.id}", limit=daily)
         now = datetime.now(UTC)
         request = MatchRequest(
             user_id=user.id,

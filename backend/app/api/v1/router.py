@@ -11,11 +11,13 @@ from app.api.v1 import (
     admin_overview,
     admin_portal,
     admin_safety,
+    admin_settings,
     admin_users,
     appeals,
     auth,
     blocks,
     chat,
+    features,
     health,
     jobs,
     moderation,
@@ -45,5 +47,7 @@ api_router.include_router(admin_users.router)
 api_router.include_router(admin_safety.router)
 api_router.include_router(admin_overview.router)
 api_router.include_router(admin_access.router)
+api_router.include_router(admin_settings.router)
+api_router.include_router(features.router)
 api_router.include_router(appeals.router)
 api_router.include_router(jobs.router)

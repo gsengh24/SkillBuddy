@@ -23,6 +23,7 @@ from app.models import (
     Profile,
     User,
 )
+from app.services import app_settings
 from app.services.email import build_email_sender
 from app.services.email.budget import may_send, record_sent
 from app.services.email.templates import notification_email
@@ -47,6 +48,8 @@ async def send_notification_email(
         return False
     if notification.read_at is not None:
         return False  # already seen in the app
+    if not await app_settings.is_on(db, app_settings.Feature.EMAIL_NOTIFICATIONS):
+        return False  # switched off on the admin Settings page (A6)
     if not await may_send(db, settings, EmailPurpose.NOTIFICATION):
         logger.warning("notification_email_skipped", extra={"reason": "email_quota_reserve"})
         return False

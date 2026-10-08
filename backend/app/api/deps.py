@@ -8,6 +8,7 @@ state-changing requests must also send a valid ``X-CSRF-Token`` header.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Annotated, Final
@@ -20,6 +21,7 @@ from app.core.errors import AuthenticationRequiredError, CsrfError, UnsupportedM
 from app.core.security import constant_time_equals
 from app.db.session import get_db_session
 from app.models import User, UserSession
+from app.services import app_settings
 from app.services.auth.delivery import OtpDelivery, QueuedOtpDelivery
 from app.services.auth.events import ClientInfo
 from app.services.auth.google import GoogleOidcClient
@@ -117,6 +119,16 @@ StorageMonitorDep = Annotated[StorageMonitor, Depends(get_storage_monitor)]
 async def require_storage_capacity(monitor: StorageMonitorDep) -> None:
     """Add to non-essential write endpoints: refuses with 503 near the storage limit."""
     await monitor.ensure_capacity_for_optional_writes()
+
+
+def require_feature(feature: app_settings.Feature) -> Callable[..., Awaitable[None]]:
+    """Add to the endpoints of a feature that can be switched off on the admin Settings
+    page (A6): 503 ``feature_off`` while it is off."""
+
+    async def dependency(db: Annotated[AsyncSession, Depends(get_db_session)]) -> None:
+        await app_settings.ensure_on(db, feature)
+
+    return dependency
 
 
 def get_google_oidc(settings: SettingsDep) -> GoogleOidcClient:

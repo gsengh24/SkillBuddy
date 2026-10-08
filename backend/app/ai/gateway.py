@@ -44,6 +44,7 @@ from app.ai.providers import (
     build_providers,
 )
 from app.core.config import Settings
+from app.services import app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +172,11 @@ class AIGateway:
     ) -> AIResult[T]:
         """Ask the first available provider; on any failure, use ``fallback()``."""
         log: dict[str, Any] = {"task": task.value, "prompt_version": prompt.version}
-        if not self._settings.ai_llm_enabled:
+        # The server kill switch, or "AI matching" off on the admin Settings page (A6):
+        # every stage uses its rule-based fallback, so matching still works.
+        async with self._session_factory() as db:
+            ai_on = await app_settings.is_on(db, app_settings.Feature.AI_MATCHING)
+        if not self._settings.ai_llm_enabled or not ai_on:
             return await self._fallback(fallback, FallbackReason.DISABLED, log)
 
         request = self.build_request(prompt)
