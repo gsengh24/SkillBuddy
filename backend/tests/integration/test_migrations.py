@@ -24,6 +24,7 @@ REPORT_TABLES = {"reports"}  # migration 0010
 BLOCK_TABLES = {"blocks"}  # migration 0011
 MODERATION_TABLES = {"moderation_actions"}  # migration 0013
 SPACE_TABLES = {"space_goals", "space_skills", "progress_logs"}  # migration 0014
+EXPORT_TABLES = {"data_exports"}  # migration 0017
 ALL_TABLES = (
     PHASE_ZERO_TABLES
     | AUTH_TABLES
@@ -36,6 +37,7 @@ ALL_TABLES = (
     | BLOCK_TABLES
     | MODERATION_TABLES
     | SPACE_TABLES
+    | EXPORT_TABLES
 )
 
 
@@ -371,6 +373,35 @@ def test_space_report_targets_migration_downgrades_to_0014(
     with engine.connect() as connection:
         kept = connection.scalars(text("SELECT target FROM reports")).all()
     assert kept == ["message"]
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
+
+
+def test_account_controls_migration_downgrades_to_0016(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO users (email, status) VALUES "
+                "('paused@example.com', 'paused'), ('active@example.com', 'active')"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO data_exports (user_id) "
+                "SELECT id FROM users WHERE email = 'paused@example.com'"
+            )
+        )
+
+    command.downgrade(config, "0016")
+    with engine.connect() as connection:
+        statuses = set(connection.scalars(text("SELECT status FROM users")).all())
+    assert statuses == {"active"}
+    assert "data_exports" not in _tables(engine)
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
