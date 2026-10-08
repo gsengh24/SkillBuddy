@@ -53,7 +53,7 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
     .fill("I build React apps and write Python. Looking for a designer for a budgeting app.");
   await page.getByRole("checkbox", { name: /read by AI to find and explain/ }).check();
   await page.getByRole("button", { name: "Save and continue" }).click();
-  await expect(page).toHaveURL(/\/profile/);
+  await expect(page).toHaveURL(/\/you/);
 
   await page.goto("/home");
   await page
@@ -80,8 +80,8 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
     ).toBeVisible();
     await shoot(page, `home-request-open-${name}`);
     for (const [path, heading, shot] of [
-      ["/profile", "About you", "profile"],
-      ["/settings/account", "Account settings", "settings"],
+      ["/you", "Your profile.", "you"],
+      ["/you?review=1", "What we understood", "you-review"],
       ["/settings/blocked", "Blocked people", "blocked"],
       ["/saved", "Saved", "saved"],
     ] as const) {

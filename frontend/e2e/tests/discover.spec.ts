@@ -30,7 +30,7 @@ test("ask for matches from Discover and see the request finish", async ({ page, 
     .fill("I can build React apps and write Python. Looking for a designer. I love chess.");
   await page.getByRole("checkbox", { name: /read by AI to find and explain/ }).check();
   await page.getByRole("button", { name: "Save and continue" }).click();
-  await expect(page).toHaveURL(/\/profile/);
+  await expect(page).toHaveURL(/\/you/);
 
   // Navigate directly: in the dev-mode CI stack, Next.js's dev indicator sits over the
   // bottom-left of the screen, on top of the phone tab bar.

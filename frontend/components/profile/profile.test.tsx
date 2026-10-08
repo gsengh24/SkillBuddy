@@ -2,7 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Profile } from "@/lib/api/schemas";
+import { profileSchema, type Profile } from "@/lib/api/schemas";
 import { profileCompleteness } from "@/lib/profile/limits";
 
 import { ProfileForm } from "./profile-form";
@@ -13,7 +13,8 @@ const router = { replace: vi.fn(), refresh: vi.fn(), push: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const ABOUT = "I build React apps and want a designer for a small app, weekends.";
-const PROFILE: Profile = {
+// Parsed, so the fields this test doesn't care about get the API's defaults.
+const PROFILE: Profile = profileSchema.parse({
   user_id: "8d3f4b2a-0000-4000-8000-000000000001",
   display_name: "Ananya",
   about_text: ABOUT,
@@ -36,7 +37,7 @@ const PROFILE: Profile = {
   ai_consent_current: true,
   created_at: "2026-10-02T10:00:00Z",
   updated_at: "2026-10-02T10:00:00Z",
-};
+});
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -123,7 +124,7 @@ describe("ProfileForm", () => {
       ai_consent: true,
       visibility: "matchable",
     });
-    expect(router.push).toHaveBeenCalledWith("/profile?welcome=1");
+    expect(router.push).toHaveBeenCalledWith("/you?welcome=1");
   });
 
   it("does not ask again while consent is current, and shows API errors", async () => {

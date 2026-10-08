@@ -8,7 +8,14 @@ import { profileSchema, type Profile } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 
 /** "Show me in new matches": pausing hides the profile from new matches only. */
-export function VisibilityToggle({ initial }: { initial: Profile["visibility"] }) {
+export function VisibilityToggle({
+  initial,
+  onSaved,
+}: {
+  initial: Profile["visibility"];
+  /** Told the saved value, so a page that also saves the profile doesn't undo it. */
+  onSaved?: (visibility: Profile["visibility"]) => void;
+}) {
   const [visibility, setVisibility] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +34,7 @@ export function VisibilityToggle({ initial }: { initial: Profile["visibility"] }
         body: { visibility: next },
       });
       setVisibility(saved.visibility);
+      onSaved?.(saved.visibility);
     } catch (caught) {
       setVisibility(previous);
       setError(describeError(caught));

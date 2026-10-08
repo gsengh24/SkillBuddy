@@ -56,7 +56,7 @@ const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: <HomeIcon /> },
   { href: "/spaces", label: "Spaces", icon: <PeopleIcon /> },
   { href: "/saved", label: "Saved", icon: <SavedIcon /> },
-  { href: "/profile", label: "You", icon: <YouIcon /> },
+  { href: "/you", label: "You", icon: <YouIcon /> },
 ];
 
 const LANDING_LINKS = [

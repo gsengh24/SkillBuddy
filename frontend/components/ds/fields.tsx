@@ -105,6 +105,40 @@ export function Input({
   );
 }
 
+/** A labelled native select, styled like Input. */
+export function Select({
+  label,
+  hideLabel = false,
+  hint,
+  error,
+  id,
+  className,
+  children,
+  ...props
+}: FieldProps & ComponentProps<"select">) {
+  const autoId = useId();
+  const inputId = id ?? autoId;
+  const hintId = `${inputId}-hint`;
+  const errorId = `${inputId}-error`;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={inputId} hidden={hideLabel}>
+        {label}
+      </Label>
+      <select
+        id={inputId}
+        {...props}
+        aria-invalid={error ? true : props["aria-invalid"]}
+        aria-describedby={describedBy(hint && hintId, error && errorId, props["aria-describedby"])}
+        className={cx(FIELD, "h-11", className)}
+      >
+        {children}
+      </select>
+      <Footnotes hintId={hintId} hint={hint} errorId={errorId} error={error} />
+    </div>
+  );
+}
+
 /**
  * A labelled textarea. With `maxLength`, a mono counter ("12/500") sits under it. The
  * counter is visual only (not read on every key); `maxLength` itself stops extra input.

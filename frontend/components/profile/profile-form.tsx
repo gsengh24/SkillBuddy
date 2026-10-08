@@ -99,7 +99,7 @@ export function ProfileForm({ profile, mode }: { profile: Profile | null; mode: 
       });
       if (mode === "onboarding") {
         setStatus("Saved. Reading your description…");
-        router.push("/profile?welcome=1");
+        router.push("/you?welcome=1");
       } else {
         setStatus("Saved.");
         setConsent(false);

@@ -123,7 +123,7 @@ export default async function HomePage({ searchParams }: Props) {
         {hasConnections ? <SpacesBand className="lg:hidden" /> : null}
         <p className="text-meta-lg text-muted mt-6">
           You&apos;re signed in as <strong className="text-ink break-all">{user.email}</strong>.{" "}
-          <TextLink href="/settings/account" tone="muted">
+          <TextLink href="/you#s-security" tone="muted">
             Account settings
           </TextLink>
         </p>

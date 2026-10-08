@@ -26,7 +26,7 @@ const ICONS: Record<(typeof APP_LINKS)[number]["href"], ReactNode> = {
   "/home": <HomeIcon />,
   "/spaces": <PeopleIcon />,
   "/saved": <SavedIcon />,
-  "/profile": <YouIcon />,
+  "/you": <YouIcon />,
 };
 
 const BOTTOM_NAV_ITEMS = APP_LINKS.map((link) => ({ ...link, icon: ICONS[link.href] }));
@@ -48,7 +48,7 @@ function BellLink({ hasNotifications }: { hasNotifications: boolean }) {
 function ProfileProgress({ value }: { value: number | null }) {
   return (
     <Link
-      href={value === null ? "/onboarding" : "/profile"}
+      href={value === null ? "/onboarding" : "/you"}
       className="rounded-control text-meta-lg text-ink hover:bg-panel flex min-h-11 items-center gap-2 px-2"
     >
       <span>Your profile</span>
@@ -97,7 +97,7 @@ export function AppShell({
               <ProfileProgress value={profileComplete} />
               <BellLink hasNotifications={hasNotifications} />
               <Link
-                href="/settings/account"
+                href="/you#s-security"
                 aria-label="Your account"
                 title={user.email}
                 className="inline-flex size-11 items-center justify-center rounded-full"

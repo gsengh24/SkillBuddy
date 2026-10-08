@@ -23,6 +23,7 @@ export const config = {
     "/saved/:path*",
     "/notifications/:path*",
     "/settings/:path*",
+    "/you/:path*",
     "/moderation/:path*",
     "/spaces/:path*",
   ],

@@ -18,7 +18,8 @@ export function SegmentedControl<T extends string>({
   /** The group's accessible name, e.g. "Filter". */
   label: string;
   segments: Segment<T>[];
-  value: T;
+  /** null: nothing picked yet. */
+  value: T | null;
   onChange: (value: T) => void;
   className?: string;
 }) {
