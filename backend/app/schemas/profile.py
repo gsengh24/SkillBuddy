@@ -3,22 +3,30 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, time
 from typing import Annotated, Final
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
-from app.ai.stages.understand import MAX_ITEMS, Phrase
+from app.ai.stages.understand import MAX_ITEMS, Intent, Phrase
 from app.models import (
     ABOUT_TEXT_MAX_LENGTH,
+    CITY_MAX_LENGTH,
     DISPLAY_NAME_MAX_LENGTH,
+    GOAL_MAX_LENGTH,
+    HEADLINE_MAX_LENGTH,
     LINK_MAX_LENGTH,
     MAX_LANGUAGES,
     MAX_LINKS,
+    ExperienceLevel,
+    LocationPrecision,
     ParseSource,
     ParseStatus,
     Profile,
     ProfileVisibility,
+    Weekday,
+    WeeklyHours,
+    WorkingStyle,
 )
 
 ABOUT_TEXT_MIN_LENGTH: Final = 20
@@ -51,6 +59,18 @@ Timezone = Annotated[
 LanguageTag = Annotated[str, StringConstraints(pattern=r"^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$")]
 Links = Annotated[list[Link], Field(max_length=MAX_LINKS)]
 Languages = Annotated[list[LanguageTag], Field(max_length=MAX_LANGUAGES)]
+City = Annotated[str, StringConstraints(strip_whitespace=True, max_length=CITY_MAX_LENGTH)]
+Headline = Annotated[str, StringConstraints(strip_whitespace=True, max_length=HEADLINE_MAX_LENGTH)]
+Goal = Annotated[str, StringConstraints(strip_whitespace=True, max_length=GOAL_MAX_LENGTH)]
+
+
+def _unique[T](values: list[T]) -> list[T]:
+    """Drops repeats, keeping the first of each."""
+    return list(dict.fromkeys(values))
+
+
+Intents = Annotated[list[Intent], Field(max_length=len(Intent)), AfterValidator(_unique)]
+Days = Annotated[list[Weekday], Field(max_length=len(Weekday)), AfterValidator(_unique)]
 
 
 class ProfileIn(BaseModel):
@@ -84,9 +104,55 @@ class ProfileSettingsIn(BaseModel):
     links: Links | None = None
     timezone: Timezone | None = None
     languages: Languages | None = None
-    visibility: ProfileVisibility | None = None
+    visibility: ProfileVisibility | None = Field(
+        default=None,
+        description=(
+            "`matchable`: shown in matches. `after_intro`: people see you only once you "
+            "accept their intro (for now treated like `paused`). `paused`: hidden from new "
+            "matches; existing chats continue."
+        ),
+    )
     email_notifications: bool | None = Field(
         default=None, description="Email me when I get an intro or one is accepted."
+    )
+    city: City | None = Field(default=None, description="An empty string clears it.")
+    headline: Headline | None = Field(default=None, description="One line; empty clears it.")
+    experience_level: ExperienceLevel | None = Field(default=None, description="`null` clears it.")
+    intents: Intents | None = Field(
+        default=None, description="What you want from Cynergi in general. Repeats are dropped."
+    )
+    goal: Goal | None = Field(default=None, description="Your goal right now; empty clears it.")
+    working_style: WorkingStyle | None = Field(default=None, description="`null` clears it.")
+    weekly_hours: WeeklyHours | None = Field(default=None, description="`null` clears it.")
+    available_days: Days | None = None
+    available_from: time | None = Field(
+        default=None, description="Local time in `timezone`, e.g. `18:00`. `null` clears it."
+    )
+    available_until: time | None = Field(
+        default=None,
+        description="May be earlier than `available_from` (past midnight). `null` clears it.",
+    )
+    location_precision: LocationPrecision | None = Field(
+        default=None,
+        description=(
+            "How much of your city others see: `city`, `country` (shown as nothing until a "
+            "country is stored) or `hidden`."
+        ),
+    )
+    show_last_active: bool | None = Field(
+        default=None, description="Stored; no one is shown a last-active time yet."
+    )
+    intros_only_from_strong_matches: bool | None = Field(
+        default=None, description="Stored; not enforced yet."
+    )
+    email_daily_digest: bool | None = Field(
+        default=None, description="Unread message digest. Stored; the email is not built yet."
+    )
+    email_match_suggestions: bool | None = Field(
+        default=None, description="Weekly match suggestions. Stored; not built yet."
+    )
+    email_product_updates: bool | None = Field(
+        default=None, description="Occasional product news. Stored; not built yet."
     )
 
 
@@ -119,6 +185,22 @@ class ProfileOut(BaseModel):
     languages: list[str]
     visibility: ProfileVisibility
     email_notifications: bool
+    city: str
+    headline: str
+    experience_level: ExperienceLevel | None
+    intents: list[Intent]
+    goal: str
+    working_style: WorkingStyle | None
+    weekly_hours: WeeklyHours | None
+    available_days: list[Weekday]
+    available_from: time | None
+    available_until: time | None
+    location_precision: LocationPrecision
+    show_last_active: bool
+    intros_only_from_strong_matches: bool
+    email_daily_digest: bool
+    email_match_suggestions: bool
+    email_product_updates: bool
     parse_status: ParseStatus = Field(
         description="`pending` while the about text is being read; poll until `parsed`."
     )
@@ -153,6 +235,24 @@ class ProfileOut(BaseModel):
             languages=list(profile.languages),
             visibility=ProfileVisibility(profile.visibility),
             email_notifications=profile.email_notifications,
+            city=profile.city,
+            headline=profile.headline,
+            experience_level=(
+                ExperienceLevel(profile.experience_level) if profile.experience_level else None
+            ),
+            intents=[Intent(value) for value in profile.intents],
+            goal=profile.goal,
+            working_style=WorkingStyle(profile.working_style) if profile.working_style else None,
+            weekly_hours=WeeklyHours(profile.weekly_hours) if profile.weekly_hours else None,
+            available_days=[Weekday(value) for value in profile.available_days],
+            available_from=profile.available_from,
+            available_until=profile.available_until,
+            location_precision=LocationPrecision(profile.location_precision),
+            show_last_active=profile.show_last_active,
+            intros_only_from_strong_matches=profile.intros_only_from_strong_matches,
+            email_daily_digest=profile.email_daily_digest,
+            email_match_suggestions=profile.email_match_suggestions,
+            email_product_updates=profile.email_product_updates,
             parse_status=ParseStatus(profile.parse_status),
             parse_source=ParseSource(profile.parse_source) if profile.parse_source else None,
             understanding=understanding,

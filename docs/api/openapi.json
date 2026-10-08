@@ -388,6 +388,16 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "ExperienceLevel": {
+        "enum": [
+          "just_starting",
+          "1_3_years",
+          "3_7_years",
+          "7_plus_years"
+        ],
+        "title": "ExperienceLevel",
+        "type": "string"
+      },
       "GoalIn": {
         "additionalProperties": false,
         "properties": {
@@ -589,6 +599,18 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "Intent": {
+        "enum": [
+          "build_together",
+          "skill_exchange",
+          "interest_buddy",
+          "accountability",
+          "mentor",
+          "explore"
+        ],
+        "title": "Intent",
+        "type": "string"
+      },
       "IntroIn": {
         "additionalProperties": false,
         "properties": {
@@ -757,6 +779,16 @@
         ],
         "title": "LivenessResponse",
         "type": "object"
+      },
+      "LocationPrecision": {
+        "description": "How much of the city others see.",
+        "enum": [
+          "city",
+          "country",
+          "hidden"
+        ],
+        "title": "LocationPrecision",
+        "type": "string"
       },
       "LogIn": {
         "additionalProperties": false,
@@ -945,6 +977,18 @@
             "title": "Languages",
             "type": "array"
           },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The city, if the person shares it (their location precision).",
+            "title": "Location"
+          },
           "offers": {
             "items": {
               "type": "string"
@@ -976,7 +1020,8 @@
           "seeks",
           "interests",
           "availability",
-          "languages"
+          "languages",
+          "location"
         ],
         "title": "MatchCandidateOut",
         "type": "object"
@@ -1578,6 +1623,18 @@
             ],
             "title": "Links"
           },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The city, if the person shares it (their location precision).",
+            "title": "Location"
+          },
           "offers": {
             "items": {
               "type": "string"
@@ -1611,7 +1668,8 @@
           "seeks",
           "interests",
           "availability",
-          "languages"
+          "languages",
+          "location"
         ],
         "title": "PersonOut",
         "type": "object"
@@ -1741,6 +1799,41 @@
             ],
             "title": "Ai Consent Version"
           },
+          "available_days": {
+            "items": {
+              "$ref": "#/components/schemas/Weekday"
+            },
+            "title": "Available Days",
+            "type": "array"
+          },
+          "available_from": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available From"
+          },
+          "available_until": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Until"
+          },
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -1750,8 +1843,49 @@
             "title": "Display Name",
             "type": "string"
           },
+          "email_daily_digest": {
+            "title": "Email Daily Digest",
+            "type": "boolean"
+          },
+          "email_match_suggestions": {
+            "title": "Email Match Suggestions",
+            "type": "boolean"
+          },
           "email_notifications": {
             "title": "Email Notifications",
+            "type": "boolean"
+          },
+          "email_product_updates": {
+            "title": "Email Product Updates",
+            "type": "boolean"
+          },
+          "experience_level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceLevel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "goal": {
+            "title": "Goal",
+            "type": "string"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "intents": {
+            "items": {
+              "$ref": "#/components/schemas/Intent"
+            },
+            "title": "Intents",
+            "type": "array"
+          },
+          "intros_only_from_strong_matches": {
+            "title": "Intros Only From Strong Matches",
             "type": "boolean"
           },
           "languages": {
@@ -1768,6 +1902,9 @@
             "title": "Links",
             "type": "array"
           },
+          "location_precision": {
+            "$ref": "#/components/schemas/LocationPrecision"
+          },
           "parse_source": {
             "anyOf": [
               {
@@ -1781,6 +1918,10 @@
           "parse_status": {
             "$ref": "#/components/schemas/ParseStatus",
             "description": "`pending` while the about text is being read; poll until `parsed`."
+          },
+          "show_last_active": {
+            "title": "Show Last Active",
+            "type": "boolean"
           },
           "timezone": {
             "anyOf": [
@@ -1815,6 +1956,26 @@
           },
           "visibility": {
             "$ref": "#/components/schemas/ProfileVisibility"
+          },
+          "weekly_hours": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyHours"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "working_style": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkingStyle"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -1826,6 +1987,22 @@
           "languages",
           "visibility",
           "email_notifications",
+          "city",
+          "headline",
+          "experience_level",
+          "intents",
+          "goal",
+          "working_style",
+          "weekly_hours",
+          "available_days",
+          "available_from",
+          "available_until",
+          "location_precision",
+          "show_last_active",
+          "intros_only_from_strong_matches",
+          "email_daily_digest",
+          "email_match_suggestions",
+          "email_product_updates",
           "parse_status",
           "parse_source",
           "understanding",
@@ -1842,6 +2019,60 @@
         "additionalProperties": false,
         "description": "Change settings without touching the about text. Omitted fields stay as they are.",
         "properties": {
+          "available_days": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Weekday"
+                },
+                "maxItems": 7,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Days"
+          },
+          "available_from": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Local time in `timezone`, e.g. `18:00`. `null` clears it.",
+            "title": "Available From"
+          },
+          "available_until": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "May be earlier than `available_from` (past midnight). `null` clears it.",
+            "title": "Available Until"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An empty string clears it.",
+            "title": "City"
+          },
           "display_name": {
             "anyOf": [
               {
@@ -1855,6 +2086,30 @@
             ],
             "title": "Display Name"
           },
+          "email_daily_digest": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unread message digest. Stored; the email is not built yet.",
+            "title": "Email Daily Digest"
+          },
+          "email_match_suggestions": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Weekly match suggestions. Stored; not built yet.",
+            "title": "Email Match Suggestions"
+          },
           "email_notifications": {
             "anyOf": [
               {
@@ -1866,6 +2121,83 @@
             ],
             "description": "Email me when I get an intro or one is accepted.",
             "title": "Email Notifications"
+          },
+          "email_product_updates": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Occasional product news. Stored; not built yet.",
+            "title": "Email Product Updates"
+          },
+          "experience_level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceLevel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`null` clears it."
+          },
+          "goal": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Your goal right now; empty clears it.",
+            "title": "Goal"
+          },
+          "headline": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "One line; empty clears it.",
+            "title": "Headline"
+          },
+          "intents": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Intent"
+                },
+                "maxItems": 6,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What you want from Cynergi in general. Repeats are dropped.",
+            "title": "Intents"
+          },
+          "intros_only_from_strong_matches": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stored; not enforced yet.",
+            "title": "Intros Only From Strong Matches"
           },
           "languages": {
             "anyOf": [
@@ -1900,6 +2232,29 @@
             ],
             "title": "Links"
           },
+          "location_precision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationPrecision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How much of your city others see: `city`, `country` (shown as nothing until a country is stored) or `hidden`."
+          },
+          "show_last_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stored; no one is shown a last-active time yet.",
+            "title": "Show Last Active"
+          },
           "timezone": {
             "anyOf": [
               {
@@ -1921,7 +2276,30 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "`matchable`: shown in matches. `after_intro`: people see you only once you accept their intro (for now treated like `paused`). `paused`: hidden from new matches; existing chats continue."
+          },
+          "weekly_hours": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyHours"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`null` clears it."
+          },
+          "working_style": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkingStyle"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`null` clears it."
           }
         },
         "title": "ProfileSettingsIn",
@@ -1930,6 +2308,7 @@
       "ProfileVisibility": {
         "enum": [
           "matchable",
+          "after_intro",
           "paused"
         ],
         "title": "ProfileVisibility",
@@ -2819,6 +3198,38 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "Weekday": {
+        "enum": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sat",
+          "sun"
+        ],
+        "title": "Weekday",
+        "type": "string"
+      },
+      "WeeklyHours": {
+        "enum": [
+          "1_3",
+          "4_6",
+          "7_10",
+          "10_plus"
+        ],
+        "title": "WeeklyHours",
+        "type": "string"
+      },
+      "WorkingStyle": {
+        "enum": [
+          "async",
+          "mix",
+          "live"
+        ],
+        "title": "WorkingStyle",
+        "type": "string"
       }
     }
   },

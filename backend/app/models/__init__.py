@@ -33,14 +33,22 @@ from app.models.moderation import (
 )
 from app.models.profile import (
     ABOUT_TEXT_MAX_LENGTH,
+    CITY_MAX_LENGTH,
     DISPLAY_NAME_MAX_LENGTH,
+    GOAL_MAX_LENGTH,
+    HEADLINE_MAX_LENGTH,
     LINK_MAX_LENGTH,
     MAX_LANGUAGES,
     MAX_LINKS,
+    ExperienceLevel,
+    LocationPrecision,
     ParseSource,
     ParseStatus,
     Profile,
     ProfileVisibility,
+    Weekday,
+    WeeklyHours,
+    WorkingStyle,
 )
 from app.models.profile_embedding import EMBEDDING_DIMENSIONS, EmbeddingFacet, ProfileEmbedding
 from app.models.social import (
@@ -66,10 +74,13 @@ from app.models.user import EMAIL_MAX_LENGTH, AuthProvider, User, UserStatus
 
 __all__ = [
     "ABOUT_TEXT_MAX_LENGTH",
+    "CITY_MAX_LENGTH",
     "DISPLAY_NAME_MAX_LENGTH",
     "EMAIL_MAX_LENGTH",
     "EMBEDDING_DIMENSIONS",
+    "GOAL_MAX_LENGTH",
     "GOAL_TITLE_MAX_LENGTH",
+    "HEADLINE_MAX_LENGTH",
     "INTENTS",
     "INTRO_NOTE_MAX_LENGTH",
     "LINK_MAX_LENGTH",
@@ -94,11 +105,13 @@ __all__ = [
     "EmailLog",
     "EmailPurpose",
     "EmbeddingFacet",
+    "ExperienceLevel",
     "GoalStatus",
     "Intro",
     "IntroStatus",
     "Job",
     "JobStatus",
+    "LocationPrecision",
     "Match",
     "MatchRequest",
     "MatchStatus",
@@ -126,4 +139,7 @@ __all__ = [
     "User",
     "UserSession",
     "UserStatus",
+    "Weekday",
+    "WeeklyHours",
+    "WorkingStyle",
 ]

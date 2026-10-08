@@ -172,6 +172,7 @@ async def test_build_together_ranks_by_offer_and_applies_hard_filters(
     best = person(url, model=model, offer=unit((axis, 1.0)))
     good = person(url, model=model, offer=unit((axis, 0.8), (axis + 2, 0.6)))
     paused = person(url, model=model, offer=unit((axis, 1.0)), visibility="paused")
+    after_intro = person(url, model=model, offer=unit((axis, 1.0)), visibility="after_intro")
     suspended = person(url, model=model, offer=unit((axis, 1.0)), status="suspended")
     stale_model = person(url, offer=unit((axis, 1.0)), model="old-model@0")
     request = new_request(
@@ -183,7 +184,7 @@ async def test_build_together_ranks_by_offer_and_applies_hard_filters(
     found = [row["candidate_id"] for row in matches(url, request)]
     assert found[:2] == [best, good]
     assert me not in found
-    for excluded in (paused, suspended, stale_model):
+    for excluded in (paused, after_intro, suspended, stale_model):
         assert excluded not in found
     state = run_sql(
         url,
@@ -500,8 +501,8 @@ async def test_matches_show_no_name_links_or_contacts(
     candidate = person(url, model=model, offer=unit((axis, 1.0)), display_name="Ishaan Secretname")
     run_sql(
         url,
-        "UPDATE profiles SET links = ARRAY['https://github.com/ishaan'], languages = ARRAY['en'] "
-        "WHERE user_id = :u",
+        "UPDATE profiles SET links = ARRAY['https://github.com/ishaan'], languages = ARRAY['en'], "
+        "city = 'Secretcity', location_precision = 'hidden' WHERE user_id = :u",
         u=candidate,
     )
     async with auth_client(settings, delivery) as client:
@@ -531,8 +532,12 @@ async def test_matches_show_no_name_links_or_contacts(
         "interests",
         "availability",
         "languages",
+        # Only as the person's location precision allows: here "hidden", so nothing.
+        "location",
     }
+    assert mine["candidate"]["location"] is None
     assert "Secretname" not in response.text
+    assert "Secretcity" not in response.text
     assert "github.com/ishaan" not in response.text
     assert request.json()["status"] == "ready"
     assert request.json()["match_count"] == len(items)

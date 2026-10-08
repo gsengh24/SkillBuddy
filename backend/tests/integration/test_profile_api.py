@@ -183,6 +183,8 @@ async def test_a_new_consent_version_asks_again(
         {"languages": ["english language"]},
         {"visibility": "public"},
         {"email": "someone@example.com"},
+        # The You page fields change only through PATCH.
+        {"city": "Bengaluru"},
     ],
 )
 async def test_save_validation(
@@ -246,6 +248,160 @@ async def test_settings_change_without_touching_the_text(
     assert about.status_code == 422
     user_id = saved.json()["user_id"]
     assert len(jobs_for(migrated_database_url, user_id, "parse_profile")) == 1
+
+
+YOU_PAGE_DEFAULTS: dict[str, Any] = {
+    "city": "",
+    "headline": "",
+    "experience_level": None,
+    "intents": [],
+    "goal": "",
+    "working_style": None,
+    "weekly_hours": None,
+    "available_days": [],
+    "available_from": None,
+    "available_until": None,
+    "location_precision": "city",
+    "show_last_active": True,
+    "intros_only_from_strong_matches": False,
+    "email_notifications": True,
+    "email_daily_digest": False,
+    "email_match_suggestions": False,
+    "email_product_updates": False,
+}
+
+YOU_PAGE_VALUES: dict[str, Any] = {
+    "city": "  Bengaluru ",
+    "headline": "Product designer learning to code",
+    "experience_level": "1_3_years",
+    "intents": ["build_together", "skill_exchange", "build_together"],
+    "goal": "Ship a small habit-tracking app by December.",
+    "working_style": "mix",
+    "weekly_hours": "4_6",
+    "available_days": ["sat", "sun", "sat"],
+    "available_from": "18:00",
+    "available_until": "22:30",
+    "location_precision": "hidden",
+    "show_last_active": False,
+    "intros_only_from_strong_matches": True,
+    "email_notifications": False,
+    "email_daily_digest": True,
+    "email_match_suggestions": True,
+    "email_product_updates": True,
+}
+
+
+async def test_you_page_fields_default_to_todays_behaviour(
+    settings: Settings, delivery: CapturingDelivery
+) -> None:
+    async with auth_client(settings, delivery) as client:
+        token = await signed_in(client, settings, delivery)
+        saved = await client.put(PROFILE, json=body(), headers=bearer(token))
+
+    assert saved.status_code == 200
+    result = saved.json()
+    assert {key: result[key] for key in YOU_PAGE_DEFAULTS} == YOU_PAGE_DEFAULTS
+    assert result["visibility"] == "matchable"
+
+
+async def test_you_page_fields_save_clear_and_survive_a_full_save(
+    settings: Settings, delivery: CapturingDelivery
+) -> None:
+    async with auth_client(settings, delivery) as client:
+        token = await signed_in(client, settings, delivery)
+        await client.put(PROFILE, json=body(), headers=bearer(token))
+        patched = await client.patch(PROFILE, json=YOU_PAGE_VALUES, headers=bearer(token))
+        # The profile form of today's web app sends PUT without these fields.
+        resaved = await client.put(PROFILE, json=body(), headers=bearer(token))
+        cleared = await client.patch(
+            PROFILE,
+            json={
+                "experience_level": None,
+                "working_style": None,
+                "weekly_hours": None,
+                "available_from": None,
+                "available_until": None,
+                # Null leaves these alone; an empty value clears them.
+                "city": None,
+                "intents": None,
+                "headline": "",
+                "available_days": [],
+            },
+            headers=bearer(token),
+        )
+        after_intro = await client.patch(
+            PROFILE, json={"visibility": "after_intro"}, headers=bearer(token)
+        )
+
+    assert patched.status_code == 200
+    result = patched.json()
+    assert {key: result[key] for key in YOU_PAGE_VALUES} == YOU_PAGE_VALUES | {
+        "city": "Bengaluru",
+        "intents": ["build_together", "skill_exchange"],
+        "available_days": ["sat", "sun"],
+        "available_from": "18:00:00",
+        "available_until": "22:30:00",
+    }
+    assert resaved.json()["goal"] == YOU_PAGE_VALUES["goal"]
+    assert resaved.json()["email_daily_digest"] is True
+    result = cleared.json()
+    assert (
+        result["experience_level"],
+        result["working_style"],
+        result["weekly_hours"],
+        result["available_from"],
+        result["available_until"],
+    ) == (None, None, None, None, None)
+    assert (result["city"], result["intents"]) == (
+        "Bengaluru",
+        ["build_together", "skill_exchange"],
+    )
+    assert (result["headline"], result["available_days"]) == ("", [])
+    assert result["goal"] == YOU_PAGE_VALUES["goal"]
+    assert after_intro.json()["visibility"] == "after_intro"
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"city": "c" * 81},
+        {"headline": "h" * 81},
+        {"goal": "g" * 301},
+        {"experience_level": "expert"},
+        {"intents": ["dating"]},
+        {"working_style": "remote"},
+        {"weekly_hours": "20"},
+        {"available_days": ["monday"]},
+        {"available_from": "25:00"},
+        {"location_precision": "street"},
+        {"show_last_active": "sometimes"},
+        {"links": ["http://example.com"]},
+        {"links": ["ftp://example.com/file"]},
+    ],
+)
+async def test_you_page_field_validation(
+    settings: Settings, delivery: CapturingDelivery, change: dict[str, Any]
+) -> None:
+    async with auth_client(settings, delivery) as client:
+        token = await signed_in(client, settings, delivery)
+        await client.put(PROFILE, json=body(), headers=bearer(token))
+        response = await client.patch(PROFILE, json=change, headers=bearer(token))
+
+    assert response.status_code == 422
+    assert error_code(response) == "validation_error"
+
+
+async def test_settings_need_a_profile_and_sign_in(
+    settings: Settings, delivery: CapturingDelivery
+) -> None:
+    async with auth_client(settings, delivery) as client:
+        anonymous = await client.patch(PROFILE, json={"city": "Pune"})
+        token = await signed_in(client, settings, delivery)
+        missing = await client.patch(PROFILE, json={"city": "Pune"}, headers=bearer(token))
+
+    assert anonymous.status_code == 401
+    assert missing.status_code == 404
+    assert error_code(missing) == "profile_not_found"
 
 
 # --- parsing and embedding jobs --------------------------------------------------------
