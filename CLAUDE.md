@@ -4,7 +4,7 @@ Guidance for AI assistants (and humans) working in this repository.
 
 ## Project overview
 
-An AI matchmaking platform (working name **Skill Buddy**) that introduces people to
+An AI matchmaking platform (**Cynergi**, formerly Skill Buddy) that introduces people to
 collaborators, skill partners and interest buddies. Users describe themselves in free text;
 the system extracts structure, embeds several facets of each profile, retrieves and ranks
 candidates, and uses an LLM to pick and explain a few matches. Contact requires two-sided

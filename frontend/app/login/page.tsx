@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/login-form";
 import { Card } from "@/components/ui/card";
-import { Logo } from "@/components/ui/logo";
+import { Logo } from "@/components/ds/logo";
 import { TextLink } from "@/components/ui/text-link";
 import { messageForCode } from "@/lib/auth/messages";
 import { getAuthMethods } from "@/lib/auth/methods";

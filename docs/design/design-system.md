@@ -1,4 +1,4 @@
-# Skill Buddy design system: direction B, "Quiet dashboard"
+# Older design system (Skill Buddy, now Cynergi): direction B, "Quiet dashboard"
 
 > **Superseded** by the Cynergi design ([ADR 0014](../adr/0014-design-system-cynergi.md),
 > [design-spec.md](design-spec.md)). This page still describes the older components in

@@ -9,7 +9,7 @@
 //
 // See "Develop in Codespaces" in README.md.
 {
-  "name": "Skill Buddy",
+  "name": "Cynergi",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
 
   // Building the images and running Postgres, the API, the worker and Next.js

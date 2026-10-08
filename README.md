@@ -1,7 +1,8 @@
-# Skill Buddy
+# Cynergi
 
 An AI matchmaking platform that introduces people to collaborators, skill partners and
-interest buddies. *Skill Buddy* is a working name; see [Renaming](#renaming-the-product).
+interest buddies. Cynergi was called Skill Buddy until October 2026; see
+[Renaming](#renaming-the-product) and [docs/rename.md](docs/rename.md).
 
 > **Status: Phase 0 (foundations).** This repository contains a production-grade skeleton:
 > API, background worker, database schema, web app, Docker, CI. It has no product features
@@ -197,7 +198,8 @@ See [CLAUDE.md](CLAUDE.md) for a detailed folder map and coding standards, and
 
 The product name is defined once per app:
 
-- Backend: `app_name` default in `backend/app/core/config.py` (overridable with `APP_NAME`)
+- Backend: `app_name` default in `backend/app/core/config.py` (overridable with `APP_NAME`;
+  the default still says Skill Buddy until a small backend PR, so set `APP_NAME=Cynergi`)
 - Frontend: `frontend/lib/brand.ts`
 
 Internal identifiers (package names, image names, the Compose project) use the neutral name

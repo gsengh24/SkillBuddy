@@ -1,7 +1,7 @@
 # Pre-launch checklist
 
 Every open item from the ADRs, the [Phase 0 exit report](phase-0-exit-report.md) and
-[ARCHITECTURE.md](ARCHITECTURE.md) that must be settled before Skill Buddy opens to the
+[ARCHITECTURE.md](ARCHITECTURE.md) that must be settled before Cynergi (formerly Skill Buddy) opens to the
 campus. Collected on **2026-10-02**; staging status updated on **2026-10-02** (staging is live, first sign-in passed; see [deployment-plan.md](deployment-plan.md#staging-status-2026-10-02)).
 
 **Owners:**

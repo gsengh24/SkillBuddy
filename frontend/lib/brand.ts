@@ -3,15 +3,14 @@ import { legal } from "./legal";
 /**
  * Product identity. The product name lives here and only here on the frontend.
  *
- * The product is being renamed to Cynergi (ADR 0014, docs/design/design-spec.md section
- * 10). `name` is what pages, titles and the legal pages say today; it changes to
- * `displayName` in the rename PRs (the legal pages in one PR, everything else in another),
- * each reviewed by the owner. The new logo already uses `wordmark`.
+ * The product is Cynergi (formerly Skill Buddy; docs/rename.md). `name` and `displayName`
+ * are the same name, kept as two fields so older and newer code read naturally; the logo
+ * uses the lowercase `wordmark`.
  */
 export const brand = {
-  /** The name shown in titles, sign-in text and the legal pages until the rename PRs. */
-  name: "Skill Buddy",
-  /** The new product name, in running text. */
+  /** The product name, in titles, metadata and running text. */
+  name: "Cynergi",
+  /** The same name (newer code uses this field). */
   displayName: "Cynergi",
   /** The new logo's wordmark: always lowercase. */
   wordmark: "cynergi",
