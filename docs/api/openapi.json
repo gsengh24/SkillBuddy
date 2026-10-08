@@ -1300,6 +1300,80 @@
         "title": "ExperienceLevel",
         "type": "string"
       },
+      "Feature": {
+        "enum": [
+          "intro_requests",
+          "chats",
+          "ai_matching",
+          "pair_spaces",
+          "email_notifications"
+        ],
+        "title": "Feature",
+        "type": "string"
+      },
+      "FeatureIn": {
+        "additionalProperties": false,
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "reason"
+        ],
+        "title": "FeatureIn",
+        "type": "object"
+      },
+      "FeatureStateOut": {
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/Feature"
+          },
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "on"
+        ],
+        "title": "FeatureStateOut",
+        "type": "object"
+      },
+      "FeaturesOut": {
+        "description": "What's switched on right now, so clients hide what's off. Cached up to 60 seconds.",
+        "properties": {
+          "features": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Feature"
+            },
+            "title": "Features",
+            "type": "object"
+          },
+          "message_max_length": {
+            "title": "Message Max Length",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "features",
+          "message_max_length"
+        ],
+        "title": "FeaturesOut",
+        "type": "object"
+      },
       "FunnelStep": {
         "properties": {
           "count": {
@@ -1962,6 +2036,73 @@
           "previous"
         ],
         "title": "KpiOut",
+        "type": "object"
+      },
+      "Limit": {
+        "enum": [
+          "match_requests_per_day",
+          "intros_per_day",
+          "max_pending_intros",
+          "message_max_length"
+        ],
+        "title": "Limit",
+        "type": "string"
+      },
+      "LimitIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          },
+          "value": {
+            "description": "Within the limit's own minimum and maximum.",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "value",
+          "reason"
+        ],
+        "title": "LimitIn",
+        "type": "object"
+      },
+      "LimitStateOut": {
+        "properties": {
+          "default": {
+            "description": "Today's value from the server settings.",
+            "title": "Default",
+            "type": "integer"
+          },
+          "key": {
+            "$ref": "#/components/schemas/Limit"
+          },
+          "maximum": {
+            "title": "Maximum",
+            "type": "integer"
+          },
+          "minimum": {
+            "title": "Minimum",
+            "type": "integer"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "default",
+          "minimum",
+          "maximum"
+        ],
+        "title": "LimitStateOut",
         "type": "object"
       },
       "LivenessResponse": {
@@ -4375,6 +4516,30 @@
         "title": "ResolveIn",
         "type": "object"
       },
+      "ServerSettingsOut": {
+        "description": "Set on the server (environment variables); read only here.",
+        "properties": {
+          "app_name": {
+            "title": "App Name",
+            "type": "string"
+          },
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "terms_version": {
+            "title": "Terms Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "app_name",
+          "terms_version",
+          "environment"
+        ],
+        "title": "ServerSettingsOut",
+        "type": "object"
+      },
       "SessionList": {
         "properties": {
           "items": {
@@ -4431,6 +4596,48 @@
           "last_seen_at"
         ],
         "title": "SessionOut",
+        "type": "object"
+      },
+      "SettingsOut": {
+        "properties": {
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureStateOut"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "intents": {
+            "description": "The intent types, read only for now.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Intents",
+            "type": "array"
+          },
+          "limits": {
+            "items": {
+              "$ref": "#/components/schemas/LimitStateOut"
+            },
+            "title": "Limits",
+            "type": "array"
+          },
+          "server": {
+            "$ref": "#/components/schemas/ServerSettingsOut"
+          },
+          "signup_mode": {
+            "$ref": "#/components/schemas/SignupMode",
+            "description": "Set on the Signup and access page."
+          }
+        },
+        "required": [
+          "server",
+          "signup_mode",
+          "features",
+          "limits",
+          "intents"
+        ],
+        "title": "SettingsOut",
         "type": "object"
       },
       "SignupMode": {
@@ -7278,6 +7485,177 @@
         ]
       }
     },
+    "/api/v1/admin/settings": {
+      "get": {
+        "operationId": "get_settings_api_v1_admin_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Feature switches, limits and server settings",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/settings/features/{feature}": {
+      "post": {
+        "description": "Off: its endpoints answer 503 ``feature_off`` (AI matching falls back to the rule-based\npath; email notifications are skipped). Applies within 60 seconds.",
+        "operationId": "set_feature_api_v1_admin_settings_features__feature__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "feature",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Feature"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeatureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Turn a feature on or off",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/settings/limits/{limit}": {
+      "post": {
+        "description": "422 ``limit_out_of_range`` outside the limit's minimum and maximum.",
+        "operationId": "set_limit_api_v1_admin_settings_limits__limit__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Limit"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LimitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Change a limit",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/sign-out": {
       "post": {
         "description": "Ends only the admin session; the normal one stays.",
@@ -9666,6 +10044,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`: chats are paused."
           }
         },
         "summary": "Messages in one conversation, newest first",
@@ -9747,7 +10135,7 @@
                 }
               }
             },
-            "description": "Validation failed."
+            "description": "Validation failed, or `message_too_long` (the length limit)."
           },
           "429": {
             "content": {
@@ -9758,6 +10146,16 @@
               }
             },
             "description": "Rate limited (see Retry-After)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`: chats are paused."
           }
         },
         "summary": "Send a message",
@@ -9814,6 +10212,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`: chats are paused."
           }
         },
         "summary": "Mark a conversation read",
@@ -9877,6 +10285,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "A pair space",
@@ -9970,6 +10388,16 @@
               }
             },
             "description": "Daily space write limit."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "Add a shared goal",
@@ -10046,6 +10474,16 @@
               }
             },
             "description": "Daily space write limit."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "Delete a shared goal (either person)",
@@ -10137,6 +10575,16 @@
               }
             },
             "description": "Daily space write limit."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "Change a shared goal (either person)",
@@ -10239,6 +10687,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "Progress notes, newest first",
@@ -10321,6 +10779,16 @@
               }
             },
             "description": "Daily space write limit."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "Write a progress note",
@@ -10407,6 +10875,16 @@
               }
             },
             "description": "Daily space write limit."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "Delete one of your progress notes",
@@ -10500,6 +10978,16 @@
               }
             },
             "description": "Daily space write limit."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "Add a skill you want to grow",
@@ -10586,11 +11074,43 @@
               }
             },
             "description": "Daily space write limit."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
           }
         },
         "summary": "Remove one of your skills",
         "tags": [
           "spaces"
+        ]
+      }
+    },
+    "/api/v1/features": {
+      "get": {
+        "description": "Public. Changes made on the admin Settings page show here within 60 seconds.",
+        "operationId": "features_api_v1_features_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Features switched on right now",
+        "tags": [
+          "features"
         ]
       }
     },
@@ -11120,6 +11640,16 @@
               }
             },
             "description": "Daily intro limit reached."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`: intros are paused."
           }
         },
         "summary": "Send an intro to a match",
