@@ -30,6 +30,7 @@ ADMIN_TABLES = {
     "admin_recovery_codes",
     "admin_sessions",
     "admin_audit_log",
+    "admin_notes",  # migration 0019
 }  # migration 0018
 ALL_TABLES = (
     PHASE_ZERO_TABLES
@@ -438,6 +439,33 @@ def test_admin_migration_downgrades_to_0017(empty_database_url: str, engine: Eng
             text("SELECT count(*) FROM pg_proc WHERE proname = 'admin_audit_log_append_only'")
         )
     assert functions == 0
+
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES
+
+
+def test_admin_users_migration_downgrades_to_0018(empty_database_url: str, engine: Engine) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "head")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO users (email, status) VALUES "
+                "('banned@example.com', 'banned'), ('pending@example.com', 'pending')"
+            )
+        )
+
+    command.downgrade(config, "0018")
+    with engine.connect() as connection:
+        statuses = set(connection.scalars(text("SELECT status FROM users")).all())
+        indexes = set(
+            connection.scalars(
+                text("SELECT indexname FROM pg_indexes WHERE indexname LIKE '%trgm%'")
+            ).all()
+        )
+    assert statuses == {"active"}
+    assert indexes == set()
+    assert "admin_notes" not in _tables(engine)
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES

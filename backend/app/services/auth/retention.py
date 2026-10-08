@@ -14,7 +14,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -42,6 +42,7 @@ class PurgeResult:
     auth_events: int
     oauth_states: int = 0
     admin_sessions: int = 0
+    suspensions_lifted: int = 0
 
 
 def _rowcount(result: object) -> int:
@@ -99,6 +100,16 @@ async def purge_expired_auth_data(
             | (AdminSession.created_at < now - timedelta(hours=settings.admin_session_max_hours))
         )
     )
+    # Time-limited suspensions that have run out (sign-in also lifts them, one by one).
+    lifted = await db.execute(
+        update(User)
+        .where(
+            User.status == UserStatus.SUSPENDED,
+            User.suspended_until.is_not(None),
+            User.suspended_until <= now,
+        )
+        .values(status=UserStatus.ACTIVE, suspended_until=None)
+    )
     await db.commit()
     result = PurgeResult(
         otp_codes=_rowcount(codes),
@@ -106,6 +117,7 @@ async def purge_expired_auth_data(
         auth_events=_rowcount(events),
         oauth_states=_rowcount(states),
         admin_sessions=_rowcount(admin),
+        suspensions_lifted=_rowcount(lifted),
     )
     logger.info(
         "auth_data_purged",
@@ -115,6 +127,7 @@ async def purge_expired_auth_data(
             "auth_events": result.auth_events,
             "oauth_states": result.oauth_states,
             "admin_sessions": result.admin_sessions,
+            "suspensions_lifted": result.suspensions_lifted,
         },
     )
     return result

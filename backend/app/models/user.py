@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, String, text
+from sqlalchemy import CheckConstraint, Index, String, text
 from sqlalchemy.dialects.postgresql import CITEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -31,13 +31,20 @@ class UserStatus(StrEnum):
     # The person paused their account: hidden from matching and new intros; they still sign
     # in, existing chats continue, and they can resume at any time.
     PAUSED = "paused"
+    # Waiting for approval to join (signup applications); can't sign in yet.
+    PENDING = "pending"
+    # Suspended by an admin or moderator; ``suspended_until`` set means it lifts itself.
     SUSPENDED = "suspended"
+    # Banned: can't sign in until an admin reverses it.
+    BANNED = "banned"
     # Deletion requested; the account is hard-deleted at deletion_scheduled_for.
     PENDING_DELETION = "pending_deletion"
 
 
 # Who may sign in and use the app. Paused people still can; only matching treats them apart.
 SIGNED_IN_STATUSES = frozenset({UserStatus.ACTIVE, UserStatus.PAUSED})
+# Taken out of other people's lists (intros, connections) as well as matching.
+HIDDEN_STATUSES = frozenset({UserStatus.SUSPENDED, UserStatus.BANNED})
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -48,6 +55,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             name="status_valid",
         ),
         CheckConstraint(f"char_length(email) <= {EMAIL_MAX_LENGTH}", name="email_length"),
+        # The admin Users page lists newest first with keyset paging.
+        Index("ix_users_created_at_id", "created_at", "id"),
     )
 
     # CITEXT makes uniqueness and lookups case-insensitive without lower() everywhere.
@@ -65,5 +74,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Soft delete: when deletion was requested, and when the hard-delete job removes the row.
     deleted_at: Mapped[datetime | None]
     deletion_scheduled_for: Mapped[datetime | None] = mapped_column(index=True)
+    # A time-limited suspension ends at this time (null: until lifted by hand).
+    suspended_until: Mapped[datetime | None]
 
     profile: Mapped[Profile | None] = relationship(back_populates="user", passive_deletes=True)

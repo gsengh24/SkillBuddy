@@ -8,7 +8,7 @@ from datetime import datetime, time
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import CheckConstraint, ForeignKey, String, Text, text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -106,6 +106,8 @@ class ParseSource(StrEnum):
 class Profile(TimestampMixin, Base):
     __tablename__ = "profiles"
     __table_args__ = (
+        # The admin Users page's intent filter (intents @> ARRAY[...]).
+        Index("ix_profiles_intents", "intents", postgresql_using="gin"),
         CheckConstraint(
             f"visibility IN ({_in(list(ProfileVisibility))})",
             name="visibility_valid",

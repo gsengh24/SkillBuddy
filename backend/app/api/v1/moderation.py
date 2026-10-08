@@ -77,7 +77,7 @@ class AccountOut(BaseModel):
     """An account as the moderator sees it: no email, no messages."""
 
     user_id: uuid.UUID
-    status: Literal["active", "suspended", "pending_deletion"]
+    status: Literal["active", "paused", "pending", "suspended", "banned", "pending_deletion"]
     display_name: str | None
     person: PersonOut
     suspended_at: datetime | None = None

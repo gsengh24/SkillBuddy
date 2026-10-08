@@ -46,6 +46,18 @@ class AccountSuspendedError(AppError):
     default_message = "This account is suspended. Contact support for help."
 
 
+class AccountBannedError(AppError):
+    status_code = HTTPStatus.FORBIDDEN
+    code = "account_banned"
+    default_message = "This account has been banned. Contact support if you think this is wrong."
+
+
+class AccountPendingError(AppError):
+    status_code = HTTPStatus.FORBIDDEN
+    code = "account_pending"
+    default_message = "Your account is waiting for approval. We'll email you when it's ready."
+
+
 class EmailNotAllowedError(AppError):
     """Outside the allowed domains or exceptions, or on the block list (ADR 0011)."""
 

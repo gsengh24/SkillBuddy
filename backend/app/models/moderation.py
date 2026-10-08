@@ -83,6 +83,12 @@ class Report(UUIDPrimaryKeyMixin, Base):
         UniqueConstraint("reporter_id", "target", "target_id"),
         # The moderator's list (open first, oldest first) and the purge of resolved ones.
         Index("ix_reports_status_created_at", "status", "created_at"),
+        # The admin Users page's "flagged" filter: people with open reports against them.
+        Index(
+            "ix_reports_reported_id_open",
+            "reported_id",
+            postgresql_where=text("status = 'open'"),
+        ),
     )
 
     reporter_id: Mapped[uuid.UUID | None] = mapped_column(

@@ -1,0 +1,75 @@
+name: Admin performance
+
+# Fills a throwaway database with 100,000 synthetic people and times the admin Users
+# queries (backend/scripts/seed_perf.py; each must stay under 200 ms). It runs only on
+# this job's own Postgres service at localhost, never on staging or production. Not a
+# required check: it runs when the queries or the script change, or by hand.
+on:
+  pull_request:
+    paths:
+      - "backend/scripts/seed_perf.py"
+      - "backend/app/services/admin/users.py"
+      - ".github/workflows/admin-perf.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-perf-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  perf:
+    name: Admin Users queries at 100k people
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg16-trixie
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ENVIRONMENT: test
+      # CI-only throwaway value; real secrets never live in the repository.
+      SECRET_KEY: ci-only-secret-key-with-at-least-32-characters
+      DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/app
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Migrate the throwaway database
+        run: uv run alembic upgrade head
+
+      - name: Seed 100,000 people and time the queries
+        # "shell: bash" adds -o pipefail, so a slow query still fails the step through tee.
+        shell: bash
+        run: uv run python -m scripts.seed_perf | tee "$RUNNER_TEMP/perf.txt"
+
+      - name: Add the results to the run summary
+        if: always()
+        working-directory: .
+        run: |
+          {
+            echo "### Admin Users queries at 100,000 people"
+            echo '```'
+            cat "$RUNNER_TEMP/perf.txt" 2>/dev/null || echo "No results."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
