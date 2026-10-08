@@ -18,7 +18,8 @@ import {
 import { describeError } from "@/lib/auth/messages";
 import { delayAfterError, nextPollDelay } from "@/lib/chat/cadence";
 
-// The API's limit (MESSAGE_MAX_LENGTH); it also rejects longer text.
+// The column's cap (MESSAGE_MAX_LENGTH); admins may set a lower limit (A6), which the API
+// also enforces.
 const MESSAGE_MAX_LENGTH = 2000;
 // Safety tips show at the start of a conversation, until it has this many messages.
 const FIRST_CHAT_MESSAGES = 10;
@@ -34,6 +35,8 @@ type ConversationProps = {
   cursor: string;
   retentionDays: number;
   hasUnread: boolean;
+  /** The message length limit from /api/v1/features (A6). */
+  maxLength?: number;
 };
 
 /**
@@ -50,6 +53,7 @@ export function Conversation({
   cursor,
   retentionDays,
   hasUnread,
+  maxLength = MESSAGE_MAX_LENGTH,
 }: ConversationProps) {
   const [messages, setMessages] = useState<Message[]>(() => [...initial].reverse());
   const [paused, setPaused] = useState(false);
@@ -248,7 +252,7 @@ export function Conversation({
           label={`Message ${otherName}`}
           hideLabel
           rows={2}
-          maxLength={MESSAGE_MAX_LENGTH}
+          maxLength={maxLength}
           showCounter={false}
           value={body}
           onChange={(event) => {

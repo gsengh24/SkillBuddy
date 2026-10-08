@@ -42,7 +42,7 @@ from app.models import (
     User,
     UserStatus,
 )
-from app.services import blocks
+from app.services import app_settings, blocks
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 from app.services.notifications import add_notification
@@ -195,9 +195,14 @@ class IntroService:
                 Intro.expires_at > now,
             )
         )
-        if (pending or 0) >= self._settings.max_pending_intros:
+        if (pending or 0) >= await app_settings.limit(
+            self._db, self._settings, app_settings.Limit.MAX_PENDING_INTROS
+        ):
             raise TooManyPendingIntrosError
-        await self._limiter.hit(f"intro:{user.id}", limit=self._settings.intros_per_day)
+        daily = await app_settings.limit(
+            self._db, self._settings, app_settings.Limit.INTROS_PER_DAY
+        )
+        await self._limiter.hit(f"intro:{user.id}", limit=daily)
 
         intro = Intro(
             id=uuid.uuid4(),

@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import SettingsDep, require_json, require_storage_capacity
+from app.api.deps import SettingsDep, require_feature, require_json, require_storage_capacity
 from app.api.v1.auth import AuthDep
 from app.db.session import get_db_session
 from app.models import (
@@ -31,12 +31,18 @@ from app.models import (
 )
 from app.schemas.errors import ErrorResponse
 from app.schemas.reports import ReportIn, ReportReceipt
-from app.services import reports
+from app.services import app_settings, reports
 from app.services.auth.rate_limit import RateLimiter
 from app.services.matching.requests import DAY_SECONDS
 from app.services.spaces import SpaceService, author
 
-router = APIRouter(prefix="/connections/{connection_id}/space", tags=["spaces"])
+# Pair spaces can be switched off on the admin Settings page (A6): 503 `feature_off`.
+router = APIRouter(
+    prefix="/connections/{connection_id}/space",
+    tags=["spaces"],
+    dependencies=[Depends(require_feature(app_settings.Feature.PAIR_SPACES))],
+    responses={503: {"model": ErrorResponse, "description": "`feature_off`."}},
+)
 
 DbDep = Annotated[AsyncSession, Depends(get_db_session)]
 

@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { SpaceView } from "@/components/spaces/space-view";
+import { SpacesPaused } from "@/components/spaces/spaces-paused";
 import { ButtonLink } from "@/components/ds/button";
 import { TextLink } from "@/components/ui/text-link";
 import { startEarly, withUser } from "@/lib/auth/with-user";
+import { getFeatures } from "@/lib/features";
 import { getConnections } from "@/lib/social/server";
 import { getSpace } from "@/lib/spaces/server";
 
@@ -15,6 +17,7 @@ export const dynamic = "force-dynamic";
 export default async function SpacePage({ params }: { params: Promise<{ connectionId: string }> }) {
   const { connectionId } = await params;
   // The session, the connections and the space, all at once.
+  const featuresCall = getFeatures();
   const spaceCall = startEarly(getSpace(connectionId));
   const { user, data: connections } = await withUser(
     `/login?next=/spaces/${encodeURIComponent(connectionId)}`,
@@ -22,6 +25,7 @@ export default async function SpacePage({ params }: { params: Promise<{ connecti
   );
   const connection = connections.items.find((item) => item.id === connectionId);
   if (!connection) notFound();
+  if (!(await featuresCall).features.pair_spaces) return <SpacesPaused />;
   const space = await spaceCall;
   const name = connection.person.display_name ?? "Your connection";
 

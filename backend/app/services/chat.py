@@ -26,7 +26,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from app.core.config import Settings
 from app.core.errors import AppError, NotFoundError, RateLimitedError
 from app.models import SIGNED_IN_STATUSES, Connection, Message, User
-from app.services import blocks
+from app.services import app_settings, blocks
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 
@@ -51,6 +51,14 @@ class ConversationClosedError(AppError):
     status_code = HTTPStatus.CONFLICT
     code = "conversation_closed"
     default_message = "This person can't receive messages right now."
+
+
+class MessageTooLongError(AppError):
+    """Longer than the message length limit set on the admin Settings page (A6)."""
+
+    status_code = HTTPStatus.UNPROCESSABLE_ENTITY
+    code = "message_too_long"
+    default_message = "That message is too long. Shorten it and send it again."
 
 
 @dataclass(frozen=True)
@@ -112,6 +120,10 @@ class ChatService:
         return connection
 
     async def send(self, user: User, connection_id: uuid.UUID, body: str) -> MessageView:
+        if len(body) > await app_settings.limit(
+            self._db, self._settings, app_settings.Limit.MESSAGE_MAX_LENGTH
+        ):
+            raise MessageTooLongError
         connection = await self._conversation(user, connection_id)
         from_a = connection.user_a == user.id
         other = await self._db.get(User, connection.user_b if from_a else connection.user_a)
