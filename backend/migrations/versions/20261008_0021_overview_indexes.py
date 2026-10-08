@@ -4,8 +4,9 @@ Revision ID: 0021
 Revises: 0020
 Create Date: 2026-10-08 18:00:00+00:00
 
-Additive only: BRIN indexes on ``created_at`` of match_requests, matches, intros,
-connections and messages (append-mostly tables: a BRIN index is a few pages), and a
+Additive only: BRIN indexes on ``created_at`` of match_requests, matches, intros and
+connections (append-mostly tables: a BRIN index is a few pages; messages has one since
+migration 0009), and a
 B-tree index on ``users.last_login_at``. Downgrade drops them.
 """
 
@@ -18,7 +19,8 @@ down_revision: str | Sequence[str] | None = "0020"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-BRIN_TABLES = ("match_requests", "matches", "intros", "connections", "messages")
+# messages already has one (migration 0009).
+BRIN_TABLES = ("match_requests", "matches", "intros", "connections")
 
 
 def upgrade() -> None:
