@@ -10,7 +10,7 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import Engine, create_engine, inspect, text
 
-from app.db.base import Base
+from app.db.base import MIGRATION_ONLY_INDEXES, Base, include_in_drift_check
 from tests.integration.conftest import alembic_config
 
 PHASE_ZERO_TABLES = {"users", "profiles", "profile_embeddings"}
@@ -267,7 +267,10 @@ def test_models_and_migrations_are_in_sync(migrated_database_url: str) -> None:
     engine = create_engine(migrated_database_url)
     try:
         with engine.connect() as connection:
-            context = MigrationContext.configure(connection, opts={"compare_type": True})
+            context = MigrationContext.configure(
+                connection,
+                opts={"compare_type": True, "include_object": include_in_drift_check},
+            )
             diff = compare_metadata(context, Base.metadata)
     finally:
         engine.dispose()
@@ -469,3 +472,20 @@ def test_admin_users_migration_downgrades_to_0018(empty_database_url: str, engin
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
+
+
+def test_the_migration_only_indexes_exist(migrated_database_url: str) -> None:
+    """The drift checks skip these by name, so check them here instead."""
+    engine = create_engine(migrated_database_url)
+    try:
+        with engine.connect() as connection:
+            found = dict(
+                connection.execute(
+                    text("SELECT indexname, indexdef FROM pg_indexes WHERE indexname = ANY(:n)"),
+                    {"n": list(MIGRATION_ONLY_INDEXES)},
+                ).tuples()
+            )
+    finally:
+        engine.dispose()
+    assert set(found) == MIGRATION_ONLY_INDEXES
+    assert all("gin_trgm_ops" in definition for definition in found.values())
