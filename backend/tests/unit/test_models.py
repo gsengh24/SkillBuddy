@@ -26,6 +26,7 @@ def test_metadata_contains_all_tables() -> None:
         "auth_events",
         "jobs",
         "rate_limit_counters",
+        "data_exports",
         "email_log",
         "match_requests",
         "matches",

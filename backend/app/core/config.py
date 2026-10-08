@@ -79,6 +79,11 @@ class Settings(BaseSettings):
     otp_verify_limit_per_email: int = Field(default=10, ge=1, le=100)
     otp_verify_limit_per_ip: int = Field(default=30, ge=1, le=1000)
     account_deletion_grace_days: int = Field(default=30, ge=1, le=90)
+    # "Download my data" (Prompt 12C): how long the emailed link works, how often someone
+    # may ask, and how long the request row is kept (for the admin Data page).
+    data_export_link_hours: int = Field(default=72, ge=1, le=168)
+    data_export_cooldown_hours: int = Field(default=24, ge=1, le=168)
+    data_export_retention_days: int = Field(default=90, ge=1, le=365)
     # Recorded on each account when the user accepts the terms. Keep equal to the version
     # shown on the terms and privacy pages (frontend/lib/legal.ts).
     terms_version: str = Field(default="2026-10-05-draft", min_length=1, max_length=32)

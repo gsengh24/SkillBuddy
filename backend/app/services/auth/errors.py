@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from http import HTTPStatus
 
-from app.core.errors import AppError
+from app.core.errors import AppError, ConflictError, NotFoundError
 
 
 class InvalidCodeError(AppError):
@@ -80,3 +80,18 @@ class GoogleSignInFailedError(AppError):
     status_code = HTTPStatus.BAD_REQUEST
     code = "google_failed"
     default_message = "We couldn't sign you in with Google. Please try again or use an email code."
+
+
+class SessionNotFoundError(NotFoundError):
+    code = "session_not_found"
+    default_message = "That device isn't signed in any more."
+
+
+class CannotPauseError(ConflictError):
+    code = "cannot_pause"
+    default_message = "Only an active account can be paused."
+
+
+class NotPausedError(ConflictError):
+    code = "not_paused"
+    default_message = "Your account isn't paused."

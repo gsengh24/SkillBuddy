@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.security import generate_token, hash_token, keyed_hash
-from app.models import User, UserSession, UserStatus
+from app.models import SIGNED_IN_STATUSES, User, UserSession
 from app.services.auth.events import ClientInfo
 
 # Refresh last_seen_at/expires_at at most this often, to avoid a write on every request.
@@ -84,7 +84,7 @@ async def resolve_session(
         await db.delete(session)
         await db.commit()
         return None
-    if user.status != UserStatus.ACTIVE:
+    if user.status not in SIGNED_IN_STATUSES:
         return None
     if now - session.last_seen_at >= SLIDE_INTERVAL:
         session.last_seen_at = now

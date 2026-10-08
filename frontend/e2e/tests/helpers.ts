@@ -21,6 +21,34 @@ export async function codeFromMailpit(request: APIRequestContext, email: string)
   return code as string;
 }
 
+/** The first link in the newest email to ``email`` whose subject contains ``subject``. */
+export async function linkFromMailpit(
+  request: APIRequestContext,
+  email: string,
+  subject: string,
+): Promise<string> {
+  let link: string | undefined;
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(`${MAILPIT_URL}/api/v1/search`, {
+          params: { query: `to:"${email}" subject:"${subject}"` },
+        });
+        const body = (await response.json()) as { messages?: { ID: string }[] };
+        const id = body.messages?.[0]?.ID;
+        if (!id) return undefined;
+        const message = (await (
+          await request.get(`${MAILPIT_URL}/api/v1/message/${id}`)
+        ).json()) as { Text?: string };
+        link = message.Text?.match(/https?:\/\/\S+/)?.[0];
+        return link;
+      },
+      { message: `waiting for the "${subject}" email to ${email}`, timeout: 90_000 },
+    )
+    .toBeDefined();
+  return link as string;
+}
+
 /** Creates an account through the real sign-in flow and lands on ``next``. */
 export async function signUp(page: Page, request: APIRequestContext, next = "/home") {
   const email = `e2e-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`;

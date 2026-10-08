@@ -2,6 +2,13 @@ import { ApiError } from "@/lib/api/errors";
 
 /** Plain-language messages for the backend's stable error codes (ADR 0006). */
 const MESSAGES: Record<string, string> = {
+  data_export_recent:
+    "You asked for your data recently. Check your email for the link, or try again tomorrow.",
+  data_export_unavailable: "This download link has expired or isn't valid. Ask for a new one.",
+  data_export_not_found: "We couldn't find that download. Ask for a new one.",
+  session_not_found: "That device is already signed out.",
+  cannot_pause: "Your account can't be paused right now.",
+  not_paused: "Your account isn't paused.",
   invalid_code:
     "That code is incorrect or has expired. Check your latest email or request a new code.",
   code_locked: "Too many incorrect attempts. Request a new code to try again.",

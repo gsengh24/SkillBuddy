@@ -37,6 +37,8 @@ x-backend-environment: &backend-environment
   SMTP_HOST: mailpit
   SMTP_PORT: "1025"
   SMTP_SECURITY: none
+  # Links in emails (intro notices, "Download my data") point at the local web app.
+  WEB_APP_URL: http://localhost:${WEB_PORT:-3000}
   # Docker Desktop bind mounts do not deliver file events; poll for hot reload.
   WATCHFILES_FORCE_POLLING: "true"
   # Who may sign in (ADR 0011). example.com keeps the email-code smoke and e2e tests working.

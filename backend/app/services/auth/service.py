@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.security import constant_time_equals, generate_numeric_code, mask_email
 from app.models import (
+    SIGNED_IN_STATUSES,
     AuthEventType,
     AuthIdentity,
     AuthProvider,
@@ -34,6 +35,7 @@ from app.services.auth.delivery import OtpDelivery
 from app.services.auth.errors import (
     AccountPendingDeletionError,
     AccountSuspendedError,
+    CannotPauseError,
     CodeLockedError,
     ConsentRequiredError,
     EmailNotAllowedError,
@@ -41,7 +43,9 @@ from app.services.auth.errors import (
     GoogleSignInFailedError,
     GoogleSignInUnavailableError,
     InvalidCodeError,
+    NotPausedError,
     OAuthStateInvalidError,
+    SessionNotFoundError,
 )
 from app.services.auth.events import ClientInfo, record_event
 from app.services.auth.google import GoogleOidcClient, GoogleSignInError
@@ -228,7 +232,7 @@ class AuthService:
         # an active account with no recorded age confirmation must confirm before signing in.
         needs_terms = user is None
         needs_age = user is None or (
-            user.status == UserStatus.ACTIVE and user.age_confirmed_at is None
+            user.status in SIGNED_IN_STATUSES and user.age_confirmed_at is None
         )
         if (needs_age and not age_confirmed) or (needs_terms and not accept_terms):
             raise ConsentRequiredError
@@ -249,7 +253,7 @@ class AuthService:
         """Refuse inactive accounts, create or link the account, and start a session."""
         google = provider is AuthProvider.GOOGLE
         detail = {"method": SignInMethod.GOOGLE.value} if google else None
-        if user is not None and user.status != UserStatus.ACTIVE:
+        if user is not None and user.status not in SIGNED_IN_STATUSES:
             record_event(
                 self._db,
                 self._settings,
@@ -429,6 +433,70 @@ class AuthService:
             detail={"sessions_revoked": revoked},
         )
         await self._db.commit()
+
+    async def logout_others(self, user: User, current: UserSession, client: ClientInfo) -> int:
+        """Sign out every device but this one."""
+        result = await self._db.execute(
+            delete(UserSession).where(UserSession.user_id == user.id, UserSession.id != current.id)
+        )
+        revoked = int(getattr(result, "rowcount", 0) or 0)
+        record_event(
+            self._db,
+            self._settings,
+            AuthEventType.LOGOUT_OTHERS,
+            client=client,
+            user_id=user.id,
+            detail={"sessions_revoked": revoked},
+        )
+        await self._db.commit()
+        return revoked
+
+    async def sessions(self, user: User) -> list[UserSession]:
+        """The live sessions, most recently used first."""
+        now = datetime.now(UTC)
+        rows = await self._db.scalars(
+            select(UserSession)
+            .where(UserSession.user_id == user.id, UserSession.expires_at > now)
+            .order_by(UserSession.last_seen_at.desc())
+        )
+        return list(rows)
+
+    async def revoke(self, user: User, session_id: uuid.UUID, client: ClientInfo) -> None:
+        """Sign out one of your own devices (404 for anyone else's)."""
+        result = await self._db.execute(
+            delete(UserSession).where(UserSession.id == session_id, UserSession.user_id == user.id)
+        )
+        if not getattr(result, "rowcount", 0):
+            raise SessionNotFoundError
+        record_event(
+            self._db, self._settings, AuthEventType.SESSION_REVOKED, client=client, user_id=user.id
+        )
+        await self._db.commit()
+
+    async def pause(self, user: User, client: ClientInfo) -> User:
+        """Hide the account from matching and new intros; sign-in and chats carry on."""
+        account = await self._db.get_one(User, user.id, with_for_update=True)
+        if account.status != UserStatus.ACTIVE:
+            raise CannotPauseError
+        account.status = UserStatus.PAUSED
+        record_event(
+            self._db, self._settings, AuthEventType.ACCOUNT_PAUSED, client=client, user_id=user.id
+        )
+        await self._db.commit()
+        await self._db.refresh(account)
+        return account
+
+    async def resume(self, user: User, client: ClientInfo) -> User:
+        account = await self._db.get_one(User, user.id, with_for_update=True)
+        if account.status != UserStatus.PAUSED:
+            raise NotPausedError
+        account.status = UserStatus.ACTIVE
+        record_event(
+            self._db, self._settings, AuthEventType.ACCOUNT_RESUMED, client=client, user_id=user.id
+        )
+        await self._db.commit()
+        await self._db.refresh(account)
+        return account
 
     async def request_deletion(self, user: User, client: ClientInfo) -> datetime:
         """Start the grace period: sign out everywhere; the account is purged later."""

@@ -59,15 +59,25 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const ACCOUNT = {
+  email: "meera@example.com",
+  termsVersion: "2026-10-08-draft",
+  isModerator: false,
+  status: "active" as const,
+  sessions: [
+    {
+      id: "s1",
+      device: "Chrome on Windows",
+      current: true,
+      created_at: "2026-10-01T10:00:00Z",
+      last_seen_at: "2026-10-08T10:00:00Z",
+    },
+  ],
+  exports: [],
+};
+
 function renderPage(profile = PROFILE) {
-  return render(
-    <YouPage
-      profile={profile}
-      email="meera@example.com"
-      termsVersion="2026-10-08-draft"
-      isModerator={false}
-    />,
-  );
+  return render(<YouPage profile={profile} account={ACCOUNT} />);
 }
 
 function calls() {
@@ -280,7 +290,7 @@ describe("YouPage", () => {
   });
 
   it("still offers the account sections before there is a profile", () => {
-    render(<YouWithoutProfile email="new@example.com" termsVersion={null} isModerator={false} />);
+    render(<YouWithoutProfile {...ACCOUNT} email="new@example.com" termsVersion={null} />);
     expect(screen.getByRole("link", { name: "Create your profile" })).toHaveAttribute(
       "href",
       "/onboarding",
@@ -289,6 +299,8 @@ describe("YouPage", () => {
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Blocked people" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete my account…" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Request" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Unsaved changes" })).not.toBeInTheDocument();
   });
 });

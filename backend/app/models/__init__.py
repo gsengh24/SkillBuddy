@@ -9,6 +9,7 @@ from app.models.auth import (
     UserSession,
 )
 from app.models.chat import MESSAGE_MAX_LENGTH, Message
+from app.models.data_export import DataExport, DataExportStatus
 from app.models.jobs import EmailLog, EmailPurpose, Job, JobStatus, RateLimitCounter
 from app.models.matching import (
     INTENTS,
@@ -70,7 +71,13 @@ from app.models.spaces import (
     SpaceGoal,
     SpaceSkill,
 )
-from app.models.user import EMAIL_MAX_LENGTH, AuthProvider, User, UserStatus
+from app.models.user import (
+    EMAIL_MAX_LENGTH,
+    SIGNED_IN_STATUSES,
+    AuthProvider,
+    User,
+    UserStatus,
+)
 
 __all__ = [
     "ABOUT_TEXT_MAX_LENGTH",
@@ -95,6 +102,7 @@ __all__ = [
     "REPORT_NOTE_MAX_LENGTH",
     "REQUEST_TEXT_MAX_LENGTH",
     "REQUEST_TEXT_MIN_LENGTH",
+    "SIGNED_IN_STATUSES",
     "SKILL_NAME_MAX_LENGTH",
     "AuthEvent",
     "AuthEventType",
@@ -102,6 +110,8 @@ __all__ = [
     "AuthProvider",
     "Block",
     "Connection",
+    "DataExport",
+    "DataExportStatus",
     "EmailLog",
     "EmailPurpose",
     "EmbeddingFacet",
