@@ -501,8 +501,8 @@ async def test_matches_show_no_name_links_or_contacts(
     candidate = person(url, model=model, offer=unit((axis, 1.0)), display_name="Ishaan Secretname")
     run_sql(
         url,
-        "UPDATE profiles SET links = ARRAY['https://github.com/ishaan'], languages = ARRAY['en'] "
-        "WHERE user_id = :u",
+        "UPDATE profiles SET links = ARRAY['https://github.com/ishaan'], languages = ARRAY['en'], "
+        "city = 'Secretcity', location_precision = 'hidden' WHERE user_id = :u",
         u=candidate,
     )
     async with auth_client(settings, delivery) as client:
@@ -532,8 +532,12 @@ async def test_matches_show_no_name_links_or_contacts(
         "interests",
         "availability",
         "languages",
+        # Only as the person's location precision allows: here "hidden", so nothing.
+        "location",
     }
+    assert mine["candidate"]["location"] is None
     assert "Secretname" not in response.text
+    assert "Secretcity" not in response.text
     assert "github.com/ishaan" not in response.text
     assert request.json()["status"] == "ready"
     assert request.json()["match_count"] == len(items)
