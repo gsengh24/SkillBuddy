@@ -45,7 +45,7 @@ describe("AppShell", () => {
         .getAllByRole("link")
         .map((link) => link.textContent),
     ).toEqual(PLACES);
-    expect(within(desktop).getByRole("link", { name: "You" })).toHaveAttribute("href", "/profile");
+    expect(within(desktop).getByRole("link", { name: "You" })).toHaveAttribute("href", "/you");
     expect(screen.getByRole("main")).toHaveTextContent("Page content");
     expect(screen.queryByText("Soon")).not.toBeInTheDocument();
   });
@@ -54,7 +54,8 @@ describe("AppShell", () => {
     ["/home", "Home"],
     ["/spaces/42", "Spaces"],
     ["/saved", "Saved"],
-    ["/profile", "You"],
+    ["/you", "You"],
+    ["/settings/blocked", "You"],
   ])("marks the current place on %s in both navs", (pathname, label) => {
     navigation.pathname = pathname;
     renderShell();
@@ -106,9 +107,9 @@ describe("AppShell", () => {
       "aria-valuenow",
       "78",
     );
-    expect(screen.getByRole("link", { name: /Your profile/ })).toHaveAttribute("href", "/profile");
+    expect(screen.getByRole("link", { name: /Your profile/ })).toHaveAttribute("href", "/you");
     const account = screen.getByRole("link", { name: "Your account" });
-    expect(account).toHaveAttribute("href", "/settings/account");
+    expect(account).toHaveAttribute("href", "/you#s-security");
     expect(account).toHaveAttribute("title", USER.email);
   });
 

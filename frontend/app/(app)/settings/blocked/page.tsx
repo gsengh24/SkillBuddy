@@ -16,8 +16,8 @@ export default async function BlockedPeoplePage() {
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <TextLink href="/settings/account" tone="muted" className="text-meta-lg self-start">
-          Account settings
+        <TextLink href="/you#s-data" tone="muted" className="text-meta-lg self-start">
+          Back to You
         </TextLink>
         <h1 className="text-headline lg:text-headline-lg">Blocked people</h1>
         <p className="text-muted">

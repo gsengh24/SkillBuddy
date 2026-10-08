@@ -7,6 +7,7 @@ const SIZES = {
   sm: "size-7 text-[11px]",
   md: "size-[34px] text-[13px]",
   lg: "size-12 text-[16px]",
+  xl: "font-display size-16 text-[22px] font-extrabold lg:size-20 lg:text-[28px]",
 } as const;
 
 const FILLS = { green: "bg-green", ink: "bg-ink" } as const;

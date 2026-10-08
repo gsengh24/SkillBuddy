@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AccountActions } from "./account-actions";
+import { DeleteAccount, SignOutActions } from "./account-actions";
 
 const router = { replace: vi.fn(), refresh: vi.fn(), push: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
@@ -20,11 +20,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("AccountActions", () => {
+describe("SignOutActions and DeleteAccount", () => {
   it("signs out with the CSRF token and returns to the login page", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
     const user = userEvent.setup();
-    render(<AccountActions />);
+    render(<SignOutActions />);
 
     await user.click(screen.getByRole("button", { name: "Sign out" }));
 
@@ -39,7 +39,7 @@ describe("AccountActions", () => {
   it("signs out of all devices", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
     const user = userEvent.setup();
-    render(<AccountActions />);
+    render(<SignOutActions />);
 
     await user.click(screen.getByRole("button", { name: "Sign out of all devices" }));
 
@@ -59,7 +59,7 @@ describe("AccountActions", () => {
       ),
     );
     const user = userEvent.setup();
-    render(<AccountActions />);
+    render(<DeleteAccount />);
 
     await user.click(screen.getByRole("button", { name: "Delete my account…" }));
     const confirm = screen.getByRole("group", { name: "Confirm account deletion" });
@@ -68,6 +68,11 @@ describe("AccountActions", () => {
     expect(deleteButton).toBeDisabled();
 
     await user.click(screen.getByRole("checkbox", { name: /I understand/ }));
+    expect(deleteButton).toBeDisabled();
+    await user.type(screen.getByRole("textbox", { name: "Type DELETE to confirm" }), "delete");
+    expect(deleteButton).toBeDisabled();
+    await user.clear(screen.getByRole("textbox", { name: "Type DELETE to confirm" }));
+    await user.type(screen.getByRole("textbox", { name: "Type DELETE to confirm" }), "DELETE");
     await user.click(deleteButton);
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -79,11 +84,13 @@ describe("AccountActions", () => {
 
   it("can cancel deleting", async () => {
     const user = userEvent.setup();
-    render(<AccountActions />);
+    render(<DeleteAccount />);
 
     await user.click(screen.getByRole("button", { name: "Delete my account…" }));
+    expect(screen.getByRole("dialog", { name: "Delete account" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
+    expect(screen.queryByRole("dialog", { name: "Delete account" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete my account…" })).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -98,7 +105,7 @@ describe("AccountActions", () => {
       ),
     );
     const user = userEvent.setup();
-    render(<AccountActions />);
+    render(<SignOutActions />);
 
     await user.click(screen.getByRole("button", { name: "Sign out" }));
 

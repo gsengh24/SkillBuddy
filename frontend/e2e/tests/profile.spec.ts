@@ -42,7 +42,7 @@ test("create a profile, see what was understood, correct it, pause matching", as
   await page.getByRole("checkbox", { name: /read by AI to find and explain/ }).check();
   await page.getByRole("button", { name: "Save and continue" }).click();
 
-  await expect(page).toHaveURL(/\/profile\?welcome=1$/);
+  await expect(page).toHaveURL(/\/you\?welcome=1$/);
   await expect(page.getByRole("heading", { name: /how we'll describe you/ })).toBeVisible({
     timeout: 60_000,
   });
@@ -61,6 +61,6 @@ test("create a profile, see what was understood, correct it, pause matching", as
 
   // Onboarding is only for people without a profile.
   await page.goto("/onboarding");
-  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page).toHaveURL(/\/you$/);
   await expect(toggle).not.toBeChecked();
 });

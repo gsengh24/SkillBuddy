@@ -14,7 +14,7 @@ export default async function OnboardingPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/onboarding");
   const profile = await getMyProfile();
-  if (profile) redirect("/profile");
+  if (profile) redirect("/you");
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">

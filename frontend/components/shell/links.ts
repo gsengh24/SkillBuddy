@@ -6,7 +6,7 @@ export const APP_LINKS = [
   { href: "/home", label: "Home", match: ["/messages"] },
   { href: "/spaces", label: "Spaces", match: [] },
   { href: "/saved", label: "Saved", match: [] },
-  { href: "/profile", label: "You", match: [] },
+  { href: "/you", label: "You", match: ["/settings"] },
 ] as const;
 
 export function isActive(pathname: string, href: string): boolean {

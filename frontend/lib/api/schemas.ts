@@ -66,6 +66,15 @@ export type DeletionScheduled = z.infer<typeof deletionScheduledSchema>;
 /** For endpoints that answer 204 No Content. */
 export const noContentSchema = z.undefined();
 
+export const intentSchema = z.enum([
+  "build_together",
+  "skill_exchange",
+  "interest_buddy",
+  "accountability",
+  "mentor",
+  "explore",
+]);
+
 export const understandingSchema = z.object({
   summary: z.string(),
   offers: z.array(z.string()),
@@ -85,6 +94,22 @@ export const profileSchema = z.object({
   visibility: z.enum(["matchable", "after_intro", "paused"]),
   /** Emails about intros (on by default); older APIs omit it. */
   email_notifications: z.boolean().default(true),
+  // The You page fields (API migration 0016). Defaults match the API's, for older APIs.
+  city: z.string().default(""),
+  headline: z.string().default(""),
+  experience_level: z
+    .enum(["just_starting", "1_3_years", "3_7_years", "7_plus_years"])
+    .nullable()
+    .default(null),
+  intents: z.array(intentSchema).default([]),
+  goal: z.string().default(""),
+  working_style: z.enum(["async", "mix", "live"]).nullable().default(null),
+  weekly_hours: z.enum(["1_3", "4_6", "7_10", "10_plus"]).nullable().default(null),
+  available_days: z.array(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])).default([]),
+  /** Local time in the profile's time zone, "HH:MM:SS". */
+  available_from: z.string().nullable().default(null),
+  available_until: z.string().nullable().default(null),
+  location_precision: z.enum(["city", "country", "hidden"]).default("city"),
   parse_status: z.enum(["empty", "pending", "parsed"]),
   parse_source: z.enum(["llm", "template", "user"]).nullable(),
   understanding: understandingSchema.nullable(),
@@ -104,15 +129,6 @@ export const authMethodsSchema = z.object({
 export type AuthMethods = z.infer<typeof authMethodsSchema>;
 
 export const googleStartSchema = z.object({ authorization_url: z.string().url() });
-
-export const intentSchema = z.enum([
-  "build_together",
-  "skill_exchange",
-  "interest_buddy",
-  "accountability",
-  "mentor",
-  "explore",
-]);
 
 export const matchRequestSchema = z.object({
   id: z.string(),

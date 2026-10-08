@@ -45,7 +45,7 @@ test("sign up with an emailed code, reach home, sign out", async ({ page, reques
 
   // Sign out from account settings (a CSRF-protected POST).
   await page.getByRole("link", { name: "Account settings" }).click();
-  await expect(page.getByRole("heading", { name: "Account settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account and security" })).toBeVisible();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL(/\/login/);
 
