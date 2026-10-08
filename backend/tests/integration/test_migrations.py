@@ -33,6 +33,7 @@ ADMIN_TABLES = {
     "admin_notes",  # migration 0019
     "appeals",  # migration 0020
 }  # migration 0018
+SIGNUP_TABLES = {"app_settings", "signup_domains", "signup_applications", "invite_codes"}  # 0022
 ALL_TABLES = (
     PHASE_ZERO_TABLES
     | AUTH_TABLES
@@ -47,6 +48,7 @@ ALL_TABLES = (
     | SPACE_TABLES
     | EXPORT_TABLES
     | ADMIN_TABLES
+    | SIGNUP_TABLES
 )
 
 
@@ -210,6 +212,7 @@ def test_chat_migration_keeps_connections_and_downgrades_to_0008(
         - SPACE_TABLES
         - EXPORT_TABLES
         - ADMIN_TABLES
+        - SIGNUP_TABLES
     )
     assert not {"user_a_read_at", "user_b_read_at"} & _connection_columns(engine)
     with engine.connect() as connection:
@@ -296,6 +299,7 @@ def test_reports_migration_downgrades_to_0009_and_back(
         - SPACE_TABLES
         - EXPORT_TABLES
         - ADMIN_TABLES
+        - SIGNUP_TABLES
     )
 
     command.upgrade(config, "head")
@@ -332,7 +336,13 @@ def test_blocks_migration_keeps_connections_and_downgrades_to_0010(
 
     command.downgrade(config, "0010")
     assert _tables(engine) == (
-        ALL_TABLES - BLOCK_TABLES - MODERATION_TABLES - SPACE_TABLES - EXPORT_TABLES - ADMIN_TABLES
+        ALL_TABLES
+        - BLOCK_TABLES
+        - MODERATION_TABLES
+        - SPACE_TABLES
+        - EXPORT_TABLES
+        - ADMIN_TABLES
+        - SIGNUP_TABLES
     )
     assert "ended_at" not in _connection_columns(engine)
     with engine.connect() as connection:

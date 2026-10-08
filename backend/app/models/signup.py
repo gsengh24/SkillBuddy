@@ -64,6 +64,7 @@ class AppSetting(Base):
 
     key: Mapped[str] = mapped_column(String(SETTING_KEY_MAX_LENGTH), primary_key=True)
     value: Mapped[Any] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
     # A plain id, like the audit log's actor: removing the admin changes nothing here.
     updated_by: Mapped[uuid.UUID | None]

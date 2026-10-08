@@ -57,6 +57,7 @@ def upgrade() -> None:
         "app_settings",
         sa.Column("key", sa.String(length=64), nullable=False),
         sa.Column("value", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        _created_at(),
         sa.Column(
             "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
