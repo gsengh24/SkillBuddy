@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { InlineError } from "@/components/ds/fields";
 import { browserApi } from "@/lib/api/browser";
 import { profileSchema } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
@@ -42,22 +43,18 @@ export function EmailToggle({ initial }: { initial: boolean }) {
           checked={enabled}
           aria-busy={saving}
           onChange={(event) => onChange(event.target.checked)}
-          className="accent-green-base mt-1 size-4 shrink-0"
+          className="accent-green mt-1 size-4 shrink-0"
         />
         <span className="flex flex-col">
           <span className="text-ink font-semibold">Emails about intros</span>
-          <span className="text-small text-muted">
+          <span className="text-meta-lg text-muted">
             {enabled
               ? "We email you when someone sends you an intro or accepts yours."
               : "Off: we won't email you about intros. You'll still see them in Notifications."}
           </span>
         </span>
       </label>
-      {error ? (
-        <p role="alert" className="text-small text-coral-ink font-semibold">
-          {error}
-        </p>
-      ) : null}
+      {error ? <InlineError announce>{error}</InlineError> : null}
     </div>
   );
 }

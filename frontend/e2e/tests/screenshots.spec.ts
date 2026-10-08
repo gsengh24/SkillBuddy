@@ -58,6 +58,16 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
       page.getByText("“A design partner for a small budgeting app, on weekends.”"),
     ).toBeVisible();
     await shoot(page, `home-request-open-${name}`);
+    for (const [path, heading, shot] of [
+      ["/profile", "About you", "profile"],
+      ["/settings/account", "Account settings", "settings"],
+      ["/settings/blocked", "Blocked people", "blocked"],
+      ["/saved", "Saved", "saved"],
+    ] as const) {
+      await page.goto(path);
+      await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
+      await shoot(page, `${shot}-${name}`);
+    }
     await page.goto("/spaces");
     await expect(page.getByRole("heading", { name: "Pair spaces", level: 1 })).toBeVisible();
     await shoot(page, `spaces-${name}`);
