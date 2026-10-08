@@ -38,7 +38,7 @@ INSERT INTO profiles (user_id, display_name, raw_about_text, intents, created_at
 SELECT u.id, 'Person ' || substr(u.email, 6, length(u.email) - 17),
        'I build things and want to learn more. Synthetic profile for timing only.',
        ARRAY[(ARRAY['build_together','skill_exchange','interest_buddy','accountability',
-                    'mentor','explore'])[1 + (abs(hashtext(u.email)::bigint) % 6)]]::varchar[],
+                    'mentor','explore'])[(1 + abs(hashtext(u.email)::bigint) % 6)::int]]::varchar[],
        now(), now()
 FROM users u WHERE u.email LIKE 'perf-%@example.com';
 
