@@ -1,9 +1,10 @@
 """Stage 4, Explain: judge the candidates, keep the best few and say why (ADR 0007;
 ARCHITECTURE.md §3).
 
-``explain()`` sends the request and up to 15 anonymous candidates (C1 to C15, best-scored
-first) to the gateway. The model is a judge, not a ranker: for every candidate it fills in
-a small rubric (``Verdict``), and code turns the rubric into a score, drops anyone under
+``explain()`` sends the request, the requester's own anonymous profile and up to 15
+anonymous candidates (C1 to C15, best-scored first) to the gateway. The model is a judge,
+not a ranker: for every candidate it fills in a small rubric (``Verdict``), and code
+turns the rubric into a score, drops anyone under
 ``min_judged`` or with a conflict, and orders the rest (ARCHITECTURE.md §7, guardrails:
 weights are applied in code, never by the model). A candidate the model did not judge, or
 an id it was not given, is dropped. So the AI path can end with fewer picks than asked for,
@@ -20,16 +21,16 @@ import re
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Annotated, Final
+from typing import Annotated, Any, Final
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from app.ai.candidates import MAX_CANDIDATES, CandidateSummary, anonymise
+from app.ai.candidates import MAX_CANDIDATES, CandidateSummary, anonymise, describe
 from app.ai.gateway import AIGateway, Prompt, Source, Task
 from app.ai.prompts import load_prompt
 from app.ai.stages.understand import Understanding
 
-PROMPT_ID: Final = "explain_v2"
+PROMPT_ID: Final = "explain_v3"
 DEFAULT_MAX_PICKS: Final = 5
 # The judged score: how much each rubric value counts (they add up to 1).
 NEED_WEIGHT: Final = 0.65
@@ -182,23 +183,31 @@ async def explain(
     *,
     user_id: str,
     name_hints: Sequence[str] = (),
+    requester: CandidateSummary | None = None,
     max_picks: int = DEFAULT_MAX_PICKS,
     min_judged: float = DEFAULT_MIN_JUDGED,
 ) -> Explanation:
-    """Judge at most 15 candidates; keep and explain up to ``max_picks`` good enough ones."""
+    """Judge at most 15 candidates; keep and explain up to ``max_picks`` good enough ones.
+
+    ``requester`` is the asking person's own profile, so the model can judge what the two
+    have in common. It is sent like a candidate: redacted, with no id.
+    """
     if not candidates:
         return Explanation(picks=[], source=Source.TEMPLATE, prompt_version=None)
     ranked = sorted(candidates, key=lambda c: c.score, reverse=True)[:MAX_CANDIDATES]
     summaries, aliases = anonymise([c.summary for c in ranked])
+    data: dict[str, Any] = {
+        "request": request_text,
+        "request_summary": request.model_dump(mode="json"),
+    }
+    if requester is not None:
+        data["student"] = describe(requester)
+    data["max_picks"] = max_picks
+    data["candidates"] = summaries
     prompt = Prompt(
         version=PROMPT_ID,
         system=load_prompt(PROMPT_ID),
-        data={
-            "request": request_text,
-            "request_summary": request.model_dump(mode="json"),
-            "max_picks": max_picks,
-            "candidates": summaries,
-        },
+        data=data,
         name_hints=name_hints,
         # A verdict for each of 15 candidates, and a reason for a few of them.
         max_tokens=1200,
