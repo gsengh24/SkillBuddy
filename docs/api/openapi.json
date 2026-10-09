@@ -3217,6 +3217,11 @@
             "title": "Summary",
             "type": "string"
           },
+          "title": {
+            "description": "A short heading for the person, written when their profile was read. Empty for profiles read without a model or corrected by their owner.",
+            "title": "Title",
+            "type": "string"
+          },
           "user_id": {
             "format": "uuid",
             "title": "User Id",
@@ -3225,6 +3230,7 @@
         },
         "required": [
           "user_id",
+          "title",
           "summary",
           "offers",
           "seeks",
@@ -3400,11 +3406,17 @@
           "text": {
             "title": "Text",
             "type": "string"
+          },
+          "title": {
+            "description": "A short heading for the request, written by the matcher. Empty until the request is matched, and when no model was available.",
+            "title": "Title",
+            "type": "string"
           }
         },
         "required": [
           "id",
           "text",
+          "title",
           "requested_intent",
           "intent",
           "status",
