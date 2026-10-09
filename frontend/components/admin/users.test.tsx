@@ -55,6 +55,18 @@ describe("UserDrawer", () => {
     expect(screen.getByText("<script>alert(1)</script> I build apps.")).toBeInTheDocument();
   });
 
+  it("shows the city, and whether the email is verified", () => {
+    render(
+      <UserDrawer
+        user={{ ...USER, email_verified_at: null, profile: { ...USER.profile!, city: "Patiala" } }}
+        permissions={MODERATOR}
+        closeHref="/admin/users"
+      />,
+    );
+    expect(screen.getByText("City").nextElementSibling).toHaveTextContent("Patiala");
+    expect(screen.getByText("Email verified").nextElementSibling).toHaveTextContent("Not yet");
+  });
+
   it("hides every action from read-only admins", () => {
     render(
       <UserDrawer

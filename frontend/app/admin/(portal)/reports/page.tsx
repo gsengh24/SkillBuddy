@@ -147,6 +147,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                   <p className="font-semibold break-all">
                     {item.person?.email ?? "Deleted account"} · {item.against}
                   </p>
+                  <p className="text-meta text-muted" suppressHydrationWarning>
+                    Appealed{" "}
+                    {new Date(item.created_at).toLocaleDateString(undefined, {
+                      dateStyle: "medium",
+                    })}
+                  </p>
                   <p className="text-meta-lg text-ink-2 whitespace-pre-wrap">{item.appeal}</p>
                   <AppealActions appealId={item.id} />
                 </li>

@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { Logo } from "@/components/ds/logo";
 import { cx } from "@/components/ui/cx";
 import { ROLE_LABELS, type AdminRole } from "@/lib/admin/schemas";
 import { hrefOf, type AdminPage } from "@/lib/admin/pages";
+import { browserApi } from "@/lib/api/browser";
+import { noContentSchema } from "@/lib/api/schemas";
 
 function initials(name: string): string {
   return name.slice(0, 2).toUpperCase();
@@ -32,7 +34,21 @@ export function AdminShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  // Ends only the admin session; the normal one stays, so they land back in the app.
+  async function signOut() {
+    setLeaving(true);
+    try {
+      await browserApi("/admin/sign-out", noContentSchema, { method: "POST" });
+      router.push("/home");
+      router.refresh();
+    } catch {
+      setLeaving(false);
+    }
+  }
   // Opening a page closes the phone menu.
   const [shownPath, setShownPath] = useState(pathname);
   if (pathname !== shownPath) {
@@ -135,14 +151,31 @@ export function AdminShell({
           <span className="border-amber-edge bg-amber-tint text-amber-ink rounded-[6px] border border-dashed px-2 py-0.5 font-mono text-[10px] uppercase">
             {environment}
           </span>
+          <form action="/admin/users" method="get" role="search" className="min-w-0 flex-1">
+            <input
+              name="q"
+              type="search"
+              aria-label="Search users by name or email"
+              placeholder="Search users by name or email"
+              className="rounded-input border-muted-2 bg-bg text-ink sm:text-body h-11 w-full max-w-[420px] border px-3 text-[16px] lg:h-10"
+            />
+          </form>
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-meta-lg text-ink-2">{ROLE_LABELS[role]}</span>
+            <span className="text-meta-lg text-ink-2 max-sm:sr-only">{ROLE_LABELS[role]}</span>
             <span
               aria-hidden
               className="bg-ink text-bg flex size-[34px] items-center justify-center rounded-full text-[12px] font-medium"
             >
               {initials(name)}
             </span>
+            <button
+              type="button"
+              onClick={signOut}
+              disabled={leaving}
+              className="text-meta-lg text-ink rounded-control hover:bg-panel inline-flex min-h-11 items-center px-2 font-medium whitespace-nowrap lg:min-h-10"
+            >
+              {leaving ? "Signing out…" : "Sign out"}
+            </button>
           </div>
         </header>
         <main id="admin-main" className="mx-auto max-w-[1280px] px-3 pt-4 pb-20 lg:px-8 lg:pt-7">

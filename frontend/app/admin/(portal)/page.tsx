@@ -24,7 +24,7 @@ export default async function AdminOverviewPage({
   searchParams: Promise<{ days?: string }>;
 }) {
   const { days: asked } = await searchParams;
-  const days = RANGES.find((range) => String(range) === asked) ?? 7;
+  const days = RANGES.find((range) => String(range) === asked) ?? 30;
   const [overview, health] = await Promise.all([getOverview(days), getHealth()]);
   const today = new Date().toLocaleDateString(undefined, { dateStyle: "full" });
 
@@ -101,11 +101,21 @@ export default async function AdminOverviewPage({
           {overview.activity.length ? (
             <ul className="divide-line flex flex-col divide-y">
               {overview.activity.map((entry) => (
-                <li key={entry.id} className="flex flex-wrap justify-between gap-x-3 py-2.5">
-                  <span className="font-mono text-[13px]">{entry.action}</span>
-                  <span className="text-mono text-muted font-mono" suppressHydrationWarning>
-                    {entry.actor_role ?? "system"} · {when(entry.created_at)}
-                  </span>
+                <li key={entry.id} className="flex flex-col gap-0.5 py-2.5">
+                  <p className="flex flex-wrap justify-between gap-x-3">
+                    <span className="font-mono text-[13px]">{entry.action}</span>
+                    <span className="text-mono text-muted font-mono" suppressHydrationWarning>
+                      {entry.actor_role ?? "system"} · {when(entry.created_at)}
+                    </span>
+                  </p>
+                  {entry.target_type ? (
+                    <p className="text-meta text-muted break-all">
+                      {entry.target_type} {entry.target_id ?? ""}
+                    </p>
+                  ) : null}
+                  {entry.reason ? (
+                    <p className="text-meta-lg text-ink-2 whitespace-pre-wrap">{entry.reason}</p>
+                  ) : null}
                 </li>
               ))}
             </ul>
