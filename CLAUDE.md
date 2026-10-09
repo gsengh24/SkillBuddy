@@ -133,7 +133,7 @@ frontend/
 .devcontainer/           GitHub Codespaces config (Docker-in-Docker; stack via docker compose)
 infra/                   Deployment notes, production env template, cloudflare-tick/ (the
                          scheduler Worker script and its test)
-docs/                    ARCHITECTURE.md, adr/, deployment-plan.md, free-tier-limits.md,
+docs/                    ARCHITECTURE.md, adr/, admin-portal.md, deployment-plan.md, free-tier-limits.md,
                          storage-budget.md, roadmap.md, phase-0-exit-report.md,
                          pre-launch-checklist.md
 ```

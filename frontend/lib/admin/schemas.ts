@@ -367,3 +367,48 @@ export const emailSendPageSchema = z.object({
   items: z.array(emailSendSchema),
   next_cursor: z.string().nullable(),
 });
+
+export const adminExportSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["users", "audit"]),
+  status: z.enum(["queued", "running", "ready", "failed", "expired"]),
+  created_at: z.string(),
+  ready_at: z.string().nullable(),
+  expires_at: z.string().nullable(),
+  rows: z.number().nullable(),
+  size_bytes: z.number().nullable(),
+});
+export type AdminExport = z.infer<typeof adminExportSchema>;
+
+export const dataPageSchema = z.object({
+  exports_requested: z.array(
+    z.object({
+      id: z.string(),
+      user_id: z.string(),
+      email: z.string().nullable(),
+      status: z.enum(["requested", "ready", "expired", "failed"]),
+      requested_at: z.string(),
+      deadline: z.string(),
+      ready_at: z.string().nullable(),
+      processable: z.boolean(),
+    }),
+  ),
+  deletions_requested: z.array(
+    z.object({
+      user_id: z.string(),
+      email: z.string(),
+      requested_at: z.string().nullable(),
+      deadline: z.string().nullable(),
+      scheduled_for: z.string().nullable(),
+    }),
+  ),
+  retention: z.array(z.object({ data: z.string(), rule: z.string() })),
+  consent: z.object({
+    terms_version: z.string(),
+    total: z.number(),
+    current: z.number(),
+    older: z.number(),
+  }),
+  csv_exports: z.array(adminExportSchema),
+});
+export type DataPage = z.infer<typeof dataPageSchema>;

@@ -14,6 +14,7 @@ Both are idempotent and safe to run late or twice.
 from __future__ import annotations
 
 import logging
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -60,6 +61,22 @@ def _rowcount(result: object) -> int:
     return int(getattr(result, "rowcount", 0) or 0)
 
 
+async def delete_accounts(db: AsyncSession, settings: Settings, ids: list[uuid.UUID]) -> None:
+    """Permanently delete these accounts, in the caller's transaction. ON DELETE CASCADE
+    removes their data; a pseudonymous ``account_deleted`` event records each."""
+    await db.execute(delete(User).where(User.id.in_(ids)))
+    for user_id in ids:
+        db.add(
+            AuthEvent(
+                user_id=None,
+                event_type=AuthEventType.ACCOUNT_DELETED,
+                # Pseudonymous: lets an operator confirm a known id was purged, without
+                # keeping the id or any personal data.
+                detail={"user_ref": keyed_hash(settings.secret_key, "user", str(user_id))},
+            )
+        )
+
+
 async def hard_delete_due_accounts(
     db: AsyncSession, settings: Settings, now: datetime, *, batch_size: int = HARD_DELETE_BATCH_SIZE
 ) -> int:
@@ -79,17 +96,7 @@ async def hard_delete_due_accounts(
         )
         if not due:
             return deleted
-        await db.execute(delete(User).where(User.id.in_(due)))
-        for user_id in due:
-            db.add(
-                AuthEvent(
-                    user_id=None,
-                    event_type=AuthEventType.ACCOUNT_DELETED,
-                    # Pseudonymous: lets an operator confirm a known id was purged, without
-                    # keeping the id or any personal data.
-                    detail={"user_ref": keyed_hash(settings.secret_key, "user", str(user_id))},
-                )
-            )
+        await delete_accounts(db, settings, due)
         await db.commit()
         deleted += len(due)
         logger.info("accounts_hard_deleted", extra={"count": len(due)})

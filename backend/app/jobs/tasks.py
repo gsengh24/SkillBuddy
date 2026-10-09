@@ -345,6 +345,14 @@ async def _send_test_email(ctx: JobContext) -> None:
         logger.info("test_email_sent", extra={"template": key})
 
 
+async def _build_admin_export(ctx: JobContext) -> None:
+    """Build an admin CSV export (A9): the Users list or the audit log."""
+    from app.services.admin.data import build_export as build_admin_export
+
+    async with ctx.session_factory() as db:
+        await build_admin_export(db, uuid.UUID(ctx.payload["export_id"]))
+
+
 PING = JobSpec(kind="ping", handler=_ping, timeout_seconds=10)
 # Highest priority: someone is waiting for this email. Same 3 tries as under Arq.
 SEND_LOGIN_CODE = JobSpec(
@@ -474,6 +482,13 @@ SEND_TEST_EMAIL = JobSpec(
     max_attempts=1,
     timeout_seconds=30,
 )
+BUILD_ADMIN_EXPORT = JobSpec(
+    kind="build_admin_export",
+    handler=_build_admin_export,
+    priority=150,
+    max_attempts=2,
+    timeout_seconds=240,
+)
 PURGE_DATA_EXPORTS = JobSpec(
     kind="purge_data_exports", handler=_purge_data_exports, priority=200, timeout_seconds=240
 )
@@ -502,6 +517,7 @@ ALL_JOBS = (
     SEND_SAFETY_NOTICE,
     SEND_INVITE,
     SEND_TEST_EMAIL,
+    BUILD_ADMIN_EXPORT,
 )
 
 

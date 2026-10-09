@@ -29,6 +29,7 @@ import {
   aiOverviewSchema,
   commsSchema,
   emailSendPageSchema,
+  dataPageSchema,
 } from "./schemas";
 
 async function adminGet<T extends z.ZodType>(path: string, schema: T): Promise<z.infer<T>> {
@@ -71,3 +72,4 @@ export const getAiOverview = () => adminGet("/ai", aiOverviewSchema);
 export const getComms = () => adminGet("/comms", commsSchema);
 export const getEmailSends = (status: string | null) =>
   adminGet(`/comms/emails?limit=50${status ? `&status=${status}` : ""}`, emailSendPageSchema);
+export const getDataPage = () => adminGet("/data", dataPageSchema);

@@ -269,6 +269,103 @@
         "title": "AdminBannerOut",
         "type": "object"
       },
+      "AdminExportKind": {
+        "enum": [
+          "users",
+          "audit"
+        ],
+        "title": "AdminExportKind",
+        "type": "string"
+      },
+      "AdminExportOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AdminExportKind"
+          },
+          "ready_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ready At"
+          },
+          "rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rows"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Bytes"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AdminExportStatus"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "created_at",
+          "ready_at",
+          "expires_at",
+          "rows",
+          "size_bytes"
+        ],
+        "title": "AdminExportOut",
+        "type": "object"
+      },
+      "AdminExportStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "ready",
+          "failed",
+          "expired"
+        ],
+        "title": "AdminExportStatus",
+        "type": "string"
+      },
       "AdminMeOut": {
         "properties": {
           "email": {
@@ -1200,6 +1297,35 @@
         "title": "ConnectionOut",
         "type": "object"
       },
+      "ConsentOut": {
+        "properties": {
+          "current": {
+            "title": "Current",
+            "type": "integer"
+          },
+          "older": {
+            "title": "Older",
+            "type": "integer"
+          },
+          "terms_version": {
+            "title": "Terms Version",
+            "type": "string"
+          },
+          "total": {
+            "description": "Accounts, not counting those being deleted.",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "terms_version",
+          "total",
+          "current",
+          "older"
+        ],
+        "title": "ConsentOut",
+        "type": "object"
+      },
       "ContentRule": {
         "enum": [
           "profanity",
@@ -1336,6 +1462,61 @@
         "title": "DataExportOut",
         "type": "object"
       },
+      "DataExportStatus": {
+        "enum": [
+          "requested",
+          "ready",
+          "expired",
+          "failed"
+        ],
+        "title": "DataExportStatus",
+        "type": "string"
+      },
+      "DataPageOut": {
+        "properties": {
+          "consent": {
+            "$ref": "#/components/schemas/ConsentOut"
+          },
+          "csv_exports": {
+            "items": {
+              "$ref": "#/components/schemas/AdminExportOut"
+            },
+            "title": "Csv Exports",
+            "type": "array"
+          },
+          "deletions_requested": {
+            "items": {
+              "$ref": "#/components/schemas/DeletionRequestOut"
+            },
+            "title": "Deletions Requested",
+            "type": "array"
+          },
+          "exports_requested": {
+            "description": "\"Download my data\" requests.",
+            "items": {
+              "$ref": "#/components/schemas/ExportRequestOut"
+            },
+            "title": "Exports Requested",
+            "type": "array"
+          },
+          "retention": {
+            "items": {
+              "$ref": "#/components/schemas/RetentionRuleOut"
+            },
+            "title": "Retention",
+            "type": "array"
+          }
+        },
+        "required": [
+          "exports_requested",
+          "deletions_requested",
+          "retention",
+          "consent",
+          "csv_exports"
+        ],
+        "title": "DataPageOut",
+        "type": "object"
+      },
       "DayCount": {
         "properties": {
           "count": {
@@ -1380,6 +1561,66 @@
           "reason"
         ],
         "title": "DecisionIn",
+        "type": "object"
+      },
+      "DeletionRequestOut": {
+        "properties": {
+          "deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "30 days after the request.",
+            "title": "Deadline"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "requested_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested At"
+          },
+          "scheduled_for": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the daily job deletes it anyway.",
+            "title": "Scheduled For"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "requested_at",
+          "deadline",
+          "scheduled_for"
+        ],
+        "title": "DeletionRequestOut",
         "type": "object"
       },
       "DeletionScheduledOut": {
@@ -1706,6 +1947,74 @@
         ],
         "title": "ExperienceLevel",
         "type": "string"
+      },
+      "ExportRequestOut": {
+        "properties": {
+          "deadline": {
+            "description": "30 days after the request.",
+            "format": "date-time",
+            "title": "Deadline",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "processable": {
+            "description": "Waiting or failed: Process builds and emails it.",
+            "title": "Processable",
+            "type": "boolean"
+          },
+          "ready_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ready At"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DataExportStatus"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "email",
+          "status",
+          "requested_at",
+          "deadline",
+          "ready_at",
+          "processable"
+        ],
+        "title": "ExportRequestOut",
+        "type": "object"
       },
       "Feature": {
         "enum": [
@@ -5285,6 +5594,24 @@
         "title": "ResolveIn",
         "type": "object"
       },
+      "RetentionRuleOut": {
+        "properties": {
+          "data": {
+            "title": "Data",
+            "type": "string"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "rule"
+        ],
+        "title": "RetentionRuleOut",
+        "type": "object"
+      },
       "RuleIn": {
         "additionalProperties": false,
         "properties": {
@@ -8291,6 +8618,368 @@
           }
         },
         "summary": "Turn a content rule on or off",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/data": {
+      "get": {
+        "operationId": "get_data_api_v1_admin_data_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataPageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Data requests, retention, consent and CSV exports",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/data/csv/{export_id}/download": {
+      "get": {
+        "description": "Works for 24 hours after it is ready. Each download is audited.",
+        "operationId": "download_csv_api_v1_admin_data_csv__export_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Export Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/gzip": {}
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download a ready CSV export (gzip)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/data/csv/{kind}": {
+      "post": {
+        "description": "Built in the background; ready within a minute or two. The audit log is for owners.\n409 ``export_already_running``.",
+        "operationId": "start_csv_api_v1_admin_data_csv__kind__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AdminExportKind"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminExportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start a CSV export (Users or the audit log)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/data/deletions/{user_id}/process": {
+      "post": {
+        "description": "Permanent, as at the end of the grace period. 409 ``cannot_process`` unless the\naccount is waiting for deletion; ``cannot_act_on_admin`` for admin accounts.",
+        "operationId": "process_deletion_api_v1_admin_data_deletions__user_id__process_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete an account that asked to be deleted, now",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/data/exports/{export_id}/process": {
+      "post": {
+        "description": "The same background job as from the You page. 409 ``cannot_process`` when it's\nalready ready or expired.",
+        "operationId": "process_export_api_v1_admin_data_exports__export_id__process_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Export Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Build and email a data download now",
         "tags": [
           "admin"
         ]

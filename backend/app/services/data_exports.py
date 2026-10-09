@@ -24,6 +24,8 @@ from app.core.errors import AppError, ConflictError, NotFoundError
 from app.core.security import constant_time_equals, generate_token, hash_token, mask_email
 from app.jobs.queue import enqueue
 from app.models import (
+    AdminExport,
+    AdminExportStatus,
     Connection,
     DataExport,
     DataExportStatus,
@@ -45,6 +47,8 @@ FORMAT_VERSION: Final = 1
 # A file is never allowed to grow without bound: messages are kept 90 days and capped in
 # length, so this is far above any real account.
 MAX_MESSAGES: Final = 20_000
+# Admin CSV exports (A9): rows are deleted this many days after they were asked for.
+ADMIN_EXPORT_RETENTION_DAYS: Final = 30
 
 
 class DataExportRecentError(ConflictError):
@@ -301,6 +305,25 @@ async def purge(db: AsyncSession, settings: Settings) -> dict[str, int]:
     deleted = await db.execute(
         delete(DataExport).where(
             DataExport.created_at <= now - timedelta(days=settings.data_export_retention_days)
+        )
+    )
+    # Admin CSV exports (A9): the file goes when its link expires, the row after 30 days.
+    await db.execute(
+        update(AdminExport)
+        .where(AdminExport.status == AdminExportStatus.READY, AdminExport.expires_at <= now)
+        .values(status=AdminExportStatus.EXPIRED, payload=None)
+    )
+    await db.execute(
+        update(AdminExport)
+        .where(
+            AdminExport.status.in_((AdminExportStatus.QUEUED, AdminExportStatus.RUNNING)),
+            AdminExport.created_at <= now - timedelta(days=1),
+        )
+        .values(status=AdminExportStatus.FAILED)
+    )
+    await db.execute(
+        delete(AdminExport).where(
+            AdminExport.created_at <= now - timedelta(days=ADMIN_EXPORT_RETENTION_DAYS)
         )
     )
     await db.commit()
