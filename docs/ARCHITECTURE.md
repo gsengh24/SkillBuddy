@@ -73,7 +73,7 @@ score = relevance \cdot (1 - w_3 \cdot inactivity - w_4 \cdot seen - w_5 \cdot o
 
 The weights start hand-set per intent. Once there are a few thousand rated matches, they are replaced by a learned ranker (gradient-boosted trees first, a neural ranker much later).
 
-**Stage 4 – Explain and verify.** The top 15 to 20 candidates go to an LLM with both structured profiles and the request. It picks the best 3 to 10, checks for contradictions a vector cannot see (for example, a mentor who said they are not taking mentees), and writes a one or two sentence reason for each. The reason is shown to both people, which is also the main trust feature.
+**Stage 4 – Explain and verify.** The top 15 to 20 candidates go to an LLM with both structured profiles and the request. The LLM acts as a judge: for each candidate it fills in a short rubric (how well they are what the request asks for, what else the two share, and whether anything contradicts the request, such as a mentor who said they are not taking mentees), and writes a one or two sentence reason for the best few. Code, not the model, turns the rubric into a score, drops anyone under a set minimum or with a contradiction, and keeps the best 3 to 10, so a request can end with fewer matches or none. The reason is shown to both people, which is also the main trust feature.
 
 **Feedback loop.** Every action is an event: match shown, opened, intro sent, accepted, declined, conversation length, and a post-chat rating. These feed the ranker and also flag profiles whose text does not match their behaviour.
 
