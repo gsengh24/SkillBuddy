@@ -26,6 +26,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   router.replace.mockReset();
   router.refresh.mockReset();
+  router.push.mockReset();
   document.cookie = "csrf_token=csrf-value-123; path=/";
 });
 
@@ -82,6 +83,25 @@ describe("AdminShell", () => {
       "aria-expanded",
       "true",
     );
+  });
+
+  it("searches users from the top bar and ends only the admin session", async () => {
+    pathname = "/admin";
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+    render(
+      <AdminShell pages={pagesFor(OWNER)} role="owner" name="owner" environment="Preview">
+        <p>Page</p>
+      </AdminShell>,
+    );
+    const search = screen.getByRole("searchbox", { name: "Search users by name or email" });
+    expect(search).toHaveAttribute("name", "q");
+    expect(search.closest("form")).toHaveAttribute("action", "/admin/users");
+
+    await userEvent.setup({ delay: null }).click(screen.getByRole("button", { name: "Sign out" }));
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/v1/admin/sign-out");
+    expect(init.method).toBe("POST");
+    expect(router.push).toHaveBeenCalledWith("/home");
   });
 
   it("leaves out pages a moderator can't open", () => {
@@ -206,5 +226,42 @@ describe("AuditLog", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/admin/audit?limit=50&cursor=c1");
     expect(screen.getByText("admin.signed_in")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Show older entries" })).not.toBeInTheDocument();
+  });
+
+  it("filters by an exact action and keeps the filter when loading older entries", async () => {
+    const entry = {
+      id: "a1",
+      created_at: "2026-10-08T10:00:00Z",
+      actor_id: "u1",
+      actor_role: "owner",
+      action: "admin.signed_in",
+      target_type: null,
+      target_id: null,
+      reason: null,
+      ip: null,
+    };
+    const banned = { ...entry, id: "a2", action: "user.banned" };
+    fetchMock
+      .mockResolvedValueOnce(json(200, { items: [banned], next_cursor: "c2" }))
+      .mockResolvedValueOnce(json(200, { items: [], next_cursor: null }))
+      .mockResolvedValueOnce(json(200, { items: [], next_cursor: null }));
+    const user = userEvent.setup({ delay: null });
+    render(<AuditLog initial={[entry]} initialCursor={null} />);
+
+    await user.type(screen.getByLabelText("Exactly"), "user.banned");
+    await user.click(screen.getByRole("button", { name: "Filter" }));
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/admin/audit?limit=50&action=user.banned");
+    expect(screen.getByText("user.banned")).toBeInTheDocument();
+    expect(screen.queryByText("admin.signed_in")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Show older entries" }));
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      "/api/v1/admin/audit?limit=50&action=user.banned&cursor=c2",
+    );
+
+    await user.clear(screen.getByLabelText("Exactly"));
+    await user.click(screen.getByRole("button", { name: "Clear filter" }));
+    expect(fetchMock.mock.calls[2]?.[0]).toBe("/api/v1/admin/audit?limit=50");
+    expect(screen.getByText("Nothing recorded yet.")).toBeInTheDocument();
   });
 });

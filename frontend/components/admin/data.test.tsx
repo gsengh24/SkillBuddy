@@ -61,5 +61,31 @@ describe("StartCsv", () => {
     await user.click(screen.getByRole("button", { name: "Export users" }));
     expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/admin/data/csv/users");
     expect(await screen.findByRole("status")).toHaveTextContent(/Queued/);
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("links to the Data page when started from another page", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          id: "x2",
+          kind: "audit",
+          status: "queued",
+          created_at: "2026-10-09T10:00:00Z",
+          ready_at: null,
+          expires_at: null,
+          rows: null,
+          size_bytes: null,
+        }),
+        { status: 202, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const user = userEvent.setup({ delay: null });
+    render(<StartCsv kind="audit" label="Export CSV" doneHref="/admin/data" />);
+    await user.click(screen.getByRole("button", { name: "Export CSV" }));
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/admin/data/csv/audit");
+    expect(
+      await screen.findByRole("link", { name: "Download it from Data and compliance" }),
+    ).toHaveAttribute("href", "/admin/data");
   });
 });

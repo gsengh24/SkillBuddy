@@ -249,6 +249,16 @@ export function UserDrawer({
             {user.suspended_until ? ` until ${when(user.suspended_until)}` : ""}
             {user.deletion_scheduled_for ? ` on ${when(user.deletion_scheduled_for)}` : ""}
           </dd>
+          <dt className="text-muted">Email verified</dt>
+          <dd suppressHydrationWarning>
+            {user.email_verified_at ? when(user.email_verified_at) : "Not yet"}
+          </dd>
+          {user.profile?.city ? (
+            <>
+              <dt className="text-muted">City</dt>
+              <dd>{user.profile.city}</dd>
+            </>
+          ) : null}
           <dt className="text-muted">Signs in with</dt>
           <dd>{user.sign_in_methods.join(", ") || "Not yet"}</dd>
           <dt className="text-muted">Joined</dt>

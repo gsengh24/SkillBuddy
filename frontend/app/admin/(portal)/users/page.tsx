@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminHeading } from "@/components/admin/admin-shell";
+import { StartCsv } from "@/components/admin/data";
 import { UserDrawer } from "@/components/admin/users";
 import { buttonClasses } from "@/components/ds/button";
 import { STATUS_LABELS, userStatusSchema } from "@/lib/admin/schemas";
@@ -69,6 +70,11 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         lead="Users."
         rest={`Everyone on ${brand.name}.`}
         description="Search, review and act on any account. Every action needs a reason and is recorded."
+        actions={
+          me.permissions.includes("delete_data") ? (
+            <StartCsv kind="users" label="Export CSV" doneHref="/admin/data" />
+          ) : null
+        }
       />
 
       <form method="get" className="mb-3 flex flex-wrap items-end gap-2" role="search">

@@ -167,7 +167,22 @@ function when(iso: string): string {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
-/** The audit log, newest first, 50 at a time. Plain text only. */
+// The API matches each of these exactly (they are the indexed columns).
+const AUDIT_FILTERS = {
+  action: "Action",
+  target_id: "Target ID",
+  actor_id: "Admin ID",
+} as const;
+type AuditFilter = keyof typeof AUDIT_FILTERS;
+
+function auditPath(filter: AuditFilter, value: string, cursor: string | null): `/${string}` {
+  const params = new URLSearchParams({ limit: "50" });
+  if (value) params.set(filter, value);
+  if (cursor) params.set("cursor", cursor);
+  return `/admin/audit?${params.toString()}`;
+}
+
+/** The audit log, newest first, 50 at a time, with an exact-match filter. Plain text only. */
 export function AuditLog({
   initial,
   initialCursor,
@@ -179,18 +194,19 @@ export function AuditLog({
   const [cursor, setCursor] = useState(initialCursor);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<AuditFilter>("action");
+  const [draft, setDraft] = useState("");
+  // The value the list on screen was fetched with; "Show older entries" keeps using it.
+  const [applied, setApplied] = useState("");
 
-  async function more() {
-    if (!cursor) return;
+  async function load(value: string, from: string | null) {
     setBusy(true);
     setError(null);
     try {
-      const page = await browserApi(
-        `/admin/audit?limit=50&cursor=${encodeURIComponent(cursor)}`,
-        auditPageSchema,
-      );
-      setItems((current) => [...current, ...page.items]);
+      const page = await browserApi(auditPath(filter, value, from), auditPageSchema);
+      setItems((current) => (from ? [...current, ...page.items] : page.items));
       setCursor(page.next_cursor);
+      setApplied(value);
     } catch (caught) {
       setError(describeError(caught));
     } finally {
@@ -198,11 +214,43 @@ export function AuditLog({
     }
   }
 
-  if (!items.length) {
-    return <p className="text-muted p-7 text-center">Nothing recorded yet.</p>;
+  function apply(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void load(draft.trim(), null);
   }
+
   return (
     <div className="flex flex-col">
+      <form onSubmit={apply} role="search" className="mb-2 flex flex-wrap items-end gap-2">
+        <Select
+          label="Filter by"
+          value={filter}
+          onChange={(event) => setFilter(event.target.value as AuditFilter)}
+        >
+          {Object.entries(AUDIT_FILTERS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </Select>
+        <div className="min-w-[180px] flex-1">
+          <Input
+            label="Exactly"
+            autoComplete="off"
+            maxLength={64}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+          />
+        </div>
+        <Button variant="outline" type="submit" disabled={busy || (!draft.trim() && !applied)}>
+          {draft.trim() || !applied ? "Filter" : "Clear filter"}
+        </Button>
+      </form>
+      {items.length ? null : (
+        <p className="text-muted p-7 text-center">
+          {applied ? "No entries match." : "Nothing recorded yet."}
+        </p>
+      )}
       <ul aria-label="Audit log" className="divide-line flex flex-col divide-y">
         {items.map((entry) => (
           <li key={entry.id} className="flex flex-col gap-0.5 py-3">
@@ -230,7 +278,7 @@ export function AuditLog({
         <Button
           variant="outline"
           size="compact"
-          onClick={more}
+          onClick={() => load(applied, cursor)}
           disabled={busy}
           className="mt-3 self-start"
         >

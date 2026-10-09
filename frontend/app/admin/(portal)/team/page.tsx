@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { AdminHeading } from "@/components/admin/admin-shell";
+import { StartCsv } from "@/components/admin/data";
 import { AuditLog, InviteAdmin, RemoveAdmin } from "@/components/admin/team-actions";
 import { ROLE_LABELS } from "@/lib/admin/schemas";
 import { getAdminMe, getAudit, getPermissionTable, getTeam } from "@/lib/admin/server";
@@ -110,10 +111,15 @@ export default async function TeamPage() {
         </section>
 
         <section aria-labelledby="audit-h" className={CARD}>
-          <h2 id="audit-h" className={CARD_TITLE}>
-            Audit log
-          </h2>
-          <p className="text-meta text-muted mb-1">Entries can&apos;t be edited or deleted.</p>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 id="audit-h" className={CARD_TITLE}>
+                Audit log
+              </h2>
+              <p className="text-meta text-muted mb-1">Entries can&apos;t be edited or deleted.</p>
+            </div>
+            <StartCsv kind="audit" label="Export CSV" doneHref="/admin/data" />
+          </div>
           <AuditLog initial={audit.items} initialCursor={audit.next_cursor} />
         </section>
       </div>

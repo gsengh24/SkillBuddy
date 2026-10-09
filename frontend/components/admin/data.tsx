@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -58,10 +59,22 @@ export function ProcessRequest({
   );
 }
 
-/** Start a CSV export; it is built in the background. */
-export function StartCsv({ kind, label }: { kind: "users" | "audit"; label: string }) {
+/**
+ * Start a CSV export; it is built in the background. Away from the Data page,
+ * ``doneHref`` links to where the file appears.
+ */
+export function StartCsv({
+  kind,
+  label,
+  doneHref,
+}: {
+  kind: "users" | "audit";
+  label: string;
+  doneHref?: string;
+}) {
   const router = useRouter();
   const [state, setState] = useState<string | null>(null);
+  const [queued, setQueued] = useState(false);
   const [busy, setBusy] = useState(false);
   return (
     <span className="flex flex-col gap-0.5">
@@ -73,7 +86,12 @@ export function StartCsv({ kind, label }: { kind: "users" | "audit"; label: stri
           setBusy(true);
           try {
             await browserApi(`/admin/data/csv/${kind}`, adminExportSchema, { method: "POST" });
-            setState("Queued. Reload in a minute to download.");
+            setQueued(true);
+            setState(
+              doneHref
+                ? "Queued. Ready in a minute or two."
+                : "Queued. Reload in a minute to download.",
+            );
             router.refresh();
           } catch (caught) {
             setState(describeError(caught));
@@ -86,6 +104,14 @@ export function StartCsv({ kind, label }: { kind: "users" | "audit"; label: stri
       </Button>
       <span role="status" className="text-meta text-muted min-h-5">
         {state}
+        {queued && doneHref ? (
+          <>
+            {" "}
+            <Link href={doneHref} className="text-green font-medium underline">
+              Download it from Data and compliance
+            </Link>
+          </>
+        ) : null}
       </span>
     </span>
   );
