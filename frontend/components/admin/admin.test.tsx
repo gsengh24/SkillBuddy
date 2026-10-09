@@ -120,9 +120,7 @@ describe("AdminShell", () => {
       </AdminShell>,
     );
     const nav = screen.getByRole("navigation", { name: "Admin" });
-    expect(
-      within(nav).getByRole("link", { name: /^Reports and safety ?4 waiting$/ }),
-    ).toBeVisible();
+    expect(within(nav).getByRole("link", { name: "Reports and safety, 4 waiting" })).toBeVisible();
     expect(within(nav).getByRole("link", { name: "Signup and access" })).toBeVisible();
   });
 
