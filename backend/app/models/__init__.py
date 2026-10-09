@@ -12,6 +12,7 @@ from app.models.admin import (
     AdminRole,
     AdminSession,
 )
+from app.models.admin_export import AdminExport, AdminExportKind, AdminExportStatus
 from app.models.auth import (
     AuthEvent,
     AuthEventType,
@@ -142,6 +143,9 @@ __all__ = [
     "SKILL_NAME_MAX_LENGTH",
     "AdminAccount",
     "AdminAuditEntry",
+    "AdminExport",
+    "AdminExportKind",
+    "AdminExportStatus",
     "AdminNote",
     "AdminRecoveryCode",
     "AdminRole",

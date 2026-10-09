@@ -41,6 +41,7 @@ def test_metadata_contains_all_tables() -> None:
         "ai_calls",
         "banners",
         "email_sends",
+        "admin_exports",
         "email_log",
         "match_requests",
         "matches",

@@ -66,6 +66,7 @@ Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runti
 | `ai_calls` | One row per AI provider call (migration 0023): provider, kind, outcome, duration, cost; about 0.1 KB. No prompt, response or user | 30 days, removed as new calls are logged (at most hourly) | Under 3 MB at the daily AI call cap |
 | `banners` | Admin announcements (migration 0024): message (at most 160 characters), type, times; about 0.3 KB | Deleted 90 days after they end | A few KB |
 | `email_sends` | One row per email the app tries to send (migration 0024): address, template, delivered or failed, a short error, the job to retry it with; about 0.3 KB. Never the body | 30 days, removed as new emails are logged (at most hourly) | Under 4 MB at the daily email cap (450 a day) |
+| `admin_exports` | One row per admin CSV export of the Users list or the audit log (migration 0025); the gzipped CSV (about 3 MB at 100,000 users) while its link works | File dropped 24 hours after it is ready; row deleted 30 days after it was asked for. One export of each kind at a time | Under 10 MB at any moment |
 
 Chosen dimension: **384** (`BAAI/bge-small-en-v1.5`, [ADR 0007](adr/0007-ai-gateway.md)).
 Migration 0004 changed the column from 768 to 384 (2026-10-02).

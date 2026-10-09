@@ -180,19 +180,6 @@ export function AdminHeading({
   );
 }
 
-/** For pages that come in later admin steps. */
-export function ComingNext({ label }: { label: string }) {
-  return (
-    <>
-      <AdminHeading lead={`${label}.`} rest="Coming next." />
-      <div className="border-line bg-bg rounded-panel text-muted border p-7 text-center">
-        This page is built in a later step. Its data and actions will be checked on the server like
-        every admin page.
-      </div>
-    </>
-  );
-}
-
 /** For people who aren't admins, or whose role doesn't include a page. */
 export function AccessDenied({ reason }: { reason: string }) {
   return (
