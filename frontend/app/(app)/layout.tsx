@@ -1,8 +1,8 @@
 import { AppShell } from "@/components/shell/app-shell";
 import { ApiError } from "@/lib/api/errors";
 import { getCurrentUser } from "@/lib/auth/session";
-import { profileCompleteness } from "@/lib/profile/limits";
 import { getMyProfile } from "@/lib/profile/server";
+import { draftFrom, strength } from "@/lib/profile/you";
 import { getUnreadCount } from "@/lib/social/server";
 
 /**
@@ -17,7 +17,8 @@ export default async function SignedInLayout({ children }: { children: React.Rea
   return (
     <AppShell
       user={{ id: user.id, email: user.email }}
-      profileComplete={profileCompleteness(profile)}
+      // The same checklist as the You page, so the two numbers always agree.
+      profileComplete={profile ? strength(draftFrom(profile)).percent : null}
       hasNotifications={unread > 0}
     >
       {children}

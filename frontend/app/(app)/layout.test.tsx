@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api/errors";
-import type { Profile, User } from "@/lib/api/schemas";
+import { profileSchema, type User } from "@/lib/api/schemas";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getMyProfile } from "@/lib/profile/server";
 
@@ -13,6 +13,24 @@ vi.mock("@/lib/social/server", () => ({ getUnreadCount: vi.fn(async () => 0) }))
 
 const USER = { id: "11111111-0000-4000-8000-000000000001", email: "a@example.com" } as User;
 const child = <p>page</p>;
+// Parsed, so the fields this test doesn't set get the API's defaults.
+const PROFILE = profileSchema.parse({
+  user_id: USER.id,
+  display_name: "Asha",
+  about_text: "I build things on weekends.",
+  links: [],
+  timezone: "Asia/Kolkata",
+  languages: ["en"],
+  visibility: "matchable",
+  parse_status: "parsed",
+  parse_source: "template",
+  understanding: null,
+  ai_consent_version: "v1",
+  ai_consent_at: null,
+  ai_consent_current: true,
+  created_at: "2026-10-08T00:00:00Z",
+  updated_at: "2026-10-08T00:00:00Z",
+});
 
 async function shellProps() {
   const element = (await SignedInLayout({ children: child })) as {
@@ -37,15 +55,18 @@ describe("SignedInLayout", () => {
     expect((await shellProps()).profileComplete).toBeNull();
   });
 
-  it("passes the profile through when it loads", async () => {
+  it("scores the profile with the You page's checklist", async () => {
+    // A new profile: a short bio, a language and a time zone tick nothing on the list.
+    vi.mocked(getMyProfile).mockResolvedValue(PROFILE);
+    expect((await shellProps()).profileComplete).toBe(0);
+
+    // Two of the eight items: a link and an intent.
     vi.mocked(getMyProfile).mockResolvedValue({
-      about_text: "I build things.",
-      parse_status: "pending",
-      links: [],
-      languages: [],
-      timezone: null,
-    } as unknown as Profile);
-    expect((await shellProps()).profileComplete).toBe(50);
+      ...PROFILE,
+      links: ["https://a.dev"],
+      intents: ["build_together"],
+    });
+    expect((await shellProps()).profileComplete).toBe(25);
   });
 
   it.each([500, 503])("keeps the shell on a profile %i", async (status) => {

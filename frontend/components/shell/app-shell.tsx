@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Avatar } from "@/components/ds/avatar";
 import { BottomNav } from "@/components/ds/bottom-nav";
-import { BellIcon, HomeIcon, PeopleIcon, SavedIcon, YouIcon } from "@/components/ds/icons";
+import { BellIcon, HomeIcon, PeopleIcon, YouIcon } from "@/components/ds/icons";
 import { Logo } from "@/components/ds/logo";
 import { cx } from "@/components/ui/cx";
 
@@ -25,7 +25,6 @@ type AppShellProps = {
 const ICONS: Record<(typeof APP_LINKS)[number]["href"], ReactNode> = {
   "/home": <HomeIcon />,
   "/spaces": <PeopleIcon />,
-  "/saved": <SavedIcon />,
   "/you": <YouIcon />,
 };
 
@@ -70,9 +69,9 @@ function ProfileProgress({ value }: { value: number | null }) {
 }
 
 /**
- * The signed-in app frame (ADR 0014). Desktop (1024px+): the top bar with Home, Spaces,
- * Saved and You, plus profile progress, the bell and the account. Phone: a slim top row
- * (logo, bell) and the bottom nav with the same four places. Chats count as Home.
+ * The signed-in app frame (ADR 0014). Desktop (1024px+): the top bar with Home, Spaces
+ * and You, plus profile progress, the bell and the account. Phone: a slim top row
+ * (logo, bell) and the bottom nav with the same three places. Chats count as Home.
  */
 export function AppShell({
   user,
