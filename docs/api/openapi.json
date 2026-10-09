@@ -1065,6 +1065,11 @@
       },
       "BlockStats": {
         "properties": {
+          "blocked_often": {
+            "description": "People blocked by three or more others.",
+            "title": "Blocked Often",
+            "type": "integer"
+          },
           "last_30_days": {
             "title": "Last 30 Days",
             "type": "integer"
@@ -1077,6 +1082,11 @@
             "title": "Most Blocked",
             "type": "array"
           },
+          "people_blocked": {
+            "description": "Different people blocked by anyone, ever.",
+            "title": "People Blocked",
+            "type": "integer"
+          },
           "total": {
             "title": "Total",
             "type": "integer"
@@ -1085,6 +1095,8 @@
         "required": [
           "total",
           "last_30_days",
+          "people_blocked",
+          "blocked_often",
           "most_blocked"
         ],
         "title": "BlockStats",
@@ -5650,6 +5662,30 @@
         "title": "RuleStateOut",
         "type": "object"
       },
+      "SafetyCounts": {
+        "properties": {
+          "in_review": {
+            "title": "In Review",
+            "type": "integer"
+          },
+          "open": {
+            "description": "Reports nobody has started on.",
+            "title": "Open",
+            "type": "integer"
+          },
+          "open_appeals": {
+            "title": "Open Appeals",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "open",
+          "in_review",
+          "open_appeals"
+        ],
+        "title": "SafetyCounts",
+        "type": "object"
+      },
       "ServerSettingsOut": {
         "description": "Set on the server (environment variables); read only here.",
         "properties": {
@@ -6634,6 +6670,11 @@
             ],
             "title": "Last Login At"
           },
+          "matches": {
+            "description": "Times they were suggested to someone as a match.",
+            "title": "Matches",
+            "type": "integer"
+          },
           "name": {
             "anyOf": [
               {
@@ -6645,6 +6686,11 @@
             ],
             "description": "Their display name, if they made a profile.",
             "title": "Name"
+          },
+          "open_reports": {
+            "description": "How many open reports there are against them.",
+            "title": "Open Reports",
+            "type": "integer"
           },
           "status": {
             "enum": [
@@ -6666,6 +6712,8 @@
           "status",
           "intents",
           "flagged",
+          "open_reports",
+          "matches",
           "created_at",
           "last_login_at"
         ],
@@ -9642,6 +9690,48 @@
           }
         },
         "summary": "Block counts",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/safety/counts": {
+      "get": {
+        "description": "Counts only.",
+        "operationId": "counts_api_v1_admin_safety_counts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafetyCounts"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "How many reports and appeals are waiting",
         "tags": [
           "admin"
         ]
