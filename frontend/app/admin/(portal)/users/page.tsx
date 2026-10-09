@@ -132,7 +132,15 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           <table className="text-meta-lg w-full border-collapse">
             <thead className="max-md:sr-only">
               <tr>
-                {["Person", "Status", "Intents", "Joined", "Last sign-in"].map((heading) => (
+                {[
+                  "Person",
+                  "Status",
+                  "Intents",
+                  "Open reports",
+                  "Matches",
+                  "Joined",
+                  "Last sign-in",
+                ].map((heading) => (
                   <th
                     key={heading}
                     scope="col"
@@ -173,6 +181,14 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                     {row.intents
                       .map((i) => INTENTS[i as keyof typeof INTENTS]?.label ?? i)
                       .join(", ") || "None"}
+                  </td>
+                  <td className="text-ink-2 px-3 py-2.5 max-md:inline-block max-md:p-0 max-md:pr-3">
+                    <span className="md:hidden">Open reports </span>
+                    {row.open_reports}
+                  </td>
+                  <td className="text-ink-2 px-3 py-2.5 max-md:inline-block max-md:p-0 max-md:pr-3">
+                    <span className="md:hidden">Matches </span>
+                    {row.matches}
                   </td>
                   <td
                     className="text-muted px-3 py-2.5 max-md:inline-block max-md:p-0 max-md:pr-3"

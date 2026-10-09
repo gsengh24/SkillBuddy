@@ -16,6 +16,7 @@ import {
   userPageSchema,
   appealPageSchema,
   blockStatsSchema,
+  safetyCountsSchema,
   caseSchema,
   queueSchema,
   healthSchema,
@@ -57,8 +58,14 @@ export const getCase = (id: string) =>
   adminGet(`/safety/reports/${encodeURIComponent(id)}`, caseSchema);
 export const getAppeals = () => adminGet("/safety/appeals?status=open", appealPageSchema);
 export const getBlockStats = () => adminGet("/safety/blocks", blockStatsSchema);
+/** For the tab labels; null when it can't be read, and the labels go without counts. */
+export const getSafetyCounts = () =>
+  adminGet("/safety/counts", safetyCountsSchema).catch(() => null);
 
-export const getOverview = (days: number) => adminGet(`/overview?days=${days}`, overviewSchema);
+/** Cached per request: the layout (menu counts) and the Overview page both ask. */
+export const getOverview = cache((days: number) =>
+  adminGet(`/overview?days=${days}`, overviewSchema),
+);
 export const getHealth = () => adminGet("/health", healthSchema);
 
 export const getAccess = () => adminGet("/access", accessSchema);

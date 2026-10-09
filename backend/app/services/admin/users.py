@@ -145,6 +145,18 @@ def list_query(filters: Filters) -> Any:
             Profile.display_name,
             Profile.intents,
             _open_reports_exist().label("flagged"),
+            # One indexed count per row shown (at most a page), never a scan. Open reports
+            # only: that is what the partial index on reports covers.
+            select(func.count())
+            .select_from(Report)
+            .where(Report.reported_id == User.id, Report.status == ReportStatus.OPEN)
+            .scalar_subquery()
+            .label("open_reports"),
+            select(func.count())
+            .select_from(Match)
+            .where(Match.candidate_id == User.id)
+            .scalar_subquery()
+            .label("matches"),
         ).outerjoin(Profile, Profile.user_id == User.id),
         filters,
     )

@@ -26,6 +26,19 @@ export function pagesFor(permissions: string[]): AdminPage[] {
   return ADMIN_PAGES.filter((page) => permissions.includes(page.permission));
 }
 
+/**
+ * The counts shown beside menu entries, from the Overview's "needs attention" figures
+ * (cached for a minute on the server). Zeroes are left out.
+ */
+export function menuCounts(attention: Record<string, number>): Record<string, number> {
+  const counts: Record<string, number> = {
+    reports: attention.open_reports ?? 0,
+    access: attention.pending_applications ?? 0,
+    data: attention.due_data_requests ?? 0,
+  };
+  return Object.fromEntries(Object.entries(counts).filter(([, value]) => value > 0));
+}
+
 export function pageBySlug(slug: string): AdminPage | undefined {
   return ADMIN_PAGES.find((page) => page.slug === slug);
 }

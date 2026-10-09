@@ -41,6 +41,7 @@ from app.services.notifications import add_notification
 PAGE_MAX: Final = 50
 BLOCK_WINDOW_DAYS: Final = 30
 TOP_BLOCKED: Final = 10
+BLOCKED_OFTEN: Final = 3
 
 
 class SafetyReportNotFoundError(NotFoundError):
@@ -69,6 +70,33 @@ class CannotSanctionAdminError(ConflictError):
 
 
 # --- the queue -----------------------------------------------------------------------------
+
+
+async def open_counts(db: AsyncSession) -> dict[str, int]:
+    """What is waiting, for the tab labels: one query, on the status indexes."""
+    row = (
+        await db.execute(
+            select(
+                select(func.count())
+                .select_from(Report)
+                .where(Report.status == ReportStatus.OPEN)
+                .scalar_subquery(),
+                select(func.count())
+                .select_from(Report)
+                .where(Report.status == ReportStatus.IN_REVIEW)
+                .scalar_subquery(),
+                select(func.count())
+                .select_from(Appeal)
+                .where(Appeal.status == AppealStatus.OPEN)
+                .scalar_subquery(),
+            )
+        )
+    ).one()
+    return {
+        "open": int(row[0] or 0),
+        "in_review": int(row[1] or 0),
+        "open_appeals": int(row[2] or 0),
+    }
 
 
 async def queue(
@@ -317,6 +345,14 @@ async def block_stats(db: AsyncSession) -> dict[str, Any]:
         await db.scalar(select(func.count()).select_from(Block).where(Block.created_at >= since))
         or 0
     )
+    people = int(await db.scalar(select(func.count(func.distinct(Block.blocked_id)))) or 0)
+    often = (
+        select(Block.blocked_id)
+        .group_by(Block.blocked_id)
+        .having(func.count() >= BLOCKED_OFTEN)
+        .subquery()
+    )
+    blocked_often = int(await db.scalar(select(func.count()).select_from(often)) or 0)
     count = func.count().label("times")
     rows = (
         await db.execute(
@@ -331,6 +367,8 @@ async def block_stats(db: AsyncSession) -> dict[str, Any]:
     return {
         "total": total,
         "last_30_days": recent,
+        "people_blocked": people,
+        "blocked_often": blocked_often,
         "most_blocked": [
             {"user_id": row[0], "email": row[1], "status": row[2], "times": int(row[3])}
             for row in rows

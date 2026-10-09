@@ -5,7 +5,15 @@ import { notFound } from "next/navigation";
 import { AdminHeading } from "@/components/admin/admin-shell";
 import { AppealActions, CaseDrawer } from "@/components/admin/safety";
 import { cx } from "@/components/ui/cx";
-import { getAdminMe, getAppeals, getBlockStats, getCase, getQueue } from "@/lib/admin/server";
+import type { SafetyCounts } from "@/lib/admin/schemas";
+import {
+  getAdminMe,
+  getAppeals,
+  getBlockStats,
+  getCase,
+  getQueue,
+  getSafetyCounts,
+} from "@/lib/admin/server";
 
 export const metadata: Metadata = { title: "Reports and safety" };
 export const dynamic = "force-dynamic";
@@ -22,10 +30,23 @@ function when(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { dateStyle: "medium" });
 }
 
-function Tabs({ tab, canAppeals }: { tab: string; canAppeals: boolean }) {
+/** "Open (3)" when the count is known. */
+function counted(label: string, count: number | undefined): string {
+  return count === undefined ? label : `${label} (${count})`;
+}
+
+function Tabs({
+  tab,
+  canAppeals,
+  counts,
+}: {
+  tab: string;
+  canAppeals: boolean;
+  counts: SafetyCounts | null;
+}) {
   const tabs = [
     { value: "queue", label: "Reports" },
-    ...(canAppeals ? [{ value: "appeals", label: "Appeals" }] : []),
+    ...(canAppeals ? [{ value: "appeals", label: counted("Appeals", counts?.open_appeals) }] : []),
     { value: "blocks", label: "Blocks" },
   ];
   return (
@@ -65,7 +86,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         : "queue";
   const status = STATUSES.some((s) => s.value === search.status) ? search.status! : "open";
   const canRead = me.permissions.includes("read_reported_messages");
-  const [queue, found, appeals, blocks] = await Promise.all([
+  const [counts, queue, found, appeals, blocks] = await Promise.all([
+    getSafetyCounts(),
     tab === "queue" ? getQueue(status) : Promise.resolve(null),
     tab === "queue" && search.report && canRead
       ? getCase(search.report).catch(() => null)
@@ -83,7 +105,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         rest="Review, decide, record."
         description="Review the report, the messages the reporter attached, and both users' history. Then decide."
       />
-      <Tabs tab={tab} canAppeals={canAppeals} />
+      <Tabs tab={tab} canAppeals={canAppeals} counts={counts} />
 
       {queue ? (
         <>
@@ -98,7 +120,11 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                   item.value === status ? "bg-ink text-bg border-ink" : "border-line text-ink-2",
                 )}
               >
-                {item.label}
+                {item.value === "open"
+                  ? counted(item.label, counts?.open)
+                  : item.value === "in_review"
+                    ? counted(item.label, counts?.in_review)
+                    : item.label}
               </Link>
             ))}
           </nav>
@@ -166,10 +192,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       {blocks ? (
         <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
               ["All blocks", blocks.total],
               ["Last 30 days", blocks.last_30_days],
+              ["People blocked", blocks.people_blocked],
+              ["Blocked by 3 or more", blocks.blocked_often],
             ].map(([label, value]) => (
               <div key={label} className="border-line bg-bg rounded-panel border p-4">
                 <p className="text-mono text-muted font-mono uppercase">{label}</p>

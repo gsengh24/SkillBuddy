@@ -20,6 +20,8 @@ class UserRow(BaseModel):
     status: Status
     intents: list[str]
     flagged: bool = Field(description="Open reports against them.")
+    open_reports: int = Field(description="How many open reports there are against them.")
+    matches: int = Field(description="Times they were suggested to someone as a match.")
     created_at: datetime
     last_login_at: datetime | None
 
@@ -32,6 +34,8 @@ class UserRow(BaseModel):
             status=row["status"],
             intents=list(row["intents"] or []),
             flagged=bool(row["flagged"]),
+            open_reports=int(row["open_reports"] or 0),
+            matches=int(row["matches"] or 0),
             created_at=row["created_at"],
             last_login_at=row["last_login_at"],
         )

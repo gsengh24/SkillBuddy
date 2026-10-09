@@ -120,6 +120,8 @@ async def test_search_filters_paging_and_a_cached_total(
     assert by_name["items"][0]["name"] == f"Zara{tag}"
     assert {row["id"] for row in by_tag["items"]} == {zara, omar, ira}
     assert by_tag["total"] == 3
+    counts = {row["id"]: (row["open_reports"], row["matches"]) for row in by_tag["items"]}
+    assert counts == {zara: (0, 0), omar: (1, 0), ira: (0, 0)}
     assert {row["id"] for row in mentors["items"]} == {zara, ira}
     assert [row["id"] for row in flagged["items"]] == [omar]
     assert flagged["items"][0]["flagged"] is True

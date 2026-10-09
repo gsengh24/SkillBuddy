@@ -131,6 +131,12 @@ class AppealDecisionIn(BaseModel):
     reason: Reason
 
 
+class SafetyCounts(BaseModel):
+    open: int = Field(description="Reports nobody has started on.")
+    in_review: int
+    open_appeals: int
+
+
 class BlockedPerson(BaseModel):
     user_id: uuid.UUID
     email: str
@@ -141,6 +147,8 @@ class BlockedPerson(BaseModel):
 class BlockStats(BaseModel):
     total: int
     last_30_days: int
+    people_blocked: int = Field(description="Different people blocked by anyone, ever.")
+    blocked_often: int = Field(description="People blocked by three or more others.")
     most_blocked: list[BlockedPerson] = Field(description="Last 30 days, most first (10).")
 
 

@@ -22,12 +22,15 @@ function initials(name: string): string {
  */
 export function AdminShell({
   pages,
+  counts = {},
   role,
   name,
   environment,
   children,
 }: {
   pages: AdminPage[];
+  /** Open items per page slug, shown beside the menu entry. */
+  counts?: Record<string, number>;
   role: AdminRole;
   name: string;
   environment: string;
@@ -113,6 +116,11 @@ export function AdminShell({
                       <Link
                         href={href}
                         aria-current={current ? "page" : undefined}
+                        aria-label={
+                          counts[page.slug]
+                            ? `${page.label}, ${counts[page.slug]} waiting`
+                            : undefined
+                        }
                         className={cx(
                           "text-meta-lg flex min-h-11 items-center rounded-lg border-l-2 px-2.5 lg:min-h-10",
                           current
@@ -121,6 +129,11 @@ export function AdminShell({
                         )}
                       >
                         {page.label}
+                        {counts[page.slug] ? (
+                          <span className="bg-ink text-bg rounded-chip ml-auto px-1.5 py-0.5 font-mono text-[10px]">
+                            {counts[page.slug]}
+                          </span>
+                        ) : null}
                       </Link>
                     </li>
                   );

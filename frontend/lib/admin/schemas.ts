@@ -95,6 +95,9 @@ export const userRowSchema = z.object({
   status: userStatusSchema,
   intents: z.array(z.string()),
   flagged: z.boolean(),
+  // Defaulted so the page still loads while an older API is running.
+  open_reports: z.number().default(0),
+  matches: z.number().default(0),
   created_at: z.string(),
   last_login_at: z.string().nullable(),
 });
@@ -194,11 +197,20 @@ export const appealPageSchema = z.object({
 export const blockStatsSchema = z.object({
   total: z.number(),
   last_30_days: z.number(),
+  people_blocked: z.number().default(0),
+  blocked_often: z.number().default(0),
   most_blocked: z.array(
     z.object({ user_id: z.string(), email: z.string(), status: z.string(), times: z.number() }),
   ),
 });
 export type BlockStats = z.infer<typeof blockStatsSchema>;
+
+export const safetyCountsSchema = z.object({
+  open: z.number(),
+  in_review: z.number(),
+  open_appeals: z.number(),
+});
+export type SafetyCounts = z.infer<typeof safetyCountsSchema>;
 
 export const overviewSchema = z.object({
   days: z.number(),
