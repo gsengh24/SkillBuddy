@@ -17,13 +17,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.ai.embeddings import EmbedKind
 from app.ai.gateway import AIGateway
+from app.ai.stages import Intent
 from app.core.config import Settings
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
 from app.jobs import JobRegistry, JobRunner
 from app.jobs.tasks import MATCH_REQUEST
 from app.models import EMBEDDING_DIMENSIONS
-from app.services.matching.engine import run_match_request
+from app.services.matching.engine import SEARCH, retrieve, run_match_request
 from app.services.matching.housekeeping import expire_and_purge_requests
 from tests.conftest import SettingsFactory
 from tests.integration.conftest import CapturingDelivery, auth_client, run_sql
@@ -253,6 +254,108 @@ async def test_at_most_matches_per_request_and_names_never_in_reasons(
     assert len(rows) == 3
     assert [row["rank"] for row in rows] == [1, 2, 3]
     assert all("Zarathustra" not in row["reason"] for row in rows)
+
+
+async def test_weak_fits_are_not_suggested_unless_their_words_match(
+    make_settings: SettingsFactory,
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    axis = 300 + uuid.uuid4().int % 60
+    weak_vector = unit((axis, 0.5), (axis + 2, 0.866))  # cosine 0.5 with the query
+    potter = {"summary": "Makes pots.", "offers": ["Pottery"]}
+    me = person(url, model=model, offer=unit((axis + 1, 1.0)))
+    strong = person(url, model=model, offer=unit((axis, 1.0)), structured=potter)
+    weak = person(url, model=model, offer=weak_vector, structured=potter)
+    weak_with_the_skill = person(
+        url,
+        model=model,
+        offer=weak_vector,
+        structured={"summary": "Builds web apps.", "offers": ["React development"]},
+    )
+    request = new_request(url, me, "Looking for a React developer.", "build_together")
+
+    assert await match(settings, session_factory, request, unit((axis, 1.0)), model)
+
+    assert [row["candidate_id"] for row in matches(url, request)] == [strong, weak_with_the_skill]
+
+    # With the floor off, the weak fit is suggested too, last.
+    no_floor = make_settings(database_url=url, ai_llm_enabled=False, match_min_relevance=0)
+    again = new_request(url, me, "Looking for a React developer.", "build_together")
+    assert await match(no_floor, session_factory, again, unit((axis, 1.0)), model)
+    assert [row["candidate_id"] for row in matches(url, again)][-1] == weak
+
+
+async def test_nobody_good_enough_is_ready_with_no_matches(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    axis = 300 + uuid.uuid4().int % 60
+    me = person(url, model=model, offer=unit((axis + 1, 1.0)))
+    person(
+        url,
+        model=model,
+        offer=unit((axis, 0.5), (axis + 2, 0.866)),
+        structured={"summary": "Makes pots.", "offers": ["Pottery"]},
+    )
+    request = new_request(url, me, "Looking for a React developer.", "build_together")
+
+    assert await match(settings, session_factory, request, unit((axis, 1.0)), model)
+
+    assert matches(url, request) == []
+    state = run_sql(url, "SELECT status FROM match_requests WHERE id = :r", r=request)
+    assert state == [{"status": "ready"}]
+    notified = run_sql(url, "SELECT count(*) AS n FROM notifications WHERE user_id = :u", u=me)
+    assert notified == [{"n": 0}]
+
+
+async def test_keyword_search_finds_people_the_vector_search_missed(
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    axis = 300 + uuid.uuid4().int % 60
+    potter = {"summary": "Makes pots.", "offers": ["Pottery"]}
+    me = person(url, model=model, offer=unit((axis + 1, 1.0)))
+    nearest = person(url, model=model, offer=unit((axis, 1.0)), structured=potter)
+    far_with_the_skill = person(
+        url,
+        model=model,
+        offer=unit((axis + 2, 1.0)),
+        structured={"summary": "Builds web apps.", "offers": ["React"]},
+    )
+    person(url, model=model, offer=unit((axis + 3, 1.0)), structured=potter)
+    # No parsed offers: the keyword search reads their own words ("... and like chess.").
+    unparsed = person(
+        url, model=model, offer=unit((axis + 4, 1.0)), structured={"summary": "New here."}
+    )
+
+    async def search(keywords: str) -> dict[uuid.UUID, float]:
+        async with session_factory() as db:
+            found = await retrieve(
+                db,
+                requester_id=me,
+                query_vector=unit((axis, 1.0)),
+                keywords=keywords,
+                search=SEARCH[Intent.BUILD_TOGETHER],
+                model_version=model,
+                with_vectors=False,
+                limit=1,
+            )
+        return {candidate.user_id: candidate.keyword for candidate in found}
+
+    # One from each search: the nearest vector, and the best keyword overlap.
+    assert await search("React developers") == {nearest: 0.0, far_with_the_skill: 0.5}
+    assert await search("chess") == {nearest: 0.0, unparsed: 1.0}
+    # Nothing but stop words to look for: the vector search alone.
+    assert await search("the and of") == {nearest: 0.0}
 
 
 async def test_no_candidates_is_ready_with_no_matches(

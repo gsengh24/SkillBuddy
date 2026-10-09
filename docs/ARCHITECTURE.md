@@ -60,14 +60,16 @@ A request to "build together" searches the other person's offer embedding with m
 **Stage 3 – Rank.** A scoring function combines signals into one score:
 
 ```latex
-score = w_1 \cdot fit + w_2 \cdot reciprocity + w_3 \cdot activity + w_4 \cdot novelty - w_5 \cdot overexposure
+relevance = rescale(fit, reciprocity) + k \cdot keyword
+score = relevance \cdot (1 - w_3 \cdot inactivity - w_4 \cdot seen - w_5 \cdot overexposure)
 ```
 
-- *fit*: intent-specific similarity from Stage 2.
+- *fit*: intent-specific similarity from Stage 2. Embedding similarities sit in a narrow band, so fit is rescaled to 0 to 1 across the band that separates poor matches from good ones.
 - *reciprocity*: would the other person also want this match? Matches are scored from both sides and the lower side is used.
-- *activity*: recently active, responsive people rank higher so intros do not go unanswered.
-- *novelty*: a small boost for people the user has not seen, to avoid a stale feed.
-- *overexposure*: penalty for people already receiving many intros, so popular profiles are not flooded.
+- *keyword*: the share of the request's words found in the other person's text for the same facet.
+- *inactivity*, *seen*, *overexposure*: penalties for people who have not signed in lately, whom the user has already been shown, or who are already suggested to many people. Each takes only a share of the relevance away, so they order close candidates and never lift a poor fit over a good one. (Until 2026-10-09 these were added to the fit, where they could outweigh it.)
+
+**Quality floor.** A candidate whose relevance is under a set minimum is not suggested. A request with too few good candidates gets fewer matches, or none and the "waiting for a match" state, never weak ones.
 
 The weights start hand-set per intent. Once there are a few thousand rated matches, they are replaced by a learned ranker (gradient-boosted trees first, a neural ranker much later).
 
