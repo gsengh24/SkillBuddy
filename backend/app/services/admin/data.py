@@ -10,9 +10,9 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any, Final
+from typing import Final
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Executable, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -278,7 +278,7 @@ def _cell(value: object) -> str:
 
 
 async def _write_rows(
-    db: AsyncSession, write: Callable[[list[str]], object], header: list[str], query: Select[Any]
+    db: AsyncSession, write: Callable[[list[str]], object], header: list[str], query: Executable
 ) -> int:
     """Stream the rows (server-side cursor), so a big table is never all in memory."""
     write(header)
@@ -303,7 +303,7 @@ AUDIT_HEADER: Final = [
 ]
 
 
-def _query(kind: AdminExportKind) -> Select[Any]:
+def _query(kind: AdminExportKind) -> Executable:
     if kind is AdminExportKind.USERS:
         # Account fields only: never profile text, requests or messages.
         return select(
