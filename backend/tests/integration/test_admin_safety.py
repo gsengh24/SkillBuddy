@@ -261,6 +261,7 @@ async def test_block_counts_and_roles(
             )
         ).json()
         read_queue = await client.get(f"{SAFETY}/reports", headers=readonly.headers)
+        waiting = (await client.get(f"{SAFETY}/counts", headers=readonly.headers)).json()
         read_case = await client.get(f"{SAFETY}/reports/{report['id']}", headers=readonly.headers)
         read_decide = await client.post(
             f"{SAFETY}/reports/{report['id']}/decide",
@@ -275,6 +276,10 @@ async def test_block_counts_and_roles(
 
     assert stats["total"] >= 1
     assert stats["last_30_days"] >= 1
+    assert stats["people_blocked"] >= 1
+    assert 0 <= stats["blocked_often"] <= stats["people_blocked"]
+    assert set(waiting) == {"open", "in_review", "open_appeals"}
+    assert waiting["open"] >= 1
     assert any(item["user_id"] == asha.id for item in stats["most_blocked"])
     assert set(stats["most_blocked"][0]) == {"user_id", "email", "status", "times"}
     assert read_queue.status_code == 200

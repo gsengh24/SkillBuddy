@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { pagesFor } from "@/lib/admin/pages";
+import { menuCounts, pagesFor } from "@/lib/admin/pages";
 
 import { AdminShell } from "./admin-shell";
 import { AuditLog, InviteAdmin } from "./team-actions";
@@ -102,6 +102,28 @@ describe("AdminShell", () => {
     expect(url).toBe("/api/v1/admin/sign-out");
     expect(init.method).toBe("POST");
     expect(router.push).toHaveBeenCalledWith("/home");
+  });
+
+  it("shows how many items wait beside a menu entry, and nothing for zero", () => {
+    pathname = "/admin";
+    const counts = menuCounts({ open_reports: 4, pending_applications: 0, failed_emails: 2 });
+    expect(counts).toEqual({ reports: 4 });
+    render(
+      <AdminShell
+        pages={pagesFor(OWNER)}
+        counts={counts}
+        role="owner"
+        name="owner"
+        environment="Preview"
+      >
+        <p>Page</p>
+      </AdminShell>,
+    );
+    const nav = screen.getByRole("navigation", { name: "Admin" });
+    expect(
+      within(nav).getByRole("link", { name: /^Reports and safetys*4 waiting$/ }),
+    ).toBeVisible();
+    expect(within(nav).getByRole("link", { name: "Signup and access" })).toBeVisible();
   });
 
   it("leaves out pages a moderator can't open", () => {

@@ -22,6 +22,7 @@ from app.schemas.admin_safety import (
     DecisionIn,
     Queue,
     QueueItem,
+    SafetyCounts,
     StartReviewIn,
 )
 from app.schemas.errors import ErrorResponse
@@ -44,6 +45,12 @@ Viewer = Annotated[AdminContext, Depends(require_admin(Permission.VIEW_USERS))]
 Reader = Annotated[AdminContext, Depends(require_admin(Permission.READ_REPORTED_MESSAGES))]
 Handler = Annotated[AdminContext, Depends(require_admin(Permission.HANDLE_REPORTS))]
 Sanctioner = Annotated[AdminContext, Depends(require_admin(Permission.SUSPEND_USERS))]
+
+
+@router.get("/counts", summary="How many reports and appeals are waiting")
+async def counts(_: Viewer, db: DbDep) -> SafetyCounts:
+    """Counts only."""
+    return SafetyCounts.model_validate(await safety.open_counts(db))
 
 
 @router.get("/reports", summary="The report queue")

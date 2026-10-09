@@ -22,12 +22,15 @@ function initials(name: string): string {
  */
 export function AdminShell({
   pages,
+  counts = {},
   role,
   name,
   environment,
   children,
 }: {
   pages: AdminPage[];
+  /** Open items per page slug, shown beside the menu entry. */
+  counts?: Record<string, number>;
   role: AdminRole;
   name: string;
   environment: string;
@@ -121,6 +124,12 @@ export function AdminShell({
                         )}
                       >
                         {page.label}
+                        {counts[page.slug] ? (
+                          <span className="bg-ink text-bg rounded-chip ml-auto px-1.5 py-0.5 font-mono text-[10px]">
+                            {counts[page.slug]}
+                            <span className="sr-only"> waiting</span>
+                          </span>
+                        ) : null}
                       </Link>
                     </li>
                   );
