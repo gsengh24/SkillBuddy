@@ -11,7 +11,13 @@ from pydantic import ValidationError
 from app.ai.candidates import CandidateSummary
 from app.ai.prompts import load_prompt
 from app.ai.stages import Candidate, Intent, Understanding, explain_template, understand_template
-from app.ai.stages.explain import Pick, Selection, template_reason
+from app.ai.stages.explain import (
+    DEFAULT_MIN_JUDGED,
+    Judgement,
+    Verdict,
+    judged_score,
+    template_reason,
+)
 from app.ai.stages.understand import detect_intent
 from evals import quality
 from evals.dataset import load_eval_set
@@ -63,11 +69,41 @@ def test_understanding_validates_model_output() -> None:
     assert "email" not in extra.model_dump()
 
 
-def test_selection_rejects_bad_ids_and_reasons() -> None:
-    assert Selection.model_validate({"picks": [{"id": "C3", "reason": "Both build apps."}]})
-    for bad in ({"id": "user-1", "reason": "Both build apps."}, {"id": "C1", "reason": "ok"}):
+def test_judgement_rejects_bad_ids_and_values_outside_the_rubric() -> None:
+    assert Judgement.model_validate(
+        {"verdicts": [{"id": "C3", "need": 3, "shared": 1, "reason": "Both build apps."}]}
+    )
+    # A reason and a conflict flag are optional.
+    assert Verdict.model_validate({"id": "C1", "need": 0, "shared": 0}).reason == ""
+    for bad in (
+        {"id": "user-1", "need": 2, "shared": 1},
+        {"id": "C1", "need": 4, "shared": 1},
+        {"id": "C1", "need": 2, "shared": -1},
+        {"id": "C1", "shared": 1},
+        {"id": "C1", "need": 2, "shared": 1, "reason": "x" * 241},
+    ):
         with pytest.raises(ValidationError):
-            Pick.model_validate(bad)
+            Verdict.model_validate(bad)
+
+
+def _verdict(need: int, shared: int, *, conflict: bool = False) -> Verdict:
+    return Verdict(id="C1", need=need, shared=shared, conflict=conflict)
+
+
+def test_judged_score_weighs_the_rubric_in_code() -> None:
+    assert judged_score(_verdict(3, 3)) == pytest.approx(1.0)
+    assert judged_score(_verdict(0, 0)) == 0.0
+    # What was asked for counts for more than what else is shared.
+    assert judged_score(_verdict(3, 0)) > judged_score(_verdict(0, 3))
+    # A conflict is 0 whatever the other values say.
+    assert judged_score(_verdict(3, 3, conflict=True)) == 0.0
+
+
+def test_the_default_judge_floor_keeps_real_fits_and_drops_vague_ones() -> None:
+    for need, shared in ((2, 0), (3, 0), (2, 1)):
+        assert judged_score(_verdict(need, shared)) >= DEFAULT_MIN_JUDGED
+    for need, shared in ((1, 1), (1, 0), (0, 3), (0, 0)):
+        assert judged_score(_verdict(need, shared)) < DEFAULT_MIN_JUDGED
 
 
 def _candidate(score: float, **fields: object) -> Candidate:
@@ -99,6 +135,7 @@ def test_explain_template_keeps_the_top_scores_in_order() -> None:
 
 def test_prompts_load_by_id_only() -> None:
     assert "C1" in load_prompt("explain_v1")
+    assert "verdicts" in load_prompt("explain_v2")
     assert "intent" in load_prompt("understand_v1")
     with pytest.raises(FileNotFoundError):
         load_prompt("../README")

@@ -17,8 +17,9 @@ ranking never use an LLM.
   a diverse set with maximal marginal relevance.
 - **Gate:** a candidate whose relevance is under ``MATCH_MIN_RELEVANCE`` is not suggested.
   Too few good people means fewer matches, or none, never weak ones.
-- **Explain:** the best 15 go, anonymised, to ``explain()``, which picks and explains up
-  to ``MATCHES_PER_REQUEST``.
+- **Explain:** the best 15 go, anonymised, to ``explain()``. With the AI on, the model
+  judges each one on a rubric and code keeps up to ``MATCHES_PER_REQUEST`` of those at or
+  above ``MATCH_MIN_JUDGE_SCORE``; with it off, the template keeps the top of the ranking.
 """
 
 from __future__ import annotations
@@ -487,6 +488,7 @@ async def run_match_request(
         user_id=str(requester_id),
         name_hints=names,
         max_picks=settings.matches_per_request,
+        min_judged=settings.match_min_judge_score,
     )
     scores = {item.candidate.user_id: item.score for item in shortlist}
 

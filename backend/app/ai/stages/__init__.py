@@ -7,7 +7,7 @@ from app.ai.stages.explain import (
     Candidate,
     Explained,
     Explanation,
-    Selection,
+    Judgement,
     explain,
     explain_template,
 )
@@ -18,7 +18,7 @@ __all__ = [
     "Explained",
     "Explanation",
     "Intent",
-    "Selection",
+    "Judgement",
     "Understanding",
     "explain",
     "explain_template",

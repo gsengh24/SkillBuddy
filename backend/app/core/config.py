@@ -121,6 +121,10 @@ class Settings(BaseSettings):
     # The quality floor: a candidate whose relevance (0 to 1; app/services/matching/engine.py)
     # is lower is not suggested. 0 turns the floor off.
     match_min_relevance: float = Field(default=0.3, ge=0, le=1)
+    # The AI judge's floor: a candidate whose judged score (0 to 1;
+    # app/ai/stages/explain.py) is lower is not suggested. 0 turns it off. Not used
+    # when the AI is off.
+    match_min_judge_score: float = Field(default=0.4, ge=0, le=1)
     # A request stops being "open" after this many days; it is deleted, with its
     # matches, after the retention period (storage rules).
     match_request_ttl_days: int = Field(default=30, ge=1, le=365)
