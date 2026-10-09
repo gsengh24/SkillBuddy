@@ -4,13 +4,19 @@ Runs in the ``match_request`` job, never in a request handler. Every stage works
 AI off: the Understand and Explain stages fall back to their templates, and retrieval and
 ranking never use an LLM.
 
-- **Retrieve:** the request is embedded once (as a query) and compared with one facet of
-  every matchable profile, chosen by intent (``SEARCH``). Hard filters: not yourself, only
-  active accounts, only profiles that are "matchable", only current-model vectors.
+- **Retrieve (hybrid):** the request is embedded once (as a query) and compared with one
+  facet of every matchable profile, chosen by intent (``SEARCH``). A second, keyword search
+  finds people whose words for that facet share word stems with the request, so an exact
+  skill is not lost when its vector is not among the nearest. Hard filters: not yourself,
+  only active accounts, only profiles that are "matchable", only current-model vectors.
 - **Rank:** in code, never by the model (ARCHITECTURE.md §7, guardrails):
-  ``score = w_fit*fit + w_recip*min(fit, reciprocity) + w_act*activity + w_new*novelty
-  - w_over*overexposure``, with hand-set weights per intent. "Explore" then picks a
-  diverse set with maximal marginal relevance.
+  ``relevance = rescaled two-sided fit + KEYWORD_WEIGHT * keyword`` and
+  ``score = relevance * (1 - penalties)``, where the penalties (inactive, seen before,
+  overexposed) only take a share of the relevance away: they order close candidates and
+  never lift a poor fit over a good one. Hand-set weights per intent. "Explore" then picks
+  a diverse set with maximal marginal relevance.
+- **Gate:** a candidate whose relevance is under ``MATCH_MIN_RELEVANCE`` is not suggested.
+  Too few good people means fewer matches, or none, never weak ones.
 - **Explain:** the best 15 go, anonymised, to ``explain()``, which picks and explains up
   to ``MATCHES_PER_REQUEST``.
 """
@@ -53,6 +59,13 @@ OVEREXPOSURE_DAYS: Final = 7
 OVEREXPOSURE_SATURATION: Final = 15
 ACTIVITY_HORIZON_DAYS: Final = 60
 MMR_LAMBDA: Final = 0.7
+# Cosines of this embedding model sit in a narrow band (evals/README.md: poor pairs average
+# 0.52, good ones 0.61), so fit is rescaled: FIT_FLOOR and below count 0, FIT_CEILING and
+# above count 1.
+FIT_FLOOR: Final = 0.45
+FIT_CEILING: Final = 0.75
+# What full keyword overlap adds to relevance.
+KEYWORD_WEIGHT: Final = 0.25
 
 
 @dataclass(frozen=True)
@@ -63,13 +76,22 @@ class Search:
     facet: EmbeddingFacet
     # Score the other side too: their "seek" against my "offer".
     reciprocal: bool
+    # The key of ``profiles.structured`` the keyword search reads (None: all of it). Goes
+    # into the SQL as written, so only ever a constant from ``SEARCH``.
+    keyword_source: str | None = None
 
 
 SEARCH: Final[dict[Intent, Search]] = {
-    Intent.BUILD_TOGETHER: Search("seeks", EmbeddingFacet.OFFER, reciprocal=True),
-    Intent.SKILL_EXCHANGE: Search("seeks", EmbeddingFacet.OFFER, reciprocal=True),
-    Intent.MENTOR: Search("seeks", EmbeddingFacet.OFFER, reciprocal=False),
-    Intent.INTEREST_BUDDY: Search("interests", EmbeddingFacet.INTEREST, reciprocal=False),
+    Intent.BUILD_TOGETHER: Search(
+        "seeks", EmbeddingFacet.OFFER, reciprocal=True, keyword_source="offers"
+    ),
+    Intent.SKILL_EXCHANGE: Search(
+        "seeks", EmbeddingFacet.OFFER, reciprocal=True, keyword_source="offers"
+    ),
+    Intent.MENTOR: Search("seeks", EmbeddingFacet.OFFER, reciprocal=False, keyword_source="offers"),
+    Intent.INTEREST_BUDDY: Search(
+        "interests", EmbeddingFacet.INTEREST, reciprocal=False, keyword_source="interests"
+    ),
     Intent.ACCOUNTABILITY: Search("all", EmbeddingFacet.IDENTITY, reciprocal=False),
     Intent.EXPLORE: Search("all", EmbeddingFacet.IDENTITY, reciprocal=False),
 }
@@ -77,6 +99,9 @@ SEARCH: Final[dict[Intent, Search]] = {
 
 @dataclass(frozen=True)
 class Weights:
+    """``fit`` and ``reciprocity`` blend the two sides of the fit; the other three are the
+    largest share of the relevance each penalty can take away."""
+
     fit: float
     reciprocity: float
     activity: float
@@ -103,12 +128,16 @@ class Retrieved:
     structured: dict[str, Any]
     display_name: str
     vector: list[float] | None
+    # The share of the request's word stems found in their text for this facet (0 to 1).
+    keyword: float = 0.0
 
 
 @dataclass(frozen=True)
 class Ranked:
     candidate: Retrieved
     score: float
+    # The fit alone, before the penalties: what the gate reads.
+    relevance: float = 1.0
 
 
 def query_text(raw_text: str, understanding: Understanding, search: Search) -> str:
@@ -120,8 +149,35 @@ def query_text(raw_text: str, understanding: Understanding, search: Search) -> s
     return raw_text
 
 
+def keyword_text(raw_text: str, understanding: Understanding, search: Search) -> str:
+    """The words the keyword search looks for: the phrases for this intent, else the request."""
+    if search.query == "seeks" and understanding.seeks:
+        return " ".join(understanding.seeks)
+    if search.query == "interests" and understanding.interests:
+        return " ".join(understanding.interests)
+    return raw_text
+
+
 def _vector_literal(vector: Sequence[float]) -> str:
     return "[" + ",".join(f"{value:.7f}" for value in vector) + "]"
+
+
+def _keyword_document(search: Search) -> str:
+    """SQL for the word stems of a profile's text for this facet.
+
+    Like the facet embeddings (``facet_texts``), a profile without parsed text for the
+    facet falls back to its own words.
+    """
+    source = (
+        "p.structured"
+        if search.keyword_source is None
+        else f"p.structured->'{search.keyword_source}'"
+    )
+    return (
+        f"COALESCE(NULLIF(jsonb_to_tsvector(CAST('english' AS regconfig), {source}, "
+        """CAST('["string"]' AS jsonb)), CAST('' AS tsvector)), """
+        "to_tsvector(CAST('english' AS regconfig), p.raw_about_text))"
+    )
 
 
 async def retrieve(
@@ -129,12 +185,47 @@ async def retrieve(
     *,
     requester_id: uuid.UUID,
     query_vector: Sequence[float],
+    keywords: str,
     search: Search,
     model_version: str,
     with_vectors: bool,
     limit: int = RETRIEVE_LIMIT,
 ) -> list[Retrieved]:
-    """Nearest profiles on one facet, with the hard filters applied in SQL."""
+    """Hybrid retrieval on one facet: the nearest vectors, plus the best keyword overlaps.
+
+    Both searches apply the hard filters in SQL and score every row the same way, so a
+    person found by both is one candidate.
+    """
+    found: dict[uuid.UUID, Retrieved] = {}
+    for by_keyword in (False, True):
+        for candidate in await _search(
+            db,
+            requester_id=requester_id,
+            query_vector=query_vector,
+            keywords=keywords,
+            search=search,
+            model_version=model_version,
+            with_vectors=with_vectors,
+            limit=limit,
+            by_keyword=by_keyword,
+        ):
+            found.setdefault(candidate.user_id, candidate)
+    return list(found.values())
+
+
+async def _search(
+    db: AsyncSession,
+    *,
+    requester_id: uuid.UUID,
+    query_vector: Sequence[float],
+    keywords: str,
+    search: Search,
+    model_version: str,
+    with_vectors: bool,
+    limit: int,
+    by_keyword: bool,
+) -> list[Retrieved]:
+    """One leg of retrieval: ordered by vector distance, or by keyword overlap."""
     reciprocity = (
         "(SELECT 1 - (their_seek.embedding <=> my_offer.embedding) "
         " FROM profile_embeddings their_seek, profile_embeddings my_offer "
@@ -144,33 +235,44 @@ async def retrieve(
         else "NULL"
     )
     vector_column = ", pe.embedding::text AS vector" if with_vectors else ""
-    rows = await db.execute(
-        text(
-            f"SELECT pe.user_id, 1 - (pe.embedding <=> CAST(:q AS vector)) AS fit, "  # noqa: S608  # fixed fragments, values are bound
-            f"{reciprocity} AS reciprocity, u.last_login_at, p.structured, p.display_name"
-            f"{vector_column} "
-            "FROM profile_embeddings pe "
-            "JOIN profiles p ON p.user_id = pe.user_id "
-            "JOIN users u ON u.id = pe.user_id "
-            "WHERE pe.facet = :facet AND pe.model_version = :model AND pe.user_id <> :me "
-            "AND u.status = 'active' AND p.visibility = 'matchable' "
-            # Blocks work both ways (app/services/blocks.py).
-            "AND NOT EXISTS (SELECT 1 FROM blocks b WHERE "
-            "(b.blocker_id = :me AND b.blocked_id = pe.user_id) OR "
-            "(b.blocker_id = pe.user_id AND b.blocked_id = :me)) "
-            "ORDER BY pe.embedding <=> CAST(:q AS vector) "
-            "LIMIT :limit"
-        ),
-        {
-            "q": _vector_literal(query_vector),
-            "facet": search.facet.value,
-            "model": model_version,
-            "me": requester_id,
-            "limit": limit,
-        },
+    request_stems = (
+        "tsvector_to_array(to_tsvector(CAST('english' AS regconfig), CAST(:keywords AS text)))"
     )
+    candidates = (
+        f"SELECT pe.user_id, 1 - (pe.embedding <=> CAST(:q AS vector)) AS fit, "  # noqa: S608  # fixed fragments, values are bound
+        f"{reciprocity} AS reciprocity, u.last_login_at, p.structured, p.display_name"
+        f"{vector_column}, "
+        f"(SELECT count(*) FROM unnest(tsvector_to_array({_keyword_document(search)})) AS stem "
+        f" WHERE stem = ANY({request_stems})) AS stems_shared, "
+        f"cardinality({request_stems}) AS stems_asked "
+        "FROM profile_embeddings pe "
+        "JOIN profiles p ON p.user_id = pe.user_id "
+        "JOIN users u ON u.id = pe.user_id "
+        "WHERE pe.facet = :facet AND pe.model_version = :model AND pe.user_id <> :me "
+        "AND u.status = 'active' AND p.visibility = 'matchable' "
+        # Blocks work both ways (app/services/blocks.py).
+        "AND NOT EXISTS (SELECT 1 FROM blocks b WHERE "
+        "(b.blocker_id = :me AND b.blocked_id = pe.user_id) OR "
+        "(b.blocker_id = pe.user_id AND b.blocked_id = :me)) "
+    )
+    statement = (
+        f"SELECT * FROM ({candidates}) AS found WHERE stems_shared > 0 "  # noqa: S608  # fixed fragments, values are bound
+        "ORDER BY stems_shared DESC, fit DESC LIMIT :limit"
+        if by_keyword
+        else f"{candidates} ORDER BY pe.embedding <=> CAST(:q AS vector) LIMIT :limit"
+    )
+    parameters: dict[str, Any] = {
+        "q": _vector_literal(query_vector),
+        "keywords": keywords,
+        "facet": search.facet.value,
+        "model": model_version,
+        "me": requester_id,
+        "limit": limit,
+    }
+    rows = await db.execute(text(statement), parameters)
     found: list[Retrieved] = []
     for row in rows.mappings():
+        stems_asked = int(row["stems_asked"] or 0)
         found.append(
             Retrieved(
                 user_id=row["user_id"],
@@ -180,6 +282,7 @@ async def retrieve(
                 structured=dict(row["structured"] or {}),
                 display_name=row["display_name"] or "",
                 vector=json.loads(row["vector"]) if with_vectors else None,
+                keyword=int(row["stems_shared"]) / stems_asked if stems_asked else 0.0,
             )
         )
     return found
@@ -195,6 +298,19 @@ def activity(last_login_at: datetime | None, now: datetime) -> float:
     return max(0.0, 1.0 - (days - 7) / (ACTIVITY_HORIZON_DAYS - 7))
 
 
+def relevance(candidate: Retrieved, weights: Weights) -> float:
+    """How well they fit the request, 0 to 1: the rescaled two-sided fit plus keyword overlap."""
+    two_sided = (
+        min(candidate.fit, candidate.reciprocity)
+        if candidate.reciprocity is not None
+        else candidate.fit
+    )
+    two_sided_share = weights.reciprocity / (weights.fit + weights.reciprocity)
+    blended = candidate.fit + two_sided_share * (two_sided - candidate.fit)
+    semantic = min(1.0, max(0.0, (blended - FIT_FLOOR) / (FIT_CEILING - FIT_FLOOR)))
+    return min(1.0, semantic + KEYWORD_WEIGHT * candidate.keyword)
+
+
 def score(
     candidate: Retrieved,
     weights: Weights,
@@ -203,19 +319,14 @@ def score(
     seen_before: bool,
     recent_suggestions: int,
 ) -> float:
-    two_sided = (
-        min(candidate.fit, candidate.reciprocity)
-        if candidate.reciprocity is not None
-        else candidate.fit
-    )
+    """Relevance, less a share for being inactive, seen before or suggested a lot lately."""
     overexposure = min(1.0, recent_suggestions / OVEREXPOSURE_SATURATION)
-    return (
-        weights.fit * candidate.fit
-        + weights.reciprocity * two_sided
-        + weights.activity * activity(candidate.last_login_at, now)
-        + weights.novelty * (0.0 if seen_before else 1.0)
-        - weights.overexposure * overexposure
+    penalties = (
+        weights.activity * (1.0 - activity(candidate.last_login_at, now))
+        + weights.novelty * (1.0 if seen_before else 0.0)
+        + weights.overexposure * overexposure
     )
+    return relevance(candidate, weights) * (1.0 - penalties)
 
 
 def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
@@ -334,13 +445,14 @@ async def run_match_request(
             db,
             requester_id=requester_id,
             query_vector=query_vector,
+            keywords=keyword_text(raw_text, understanding, search),
             search=search,
             model_version=embedder.model_version,
             with_vectors=intent is Intent.EXPLORE,
         )
         seen, counts = await _history(db, requester_id, request_id, [c.user_id for c in found])
 
-    # --- 3. rank ---------------------------------------------------------------------------
+    # --- 3. rank, and drop anyone who is not a good enough fit -----------------------------
     weights = WEIGHTS[intent]
     ranked = sorted(
         (
@@ -353,12 +465,15 @@ async def run_match_request(
                     seen_before=c.user_id in seen,
                     recent_suggestions=counts.get(c.user_id, 0),
                 ),
+                relevance(c, weights),
             )
             for c in found
         ),
-        key=lambda item: item.score,
+        # Fits above FIT_CEILING all count the same, so the raw fit settles ties.
+        key=lambda item: (item.score, item.candidate.fit),
         reverse=True,
     )
+    ranked = [item for item in ranked if item.relevance >= settings.match_min_relevance]
     if intent is Intent.EXPLORE:
         ranked = diversify(ranked, MAX_CANDIDATES)
     shortlist = ranked[:MAX_CANDIDATES]
@@ -411,6 +526,7 @@ async def run_match_request(
         extra={
             "intent": intent.value,
             "retrieved": len(found),
+            "good_enough": len(ranked),
             "matches": len(explanation.picks),
             "explanation_source": explanation.source.value,
         },
