@@ -17,7 +17,7 @@ export type BottomNavItem = {
 };
 
 /**
- * The phone tab bar: four items, a 20px icon over a 10px label, the current one in green
+ * The phone tab bar: equal-width items, a 20px icon over a 10px label, the current one in green
  * (aria-current="page"), with padding for the home indicator. Hidden from 1024px up.
  */
 export function BottomNav({ items, className }: { items: BottomNavItem[]; className?: string }) {
@@ -26,7 +26,7 @@ export function BottomNav({ items, className }: { items: BottomNavItem[]; classN
     <nav
       aria-label="Main"
       className={cx(
-        "border-line bg-bg sticky bottom-0 grid grid-cols-4 border-t px-1.5 pt-2 pb-[calc(10px+env(safe-area-inset-bottom))] lg:hidden",
+        "border-line bg-bg sticky bottom-0 grid auto-cols-fr grid-flow-col border-t px-1.5 pt-2 pb-[calc(10px+env(safe-area-inset-bottom))] lg:hidden",
         className,
       )}
     >

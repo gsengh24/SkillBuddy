@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { profileSchema, type Profile } from "@/lib/api/schemas";
-import { profileCompleteness } from "@/lib/profile/limits";
 
 import { ProfileForm } from "./profile-form";
 import { UnderstandingReview } from "./understanding-review";
@@ -213,13 +212,5 @@ describe("VisibilityToggle errors", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/temporarily unavailable/);
     expect(toggle).toBeChecked();
-  });
-});
-
-describe("profileCompleteness", () => {
-  it("scores what is filled in", () => {
-    expect(profileCompleteness(null)).toBeNull();
-    expect(profileCompleteness({ ...PROFILE, parse_status: "pending", languages: [] })).toBe(60);
-    expect(profileCompleteness({ ...PROFILE, links: ["https://x.dev"] })).toBe(100);
   });
 });

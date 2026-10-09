@@ -28,7 +28,7 @@ test("sign up with an emailed code, reach home, sign out", async ({ page, reques
   // On a phone the app shell shows a bottom tab bar with 44px+ touch targets.
   await page.setViewportSize({ width: 390, height: 844 });
   const tabs = page.getByRole("navigation", { name: "Main" }).getByRole("link");
-  await expect(tabs).toHaveText(["Home", "Spaces", "Saved", "You"]);
+  await expect(tabs).toHaveText(["Home", "Spaces", "You"]);
   for (const tab of await tabs.all()) {
     const box = await tab.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);

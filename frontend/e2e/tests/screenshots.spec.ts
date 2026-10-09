@@ -83,7 +83,6 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
       ["/you", "Your profile.", "you"],
       ["/you?review=1", "What we understood", "you-review"],
       ["/settings/blocked", "Blocked people", "blocked"],
-      ["/saved", "Saved", "saved"],
     ] as const) {
       await page.goto(path);
       await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();

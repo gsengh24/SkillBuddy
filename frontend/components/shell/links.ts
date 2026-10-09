@@ -1,11 +1,10 @@
 /**
- * The four places in the app, the same on desktop (top bar) and phones (bottom nav).
+ * The three places in the app, the same on desktop (top bar) and phones (bottom nav).
  * Chats (/messages/...) belong to Home, which lists requests and messages together.
  */
 export const APP_LINKS = [
   { href: "/home", label: "Home", match: ["/messages"] },
   { href: "/spaces", label: "Spaces", match: [] },
-  { href: "/saved", label: "Saved", match: [] },
   { href: "/you", label: "You", match: ["/settings"] },
 ] as const;
 

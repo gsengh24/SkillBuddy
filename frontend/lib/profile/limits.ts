@@ -21,22 +21,3 @@ export const LANGUAGES: { code: string; label: string }[] = [
   { code: "te", label: "Telugu" },
   { code: "kn", label: "Kannada" },
 ];
-
-/** Share of the profile filled in, 0 to 100, for the sidebar card. */
-export function profileCompleteness(
-  profile: {
-    about_text: string;
-    parse_status: string;
-    links: string[];
-    languages: string[];
-    timezone: string | null;
-  } | null,
-): number | null {
-  if (!profile) return null;
-  let value = profile.about_text.trim() ? 50 : 0;
-  if (profile.parse_status === "parsed") value += 20;
-  if (profile.links.length) value += 10;
-  if (profile.languages.length) value += 10;
-  if (profile.timezone) value += 10;
-  return value;
-}
