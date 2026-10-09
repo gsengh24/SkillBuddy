@@ -73,7 +73,12 @@ async def test_understand_uses_the_model_and_sends_no_contact_details(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     settings = make_settings(database_url=migrated_database_url)
-    reply = {"intent": "build_together", "summary": "Builds React apps.", "offers": ["React"]}
+    reply = {
+        "intent": "build_together",
+        "title": "React developer",
+        "summary": "Builds React apps.",
+        "offers": ["React"],
+    }
     groq = _fake(json.dumps(reply))
     result = await understand(
         _gateway(settings, session_factory, [groq]),
@@ -85,8 +90,9 @@ async def test_understand_uses_the_model_and_sends_no_contact_details(
     assert result.source is Source.LLM
     assert result.value.intent is Intent.BUILD_TOGETHER
     assert result.value.offers == ["React"]
+    assert result.value.title == "React developer"
     sent = groq.requests[0]
-    assert sent.system.startswith(load_prompt("understand_v1"))
+    assert sent.system.startswith(load_prompt("understand_v2"))
     for leaked in ("Aarav", "Sharma", "aarav.s@thapar.edu"):
         assert leaked not in sent.user
 

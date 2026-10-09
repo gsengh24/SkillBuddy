@@ -3,7 +3,9 @@
 ``understand()`` asks the gateway (Groq, then Cloudflare) and falls back to
 ``understand_template()``, a rule-based reading that needs no AI, so matching still works
 with the AI off, rate-limited or unreachable. The result feeds the embedding facets
-(``summary``, ``offers``, ``seeks``, ``interests``) and the Explain stage.
+(``summary``, ``offers``, ``seeks``, ``interests``) and the Explain stage, and is what
+other people see on a match card, so the prompt asks for platform wording, not the
+user's own.
 """
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ from app.ai.gateway import AIGateway, AIResult, Prompt, Task
 from app.ai.privacy import redact
 from app.ai.prompts import load_prompt
 
-PROMPT_ID: Final = "understand_v1"
+PROMPT_ID: Final = "understand_v2"
 MAX_ITEMS: Final = 8
 
 Phrase = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
@@ -40,6 +42,8 @@ class Understanding(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     intent: Intent | None = None
+    # A short card heading. Only the model writes one; the template leaves it empty.
+    title: Annotated[str, StringConstraints(strip_whitespace=True, max_length=60)] = ""
     summary: Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] = ""
     offers: list[Phrase] = Field(default_factory=list, max_length=MAX_ITEMS)
     seeks: list[Phrase] = Field(default_factory=list, max_length=MAX_ITEMS)

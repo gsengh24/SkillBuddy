@@ -50,6 +50,8 @@ def test_understand_template_extracts_phrases_and_availability() -> None:
     assert result.interests == ["hiking", "chess"]
     assert result.availability == "4-6 hours a week"
     assert result.summary == "I can build React apps and write Python."
+    # Only the model writes a heading; clients build one from the tags when it is empty.
+    assert result.title == ""
     assert set(result.facets()) == {"summary", "offers", "seeks", "interests"}
 
 
@@ -137,6 +139,7 @@ def test_prompts_load_by_id_only() -> None:
     assert "C1" in load_prompt("explain_v1")
     assert "verdicts" in load_prompt("explain_v2")
     assert "intent" in load_prompt("understand_v1")
+    assert '"title"' in load_prompt("understand_v2")
     with pytest.raises(FileNotFoundError):
         load_prompt("../README")
     with pytest.raises(FileNotFoundError):

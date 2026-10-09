@@ -159,6 +159,8 @@ export const applicationReceivedSchema = z.object({ status: z.literal("received"
 export const matchRequestSchema = z.object({
   id: z.string(),
   text: z.string(),
+  /** The matcher's heading for the request; empty or missing until it has one. */
+  title: z.string().optional(),
   requested_intent: intentSchema.nullable(),
   intent: intentSchema.nullable(),
   status: z.enum(["pending", "ready", "closed", "expired"]),
@@ -181,12 +183,16 @@ export const matchSchema = z.object({
   status: z.enum(["shown", "viewed", "intro_sent", "accepted", "declined", "expired"]),
   candidate: z.object({
     user_id: z.string(),
+    /** The matcher's heading for the person; empty or missing on older profiles. */
+    title: z.string().optional(),
     summary: z.string(),
     offers: z.array(z.string()),
     seeks: z.array(z.string()),
     interests: z.array(z.string()),
     availability: z.string(),
     languages: z.array(z.string()),
+    /** The city, only if the person shares it. */
+    location: z.string().nullable().optional(),
   }),
 });
 export type Match = z.infer<typeof matchSchema>;

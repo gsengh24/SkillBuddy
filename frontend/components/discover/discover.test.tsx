@@ -110,9 +110,25 @@ describe("RequestCard", () => {
     expect(screen.getByText("Finding people for this…")).toBeInTheDocument();
     await act(() => vi.advanceTimersByTimeAsync(3100));
     expect(await screen.findByText("Final-year design student.")).toBeInTheDocument();
+    // No heading from the matcher yet: a plain one, with their words below it.
+    expect(screen.getByRole("heading", { name: "Your request" })).toBeInTheDocument();
+    expect(screen.getByText(`“${REQUEST.text}”`)).toBeInTheDocument();
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`/api/v1/requests/${REQUEST.id}`);
     expect(fetchMock.mock.calls[1]?.[0]).toBe(`/api/v1/requests/${REQUEST.id}/matches`);
     expect(screen.getByText("1 match ready.")).toBeInTheDocument();
+  });
+
+  it("is headed by the matcher's wording, not the person's", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, { items: [] }));
+    render(
+      <RequestCard
+        initial={{ ...REQUEST, status: "ready", title: "Designer for a budgeting app" }}
+      />,
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Designer for a budgeting app" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(`“${REQUEST.text}”`)).toBeInTheDocument();
   });
 
   it("says when nobody fits yet", async () => {
@@ -134,10 +150,36 @@ describe("RequestCard", () => {
 });
 
 describe("MatchCard", () => {
+  it("uses the matcher's heading and tidies older tags", () => {
+    render(
+      <MatchCard
+        match={{
+          ...MATCH,
+          candidate: {
+            ...MATCH.candidate,
+            title: "UI designer and illustrator",
+            offers: ["ui design skills", "Figma"],
+            interests: ["figma", "chess"],
+          },
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "UI designer and illustrator" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("UI design")).toBeInTheDocument();
+    expect(screen.getAllByText(/^figma$/i)).toHaveLength(1);
+    expect(screen.getByText("Chess")).toBeInTheDocument();
+  });
+
   it("shows what they offer and why, but no name", () => {
     render(<MatchCard match={MATCH} />);
-    expect(screen.getByRole("heading", { name: "Final-year design student." })).toBeInTheDocument();
+    // The heading is a short label; the sentence about them is body text.
+    expect(screen.getByRole("heading", { name: "UI design · Figma" })).toBeInTheDocument();
+    expect(screen.getByText("Final-year design student.")).toBeInTheDocument();
+    expect(screen.getByText("Can help with")).toBeInTheDocument();
     expect(screen.getByText("UI design")).toBeInTheDocument();
+    expect(screen.getByText("Available weekends")).toBeInTheDocument();
     expect(screen.getByText("Why this match")).toBeInTheDocument();
     expect(screen.getByText(MATCH.reason)).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();

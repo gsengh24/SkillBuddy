@@ -513,6 +513,7 @@ async def run_match_request(
         request.structured = {
             **understanding.facets(),
             "availability": understanding.availability,
+            "title": understanding.title,
         }
         request.explanation_source = explanation.source.value
         request.prompt_version = explanation.prompt_version
