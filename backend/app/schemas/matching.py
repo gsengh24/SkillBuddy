@@ -48,6 +48,10 @@ class MatchRequestIn(BaseModel):
 class MatchRequestOut(BaseModel):
     id: uuid.UUID
     text: str
+    title: str = Field(
+        description="A short heading for the request, written by the matcher. Empty until "
+        "the request is matched, and when no model was available."
+    )
     requested_intent: Intent | None
     intent: Intent | None = Field(description="The intent the matcher used, once matched.")
     status: RequestStatus = Field(
@@ -63,6 +67,7 @@ class MatchRequestOut(BaseModel):
         return cls(
             id=request.id,
             text=request.raw_text,
+            title=str((request.structured or {}).get("title", "")),
             requested_intent=request.requested_intent,  # type: ignore[arg-type]  # CHECK-constrained column
             intent=request.intent,  # type: ignore[arg-type]  # CHECK-constrained column
             status=RequestStatus(request.status),
@@ -83,6 +88,10 @@ class MatchCandidateOut(BaseModel):
     profile only. No name, links or contact details (they come with an accepted intro)."""
 
     user_id: uuid.UUID
+    title: str = Field(
+        description="A short heading for the person, written when their profile was read. "
+        "Empty for profiles read without a model or corrected by their owner."
+    )
     summary: str
     offers: list[str]
     seeks: list[str]
@@ -116,6 +125,7 @@ class MatchOut(BaseModel):
             status=MatchStatus(match.status),
             candidate=MatchCandidateOut(
                 user_id=match.candidate_id,
+                title=str(data.get("title", "")),
                 summary=str(data.get("summary", "")),
                 offers=items("offers"),
                 seeks=items("seeks"),

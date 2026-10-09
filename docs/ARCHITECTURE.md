@@ -46,7 +46,7 @@ Every request on the platform is one of six intents, and the intent decides how 
 
 The matcher is a four-stage pipeline: understand, retrieve, rank, explain. Cheap vector search narrows millions of people to a few hundred; the expensive LLM only sees the final 20 or so. This keeps quality high and cost per match low.
 
-**Stage 1 – Understand (profile and request parsing).** An LLM reads the free-text profile or request and returns structured JSON: skills with level, interests, goals, stage, availability, working style, what they offer, what they seek. The original text is always kept, so nothing is lost if the schema changes.
+**Stage 1 – Understand (profile and request parsing).** An LLM reads the free-text profile or request and returns structured JSON: skills with level, interests, goals, stage, availability, working style, what they offer, what they seek. The original text is always kept, so nothing is lost if the schema changes. What it returns is also what other people see on a match card (a short heading, one sentence, tags), so the prompt (`understand_v2`) asks for the platform's wording, never a copy of the person's own sentences; clients show the person's words only to that person.
 
 **Stage 2 – Retrieve (candidate generation).** Each profile gets several embeddings, not one, so different intents can search different facets:
 

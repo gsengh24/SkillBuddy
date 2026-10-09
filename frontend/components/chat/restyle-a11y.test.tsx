@@ -82,7 +82,7 @@ describe("match card", () => {
 
   it("names the match and keeps the person's dot out of the accessibility tree", () => {
     const { container } = render(<MatchCard match={MATCH} />);
-    expect(screen.getByRole("heading", { name: "Final-year design student." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "UI design" })).toBeInTheDocument();
     expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
     expect(screen.getByRole("button", { name: "Report" })).toBeInTheDocument();
   });

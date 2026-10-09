@@ -36,8 +36,12 @@ def text_hash(text: str) -> str:
 
 
 def structured_from(understanding: Understanding) -> dict[str, Any]:
-    """The ``profiles.structured`` document: the four facet keys plus availability."""
-    return {**understanding.facets(), "availability": understanding.availability}
+    """The ``profiles.structured`` document: the facet keys, availability and title."""
+    return {
+        **understanding.facets(),
+        "availability": understanding.availability,
+        "title": understanding.title,
+    }
 
 
 async def parse_profile(

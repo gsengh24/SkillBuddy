@@ -2,6 +2,7 @@ import { Panel, TopicChip, WhyPanel } from "@/components/ds/surfaces";
 import { ReportButton } from "@/components/safety/report-button";
 import { SendIntro } from "@/components/social/send-intro";
 import type { Match } from "@/lib/api/schemas";
+import { MAX_TAGS, presentMatch } from "@/lib/matching/present";
 
 /** A plain dot in place of a face: names (and initials) are shown only after an accepted intro. */
 function PersonDot() {
@@ -13,47 +14,46 @@ function PersonDot() {
   );
 }
 
-/** One suggested person: what they offer and like, and why they were suggested. */
+/** A labelled row of tags, cut off at MAX_TAGS with a count of the rest. */
+function Tags({ label, items, tone }: { label: string; items: string[]; tone?: "soft" }) {
+  if (!items.length) return null;
+  const more = items.length - MAX_TAGS;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-mono-lg text-muted font-mono uppercase">{label}</p>
+      <ul className="flex flex-wrap items-center gap-2">
+        {items.slice(0, MAX_TAGS).map((item) => (
+          <li key={item}>
+            <TopicChip tone={tone}>{item}</TopicChip>
+          </li>
+        ))}
+        {more > 0 ? <li className="text-meta-lg text-muted">+{more} more</li> : null}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * One suggested person, in the platform's words: a short heading, why they were suggested,
+ * one line about them, then what they can help with and what they're into.
+ */
 export function MatchCard({ match }: { match: Match }) {
   const { candidate } = match;
-  const title = candidate.summary || "Someone who fits what you asked for";
+  const view = presentMatch(candidate);
   return (
     <Panel interactive className="flex flex-col gap-4">
       <div className="flex items-start gap-3">
         <PersonDot />
         <div className="flex min-w-0 flex-col gap-0.5">
           <p className="text-mono-lg text-muted font-mono uppercase">Match {match.rank}</p>
-          <h4 className="text-title lg:text-title-lg text-ink">{title}</h4>
-          {candidate.availability ? (
-            <p className="text-meta-lg text-muted">Available: {candidate.availability}</p>
-          ) : null}
+          <h4 className="text-title lg:text-title-lg text-ink">{view.title}</h4>
+          {view.meta ? <p className="text-meta-lg text-muted">{view.meta}</p> : null}
         </div>
       </div>
-      {candidate.offers.length ? (
-        <div className="flex flex-col gap-1.5">
-          <p className="text-mono-lg text-muted font-mono uppercase">Offers</p>
-          <ul className="flex flex-wrap gap-2">
-            {candidate.offers.map((item) => (
-              <li key={item}>
-                <TopicChip>{item}</TopicChip>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {candidate.interests.length ? (
-        <div className="flex flex-col gap-1.5">
-          <p className="text-mono-lg text-muted font-mono uppercase">Into</p>
-          <ul className="flex flex-wrap gap-2">
-            {candidate.interests.map((item) => (
-              <li key={item}>
-                <TopicChip tone="soft">{item}</TopicChip>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
       <WhyPanel title="Why this match">{match.reason}</WhyPanel>
+      {view.summary ? <p className="text-ink-2">{view.summary}</p> : null}
+      <Tags label="Can help with" items={view.offers} />
+      <Tags label="Interested in" items={view.interests} tone="soft" />
       <SendIntro match={match} />
       <ReportButton kind="profile" targetId={candidate.user_id} compact />
     </Panel>

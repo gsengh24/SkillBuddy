@@ -93,7 +93,7 @@ export function buildActivity(
       type: "request",
       id: request.id,
       group: "requests",
-      title: request.text,
+      title: request.title?.trim() || request.text,
       secondary: requestLine(request),
       at,
       time: relativeTime(at, now),

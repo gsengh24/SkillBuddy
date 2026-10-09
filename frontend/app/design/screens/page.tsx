@@ -28,6 +28,7 @@ const THEM = "00000000-0000-4000-8000-00000000000b";
 
 const CANDIDATE = {
   user_id: THEM,
+  title: "UI designer for fintech apps",
   summary: "Final-year design student who likes fintech.",
   offers: ["UI design", "Figma", "User research"],
   seeks: ["A side project"],

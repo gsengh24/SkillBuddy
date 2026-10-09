@@ -479,6 +479,8 @@ async def test_create_read_list_close(
     assert body["status"] == "pending"
     assert body["text"] == "Looking for a designer for my app."
     assert body["requested_intent"] == "build_together"
+    # The matcher writes the heading; there is none while the request is pending.
+    assert body["title"] == ""
     assert body["match_count"] == 0
     assert fetched.json() == body
     assert pending_matches.json() == {"items": []}
@@ -602,7 +604,13 @@ async def test_matches_show_no_name_links_or_contacts(
 ) -> None:
     url = migrated_database_url
     axis = 300 + uuid.uuid4().int % 60
-    candidate = person(url, model=model, offer=unit((axis, 1.0)), display_name="Ishaan Secretname")
+    candidate = person(
+        url,
+        model=model,
+        offer=unit((axis, 1.0)),
+        display_name="Ishaan Secretname",
+        structured={"title": "React developer", "summary": "Builds web apps.", "offers": ["React"]},
+    )
     run_sql(
         url,
         "UPDATE profiles SET links = ARRAY['https://github.com/ishaan'], languages = ARRAY['en'], "
@@ -627,9 +635,11 @@ async def test_matches_show_no_name_links_or_contacts(
     mine = next(item for item in items if item["candidate"]["user_id"] == str(candidate))
     assert mine["rank"] == 1
     assert mine["candidate"]["offers"] == ["React"]
+    assert mine["candidate"]["title"] == "React developer"
     assert mine["candidate"]["languages"] == ["en"]
     assert set(mine["candidate"]) == {
         "user_id",
+        "title",
         "summary",
         "offers",
         "seeks",

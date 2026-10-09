@@ -19,7 +19,8 @@ const POLL_MS = 3000;
 const MAX_POLLS = 40;
 
 /**
- * One request and its matches. While the request is pending it polls until the matches
+ * One request and its matches, under the matcher's heading for it (the person's own
+ * words are a small line below). While the request is pending it polls until the matches
  * are ready (usually seconds; the first request after an idle period can take a minute).
  */
 export function RequestCard({ initial }: { initial: MatchRequest }) {
@@ -89,9 +90,13 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
             </span>
           ) : null}
         </div>
-        <h3 id={`${ids}-h`} className="text-body text-ink font-semibold">
-          “{request.text}”
+        <h3 id={`${ids}-h`} className="text-title lg:text-title-lg text-ink">
+          {request.title?.trim() || "Your request"}
         </h3>
+        {/* Their own words stay, but small: the heading is the platform's. */}
+        <p className="text-meta-lg text-muted">
+          You asked: <span>“{request.text}”</span>
+        </p>
       </div>
 
       <p role="status" aria-live="polite" className={pending ? "text-muted" : "sr-only"}>
