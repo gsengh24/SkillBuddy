@@ -32,7 +32,7 @@ data; events kept raw for 30 days.
 
 | Table | What is stored per user | Assumption | Per user (384-dim) | Per user (768-dim) |
 | --- | --- | --- | --- | --- |
-| `users` | 1 row + primary key and unique email index (+ consent and deletion columns, migration 0002; + the Google account picture's address, up to 300 characters, about 100 in practice, with a copy on `profiles` while the person shows it: migration 0030, [ADR 0017](adr/0017-google-profile-photo.md). The picture itself is never stored) | ~200 B row + up to ~0.2 KB | ~0.5 KB | ~0.5 KB |
+| `users` | 1 row + primary key and unique email index (+ consent and deletion columns, migration 0002; + the Google account picture's address, up to 300 characters, about 100 in practice, with a copy on `profiles` while the person shows it: migration 0031, [ADR 0017](adr/0017-google-profile-photo.md). The picture itself is never stored) | ~200 B row + up to ~0.2 KB | ~0.5 KB | ~0.5 KB |
 | `auth_identities` | 1 email identity (Google later) + unique (provider, subject) index | ~150 B | ~0.3 KB | ~0.3 KB |
 | `profiles` | About text (capped at 2,000 characters), structured JSON, timezone, languages; display name, up to 3 links, parse state and AI-consent columns (migration 0005, ~0.2 KB) | ~2 KB text + ~1.5 KB JSON + ~0.2 KB | ~4 KB | ~4 KB |
 | `profile_embeddings` | 4 vectors + HNSW index + unique index | 4 × (vector + ~120 B row) × 2.2 | ~14 KB | ~28 KB |
