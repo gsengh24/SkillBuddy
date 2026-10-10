@@ -19,6 +19,7 @@ import { describeError } from "@/lib/auth/messages";
 
 import { SELECT } from "./create-team";
 import { InviteLink } from "./invite-link";
+import { TeamListing } from "./team-listing";
 
 export type Invitable = { userId: string; name: string };
 
@@ -50,6 +51,8 @@ export function TeamPeople({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const full = members.length >= team.max_members;
+  const requests = invites.filter((invite) => invite.kind === "request");
+  const sent = invites.filter((invite) => invite.kind !== "request");
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -80,6 +83,27 @@ export function TeamPeople({
     void run(async () => {
       await browserApi(`/teams/invites/${invite.id}`, noContentSchema, { method: "DELETE" });
       setInvites((current) => current.filter((item) => item.id !== invite.id));
+    });
+  }
+
+  /** The owner's answer to a request to join. */
+  function answer(request: TeamInvite, accept: boolean) {
+    void run(async () => {
+      await browserApi(`/teams/invites/${request.id}/respond`, teamInviteSchema, {
+        method: "POST",
+        body: { accept },
+      });
+      setInvites((current) => current.filter((item) => item.id !== request.id));
+      if (accept) {
+        setMembers((current) => [
+          ...current,
+          {
+            user_id: request.user_id,
+            display_name: request.display_name,
+            joined_at: new Date().toISOString(),
+          },
+        ]);
+      }
     });
   }
 
@@ -140,11 +164,49 @@ export function TeamPeople({
 
       {isOwner ? (
         <div className="flex flex-col gap-3">
-          {invites.length ? (
+          {requests.length ? (
+            <div className="flex flex-col gap-2">
+              <h3 className="text-title text-ink">Asked to join</h3>
+              <ul className="flex flex-col gap-3">
+                {requests.map((request) => {
+                  const name = request.display_name || "Someone";
+                  return (
+                    <li key={request.id} className="flex flex-col gap-2">
+                      <p className="text-ink break-words">
+                        {name}
+                        {request.note ? <span className="text-ink-2">: {request.note}</span> : null}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="compact"
+                          disabled={busy || full}
+                          onClick={() => answer(request, true)}
+                          aria-label={`Let ${name} join`}
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="compact"
+                          disabled={busy}
+                          onClick={() => answer(request, false)}
+                          aria-label={`Decline ${name}'s request`}
+                        >
+                          Decline
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+          {sent.length ? (
             <div className="flex flex-col gap-2">
               <h3 className="text-title text-ink">Invited</h3>
               <ul className="flex flex-col gap-2">
-                {invites.map((invite) => (
+                {sent.map((invite) => (
                   <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-ink break-words">
                       {invite.display_name || "Someone you invited"}
@@ -203,6 +265,9 @@ export function TeamPeople({
 
       {isOwner ? (
         <InviteLink teamId={team.id} expiresAt={team.invite_link_expires_at} full={full} />
+      ) : null}
+      {isOwner ? (
+        <TeamListing teamId={team.id} listed={team.listed} lookingFor={team.looking_for} />
       ) : null}
 
       {error ? <InlineError announce>{error}</InlineError> : null}

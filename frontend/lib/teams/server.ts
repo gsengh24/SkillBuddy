@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 
 import { apiRequest } from "@/lib/api/client";
 import {
+  listedTeamPageSchema,
   messageUpdatesSchema,
   teamInviteListSchema,
   teamListSchema,
@@ -11,6 +12,7 @@ import {
   teamSchema,
   teamSpaceSchema,
   teamSummarySchema,
+  type TeamPurpose,
 } from "@/lib/api/schemas";
 
 async function cookieHeader(): Promise<Record<string, string>> {
@@ -61,6 +63,30 @@ export async function getTeamChat(teamId: string) {
 /** The team behind an invite link: name, purpose and size only. */
 export async function getTeamByLink(code: string) {
   return apiRequest(`/api/v1/teams/join/${encodeURIComponent(code)}`, teamSummarySchema, {
+    headers: await cookieHeader(),
+  });
+}
+
+/** Teams their owners listed, which the person could ask to join. */
+export async function getListedTeams({
+  purpose,
+  cursor,
+}: {
+  purpose?: TeamPurpose;
+  cursor?: string;
+}) {
+  const query = new URLSearchParams({
+    ...(purpose ? { purpose } : {}),
+    ...(cursor ? { cursor } : {}),
+  }).toString();
+  return apiRequest(`/api/v1/teams/listed${query ? `?${query}` : ""}`, listedTeamPageSchema, {
+    headers: await cookieHeader(),
+  });
+}
+
+/** The person's own open requests to join teams. */
+export async function getMyTeamRequests() {
+  return apiRequest("/api/v1/teams/requests", teamInviteListSchema, {
     headers: await cookieHeader(),
   });
 }

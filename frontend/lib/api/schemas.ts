@@ -302,6 +302,8 @@ export const notificationSchema = z.object({
     "content_removed",
     "team_invite",
     "team_joined",
+    "team_request",
+    "team_request_accepted",
   ]),
   intro_id: z.string().nullable(),
   request_id: z.string().nullable(),
@@ -442,6 +444,8 @@ export const teamSummarySchema = z.object({
   created_at: z.string(),
   unread: z.number().default(0),
   last_message_at: z.string().nullable().default(null),
+  listed: z.boolean().default(false),
+  looking_for: z.string().default(""),
 });
 export type TeamSummary = z.infer<typeof teamSummarySchema>;
 
@@ -452,6 +456,7 @@ export const teamInviteSchema = z.object({
   team: teamSummarySchema,
   user_id: z.string(),
   display_name: z.string(),
+  note: z.string().default(""),
   expires_at: z.string(),
   created_at: z.string(),
 });
@@ -479,6 +484,12 @@ export const teamListSchema = z.object({
   items: z.array(teamSummarySchema),
   max_teams: z.number(),
   max_owned: z.number(),
+});
+
+/** Listed teams, newest first (cursor-paged). */
+export const listedTeamPageSchema = z.object({
+  items: z.array(teamSummarySchema),
+  next_cursor: z.string().nullable(),
 });
 
 export const teamInviteListSchema = z.object({ items: z.array(teamInviteSchema) });

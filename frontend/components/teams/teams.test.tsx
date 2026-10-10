@@ -5,11 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SpaceView } from "@/components/spaces/space-view";
 import type { Team, TeamInvite, TeamMessage, TeamSpace, TeamSummary } from "@/lib/api/schemas";
 
+import { AskToJoin, MyTeamRequests } from "./ask-to-join";
 import { CreateTeam } from "./create-team";
 import { InviteLink } from "./invite-link";
 import { JoinByLink } from "./join-by-link";
 import { MyTeamInvites } from "./my-invites";
 import { TeamChat } from "./team-chat";
+import { TeamListing } from "./team-listing";
 import { TeamPeople } from "./team-people";
 
 const push = vi.fn();
@@ -31,6 +33,8 @@ const SUMMARY: TeamSummary = {
   created_at: "2026-10-10T10:00:00Z",
   unread: 0,
   last_message_at: null,
+  listed: false,
+  looking_for: "",
 };
 const INVITE: TeamInvite = {
   id: "i1",
@@ -39,6 +43,7 @@ const INVITE: TeamInvite = {
   team: SUMMARY,
   user_id: MINA,
   display_name: "Mina",
+  note: "",
   expires_at: "2026-10-24T10:00:00Z",
   created_at: "2026-10-10T10:00:00Z",
 };
@@ -195,6 +200,81 @@ describe("TeamPeople", () => {
       method: "DELETE",
     });
     expect(push).toHaveBeenCalledWith("/teams");
+  });
+});
+
+describe("Listed teams", () => {
+  const REQUEST: TeamInvite = {
+    ...INVITE,
+    id: "r1",
+    kind: "request",
+    user_id: "u9",
+    display_name: "Kiran",
+    note: "I draw maps.",
+  };
+
+  it("lets the owner list the team and say who it is looking for", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(
+      json(200, { ...TEAM, invites: [], listed: true, looking_for: "A designer" }),
+    );
+    render(<TeamListing teamId={TEAM_ID} listed={false} lookingFor="" />);
+    expect(screen.getByRole("button", { name: "Save listing" })).toBeDisabled();
+    expect(screen.getByText("This team is not listed.")).toBeVisible();
+    await user.click(screen.getByRole("checkbox", { name: /List this team/ }));
+    await user.type(screen.getByLabelText("Who are you looking for?"), "A designer");
+    await user.click(screen.getByRole("button", { name: "Save listing" }));
+    expect(lastCall()).toEqual({
+      url: `/api/v1/teams/${TEAM_ID}`,
+      method: "PATCH",
+      body: { listed: true, looking_for: "A designer" },
+    });
+    expect(await screen.findByText("This team is listed.")).toBeVisible();
+  });
+
+  it("sends a request to join with a note", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(json(201, REQUEST));
+    render(<AskToJoin teamId={TEAM_ID} teamName="Hack night" asked={false} />);
+    await user.click(screen.getByRole("button", { name: "Ask to join Hack night" }));
+    await user.type(screen.getByLabelText(/A note to the owner/), "I draw maps.");
+    await user.click(screen.getByRole("button", { name: "Send request" }));
+    expect(lastCall()).toEqual({
+      url: `/api/v1/teams/${TEAM_ID}/requests`,
+      method: "POST",
+      body: { note: "I draw maps." },
+    });
+    expect(await screen.findByText(/You asked to join/)).toBeVisible();
+  });
+
+  it("shows a request already sent, and takes one back", async () => {
+    const user = userEvent.setup();
+    render(<AskToJoin teamId={TEAM_ID} teamName="Hack night" asked />);
+    expect(screen.getByText(/You asked to join/)).toBeVisible();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+    fetchMock.mockResolvedValueOnce(json(204));
+    render(<MyTeamRequests initial={[REQUEST]} />);
+    await user.click(
+      screen.getByRole("button", { name: "Take back your request to join Hack night" }),
+    );
+    expect(lastCall()).toMatchObject({ url: "/api/v1/teams/invites/r1", method: "DELETE" });
+    expect(screen.queryByText("Waiting for the owner's answer")).not.toBeInTheDocument();
+  });
+
+  it("lets the owner accept a request, which adds the person", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(json(200, { ...REQUEST, status: "accepted" }));
+    render(<TeamPeople team={{ ...TEAM, invites: [REQUEST] }} meId={ME} invitable={[]} />);
+    expect(screen.getByText(/I draw maps\./)).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Let Kiran join" }));
+    expect(lastCall()).toEqual({
+      url: "/api/v1/teams/invites/r1/respond",
+      method: "POST",
+      body: { accept: true },
+    });
+    expect(await screen.findByRole("button", { name: "Remove Kiran" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Let Kiran join" })).not.toBeInTheDocument();
   });
 });
 
