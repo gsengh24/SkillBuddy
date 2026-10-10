@@ -113,6 +113,7 @@ and global poll caps do not change. Team messages count against the same
 | Team invites sent per person per day | 10 |
 | Requests to join per person per day | 5 |
 | Pending invites and requests per team | 20 |
+| Teams created per person per day | 5 |
 | Goals per team / skills per person per team | 30 / 10 (as pair spaces) |
 | Goal, skill and note writes | Shared with `SPACE_WRITES_PER_DAY` (100) |
 | Team messages | Shared with `MESSAGES_PER_DAY` (300) |

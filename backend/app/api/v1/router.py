@@ -28,6 +28,7 @@ from app.api.v1 import (
     requests,
     social,
     spaces,
+    teams,
 )
 
 API_V1_PREFIX = "/api/v1"
@@ -43,6 +44,7 @@ api_router.include_router(chat.router)
 api_router.include_router(blocks.router)
 api_router.include_router(spaces.router)
 api_router.include_router(spaces.report_router)
+api_router.include_router(teams.router)
 api_router.include_router(moderation.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_portal.router)

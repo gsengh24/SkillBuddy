@@ -158,6 +158,14 @@ class Settings(BaseSettings):
     # days after its connection ends.
     space_retention_days: int = Field(default=90, ge=7, le=730)
 
+    # --- Teams (ADR 0016) ---------------------------------------------------------------
+    # Teams a person may create per UTC day.
+    teams_created_per_day: int = Field(default=5, ge=1, le=100)
+    # Team invites a person may send per UTC day.
+    team_invites_per_day: int = Field(default=10, ge=1, le=200)
+    # A closed team, and answered or expired invites, are deleted after this many days.
+    team_retention_days: int = Field(default=90, ge=7, le=730)
+
     # --- Reports and moderation (ARCHITECTURE.md §8) -----------------------------------
     # People a person may block per UTC day.
     blocks_per_day: int = Field(default=20, ge=1, le=200)

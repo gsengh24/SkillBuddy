@@ -137,10 +137,19 @@ class ConnectionList(BaseModel):
 class NotificationOut(BaseModel):
     id: uuid.UUID
     kind: Literal[
-        "intro_received", "intro_accepted", "matches_ready", "report_reviewed", "content_removed"
+        "intro_received",
+        "intro_accepted",
+        "matches_ready",
+        "report_reviewed",
+        "content_removed",
+        "team_invite",
+        "team_joined",
     ]
     intro_id: uuid.UUID | None
     request_id: uuid.UUID | None
+    team_id: uuid.UUID | None = Field(
+        default=None, description="For `team_invite` and `team_joined`: the team (ADR 0016)."
+    )
     rule: str | None = Field(
         default=None,
         description="For `content_removed`: the content rule the text broke (A7).",
@@ -155,6 +164,7 @@ class NotificationOut(BaseModel):
             kind=notification.kind,  # type: ignore[arg-type]  # CHECK-constrained column
             intro_id=notification.intro_id,
             request_id=notification.request_id,
+            team_id=notification.team_id,
             rule=notification.rule,
             read_at=notification.read_at,
             created_at=notification.created_at,

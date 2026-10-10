@@ -1,7 +1,8 @@
 """Feature switches and limits set from the admin Settings page (A6).
 
 Stored in ``app_settings`` (``feature:<name>`` and ``limit:<name>``). A missing row means
-the default: every feature on, and each limit at today's value from the server settings.
+the default: every feature on (except ``OFF_BY_DEFAULT``), and each limit at today's value
+from the server settings.
 So with nothing stored, the app behaves exactly as before.
 
 Read through a 60-second in-process cache: a change reaches every process within a minute,
@@ -39,6 +40,16 @@ class Feature(StrEnum):
     AI_MATCHING = "ai_matching"
     PAIR_SPACES = "pair_spaces"
     EMAIL_NOTIFICATIONS = "email_notifications"
+    TEAMS = "teams"
+
+
+# Off until an admin turns them on. Teams stay off until reporting for teams has shipped
+# (ADR 0016).
+OFF_BY_DEFAULT: Final = frozenset({Feature.TEAMS})
+
+
+def _default(feature: Feature) -> bool:
+    return feature not in OFF_BY_DEFAULT
 
 
 class Limit(StrEnum):
@@ -70,6 +81,7 @@ _OFF_MESSAGES: Final[dict[Feature, str]] = {
     Feature.AI_MATCHING: "AI matching is paused right now.",
     Feature.PAIR_SPACES: "Pair spaces are paused right now. Please try again later.",
     Feature.EMAIL_NOTIFICATIONS: "Email notifications are paused right now.",
+    Feature.TEAMS: "Teams are paused right now. Please try again later.",
 }
 
 
@@ -146,7 +158,7 @@ cache: Final = _Cache()
 
 
 async def is_on(db: AsyncSession, feature: Feature) -> bool:
-    return (await cache.get(db)).features.get(feature, True)
+    return (await cache.get(db)).features.get(feature, _default(feature))
 
 
 async def ensure_on(db: AsyncSession, feature: Feature) -> None:
@@ -161,7 +173,7 @@ async def limit(db: AsyncSession, settings: Settings, which: Limit) -> int:
 
 async def all_features(db: AsyncSession) -> dict[Feature, bool]:
     snapshot = await cache.get(db)
-    return {feature: snapshot.features.get(feature, True) for feature in Feature}
+    return {feature: snapshot.features.get(feature, _default(feature)) for feature in Feature}
 
 
 async def all_limits(db: AsyncSession, settings: Settings) -> dict[Limit, int]:

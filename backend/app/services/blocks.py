@@ -7,12 +7,14 @@ While a block exists, in both directions:
 - the connection between them ends for good (``connections.ended_at``) and disappears from
   both Messages lists. Unblocking does not reopen it: a new intro is needed;
 - open intros between them are withdrawn, and no new intros can be sent either way;
+- they stop sharing teams (ADR 0016): the blocker leaves each team they share, or, where
+  the blocker owns the team, the blocked person is removed; invites between them end;
 - neither appears in the other's matches (a hard filter in retrieval, in SQL) or in match
   lists already shown.
 
 The blocked person is not told. Reporting still works after a block. People can only
 block someone they've had contact with through the app: a match, an intro or a
-connection.
+connection, or a team they are both in.
 """
 
 from __future__ import annotations
@@ -35,8 +37,10 @@ from app.models import (
     Match,
     MatchRequest,
     Profile,
+    TeamMember,
     User,
 )
+from app.services import team_blocks
 from app.services.auth.rate_limit import RateLimiter
 
 logger = logging.getLogger(__name__)
@@ -97,7 +101,13 @@ async def had_contact(db: AsyncSession, me: uuid.UUID, other: uuid.UUID) -> bool
         )
         .exists()
     )
-    return bool(await db.scalar(select(or_(connected, intro, matched))))
+    mine = select(TeamMember.team_id).where(TeamMember.user_id == me)
+    teammate = (
+        select(TeamMember.id)
+        .where(TeamMember.user_id == other, TeamMember.team_id.in_(mine))
+        .exists()
+    )
+    return bool(await db.scalar(select(or_(connected, intro, matched, teammate))))
 
 
 async def block(
@@ -135,6 +145,7 @@ async def block(
         )
         .values(status=IntroStatus.WITHDRAWN)
     )
+    await team_blocks.separate(db, blocker=user.id, blocked=other)
     await db.commit()
     logger.info("person_blocked")
     found = (

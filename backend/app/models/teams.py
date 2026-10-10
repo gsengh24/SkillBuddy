@@ -1,0 +1,137 @@
+"""Teams: groups of up to six people (ADR 0016).
+
+Unlike a pair space, a team has rows of its own: a name, an owner, and members who come and
+go. A person joins only by their own action (here: accepting the owner's invite).
+
+Retention (storage rules, CLAUDE.md): a closed team is hidden at once and deleted
+``TEAM_RETENTION_DAYS`` (90) later with everything in it; pending invites expire after
+``TEAM_INVITE_TTL_DAYS`` and answered or expired ones are deleted after the same 90 days; a
+membership row is deleted when the person leaves or is removed. Account deletion removes a
+person's memberships and invites (ON DELETE CASCADE); a team they owned passes to its
+longest-standing member.
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime
+from enum import StrEnum
+
+from sqlalchemy import (
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.base import Base, UUIDPrimaryKeyMixin
+
+TEAM_NAME_MAX_LENGTH = 60
+TEAM_DESCRIPTION_MAX_LENGTH = 300
+MAX_TEAM_MEMBERS = 6
+MAX_TEAMS_PER_PERSON = 5
+MAX_TEAMS_OWNED = 3
+MAX_PENDING_PER_TEAM = 20
+TEAM_INVITE_TTL_DAYS = 14
+
+
+def _in(values: tuple[str, ...]) -> str:
+    return ", ".join(f"'{value}'" for value in values)
+
+
+class TeamPurpose(StrEnum):
+    HACKATHON = "hackathon"
+    PROJECT = "project"
+    STUDY = "study"
+    OTHER = "other"
+
+
+class TeamInviteKind(StrEnum):
+    # The owner invited someone they are connected with.
+    INVITE = "invite"
+    # Later routes (ADR 0016): someone asked to join a listed team; the matcher suggested them.
+    REQUEST = "request"
+    SUGGESTED = "suggested"
+
+
+class TeamInviteStatus(StrEnum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    # Never shown to the owner: a declined invite looks pending until it expires.
+    DECLINED = "declined"
+    WITHDRAWN = "withdrawn"
+    EXPIRED = "expired"
+
+
+class Team(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "teams"
+    __table_args__ = (
+        CheckConstraint(
+            f"char_length(name) BETWEEN 1 AND {TEAM_NAME_MAX_LENGTH}", name="name_length"
+        ),
+        CheckConstraint(
+            f"char_length(description) <= {TEAM_DESCRIPTION_MAX_LENGTH}", name="description_length"
+        ),
+        CheckConstraint(f"purpose IN ({_in(tuple(TeamPurpose))})", name="purpose_valid"),
+        # The daily purge of teams closed long enough ago.
+        Index("ix_teams_closed_at", "closed_at", postgresql_where=text("closed_at IS NOT NULL")),
+    )
+
+    name: Mapped[str] = mapped_column(Text)
+    purpose: Mapped[str] = mapped_column(String(16))
+    description: Mapped[str] = mapped_column(Text, default="", server_default=text("''"))
+    # Empty only between an owner's account being deleted and the daily job passing the team
+    # to its longest-standing member.
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    # A closed team is hidden from everyone at once and deleted 90 days later.
+    closed_at: Mapped[datetime | None]
+
+
+class TeamMember(UUIDPrimaryKeyMixin, Base):
+    """One person in one team. ``created_at`` is when they joined."""
+
+    __tablename__ = "team_members"
+    __table_args__ = (UniqueConstraint("team_id", "user_id"),)
+
+    team_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class TeamInvite(UUIDPrimaryKeyMixin, Base):
+    """Someone who may join a team once they (or, for a request, the owner) say yes."""
+
+    __tablename__ = "team_invites"
+    __table_args__ = (
+        CheckConstraint(f"kind IN ({_in(tuple(TeamInviteKind))})", name="kind_valid"),
+        CheckConstraint(f"status IN ({_in(tuple(TeamInviteStatus))})", name="status_valid"),
+        # One open invite per team and person.
+        Index(
+            "uq_team_invites_pending",
+            "team_id",
+            "user_id",
+            unique=True,
+            postgresql_where=text("status = 'pending'"),
+        ),
+        Index("ix_team_invites_user_id_status", "user_id", "status"),
+    )
+
+    team_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(
+        String(16), default=TeamInviteStatus.PENDING, server_default=text("'pending'")
+    )
+    responded_at: Mapped[datetime | None]
+    expires_at: Mapped[datetime]
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
