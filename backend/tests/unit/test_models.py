@@ -55,6 +55,9 @@ def test_metadata_contains_all_tables() -> None:
         "space_goals",
         "space_skills",
         "progress_logs",
+        "teams",
+        "team_members",
+        "team_invites",
     }
 
 

@@ -37,6 +37,7 @@ SIGNUP_TABLES = {"app_settings", "signup_domains", "signup_applications", "invit
 CONTENT_TABLES = {"content_flags", "ai_calls"}  # 0023
 COMMS_TABLES = {"banners", "email_sends"}  # 0024
 EXPORT_CSV_TABLES = {"admin_exports"}  # 0025
+TEAM_TABLES = {"teams", "team_members", "team_invites"}  # 0026 (ADR 0016)
 ALL_TABLES = (
     PHASE_ZERO_TABLES
     | AUTH_TABLES
@@ -55,6 +56,7 @@ ALL_TABLES = (
     | CONTENT_TABLES
     | COMMS_TABLES
     | EXPORT_CSV_TABLES
+    | TEAM_TABLES
 )
 
 
@@ -222,6 +224,7 @@ def test_chat_migration_keeps_connections_and_downgrades_to_0008(
         - CONTENT_TABLES
         - COMMS_TABLES
         - EXPORT_CSV_TABLES
+        - TEAM_TABLES
     )
     assert not {"user_a_read_at", "user_b_read_at"} & _connection_columns(engine)
     with engine.connect() as connection:
@@ -312,6 +315,7 @@ def test_reports_migration_downgrades_to_0009_and_back(
         - CONTENT_TABLES
         - COMMS_TABLES
         - EXPORT_CSV_TABLES
+        - TEAM_TABLES
     )
 
     command.upgrade(config, "head")
@@ -358,6 +362,7 @@ def test_blocks_migration_keeps_connections_and_downgrades_to_0010(
         - CONTENT_TABLES
         - COMMS_TABLES
         - EXPORT_CSV_TABLES
+        - TEAM_TABLES
     )
     assert "ended_at" not in _connection_columns(engine)
     with engine.connect() as connection:

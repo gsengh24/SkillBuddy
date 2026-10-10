@@ -38,6 +38,7 @@ from app.services.notifications import purge_old_notifications
 from app.services.profile_parsing import BACKFILL_BATCH_SIZE, parse_profile, pending_profiles
 from app.services.reports import purge_resolved_reports, send_report_alert
 from app.services.spaces import purge_spaces
+from app.services.teams import purge_teams
 
 logger = logging.getLogger(__name__)
 
@@ -206,9 +207,11 @@ async def _ai_probe(ctx: JobContext) -> None:
 
 
 async def _purge_spaces(ctx: JobContext) -> None:
-    """Daily: old progress logs, and spaces whose connection ended long enough ago."""
+    """Daily: old progress logs, and spaces whose connection ended long enough ago. Also
+    teams (ADR 0016): expired invites, and teams closed long enough ago."""
     async with ctx.session_factory() as db:
         await purge_spaces(db, ctx.settings, datetime.now(UTC))
+        await purge_teams(db, ctx.settings, datetime.now(UTC))
 
 
 async def _purge_moderation_log(ctx: JobContext) -> None:

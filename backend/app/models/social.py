@@ -104,6 +104,9 @@ class NotificationKind(StrEnum):
     REPORT_REVIEWED = "report_reviewed"
     # A moderator removed text you wrote; ``rule`` names why (A7).
     CONTENT_REMOVED = "content_removed"
+    # Teams (ADR 0016): you were invited to a team; someone joined a team you are in.
+    TEAM_INVITE = "team_invite"
+    TEAM_JOINED = "team_joined"
 
 
 class Notification(UUIDPrimaryKeyMixin, Base):
@@ -121,6 +124,7 @@ class Notification(UUIDPrimaryKeyMixin, Base):
     request_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("match_requests.id", ondelete="CASCADE")
     )
+    team_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
     # For content_removed: the content rule (a fixed name, never text).
     rule: Mapped[str | None] = mapped_column(String(32))
     read_at: Mapped[datetime | None]

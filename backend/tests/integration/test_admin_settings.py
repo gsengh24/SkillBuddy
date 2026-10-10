@@ -99,7 +99,9 @@ async def test_defaults_equal_todays_behaviour(
         "environment": settings.environment.value,
     }
     assert page["signup_mode"] == "open"
-    assert {f["key"]: f["on"] for f in page["features"]} == {f.value: True for f in Feature}
+    assert {f["key"]: f["on"] for f in page["features"]} == {
+        f.value: f not in app_settings.OFF_BY_DEFAULT for f in Feature
+    }
     limits = {item["key"]: (item["value"], item["default"]) for item in page["limits"]}
     assert limits == {
         "match_requests_per_day": (settings.match_requests_per_day,) * 2,
@@ -109,7 +111,7 @@ async def test_defaults_equal_todays_behaviour(
     }
     assert page["intents"] == list(INTENTS)
     assert public == {
-        "features": {f.value: True for f in Feature},
+        "features": {f.value: f not in app_settings.OFF_BY_DEFAULT for f in Feature},
         "message_max_length": MESSAGE_MAX_LENGTH,
     }
 
@@ -161,6 +163,7 @@ async def test_a_switch_turned_off_blocks_its_endpoints(
         "ai_matching": True,
         "pair_spaces": False,
         "email_notifications": True,
+        "teams": False,
     }
     assert after.status_code == 201
     actions = run_sql(
