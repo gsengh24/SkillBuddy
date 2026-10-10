@@ -7,6 +7,10 @@ stored as ``from_a`` (written by ``user_a``), never a user id.
 Retention (storage rules, CLAUDE.md): progress logs are deleted ``SPACE_RETENTION_DAYS``
 (90) after they are written; everything in a space is deleted 90 days after its connection
 ends; account deletion removes it all with the connection (ON DELETE CASCADE).
+
+Teams use the same three tables (ADR 0016): a row belongs either to a connection (with
+``from_a``) or to a team (with ``author_id``), never both. Team rows go with the team, and a
+person's own rows go with their account.
 """
 
 from __future__ import annotations
@@ -36,6 +40,14 @@ MAX_GOALS_PER_SPACE = 30
 MAX_SKILLS_PER_PERSON = 10
 
 
+# A row hangs off a connection (author as ``from_a``) or a team (author as ``author_id``).
+ONE_PARENT = (
+    "(connection_id IS NOT NULL AND from_a IS NOT NULL AND team_id IS NULL AND author_id IS NULL)"
+    " OR "
+    "(connection_id IS NULL AND from_a IS NULL AND team_id IS NOT NULL AND author_id IS NOT NULL)"
+)
+
+
 class GoalStatus(StrEnum):
     OPEN = "open"
     DONE = "done"
@@ -50,12 +62,16 @@ class SpaceGoal(UUIDPrimaryKeyMixin, Base):
             f"char_length(title) BETWEEN 1 AND {GOAL_TITLE_MAX_LENGTH}", name="title_length"
         ),
         CheckConstraint("status IN ('open', 'done')", name="status_valid"),
+        CheckConstraint(ONE_PARENT, name="one_parent"),
+        Index("ix_space_goals_team_id", "team_id", postgresql_where=text("team_id IS NOT NULL")),
     )
 
-    connection_id: Mapped[uuid.UUID] = mapped_column(
+    connection_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("connections.id", ondelete="CASCADE"), index=True
     )
-    from_a: Mapped[bool]
+    from_a: Mapped[bool | None]
+    team_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
+    author_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     title: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(
         String(8), default=GoalStatus.OPEN, server_default=text("'open'")
@@ -74,12 +90,23 @@ class SpaceSkill(UUIDPrimaryKeyMixin, Base):
             f"char_length(name) BETWEEN 1 AND {SKILL_NAME_MAX_LENGTH}", name="name_length"
         ),
         UniqueConstraint("connection_id", "from_a", "name"),
+        CheckConstraint(ONE_PARENT, name="one_parent"),
+        Index(
+            "uq_space_skills_team",
+            "team_id",
+            "author_id",
+            "name",
+            unique=True,
+            postgresql_where=text("team_id IS NOT NULL"),
+        ),
     )
 
-    connection_id: Mapped[uuid.UUID] = mapped_column(
+    connection_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("connections.id", ondelete="CASCADE")
     )
-    from_a: Mapped[bool]
+    from_a: Mapped[bool | None]
+    team_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
+    author_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
@@ -97,12 +124,22 @@ class ProgressLog(UUIDPrimaryKeyMixin, Base):
         Index("ix_progress_logs_connection_id_created_at", "connection_id", "created_at", "id"),
         # The daily purge by age (a BRIN index is a few KB for an append-only time column).
         Index("ix_progress_logs_created_at_brin", "created_at", postgresql_using="brin"),
+        CheckConstraint(ONE_PARENT, name="one_parent"),
+        Index(
+            "ix_progress_logs_team_id_created_at",
+            "team_id",
+            "created_at",
+            "id",
+            postgresql_where=text("team_id IS NOT NULL"),
+        ),
     )
 
-    connection_id: Mapped[uuid.UUID] = mapped_column(
+    connection_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("connections.id", ondelete="CASCADE")
     )
-    from_a: Mapped[bool]
+    from_a: Mapped[bool | None]
+    team_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
+    author_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     note: Mapped[str] = mapped_column(Text)
     goal_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("space_goals.id", ondelete="SET NULL")

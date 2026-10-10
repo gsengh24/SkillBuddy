@@ -95,7 +95,7 @@ class Space:
     logs: list[ProgressLog]
 
 
-def author(connection: Connection, from_a: bool) -> uuid.UUID:
+def author(connection: Connection, from_a: bool | None) -> uuid.UUID:
     return connection.user_a if from_a else connection.user_b
 
 

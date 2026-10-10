@@ -160,6 +160,23 @@ def _rows(result: Any) -> int:
     return int(getattr(result, "rowcount", 0) or 0)
 
 
+async def open_team(
+    db: AsyncSession, user: User, team_id: uuid.UUID, *, lock: bool = False
+) -> Team:
+    """An open team ``user`` is in; anything else is "not found"."""
+    query = (
+        select(Team)
+        .join(TeamMember, TeamMember.team_id == Team.id)
+        .where(Team.id == team_id, Team.closed_at.is_(None), TeamMember.user_id == user.id)
+    )
+    if lock:
+        query = query.with_for_update(of=Team)
+    team = await db.scalar(query)
+    if team is None:
+        raise TeamNotFoundError
+    return team
+
+
 class TeamService:
     def __init__(self, db: AsyncSession, settings: Settings, limiter: RateLimiter) -> None:
         self._db = db
@@ -170,18 +187,7 @@ class TeamService:
     # --- lookups ------------------------------------------------------------------------
 
     async def _team(self, user: User, team_id: uuid.UUID, *, lock: bool = False) -> Team:
-        """An open team ``user`` is in."""
-        query = (
-            select(Team)
-            .join(TeamMember, TeamMember.team_id == Team.id)
-            .where(Team.id == team_id, Team.closed_at.is_(None), TeamMember.user_id == user.id)
-        )
-        if lock:
-            query = query.with_for_update(of=Team)
-        team = await self._db.scalar(query)
-        if team is None:
-            raise TeamNotFoundError
-        return team
+        return await open_team(self._db, user, team_id, lock=lock)
 
     async def _owned(self, user: User, team_id: uuid.UUID, *, lock: bool = False) -> Team:
         team = await self._team(user, team_id, lock=lock)

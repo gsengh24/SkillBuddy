@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import AsyncIterator, Callable, Iterator
+from collections.abc import AsyncIterator, Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -46,20 +46,6 @@ async def session_factory(settings: Settings) -> AsyncIterator[async_sessionmake
         yield create_session_factory(engine)
     finally:
         await engine.dispose()
-
-
-@pytest.fixture
-def teams_on(migrated_database_url: str) -> Iterator[None]:
-    """Teams are off by default: switch them on for one test, then back."""
-    run_sql(
-        migrated_database_url,
-        "INSERT INTO app_settings (key, value) VALUES ('feature:teams', 'true'::jsonb) "
-        "ON CONFLICT (key) DO UPDATE SET value = 'true'::jsonb",
-    )
-    app_settings.cache.invalidate()
-    yield
-    run_sql(migrated_database_url, "DELETE FROM app_settings WHERE key = 'feature:teams'")
-    app_settings.cache.invalidate()
 
 
 async def link(client: AsyncClient, url: str, sender: Person, recipient: Person) -> None:
