@@ -51,6 +51,7 @@ from app.models import (
     Profile,
     RequestStatus,
 )
+from app.services import teams
 from app.services.notifications import add_notification
 
 logger = logging.getLogger(__name__)
@@ -454,6 +455,7 @@ async def run_match_request(
         raw_text = request.raw_text
         requester_id = request.user_id
         requested_intent = request.requested_intent
+        team_id = request.team_id
         names = [profile.display_name] if profile and profile.display_name.strip() else []
         requester = _requester_summary(profile, names)
 
@@ -480,6 +482,10 @@ async def run_match_request(
             model_version=embedder.model_version,
             with_vectors=intent is Intent.EXPLORE,
         )
+        if team_id is not None:
+            # Looking for a teammate (ADR 0016): not the people already in the team.
+            taken = await teams.not_invitable(db, team_id)
+            found = [c for c in found if c.user_id not in taken]
         seen, counts = await _history(db, requester_id, request_id, [c.user_id for c in found])
 
     # --- 3. rank, and drop anyone who is not a good enough fit -----------------------------

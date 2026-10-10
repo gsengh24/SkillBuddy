@@ -165,6 +165,8 @@ export const matchRequestSchema = z.object({
   intent: intentSchema.nullable(),
   status: z.enum(["pending", "ready", "closed", "expired"]),
   match_count: z.number(),
+  /** Set when the request looks for a teammate for a team (ADR 0016). */
+  team_id: z.string().nullable().optional(),
   created_at: z.string(),
   matched_at: z.string().nullable(),
   expires_at: z.string(),

@@ -13,6 +13,9 @@
 - Listed teams: the owner can list a team with a "looking for" line. Any signed-in person
   can browse listed teams and ask to join with a short note; the owner accepts or
   declines. A decline is not shown to the asker: it looks pending until it expires.
+- The matcher finds teammates: the owner's match request carries the team, and the owner
+  can invite a match to the team (kind ``suggested``). The person sees why they were
+  suggested and the team's name, purpose and size, and accepts or declines.
 - Nobody can be invited to, or join, a team with a member on either side of a block with
   them (``app.services.blocks``). They are told only that it can't be done, never who.
 - Caps: MAX_TEAM_MEMBERS people, MAX_TEAMS_PER_PERSON teams each, MAX_TEAMS_OWNED owned,
@@ -47,7 +50,10 @@ from app.models import (
     SIGNED_IN_STATUSES,
     TEAM_INVITE_TTL_DAYS,
     TEAM_LINK_TTL_DAYS,
+    Block,
     Connection,
+    Match,
+    MatchRequest,
     NotificationKind,
     Profile,
     Team,
@@ -405,8 +411,33 @@ class TeamService:
             )
         )
 
-    async def invite(self, user: User, team_id: uuid.UUID, invitee_id: uuid.UUID) -> InviteView:
+    async def invite(
+        self,
+        user: User,
+        team_id: uuid.UUID,
+        invitee_id: uuid.UUID | None = None,
+        *,
+        match_id: uuid.UUID | None = None,
+    ) -> InviteView:
+        """Invite a connection, or (``match_id``) someone the matcher suggested for this team."""
         team = await self._owned(user, team_id, lock=True)
+        kind, note = TeamInviteKind.INVITE, ""
+        if match_id is not None:
+            # Only a match from the owner's own request for this team counts.
+            match = await self._db.scalar(
+                select(Match)
+                .join(MatchRequest, MatchRequest.id == Match.request_id)
+                .where(
+                    Match.id == match_id,
+                    MatchRequest.user_id == user.id,
+                    MatchRequest.team_id == team.id,
+                )
+            )
+            if match is None:
+                raise CannotInviteError
+            invitee_id, kind, note = match.candidate_id, TeamInviteKind.SUGGESTED, match.reason
+        if invitee_id is None:
+            raise CannotInviteError
         now = datetime.now(UTC)
         members = await self._member_ids(team.id)
         if invitee_id in members:
@@ -414,7 +445,7 @@ class TeamService:
         open_invites = await self._open_invitees(team.id, invitee_id, now)
         if invitee_id in open_invites:
             raise TeamInviteExistsError
-        if not await self._can_invite(user, invitee_id, members):
+        if not await self._can_invite(user, invitee_id, members, need_connection=match_id is None):
             raise CannotInviteError
         if len(members) >= MAX_TEAM_MEMBERS:
             raise TeamFullError
@@ -425,8 +456,9 @@ class TeamService:
             id=uuid.uuid4(),
             team_id=team.id,
             user_id=invitee_id,
-            kind=TeamInviteKind.INVITE,
+            kind=kind,
             status=TeamInviteStatus.PENDING,
+            note=note,
             expires_at=now + timedelta(days=TEAM_INVITE_TTL_DAYS),
         )
         self._db.add(invite)
@@ -447,19 +479,27 @@ class TeamService:
         )
 
     async def _can_invite(
-        self, user: User, invitee_id: uuid.UUID, members: list[uuid.UUID]
+        self,
+        user: User,
+        invitee_id: uuid.UUID,
+        members: list[uuid.UUID],
+        *,
+        need_connection: bool,
     ) -> bool:
         if invitee_id == user.id:
             return False
-        connected = await self._db.scalar(
-            select(Connection.id).where(
-                Connection.user_a == min(user.id, invitee_id),
-                Connection.user_b == max(user.id, invitee_id),
-                Connection.ended_at.is_(None),
+        if need_connection:
+            connected = await self._db.scalar(
+                select(Connection.id).where(
+                    Connection.user_a == min(user.id, invitee_id),
+                    Connection.user_b == max(user.id, invitee_id),
+                    Connection.ended_at.is_(None),
+                )
             )
-        )
+            if connected is None:
+                return False
         invitee = await self._db.get(User, invitee_id)
-        if connected is None or invitee is None or invitee.status not in SIGNED_IN_STATUSES:
+        if invitee is None or invitee.status not in SIGNED_IN_STATUSES:
             return False
         return not (await blocks.blocked_with(self._db, invitee_id)).intersection(members)
 
@@ -478,7 +518,7 @@ class TeamService:
             .join(Team, Team.id == TeamInvite.team_id)
             .where(
                 TeamInvite.user_id == user.id,
-                TeamInvite.kind == TeamInviteKind.INVITE,
+                TeamInvite.kind.in_((TeamInviteKind.INVITE, TeamInviteKind.SUGGESTED)),
                 TeamInvite.status == TeamInviteStatus.PENDING,
                 TeamInvite.expires_at > datetime.now(UTC),
                 Team.closed_at.is_(None),
@@ -747,6 +787,20 @@ class TeamService:
         invite.status = TeamInviteStatus.WITHDRAWN
         invite.responded_at = datetime.now(UTC)
         await self._db.commit()
+
+
+async def not_invitable(db: AsyncSession, team_id: uuid.UUID) -> set[uuid.UUID]:
+    """People the matcher should not suggest for a team: its members, and anyone on either
+    side of a block with one of them."""
+    members = set(await db.scalars(select(TeamMember.user_id).where(TeamMember.team_id == team_id)))
+    if not members:
+        return members
+    pairs = await db.execute(
+        select(Block.blocker_id, Block.blocked_id).where(
+            or_(Block.blocker_id.in_(members), Block.blocked_id.in_(members))
+        )
+    )
+    return members.union(*(pair for pair in pairs.tuples()))
 
 
 async def purge_teams(db: AsyncSession, settings: Settings, now: datetime) -> dict[str, int]:

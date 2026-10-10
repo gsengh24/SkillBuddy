@@ -123,7 +123,7 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
         <ul className="grid gap-4 md:grid-cols-2">
           {matches.map((match) => (
             <li key={match.id}>
-              <MatchCard match={match} />
+              <MatchCard match={match} teamId={request.team_id} />
             </li>
           ))}
         </ul>

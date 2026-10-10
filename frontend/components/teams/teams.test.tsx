@@ -7,6 +7,7 @@ import type { Team, TeamInvite, TeamMessage, TeamSpace, TeamSummary } from "@/li
 
 import { AskToJoin, MyTeamRequests } from "./ask-to-join";
 import { CreateTeam } from "./create-team";
+import { FindTeammate, InviteMatchToTeam } from "./find-teammate";
 import { InviteLink } from "./invite-link";
 import { JoinByLink } from "./join-by-link";
 import { MyTeamInvites } from "./my-invites";
@@ -275,6 +276,59 @@ describe("Listed teams", () => {
     });
     expect(await screen.findByRole("button", { name: "Remove Kiran" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Let Kiran join" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Finding a teammate", () => {
+  it("asks the matcher with the team attached, then opens the request", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(
+      json(202, {
+        id: "req1",
+        text: "A designer who can prototype fast",
+        title: "",
+        requested_intent: null,
+        intent: null,
+        status: "pending",
+        match_count: 0,
+        team_id: TEAM_ID,
+        created_at: "2026-10-11T10:00:00Z",
+        matched_at: null,
+        expires_at: "2026-11-10T10:00:00Z",
+      }),
+    );
+    render(<FindTeammate teamId={TEAM_ID} full={false} />);
+    expect(screen.getByRole("button", { name: "Find people" })).toBeDisabled();
+    await user.type(
+      screen.getByLabelText("Who does the team need?"),
+      "A designer who can prototype fast",
+    );
+    await user.click(screen.getByRole("button", { name: "Find people" }));
+    expect(lastCall()).toEqual({
+      url: "/api/v1/requests",
+      method: "POST",
+      body: { text: "A designer who can prototype fast", team_id: TEAM_ID },
+    });
+    expect(push).toHaveBeenCalledTimes(1);
+  });
+
+  it("has no form when the team is full", () => {
+    render(<FindTeammate teamId={TEAM_ID} full />);
+    expect(screen.queryByLabelText("Who does the team need?")).not.toBeInTheDocument();
+    expect(screen.getByText(/The team is full/)).toBeVisible();
+  });
+
+  it("invites a match to the team", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(json(201, { ...INVITE, kind: "suggested" }));
+    render(<InviteMatchToTeam teamId={TEAM_ID} matchId="match1" />);
+    await user.click(screen.getByRole("button", { name: "Invite to team" }));
+    expect(lastCall()).toEqual({
+      url: `/api/v1/teams/${TEAM_ID}/invites`,
+      method: "POST",
+      body: { match_id: "match1" },
+    });
+    expect(await screen.findByText(/Invited to the team/)).toBeVisible();
   });
 });
 

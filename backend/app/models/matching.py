@@ -79,6 +79,9 @@ class MatchRequest(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     raw_text: Mapped[str] = mapped_column(Text)
+    # Set when a team's owner is looking for a teammate (ADR 0016): the team's members
+    # are left out of the matches, and a match can be invited to the team.
+    team_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"))
     # The intent chip the user picked, if any; ``intent`` is what the matcher used.
     requested_intent: Mapped[str | None] = mapped_column(String(32))
     intent: Mapped[str | None] = mapped_column(String(32))
