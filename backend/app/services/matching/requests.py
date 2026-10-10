@@ -27,7 +27,7 @@ from app.models import (
     RequestStatus,
     User,
 )
-from app.services import app_settings, blocks, content_rules
+from app.services import app_settings, blocks, content_rules, teams
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import InvalidCursorError, decode_cursor, encode
 
@@ -71,7 +71,9 @@ class MatchRequestService:
         # Counts per UTC-aligned day window (the limiter's window is set by the caller).
         self._limiter = limiter
 
-    async def create(self, user: User, raw_text: str, intent: str | None) -> MatchRequest:
+    async def create(
+        self, user: User, raw_text: str, intent: str | None, team_id: uuid.UUID | None = None
+    ) -> MatchRequest:
         profile = await self._db.get(Profile, user.id)
         if profile is None or not profile.raw_about_text.strip():
             raise ProfileRequiredError
@@ -82,6 +84,12 @@ class MatchRequestService:
         )
         if (open_count or 0) >= self._settings.max_open_match_requests:
             raise TooManyOpenRequestsError
+        if team_id is not None:
+            # Looking for a teammate (ADR 0016): only the team's owner, while teams are on.
+            await app_settings.ensure_on(self._db, app_settings.Feature.TEAMS)
+            team = await teams.open_team(self._db, user, team_id)
+            if team.owner_id != user.id:
+                raise teams.NotTeamOwnerError
         daily = await app_settings.limit(
             self._db, self._settings, app_settings.Limit.MATCH_REQUESTS_PER_DAY
         )
@@ -90,6 +98,7 @@ class MatchRequestService:
         request = MatchRequest(
             user_id=user.id,
             raw_text=raw_text,
+            team_id=team_id,
             requested_intent=intent,
             status=RequestStatus.PENDING,
             expires_at=now + timedelta(days=self._settings.match_request_ttl_days),

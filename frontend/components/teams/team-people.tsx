@@ -18,6 +18,7 @@ import {
 import { describeError } from "@/lib/auth/messages";
 
 import { SELECT } from "./create-team";
+import { FindTeammate } from "./find-teammate";
 import { InviteLink } from "./invite-link";
 import { TeamListing } from "./team-listing";
 
@@ -266,6 +267,7 @@ export function TeamPeople({
       {isOwner ? (
         <InviteLink teamId={team.id} expiresAt={team.invite_link_expires_at} full={full} />
       ) : null}
+      {isOwner ? <FindTeammate teamId={team.id} full={full} /> : null}
       {isOwner ? (
         <TeamListing teamId={team.id} listed={team.listed} lookingFor={team.looking_for} />
       ) : null}

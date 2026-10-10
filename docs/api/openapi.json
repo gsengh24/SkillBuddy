@@ -3375,6 +3375,19 @@
             "description": "The intent the person picked. Without it the matcher works it out.",
             "title": "Intent"
           },
+          "team_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A team you own, when you are looking for a teammate for it: its members are left out, and a match can be invited to the team.",
+            "title": "Team Id"
+          },
           "text": {
             "description": "What the person is looking for, in their own words.",
             "maxLength": 1000,
@@ -3464,6 +3477,18 @@
           "status": {
             "$ref": "#/components/schemas/RequestStatus",
             "description": "`pending` while matches are being found (poll until `ready`)."
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
           },
           "text": {
             "title": "Text",
@@ -6329,16 +6354,33 @@
       "TeamInviteIn": {
         "additionalProperties": false,
         "properties": {
+          "match_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Or a match from your request for a teammate for this team: that person is invited, and sees why they were suggested.",
+            "title": "Match Id"
+          },
           "user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "description": "Someone you have an open connection with.",
-            "format": "uuid",
-            "title": "User Id",
-            "type": "string"
+            "title": "User Id"
           }
         },
-        "required": [
-          "user_id"
-        ],
         "title": "TeamInviteIn",
         "type": "object"
       },
@@ -6392,7 +6434,7 @@
           },
           "note": {
             "default": "",
-            "description": "What a person asking to join wrote.",
+            "description": "What a person asking to join wrote; for `suggested`, why the matcher suggested them.",
             "title": "Note",
             "type": "string"
           },
@@ -17017,6 +17059,26 @@
             },
             "description": "Not signed in."
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`not_team_owner` (with `team_id`)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`team_not_found` (with `team_id`)."
+          },
           "409": {
             "content": {
               "application/json": {
@@ -18563,7 +18625,7 @@
             "description": "`feature_off`."
           }
         },
-        "summary": "Invite someone you are connected with (owner)",
+        "summary": "Invite a connection, or a match suggested for the team (owner)",
         "tags": [
           "teams"
         ]

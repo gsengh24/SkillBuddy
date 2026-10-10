@@ -53,6 +53,8 @@ _ERRORS: dict[int | str, dict[str, Any]] = {
     dependencies=[Depends(require_json), Depends(require_storage_capacity)],
     responses={
         401: _ERRORS[401],
+        403: {"model": ErrorResponse, "description": "`not_team_owner` (with `team_id`)."},
+        404: {"model": ErrorResponse, "description": "`team_not_found` (with `team_id`)."},
         409: {
             "model": ErrorResponse,
             "description": "`profile_required` or `too_many_open_requests`.",
@@ -68,7 +70,7 @@ async def create_request(
 ) -> MatchRequestOut:
     """Saves the request and returns at once with `status: pending`. Matches are found in
     the background (usually within 30 seconds); poll `GET /requests/{id}`."""
-    request = await service.create(auth.user, body.text, body.intent)
+    request = await service.create(auth.user, body.text, body.intent, body.team_id)
     return MatchRequestOut.build(request, 0)
 
 

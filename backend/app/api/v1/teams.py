@@ -250,7 +250,7 @@ async def close_team(team_id: uuid.UUID, auth: AuthDep, service: ServiceDep) -> 
 @router.post(
     "/{team_id}/invites",
     status_code=HTTPStatus.CREATED,
-    summary="Invite someone you are connected with (owner)",
+    summary="Invite a connection, or a match suggested for the team (owner)",
     dependencies=WRITE,
     responses={
         401: _401,
@@ -269,7 +269,9 @@ async def invite_to_team(
     team_id: uuid.UUID, body: TeamInviteIn, auth: AuthDep, service: ServiceDep
 ) -> TeamInviteOut:
     """They get an in-app notification and have 14 days to answer."""
-    return TeamInviteOut.build(await service.invite(auth.user, team_id, body.user_id))
+    return TeamInviteOut.build(
+        await service.invite(auth.user, team_id, body.user_id, match_id=body.match_id)
+    )
 
 
 @router.delete(

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from app.models import (
     MAX_TEAM_MEMBERS,
@@ -60,7 +60,20 @@ class TeamPatch(BaseModel):
 class TeamInviteIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    user_id: uuid.UUID = Field(description="Someone you have an open connection with.")
+    user_id: uuid.UUID | None = Field(
+        default=None, description="Someone you have an open connection with."
+    )
+    match_id: uuid.UUID | None = Field(
+        default=None,
+        description="Or a match from your request for a teammate for this team: that person "
+        "is invited, and sees why they were suggested.",
+    )
+
+    @model_validator(mode="after")
+    def _one_of(self) -> Self:
+        if (self.user_id is None) == (self.match_id is None):
+            raise ValueError("send user_id or match_id, not both")
+        return self
 
 
 class TeamRequestIn(BaseModel):
@@ -137,7 +150,11 @@ class TeamInviteOut(BaseModel):
     )
     team: TeamSummaryOut
     user_id: uuid.UUID = Field(description="The invited person, or the person asking.")
-    note: str = Field(default="", description="What a person asking to join wrote.")
+    note: str = Field(
+        default="",
+        description="What a person asking to join wrote; for `suggested`, why the matcher "
+        "suggested them.",
+    )
     display_name: str = Field(description="Their name, in the owner's list; otherwise empty.")
     expires_at: datetime
     created_at: datetime

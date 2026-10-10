@@ -43,6 +43,11 @@ class MatchRequestIn(BaseModel):
         default=None,
         description="The intent the person picked. Without it the matcher works it out.",
     )
+    team_id: uuid.UUID | None = Field(
+        default=None,
+        description="A team you own, when you are looking for a teammate for it: its "
+        "members are left out, and a match can be invited to the team.",
+    )
 
 
 class MatchRequestOut(BaseModel):
@@ -58,6 +63,7 @@ class MatchRequestOut(BaseModel):
         description="`pending` while matches are being found (poll until `ready`)."
     )
     match_count: int
+    team_id: uuid.UUID | None = None
     created_at: datetime
     matched_at: datetime | None
     expires_at: datetime
@@ -72,6 +78,7 @@ class MatchRequestOut(BaseModel):
             intent=request.intent,  # type: ignore[arg-type]  # CHECK-constrained column
             status=RequestStatus(request.status),
             match_count=match_count,
+            team_id=request.team_id,
             created_at=request.created_at,
             matched_at=request.matched_at,
             expires_at=request.expires_at,
