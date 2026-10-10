@@ -57,6 +57,10 @@ Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless 
      green, **except** a PR that adds the pair-space report target or changes privacy,
      terms or retention wording: that stops for the owner's review (owner decision,
      2026-10-04). Step 9 only.
+   - **Teams (ADR 0016), PRs T1 to T7:** auto-merge is allowed once the five required
+     checks are green. **T8** (reports for teams and team messages, moderator actions,
+     privacy and terms wording) stops for the owner's review, and the `teams` feature
+     switch stays off until it has merged (owner decision, 2026-10-10). Teams only.
    - Build one PR at a time. After a PR with a migration merges, **for staging only**,
      Claude Code starts Actions → Migrate staging itself (`gh workflow run "Migrate staging"
      --ref main`), waits for it, confirms its "Revision after upgrade" step shows the new
