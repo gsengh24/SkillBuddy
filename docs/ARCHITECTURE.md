@@ -113,7 +113,7 @@ PostgreSQL is the single source of truth, with the pgvector extension holding em
 
 | Entity | Key fields | Notes |
 | --- | --- | --- |
-| users | id, email, auth provider, status, created\_at | Identity and account only; no profile data here |
+| users | id, email, auth provider, status, created\_at | Identity and account only; no profile data here. Holds the address of the Google account picture, never the picture ([ADR 0017](adr/0017-google-profile-photo.md)) |
 | profiles | user\_id, raw\_about\_text, structured\_json, location, timezone, languages, visibility | Raw text kept forever; structured\_json is re-derivable |
 | profile\_embeddings | user\_id, facet (identity, offer, seek, interest), vector, model\_version | One row per facet; model\_version enables re-embedding |
 | skills / interests | id, name, category, embedding | Controlled vocabulary grown from extraction; used for filters and display |

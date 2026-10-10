@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeleteAccount, SignOutActions } from "@/components/auth/account-actions";
 
 import { EmailToggle } from "./email-toggle";
+import { PhotoToggle } from "./photo-toggle";
 import { VisibilityToggle } from "./visibility-toggle";
 
 /*
@@ -34,6 +35,24 @@ describe("switches", () => {
     await userEvent.setup().keyboard(" ");
     expect(toggle).not.toBeChecked();
     expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("'Show my Google photo' is off by default and Space turns it on", async () => {
+    render(<PhotoToggle initial={null} available />);
+    const toggle = screen.getByRole("switch", { name: /Show my Google photo/ });
+    expect(toggle).not.toBeChecked();
+    toggle.focus();
+    await userEvent.setup().keyboard(" ");
+    expect(toggle).toBeChecked();
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ show_photo: true }));
+  });
+
+  it("'Show my Google photo' can't be turned on without a Google picture", () => {
+    render(<PhotoToggle initial={null} available={false} />);
+    const toggle = screen.getByRole("switch", { name: /Show my Google photo/ });
+    expect(toggle).toBeDisabled();
+    expect(screen.getByText(/Sign in with Google once/)).toBeInTheDocument();
   });
 
   it("'Show me in new matches' is a named switch reachable by Tab", async () => {

@@ -43,6 +43,12 @@ class ProfileTextRequiredError(AppError):
     default_message = "Add a description before correcting what was understood from it."
 
 
+class PhotoUnavailableError(AppError):
+    status_code = HTTPStatus.CONFLICT
+    code = "photo_unavailable"
+    default_message = "Sign in with Google once to use your Google account picture."
+
+
 # PATCH fields that stay as they are when sent as null (the column can't be empty) ...
 _KEPT_ON_NULL = (
     "display_name",
@@ -149,6 +155,14 @@ class ProfileService:
         for field in _CLEARED_ON_NULL:
             if field in changes:
                 setattr(profile, field, changes[field])
+        # The picture is only ever the Google one, and only while the person keeps this on
+        # (ADR 0017): there is no upload and no address of the person's choosing.
+        if changes.get("show_photo") is True:
+            if user.google_picture_url is None:
+                raise PhotoUnavailableError
+            profile.photo_url = user.google_picture_url
+        elif changes.get("show_photo") is False:
+            profile.photo_url = None
         await self._db.commit()
         await self._db.refresh(profile)
         return profile

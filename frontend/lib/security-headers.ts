@@ -3,7 +3,8 @@
  *
  * The Content-Security-Policy allows only this site's own scripts, styles, fonts, images
  * and API calls (the browser talks only to our same-origin /api/v1 forwarder, and fonts are
- * self-hosted by next/font). Next.js needs inline scripts to start the page, hence
+ * self-hosted by next/font). The one exception is images from Google's account-picture
+ * hosts, for profile pictures (ADR 0017). Next.js needs inline scripts to start the page, hence
  * 'unsafe-inline' for scripts; development also needs 'unsafe-eval' and a WebSocket for
  * hot reload. Framing is refused twice: frame-ancestors and X-Frame-Options.
  * Strict-Transport-Security makes browsers use HTTPS only; it is sent in production (on
@@ -12,12 +13,23 @@
 
 export type Header = { key: string; value: string };
 
+/**
+ * Where Google serves account pictures from. The API accepts a picture address only on
+ * these hosts (backend `services/auth/google.py`); keep the two lists the same.
+ */
+export const PHOTO_HOSTS = [
+  "https://lh3.googleusercontent.com",
+  "https://lh4.googleusercontent.com",
+  "https://lh5.googleusercontent.com",
+  "https://lh6.googleusercontent.com",
+] as const;
+
 export function contentSecurityPolicy(isDev: boolean): string {
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])],
     "style-src": ["'self'", "'unsafe-inline'"],
-    "img-src": ["'self'", "data:"],
+    "img-src": ["'self'", "data:", ...PHOTO_HOSTS],
     "font-src": ["'self'"],
     "connect-src": ["'self'", ...(isDev ? ["ws:", "wss:"] : [])],
     "frame-ancestors": ["'none'"],

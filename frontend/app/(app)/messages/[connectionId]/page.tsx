@@ -58,7 +58,12 @@ export default async function ConversationPage({
         </TextLink>
         <div className="border-line flex flex-wrap items-center justify-between gap-3 border-b pb-4">
           <div className="flex min-w-0 items-center gap-3">
-            <Avatar userId={connection.person.user_id} name={name} decorative />
+            <Avatar
+              userId={connection.person.user_id}
+              name={name}
+              photoUrl={connection.person.photo_url}
+              decorative
+            />
             <div className="min-w-0">
               <h1 className="text-title lg:text-title-lg font-sans break-words">{name}</h1>
               <p className="text-meta text-muted">Connected</p>

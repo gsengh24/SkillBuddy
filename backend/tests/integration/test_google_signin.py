@@ -29,6 +29,8 @@ from tests.conftest import SettingsFactory
 from tests.fake_oidc import FakeOidc
 from tests.integration.conftest import CapturingDelivery, run_sql
 from tests.integration.test_auth_codes import error_code, new_email, request_code
+from tests.integration.test_auth_sessions import bearer
+from tests.integration.test_profile_api import body as profile_body
 
 ISSUER = "http://fake-oidc.test"
 CLIENT_ID = "client-123.apps.googleusercontent.com"
@@ -451,3 +453,72 @@ async def test_unused_attempts_are_purged_once_expired(
         await engine.dispose()
     assert result.oauth_states >= 1
     assert run_sql(migrated_database_url, "SELECT 1 FROM oauth_states") == []
+
+
+# --- the account picture (ADR 0017) ------------------------------------------------------
+
+PICTURE = "https://lh3.googleusercontent.com/a/ACg8ocFakePictureOne=s96-c"
+NEW_PICTURE = "https://lh3.googleusercontent.com/a/ACg8ocFakePictureTwo=s96-c"
+PROFILE = "/api/v1/me/profile"
+
+
+async def google_token(client: AsyncClient, settings: Settings, fake: FakeOidc, email: str) -> str:
+    """Signs in with Google and returns the session as a bearer token (no cookies, no CSRF)."""
+    landed(await google_sign_in(client, fake, email))
+    token = client.cookies[settings.session_cookie_name]
+    client.cookies.clear()
+    return token
+
+
+async def test_the_google_picture_is_off_until_switched_on_and_then_follows_google(
+    make_settings: SettingsFactory, fake: FakeOidc, migrated_database_url: str
+) -> None:
+    settings = google_settings(make_settings, migrated_database_url, ai_llm_enabled=False)
+    email = thapar_email()
+    fake.tamper.claims = {"picture": PICTURE}
+    async with browser(settings, fake) as client:
+        token = await google_token(client, settings, fake, email)
+        saved = await client.put(PROFILE, json=profile_body(), headers=bearer(token))
+        shown = await client.patch(PROFILE, json={"show_photo": True}, headers=bearer(token))
+
+        fake.tamper.claims = {"picture": NEW_PICTURE}
+        token = await google_token(client, settings, fake, email)
+        followed = await client.get(PROFILE, headers=bearer(token))
+        hidden = await client.patch(PROFILE, json={"show_photo": False}, headers=bearer(token))
+
+        fake.tamper.claims = {"picture": "https://evil.example/picture.png"}
+        token = await google_token(client, settings, fake, email)
+        gone = await client.get(PROFILE, headers=bearer(token))
+        refused = await client.patch(PROFILE, json={"show_photo": True}, headers=bearer(token))
+
+    assert saved.status_code == 200, saved.text
+    assert (saved.json()["photo_url"], saved.json()["photo_available"]) == (None, True)
+    assert shown.status_code == 200, shown.text
+    assert shown.json()["photo_url"] == PICTURE
+    assert followed.json()["photo_url"] == NEW_PICTURE
+    assert (hidden.json()["photo_url"], hidden.json()["photo_available"]) == (None, True)
+    assert (gone.json()["photo_url"], gone.json()["photo_available"]) == (None, False)
+    assert refused.status_code == 409
+    assert error_code(refused) == "photo_unavailable"
+    stored = run_sql(
+        migrated_database_url, "SELECT google_picture_url FROM users WHERE email = :e", e=email
+    )
+    assert stored == [{"google_picture_url": None}]
+
+
+async def test_a_shown_picture_is_dropped_when_google_stops_sending_one(
+    make_settings: SettingsFactory, fake: FakeOidc, migrated_database_url: str
+) -> None:
+    settings = google_settings(make_settings, migrated_database_url, ai_llm_enabled=False)
+    email = thapar_email()
+    fake.tamper.claims = {"picture": PICTURE}
+    async with browser(settings, fake) as client:
+        token = await google_token(client, settings, fake, email)
+        await client.put(PROFILE, json=profile_body(), headers=bearer(token))
+        shown = await client.patch(PROFILE, json={"show_photo": True}, headers=bearer(token))
+        fake.tamper.claims = {}
+        token = await google_token(client, settings, fake, email)
+        after = await client.get(PROFILE, headers=bearer(token))
+
+    assert shown.json()["photo_url"] == PICTURE
+    assert (after.json()["photo_url"], after.json()["photo_available"]) == (None, False)

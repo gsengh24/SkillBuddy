@@ -28,11 +28,19 @@ class IntroResponseIn(BaseModel):
 
 
 class PersonOut(BaseModel):
-    """Someone else. ``display_name`` and ``links`` are set only once you're connected."""
+    """Someone else. ``display_name``, ``links`` and ``photo_url`` are set only once
+    you're connected."""
 
     user_id: uuid.UUID
     display_name: str | None
     links: list[str] | None
+    photo_url: str | None = Field(
+        default=None,
+        description=(
+            "Their Google account picture's address, if they chose to show it and you are "
+            "connected (ADR 0017). Hosted by Google; show initials when `null`."
+        ),
+    )
     summary: str
     offers: list[str]
     seeks: list[str]
@@ -55,6 +63,7 @@ class PersonOut(BaseModel):
             user_id=user_id,
             display_name=(profile.display_name or None) if connected and profile else None,
             links=list(profile.links) if connected and profile else None,
+            photo_url=profile.photo_url if connected and profile else None,
             summary=str(data.get("summary", "")),
             offers=items("offers"),
             seeks=items("seeks"),

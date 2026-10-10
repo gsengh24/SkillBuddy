@@ -24,6 +24,16 @@ describe("security headers", () => {
     expect(csp).not.toContain("ws:");
   });
 
+  it("loads images only from this site and Google's account-picture hosts", () => {
+    const imgSrc = contentSecurityPolicy(false)
+      .split("; ")
+      .find((directive) => directive.startsWith("img-src "));
+    expect(imgSrc).toBe(
+      "img-src 'self' data: https://lh3.googleusercontent.com https://lh4.googleusercontent.com " +
+        "https://lh5.googleusercontent.com https://lh6.googleusercontent.com",
+    );
+  });
+
   it("in development: hot reload allowed, no HSTS", () => {
     const headers = asMap(securityHeaders(true));
     expect(headers["Strict-Transport-Security"]).toBeUndefined();

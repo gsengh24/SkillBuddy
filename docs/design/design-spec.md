@@ -85,7 +85,7 @@ Use contractions. Active voice. Button labels: verb first, 1 to 3 words, no full
 7. **Badge**: `REQUEST` (black), `INTRO` (green tint with green text and green-line border).
 8. **Segmented control**: `--panel` track, white selected segment with 1px line. Used for All, Requests, Messages.
 9. **List row**: 34px leading icon or avatar, title 14px weight 600, one-line secondary text 12px, optional right-side badge or unread dot. Rows separated by 1px lines, not cards.
-10. **Avatar**: circle with initials, `--green` or `--ink` fill, white text. No photos.
+10. **Avatar**: circle with initials, `--green` or `--ink` fill, white text. No photos, except a person's Google account picture laid over the initials when they chose to show it to their connections ([ADR 0017](../adr/0017-google-profile-photo.md)).
 11. **Input and textarea**: white, 1px `--muted-2` border (the pale `--line` is too faint to be a field's only edge), radius 10px, 16px text on phone (prevents iOS zoom), green focus ring, character counter in mono.
 12. **Accordion** (FAQ): hairline rows, chevron rotates 180deg, height opens with `grid-template-rows` transition, one open at a time optional.
 13. **Skeleton**: `--panel` blocks with a slow opacity pulse, used by `loading.tsx` on every route.

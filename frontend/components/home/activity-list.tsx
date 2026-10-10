@@ -18,7 +18,14 @@ const EMPTY: Record<Filter, string> = {
 
 function leadingFor(row: ActivityRow) {
   if (row.type === "chat" && row.person) {
-    return <Avatar userId={row.person.userId} name={row.person.name} decorative />;
+    return (
+      <Avatar
+        userId={row.person.userId}
+        name={row.person.name}
+        photoUrl={row.person.photoUrl}
+        decorative
+      />
+    );
   }
   return <RowTile kind={row.type === "intro" ? "intro" : "request"} />;
 }

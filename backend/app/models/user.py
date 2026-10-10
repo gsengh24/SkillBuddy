@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 
 # RFC 5321 limit on an email address used as a login identifier.
 EMAIL_MAX_LENGTH = 254
+# Google's account picture addresses are about 100 characters; anything longer is ignored.
+GOOGLE_PICTURE_URL_MAX_LENGTH = 300
 
 
 class AuthProvider(StrEnum):
@@ -78,5 +80,9 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     deletion_scheduled_for: Mapped[datetime | None] = mapped_column(index=True)
     # A time-limited suspension ends at this time (null: until lifted by hand).
     suspended_until: Mapped[datetime | None]
+    # The address of the person's Google account picture, as sent at their last Google
+    # sign-in (ADR 0017). Only the address: the picture stays on Google's servers. Null for
+    # accounts that have only used email codes. Others see it only through profiles.photo_url.
+    google_picture_url: Mapped[str | None] = mapped_column(String(GOOGLE_PICTURE_URL_MAX_LENGTH))
 
     profile: Mapped[Profile | None] = relationship(back_populates="user", passive_deletes=True)

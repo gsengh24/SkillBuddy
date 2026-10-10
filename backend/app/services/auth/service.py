@@ -8,7 +8,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +22,7 @@ from app.models import (
     AuthProvider,
     OAuthState,
     OtpCode,
+    Profile,
     SignupApplication,
     SignupMode,
     User,
@@ -320,6 +321,7 @@ class AuthService:
         *,
         provider: AuthProvider,
         subject: str,
+        picture_url: str | None = None,
     ) -> SignInResult:
         """Refuse inactive accounts, create or link the account, and start a session."""
         google = provider is AuthProvider.GOOGLE
@@ -378,6 +380,8 @@ class AuthService:
             if user.age_confirmed_at is None:
                 user.age_confirmed_at = now  # confirmed now (checked by the caller)
         user.last_login_at = now
+        if google:
+            await self._keep_google_picture(user, picture_url)
         new = await create_session(self._db, self._settings, user.id, client)
         event = AuthEventType.SIGNUP if created_account else AuthEventType.LOGIN
         record_event(self._db, self._settings, event, client=client, user_id=user.id, detail=detail)
@@ -392,6 +396,18 @@ class AuthService:
         )
         return SignInResult(
             user=user, session=new.session, token=new.token, created_account=created_account
+        )
+
+    async def _keep_google_picture(self, user: User, picture_url: str | None) -> None:
+        """Store the picture address Google sent this time (ADR 0017). A profile that shows
+        the picture follows it, so a changed or removed Google picture is never left stale."""
+        if user.google_picture_url == picture_url:
+            return
+        user.google_picture_url = picture_url
+        await self._db.execute(
+            update(Profile)
+            .where(Profile.user_id == user.id, Profile.photo_url.is_not(None))
+            .values(photo_url=picture_url)
         )
 
     async def _has_identity(self, user_id: uuid.UUID, provider: AuthProvider, subject: str) -> bool:
@@ -523,6 +539,7 @@ class AuthService:
             client,
             provider=AuthProvider.GOOGLE,
             subject=identity.subject,
+            picture_url=identity.picture_url,
         )
         return GoogleSignInResult(sign_in=result, next_path=attempt.next_path)
 

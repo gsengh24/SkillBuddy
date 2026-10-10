@@ -14,6 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
 from app.models.matching import INTENTS
+from app.models.user import GOOGLE_PICTURE_URL_MAX_LENGTH
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -218,6 +219,10 @@ class Profile(TimestampMixin, Base):
         default=LocationPrecision.CITY,
         server_default=text(f"'{LocationPrecision.CITY}'"),
     )
+    # The picture people the person is connected with see (ADR 0017): a copy of
+    # users.google_picture_url while "show my Google photo" is on, otherwise null. Off by
+    # default; nobody sees it before a connection.
+    photo_url: Mapped[str | None] = mapped_column(String(GOOGLE_PICTURE_URL_MAX_LENGTH))
     # Stored for the You page. Nothing shows anyone's last-active time to others yet.
     show_last_active: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
     # Stored for the You page. Not enforced yet: "strong" needs a score threshold.

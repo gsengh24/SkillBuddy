@@ -23,7 +23,7 @@ export type ActivityRow = {
   time: string;
   unread: boolean;
   /** Messages only: who it's with (for the avatar). */
-  person?: { userId: string; name: string };
+  person?: { userId: string; name: string; photoUrl?: string | null };
 };
 
 export const FILTERS: readonly Filter[] = ["all", "requests", "messages"];
@@ -128,7 +128,7 @@ export function buildActivity(
       at,
       time: relativeTime(at, now),
       unread: unread > 0,
-      person: { userId: connection.person.user_id, name },
+      person: { userId: connection.person.user_id, name, photoUrl: connection.person.photo_url },
     });
   }
   return rows.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));

@@ -139,6 +139,14 @@ class ProfileSettingsIn(BaseModel):
             "country is stored) or `hidden`."
         ),
     )
+    show_photo: bool | None = Field(
+        default=None,
+        description=(
+            "`true`: people you are connected with see your Google account picture "
+            "(`photo_unavailable` when there is none, see `photo_available`). `false`: they "
+            "see your initials again."
+        ),
+    )
     show_last_active: bool | None = Field(
         default=None, description="Stored; no one is shown a last-active time yet."
     )
@@ -196,6 +204,15 @@ class ProfileOut(BaseModel):
     available_from: time | None
     available_until: time | None
     location_precision: LocationPrecision
+    photo_url: str | None = Field(
+        description=(
+            "The picture people you are connected with see: your Google account picture's "
+            "address (the picture is hosted by Google, never by us), or `null` when off."
+        )
+    )
+    photo_available: bool = Field(
+        description="A Google account picture is on file, so `show_photo` can be turned on."
+    )
     show_last_active: bool
     intros_only_from_strong_matches: bool
     email_daily_digest: bool
@@ -215,7 +232,9 @@ class ProfileOut(BaseModel):
     updated_at: datetime
 
     @classmethod
-    def from_profile(cls, profile: Profile, *, consent_version: str) -> ProfileOut:
+    def from_profile(
+        cls, profile: Profile, *, consent_version: str, photo_available: bool
+    ) -> ProfileOut:
         data = profile.structured or {}
         understanding = None
         if profile.parse_status == ParseStatus.PARSED:
@@ -248,6 +267,8 @@ class ProfileOut(BaseModel):
             available_from=profile.available_from,
             available_until=profile.available_until,
             location_precision=LocationPrecision(profile.location_precision),
+            photo_url=profile.photo_url,
+            photo_available=photo_available,
             show_last_active=profile.show_last_active,
             intros_only_from_strong_matches=profile.intros_only_from_strong_matches,
             email_daily_digest=profile.email_daily_digest,
