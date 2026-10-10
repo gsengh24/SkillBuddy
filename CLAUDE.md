@@ -120,7 +120,7 @@ backend/
   tests/fake_oidc.py     Fake Google OpenID Connect provider (tests; `fake-oidc` compose service)
 frontend/
   app/                   App Router pages: /login, /terms, /privacy; signed-in pages in app/(app)/
-                         (/home, /messages, /notifications, /settings/account) share
+                         (/home, /messages, /notifications, /settings/account, /spaces, /teams) share
                          the app shell; /design is the style guide (development and previews)
   app/api/v1/[...path]/  Same-origin forwarder to the API (app/api/health = web liveness)
   proxy.ts               Next.js Proxy: sends signed-out visitors of protected pages to /login

@@ -260,9 +260,26 @@ export const messagePageSchema = z.object({
 });
 export type MessagePage = z.infer<typeof messagePageSchema>;
 
+/** A message in a team's chat (ADR 0016). */
+export const teamMessageSchema = z.object({
+  id: z.string(),
+  team_id: z.string(),
+  sender_id: z.string(),
+  body: z.string(),
+  created_at: z.string(),
+});
+export type TeamMessage = z.infer<typeof teamMessageSchema>;
+
+export const teamMessagePageSchema = z.object({
+  items: z.array(teamMessageSchema),
+  next_cursor: z.string().nullable(),
+  retention_days: z.number(),
+});
+
 /** New messages in all conversations since a cursor, oldest first; may repeat recent ones. */
 export const messageUpdatesSchema = z.object({
   items: z.array(messageSchema),
+  team_items: z.array(teamMessageSchema).default([]),
   cursor: z.string(),
   has_more: z.boolean(),
   poll_after_seconds: z.number().nullable(),
@@ -277,9 +294,12 @@ export const notificationSchema = z.object({
     "matches_ready",
     "report_reviewed",
     "content_removed",
+    "team_invite",
+    "team_joined",
   ]),
   intro_id: z.string().nullable(),
   request_id: z.string().nullable(),
+  team_id: z.string().nullable().default(null),
   rule: z.string().nullable().default(null),
   read_at: z.string().nullable(),
   created_at: z.string(),
@@ -395,6 +415,64 @@ export const spaceSchema = z.object({
 });
 export type Space = z.infer<typeof spaceSchema>;
 
+/** A team's goals, every member's skills and the newest notes (ADR 0016). */
+export const teamSpaceSchema = spaceSchema.omit({ connection_id: true }).extend({
+  team_id: z.string(),
+});
+export type TeamSpace = z.infer<typeof teamSpaceSchema>;
+
+export const teamPurposeSchema = z.enum(["hackathon", "project", "study", "other"]);
+export type TeamPurpose = z.infer<typeof teamPurposeSchema>;
+
+/** A team as it appears in lists and on invites (ADR 0016). */
+export const teamSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  purpose: teamPurposeSchema,
+  description: z.string(),
+  owner_id: z.string().nullable(),
+  member_count: z.number(),
+  max_members: z.number(),
+  created_at: z.string(),
+  unread: z.number().default(0),
+  last_message_at: z.string().nullable().default(null),
+});
+export type TeamSummary = z.infer<typeof teamSummarySchema>;
+
+export const teamInviteSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["invite", "request", "suggested"]),
+  status: z.enum(["pending", "accepted", "declined"]),
+  team: teamSummarySchema,
+  user_id: z.string(),
+  display_name: z.string(),
+  expires_at: z.string(),
+  created_at: z.string(),
+});
+export type TeamInvite = z.infer<typeof teamInviteSchema>;
+
+export const teamMemberSchema = z.object({
+  user_id: z.string(),
+  display_name: z.string(),
+  joined_at: z.string(),
+});
+export type TeamMember = z.infer<typeof teamMemberSchema>;
+
+/** One team with its members; `invites` is filled for the owner only. */
+export const teamSchema = teamSummarySchema.extend({
+  members: z.array(teamMemberSchema),
+  invites: z.array(teamInviteSchema),
+});
+export type Team = z.infer<typeof teamSchema>;
+
+export const teamListSchema = z.object({
+  items: z.array(teamSummarySchema),
+  max_teams: z.number(),
+  max_owned: z.number(),
+});
+
+export const teamInviteListSchema = z.object({ items: z.array(teamInviteSchema) });
+
 export const progressLogPageSchema = z.object({
   items: z.array(progressLogSchema),
   next_cursor: z.string().nullable(),
@@ -429,6 +507,8 @@ export const featuresSchema = z.object({
     ai_matching: z.boolean(),
     pair_spaces: z.boolean(),
     email_notifications: z.boolean(),
+    // Off until an admin turns teams on (ADR 0016).
+    teams: z.boolean().default(false),
   }),
   message_max_length: z.number(),
 });

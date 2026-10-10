@@ -27,5 +27,6 @@ export const config = {
     "/admin/:path*",
     "/moderation/:path*",
     "/spaces/:path*",
+    "/teams/:path*",
   ],
 };

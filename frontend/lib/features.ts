@@ -5,7 +5,7 @@ import { cache } from "react";
 import { apiRequest } from "@/lib/api/client";
 import { featuresSchema, type Features } from "@/lib/api/schemas";
 
-/** Everything on, as when nothing is stored: used if the API can't be reached. */
+/** Everything on except teams, as when nothing is stored: used if the API can't be reached. */
 const ALL_ON: Features = {
   features: {
     intro_requests: true,
@@ -13,6 +13,7 @@ const ALL_ON: Features = {
     ai_matching: true,
     pair_spaces: true,
     email_notifications: true,
+    teams: false,
   },
   message_max_length: 2000,
 };
