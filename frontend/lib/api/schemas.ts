@@ -342,7 +342,7 @@ export const moderationReportSchema = z.object({
   reported_id: z.string().nullable(),
   reported_status: z.enum(["active", "suspended", "pending_deletion"]).nullable(),
   connection_id: z.string().nullable(),
-  target: z.enum(["message", "intro", "profile", "goal", "progress_log"]),
+  target: z.enum(["message", "intro", "profile", "goal", "progress_log", "team", "team_message"]),
   target_id: z.string(),
   messages: z.array(
     z.object({

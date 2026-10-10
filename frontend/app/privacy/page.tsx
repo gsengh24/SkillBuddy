@@ -64,6 +64,12 @@ export default function PrivacyPage() {
             add in a pair space with someone you are connected with.
           </li>
           <li>
+            <strong>Teams:</strong> the teams you make or join (a name, what it is for, a short
+            description and, if the owner lists it, who it is looking for), the messages you send in
+            a team chat, the goals, skills and progress notes you add in a team, and any invite or
+            request to join.
+          </li>
+          <li>
             <strong>Safety:</strong> the people you block, reports you make, and copies kept with
             reports about you (see &quot;Reports, blocks and moderation&quot;).
           </li>
@@ -118,6 +124,22 @@ export default function PrivacyPage() {
             A pair space, with its goals, skills and notes, can be seen only by the two people in
             it. We don&apos;t use AI to read it, and it isn&apos;t used for matching.
           </li>
+          <li>
+            A team (up to 6 people), with its chat, goals, skills and notes, can be seen only by the
+            people in it. They see your name, whether or not you are connected with them, and a new
+            member can read the team&apos;s earlier messages. We don&apos;t use AI to read a
+            team&apos;s chat, goals or notes.
+          </li>
+          <li>
+            If a team&apos;s owner lists it, anyone signed in can see its name, what it is for, its
+            description, how many people are in it and who it is looking for, but not who is in it.
+            If you ask to join, the owner sees your name and your note.
+          </li>
+          <li>
+            Joining a team is always your own choice: you accept an invite, use an invite link, or
+            ask to join. With an invite link or a listed team, the people already in the team
+            don&apos;t each approve you, and you may not be connected with them.
+          </li>
           <li>Nobody can contact you unless you both agree to the introduction.</li>
           <li>We don&apos;t sell your data or show you advertising.</li>
         </ul>
@@ -141,6 +163,14 @@ export default function PrivacyPage() {
           copy. It is deleted {retention.reportDaysAfterResolve} days after the report is resolved,
           even if the account or the original messages were deleted sooner. The reported person
           isn&apos;t told who reported them.
+        </p>
+        <p>
+          In a team you can also report a team chat message, a goal or a note, and you can report a
+          team itself (its name, description and who it is looking for). We keep a copy of only what
+          you report: one message, never the rest of the team&apos;s chat. A report about a team is
+          about its owner. If our moderator acts on it, the team is taken off the list of teams.
+          Blocking someone in your team takes you out of that team; if you own the team, it takes
+          them out instead. They aren&apos;t told why.
         </p>
         <p>
           If you block someone, neither of you can message the other, and you won&apos;t be
@@ -190,6 +220,19 @@ export default function PrivacyPage() {
           <li>Notifications: {retention.notificationDays} days.</li>
           <li>Chat messages: {retention.messageDays} days after each is sent.</li>
           <li>Pair-space progress notes: {retention.spaceDays} days after each is written.</li>
+          <li>
+            Team chat messages: {retention.messageDays} days after each is sent. Team progress
+            notes: {retention.spaceDays} days after each is written.
+          </li>
+          <li>
+            A team: hidden from everyone as soon as it is closed, and deleted with everything in it{" "}
+            {retention.spaceDays} days later. When you leave a team, what you wrote stays with the
+            team until then; if you delete your account, it is deleted with the account.
+          </li>
+          <li>
+            Team invites and requests to join: they run out after 14 days and are deleted{" "}
+            {retention.spaceDays} days later.
+          </li>
           <li>
             A pair space (its goals, skills and notes): hidden from both people as soon as the
             connection ends, and deleted {retention.spaceDays} days later.

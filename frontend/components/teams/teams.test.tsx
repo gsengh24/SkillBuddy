@@ -416,6 +416,8 @@ describe("TeamChat", () => {
     expect(rows[1]).toHaveTextContent("Ravi");
     expect(rows[1]).toHaveTextContent("Kick-off at six?");
     expect(screen.getByText(/Everyone in the team can read this/)).toBeVisible();
+    // Other people's messages can be reported; there are two here.
+    expect(screen.getAllByRole("button", { name: "Report" })).toHaveLength(2);
   });
 
   it("sends a message to the team", async () => {
@@ -480,8 +482,8 @@ describe("SpaceView for a team", () => {
       "listitem",
     );
     expect(notes[0]).toHaveTextContent("Ravi");
-    // Reporting team entries is not built yet.
-    expect(screen.queryByRole("button", { name: "Report" })).not.toBeInTheDocument();
+    // A teammate's goal and note can be reported, like in a pair space.
+    expect(screen.getAllByRole("button", { name: "Report" })).toHaveLength(2);
 
     fetchMock.mockResolvedValueOnce(json(201, { ...SPACE.goals[0], id: "g2", title: "Pitch" }));
     await user.type(screen.getByLabelText("New goal"), "Pitch");

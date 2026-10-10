@@ -133,7 +133,7 @@ async def test_only_members_and_only_authors(
             await client.delete(f"{base(team)}/skills/{skill['id']}", headers=ravi.headers),
             await client.delete(f"{base(team)}/logs/{log['id']}", headers=ravi.headers),
         ]
-        # A team's goal is not reachable through reports until team reports exist.
+        # A teammate can report a team's goal, like one in a pair space.
         reported = await client.post(
             f"/api/v1/space-goals/{goal['id']}/report",
             json={"reason": "spam"},
@@ -157,7 +157,7 @@ async def test_only_members_and_only_authors(
     for response in not_yours:
         assert response.status_code == 403
         assert error_code(response) == "not_yours"
-    assert error_code(reported) == "goal_not_found"
+    assert reported.status_code == 201, reported.text
     assert [response.status_code for response in deleted] == [204, 204, 204]
     assert error_code(missing) == "goal_not_found"
     assert error_code(after_leaving) == "team_not_found"

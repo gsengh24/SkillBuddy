@@ -52,6 +52,7 @@ from app.models import (
     TEAM_LINK_TTL_DAYS,
     Block,
     Connection,
+    FlaggedItem,
     Match,
     MatchRequest,
     NotificationKind,
@@ -63,7 +64,7 @@ from app.models import (
     TeamMember,
     User,
 )
-from app.services import blocks
+from app.services import blocks, content_rules
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 from app.services.notifications import add_notification
@@ -339,6 +340,16 @@ class TeamService:
         for field in ("name", "purpose", "description", "listed", "looking_for"):
             if changes.get(field) is not None:
                 setattr(team, field, changes[field])
+        if team.listed:
+            # Strangers can read a listed team: the content rules (A7) flag it for a
+            # moderator; they never block the save.
+            await content_rules.flag(
+                self._db,
+                user_id=user.id,
+                item=FlaggedItem.TEAM,
+                item_id=team.id,
+                text="\n".join((team.name, team.description, team.looking_for)),
+            )
         await self._db.commit()
         return await self.get(user, team_id)
 

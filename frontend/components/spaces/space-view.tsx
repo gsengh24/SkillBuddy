@@ -46,7 +46,7 @@ function when(iso: string) {
  * wants to grow (only the owner removes them) and progress notes (only the author deletes).
  *
  * A team's space (ADR 0016) is the same thing for more people: pass `team` with the API path
- * and the members' names. Reporting team entries is not built yet, so it is left out there.
+ * and the members' names.
  */
 export function SpaceView({
   space,
@@ -216,12 +216,12 @@ export function SpaceView({
                     </span>
                   </label>
                   <div className="flex flex-wrap items-center gap-3">
-                    {!team && goal.created_by !== meId ? (
+                    {goal.created_by !== meId ? (
                       <ReportButton
                         kind="goal"
                         targetId={goal.id}
-                        blockUserId={otherId}
-                        blockName={otherName}
+                        blockUserId={team ? goal.created_by : otherId}
+                        blockName={nameOf(goal.created_by)}
                         compact
                       />
                     ) : null}
@@ -409,12 +409,12 @@ export function SpaceView({
                       >
                         Delete
                       </Button>
-                    ) : team ? null : (
+                    ) : (
                       <ReportButton
                         kind="note"
                         targetId={log.id}
-                        blockUserId={otherId}
-                        blockName={otherName}
+                        blockUserId={team ? log.author_id : otherId}
+                        blockName={nameOf(log.author_id)}
                         compact
                       />
                     )}

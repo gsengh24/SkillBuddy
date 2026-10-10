@@ -29,6 +29,7 @@ from app.models import (
     NotificationKind,
     Profile,
     RequestStatus,
+    Team,
     User,
 )
 from app.services import app_settings, content_rules
@@ -117,6 +118,15 @@ async def _texts(db: AsyncSession, flags: list[ContentFlag]) -> dict[uuid.UUID, 
             select(Intro.id, Intro.note).where(Intro.id.in_(ids[FlaggedItem.INTRO]))
         )
         texts.update(dict(rows.tuples().all()))
+    if ids[FlaggedItem.TEAM]:
+        teams = await db.execute(
+            select(Team.id, Team.name, Team.description, Team.looking_for).where(
+                Team.id.in_(ids[FlaggedItem.TEAM])
+            )
+        )
+        texts.update(
+            {team_id: "\n".join(part for part in parts if part) for team_id, *parts in teams}
+        )
     return texts
 
 
@@ -148,7 +158,7 @@ async def queue(
 
 async def _clear(db: AsyncSession, flag: ContentFlag) -> None:
     """Remove the flagged text. The item itself stays (an empty bio, a closed request, an
-    intro without a note)."""
+    intro without a note, an unlisted team)."""
     if flag.item_type == FlaggedItem.PROFILE:
         await clear_about_text(db, flag.item_id)
     elif flag.item_type == FlaggedItem.REQUEST:
@@ -157,6 +167,13 @@ async def _clear(db: AsyncSession, flag: ContentFlag) -> None:
             request.raw_text = ""
             if request.status in (RequestStatus.PENDING, RequestStatus.READY):
                 request.status = RequestStatus.CLOSED
+    elif flag.item_type == FlaggedItem.TEAM:
+        # The team stays, off the list and without its free text (the name is kept).
+        team = await db.get(Team, flag.item_id, with_for_update=True)
+        if team is not None:
+            team.description = ""
+            team.looking_for = ""
+            team.listed = False
     else:
         intro = await db.get(Intro, flag.item_id, with_for_update=True)
         if intro is not None:

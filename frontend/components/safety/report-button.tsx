@@ -12,7 +12,8 @@ import { REPORT_DETAILS_MAX_LENGTH, REPORT_REASONS, type ReportReason } from "@/
 
 import { BlockButton } from "./block-button";
 
-export type ReportKind = "message" | "intro" | "profile" | "goal" | "note";
+export type ReportKind =
+  "message" | "intro" | "profile" | "goal" | "note" | "team" | "team message";
 
 /** Messages a reporter may attach when reporting someone from a chat (A3). */
 export const MAX_ATTACHED = 5;
@@ -23,6 +24,8 @@ const PATHS: Record<ReportKind, (id: string) => `/${string}`> = {
   profile: (id) => `/people/${id}/report`,
   goal: (id) => `/space-goals/${id}/report`,
   note: (id) => `/progress-logs/${id}/report`,
+  team: (id) => `/teams/${id}/report`,
+  "team message": (id) => `/team-messages/${id}/report`,
 };
 
 const WHAT_IS_SEEN: Record<ReportKind, string> = {
@@ -31,6 +34,9 @@ const WHAT_IS_SEEN: Record<ReportKind, string> = {
   profile: "Our moderator will see a copy of their profile as you can see it.",
   goal: "Our moderator will see a copy of this goal.",
   note: "Our moderator will see a copy of this note.",
+  team: "Our moderator will see a copy of this team's name, description and who it is looking for, not who is in it.",
+  "team message":
+    "Our moderator will see a copy of this one message, not the rest of the team chat.",
 };
 
 /**

@@ -58,6 +58,10 @@ class ReportTarget(StrEnum):
     # Pair spaces (ADR 0013): a goal title or a progress note.
     GOAL = "goal"
     PROGRESS_LOG = "progress_log"
+    # Teams (ADR 0016): a team's name, description and listing; a team chat message.
+    # A team's goals and notes use GOAL and PROGRESS_LOG.
+    TEAM = "team"
+    TEAM_MESSAGE = "team_message"
 
 
 class ReportStatus(StrEnum):
