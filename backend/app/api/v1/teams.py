@@ -8,7 +8,7 @@ import uuid
 from http import HTTPStatus
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import SettingsDep, require_feature, require_json, require_storage_capacity
@@ -22,6 +22,7 @@ from app.schemas.teams import (
     TeamInviteList,
     TeamInviteOut,
     TeamInviteResponseIn,
+    TeamLinkOut,
     TeamList,
     TeamPatch,
     TeamSummaryOut,
@@ -59,7 +60,12 @@ _404: dict[str, Any] = {
     "description": "`team_not_found`: no such open team, or you are not in it.",
 }
 _404_INVITE: dict[str, Any] = {"model": ErrorResponse, "description": "`team_invite_not_found`."}
+_404_LINK: dict[str, Any] = {
+    "model": ErrorResponse,
+    "description": "`team_link_invalid`: unknown, expired or turned off.",
+}
 _422: dict[str, Any] = {"model": ErrorResponse, "description": "Validation failed."}
+LinkCode = Annotated[str, Path(min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")]
 _429: dict[str, Any] = {"model": ErrorResponse, "description": "A daily limit was reached."}
 
 
@@ -143,6 +149,37 @@ async def withdraw_invite(invite_id: uuid.UUID, auth: AuthDep, service: ServiceD
     await service.withdraw(auth.user, invite_id)
 
 
+@router.get(
+    "/join/{code}",
+    summary="The team behind an invite link",
+    responses={
+        401: _401,
+        404: _404_LINK,
+        429: _429,
+    },
+)
+async def preview_invite_link(code: LinkCode, auth: AuthDep, service: ServiceDep) -> TeamSummaryOut:
+    """Its name, purpose and size, so the person can decide. Nothing is joined."""
+    return TeamSummaryOut.build(await service.preview_link(auth.user, code))
+
+
+@router.post(
+    "/join/{code}",
+    summary="Join a team with its invite link",
+    dependencies=[Depends(require_storage_capacity)],
+    responses={
+        401: _401,
+        404: _404_LINK,
+        409: {"model": ErrorResponse, "description": "`team_full` or `too_many_teams`."},
+        429: _429,
+    },
+)
+async def join_by_invite_link(code: LinkCode, auth: AuthDep, service: ServiceDep) -> TeamDetailOut:
+    """You join at once, without waiting for the owner. The members are told someone
+    joined. Using the link again when you are already in changes nothing."""
+    return TeamDetailOut.build_full(await service.join_by_link(auth.user, code))
+
+
 @router.get("/{team_id}", summary="A team and its members", responses={401: _401, 404: _404})
 async def get_team(team_id: uuid.UUID, auth: AuthDep, service: ServiceDep) -> TeamDetailOut:
     return TeamDetailOut.build_full(await service.get(auth.user, team_id))
@@ -222,3 +259,27 @@ async def remove_member(
         await service.leave(auth.user, team_id)
     else:
         await service.remove(auth.user, team_id, user_id)
+
+
+@router.post(
+    "/{team_id}/invite-link",
+    status_code=HTTPStatus.CREATED,
+    summary="Make an invite link (owner)",
+    dependencies=[Depends(require_storage_capacity)],
+    responses={401: _401, 403: _403, 404: _404, 429: _429},
+)
+async def make_invite_link(team_id: uuid.UUID, auth: AuthDep, service: ServiceDep) -> TeamLinkOut:
+    """Good for 7 days. Any earlier link stops working. Anyone signed in who has the link
+    can join while there is room, so share it with care."""
+    code, expires_at = await service.make_link(auth.user, team_id)
+    return TeamLinkOut(code=code, expires_at=expires_at)
+
+
+@router.delete(
+    "/{team_id}/invite-link",
+    status_code=HTTPStatus.NO_CONTENT,
+    summary="Turn off the invite link (owner)",
+    responses={401: _401, 403: _403, 404: _404},
+)
+async def revoke_invite_link(team_id: uuid.UUID, auth: AuthDep, service: ServiceDep) -> None:
+    await service.revoke_link(auth.user, team_id)

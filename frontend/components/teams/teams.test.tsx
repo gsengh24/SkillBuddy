@@ -6,6 +6,8 @@ import { SpaceView } from "@/components/spaces/space-view";
 import type { Team, TeamInvite, TeamMessage, TeamSpace, TeamSummary } from "@/lib/api/schemas";
 
 import { CreateTeam } from "./create-team";
+import { InviteLink } from "./invite-link";
+import { JoinByLink } from "./join-by-link";
 import { MyTeamInvites } from "./my-invites";
 import { TeamChat } from "./team-chat";
 import { TeamPeople } from "./team-people";
@@ -47,6 +49,7 @@ const TEAM: Team = {
     { user_id: RAVI, display_name: "Ravi", joined_at: "2026-10-10T11:00:00Z" },
   ],
   invites: [INVITE],
+  invite_link_expires_at: null,
 };
 const MESSAGE: TeamMessage = {
   id: "m1",
@@ -192,6 +195,66 @@ describe("TeamPeople", () => {
       method: "DELETE",
     });
     expect(push).toHaveBeenCalledWith("/teams");
+  });
+});
+
+describe("InviteLink", () => {
+  it("shows a new link once, and turns it off", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(
+      json(201, { code: "abcDEF123456_-abcDEF12", expires_at: "2026-10-17T10:00:00Z" }),
+    );
+    render(<InviteLink teamId={TEAM_ID} expiresAt={null} full={false} />);
+    expect(screen.queryByRole("button", { name: "Turn off link" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Make an invite link" }));
+    expect(lastCall()).toMatchObject({
+      url: `/api/v1/teams/${TEAM_ID}/invite-link`,
+      method: "POST",
+    });
+    expect(await screen.findByLabelText("Link to share")).toHaveValue(
+      `${window.location.origin}/teams/join/abcDEF123456_-abcDEF12`,
+    );
+    expect(screen.getByText(/You won't be shown this link again/)).toBeVisible();
+
+    fetchMock.mockResolvedValueOnce(json(204));
+    await user.click(screen.getByRole("button", { name: "Turn off link" }));
+    expect(lastCall()).toMatchObject({ method: "DELETE" });
+    expect(screen.queryByLabelText("Link to share")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Make an invite link" })).toBeVisible();
+  });
+
+  it("says a link is active without showing it", () => {
+    render(<InviteLink teamId={TEAM_ID} expiresAt="2026-10-17T10:00:00Z" full />);
+    expect(screen.getByText(/A link is active until/)).toBeVisible();
+    expect(screen.getByText("The team is full, so nobody can join.")).toBeVisible();
+    expect(screen.queryByLabelText("Link to share")).not.toBeInTheDocument();
+  });
+});
+
+describe("JoinByLink", () => {
+  it("joins and opens the team", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(json(200, { ...TEAM, invites: [] }));
+    render(<JoinByLink code="abcDEF123456_-abcDEF12" teamName="Hack night" />);
+    await user.click(screen.getByRole("button", { name: "Join Hack night" }));
+    expect(lastCall()).toMatchObject({
+      url: "/api/v1/teams/join/abcDEF123456_-abcDEF12",
+      method: "POST",
+    });
+    expect(push).toHaveBeenCalledWith(`/teams/${TEAM_ID}`);
+  });
+
+  it("says when the link no longer works", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(
+      json(404, {
+        error: { code: "team_link_invalid", message: "This invite link doesn't work any more." },
+      }),
+    );
+    render(<JoinByLink code="abcDEF123456_-abcDEF12" teamName="Hack night" />);
+    await user.click(screen.getByRole("button", { name: "Join Hack night" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
   });
 });
 

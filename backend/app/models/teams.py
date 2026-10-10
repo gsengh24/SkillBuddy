@@ -43,6 +43,7 @@ MAX_TEAMS_PER_PERSON = 5
 MAX_TEAMS_OWNED = 3
 MAX_PENDING_PER_TEAM = 20
 TEAM_INVITE_TTL_DAYS = 14
+TEAM_LINK_TTL_DAYS = 7
 
 
 def _in(values: tuple[str, ...]) -> str:
@@ -98,6 +99,10 @@ class Team(UUIDPrimaryKeyMixin, Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     # A closed team is hidden from everyone at once and deleted 90 days later.
     closed_at: Mapped[datetime | None]
+    # The invite link: only a keyed hash of its code is stored, like sign-in codes. Making
+    # a new link replaces the old one.
+    invite_code_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    invite_expires_at: Mapped[datetime | None]
 
 
 class TeamMember(UUIDPrimaryKeyMixin, Base):

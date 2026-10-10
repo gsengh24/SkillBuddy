@@ -462,8 +462,12 @@ export type TeamMember = z.infer<typeof teamMemberSchema>;
 export const teamSchema = teamSummarySchema.extend({
   members: z.array(teamMemberSchema),
   invites: z.array(teamInviteSchema),
+  invite_link_expires_at: z.string().nullable().default(null),
 });
 export type Team = z.infer<typeof teamSchema>;
+
+/** A new invite link's code: shown once, only its hash is kept. */
+export const teamLinkSchema = z.object({ code: z.string(), expires_at: z.string() });
 
 export const teamListSchema = z.object({
   items: z.array(teamSummarySchema),

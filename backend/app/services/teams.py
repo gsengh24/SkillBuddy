@@ -7,6 +7,9 @@
 - Joining (this module's route): the owner invites someone they have an open connection
   with, and that person accepts. Nobody is added without their own yes. A decline is not
   shown to the owner: the invite looks pending until it expires.
+- Joining by link: the owner makes an invite link (a random code, kept only as a keyed
+  hash, good for TEAM_LINK_TTL_DAYS; a new link replaces the old). Anyone signed in who
+  has it can see the team's name and size and join at once, while there is room.
 - Nobody can be invited to, or join, a team with a member on either side of a block with
   them (``app.services.blocks``). They are told only that it can't be done, never who.
 - Caps: MAX_TEAM_MEMBERS people, MAX_TEAMS_PER_PERSON teams each, MAX_TEAMS_OWNED owned,
@@ -32,6 +35,7 @@ from sqlalchemy.orm import aliased
 
 from app.core.config import Settings
 from app.core.errors import ConflictError, NotFoundError, PermissionDeniedError
+from app.core.security import generate_token, keyed_hash
 from app.models import (
     MAX_PENDING_PER_TEAM,
     MAX_TEAM_MEMBERS,
@@ -39,6 +43,7 @@ from app.models import (
     MAX_TEAMS_PER_PERSON,
     SIGNED_IN_STATUSES,
     TEAM_INVITE_TTL_DAYS,
+    TEAM_LINK_TTL_DAYS,
     Connection,
     NotificationKind,
     Profile,
@@ -72,6 +77,13 @@ class TeamInviteNotFoundError(NotFoundError):
 class TeamMemberNotFoundError(NotFoundError):
     code = "team_member_not_found"
     default_message = "That person isn't in this team."
+
+
+class TeamLinkInvalidError(NotFoundError):
+    """Unknown, expired or turned off, a closed team, or a block: the person isn't told which."""
+
+    code = "team_link_invalid"
+    default_message = "This invite link doesn't work any more."
 
 
 class NotTeamOwnerError(PermissionDeniedError):
@@ -154,6 +166,8 @@ class TeamView:
     members: list[MemberView]
     # Open invites, for the owner only.
     invites: list[InviteView]
+    # When the invite link stops working, for the owner only; None without a live link.
+    link_expires_at: datetime | None = None
 
 
 def _rows(result: Any) -> int:
@@ -297,7 +311,10 @@ class TeamService:
                 InviteView(invite, summary, name or "", TeamInviteStatus.PENDING)
                 for invite, name in open_invites.tuples()
             ]
-        return TeamView(summary, members, invites)
+        link = team.invite_expires_at if team.owner_id == user.id else None
+        if team.invite_code_hash is None or (link is not None and link <= datetime.now(UTC)):
+            link = None
+        return TeamView(summary, members, invites, link)
 
     async def update(self, user: User, team_id: uuid.UUID, changes: dict[str, Any]) -> TeamView:
         """``changes`` holds only the fields the client sent: name, purpose, description."""
@@ -492,6 +509,85 @@ class TeamService:
         await self._db.refresh(team)
         logger.info("team_invite_answered", extra={"accepted": accept})
         return InviteView(found, TeamSummary(team, len(members)), "", status)
+
+    # --- invite link --------------------------------------------------------------------
+
+    def _code_hash(self, code: str) -> str:
+        return keyed_hash(self._settings.secret_key, "team-invite-link", code)
+
+    async def make_link(self, user: User, team_id: uuid.UUID) -> tuple[str, datetime]:
+        """A new link for the team; any earlier link stops working. The code is returned
+        once and never stored."""
+        team = await self._owned(user, team_id, lock=True)
+        await self._write(user)
+        code = generate_token(16)
+        expires_at = datetime.now(UTC) + timedelta(days=TEAM_LINK_TTL_DAYS)
+        team.invite_code_hash = self._code_hash(code)
+        team.invite_expires_at = expires_at
+        await self._db.commit()
+        logger.info("team_link_made")
+        return code, expires_at
+
+    async def revoke_link(self, user: User, team_id: uuid.UUID) -> None:
+        team = await self._owned(user, team_id, lock=True)
+        team.invite_code_hash = None
+        team.invite_expires_at = None
+        await self._db.commit()
+
+    async def _by_link(
+        self, user: User, code: str, *, lock: bool = False
+    ) -> tuple[Team, list[uuid.UUID]]:
+        await self._limiter.hit(
+            f"team-link:{user.id}", limit=self._settings.team_link_tries_per_day
+        )
+        query = select(Team).where(
+            Team.invite_code_hash == self._code_hash(code),
+            Team.invite_expires_at > datetime.now(UTC),
+            Team.closed_at.is_(None),
+        )
+        if lock:
+            query = query.with_for_update()
+        team = await self._db.scalar(query)
+        if team is None:
+            raise TeamLinkInvalidError
+        members = await self._member_ids(team.id)
+        if user.id not in members and (await blocks.blocked_with(self._db, user.id)).intersection(
+            members
+        ):
+            raise TeamLinkInvalidError
+        return team, members
+
+    async def preview_link(self, user: User, code: str) -> TeamSummary:
+        """What someone holding the link sees before joining: name, purpose and size."""
+        team, members = await self._by_link(user, code)
+        return TeamSummary(team, len(members))
+
+    async def join_by_link(self, user: User, code: str) -> TeamView:
+        team, members = await self._by_link(user, code, lock=True)
+        if user.id in members:
+            return await self.get(user, team.id)
+        if len(members) >= MAX_TEAM_MEMBERS:
+            raise TeamFullError
+        if await self._teams_of(user.id) >= MAX_TEAMS_PER_PERSON:
+            raise TooManyTeamsError
+        now = datetime.now(UTC)
+        self._db.add(TeamMember(id=uuid.uuid4(), team_id=team.id, user_id=user.id))
+        for member_id in members:
+            add_notification(self._db, member_id, NotificationKind.TEAM_JOINED, team_id=team.id)
+        # An open invite to the same team is answered by joining.
+        await self._db.execute(
+            update(TeamInvite)
+            .where(
+                TeamInvite.team_id == team.id,
+                TeamInvite.user_id == user.id,
+                TeamInvite.status.in_(_OPEN),
+            )
+            .values(status=TeamInviteStatus.ACCEPTED, responded_at=now)
+            .execution_options(synchronize_session=False)
+        )
+        await self._db.commit()
+        logger.info("team_joined_by_link")
+        return await self.get(user, team.id)
 
     async def withdraw(self, user: User, invite_id: uuid.UUID) -> None:
         """The owner takes back an open invite."""

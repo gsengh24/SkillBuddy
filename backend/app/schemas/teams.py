@@ -134,6 +134,11 @@ class TeamInviteOut(BaseModel):
 class TeamDetailOut(TeamSummaryOut):
     members: list[TeamMateOut] = Field(description="Longest-standing first.")
     invites: list[TeamInviteOut] = Field(description="Open invites; filled for the owner only.")
+    invite_link_expires_at: datetime | None = Field(
+        default=None,
+        description="When the invite link stops working; for the owner only, and empty "
+        "without a live link. The link itself is shown only when it is made.",
+    )
 
     @classmethod
     def build_full(cls, view: TeamView) -> TeamDetailOut:
@@ -141,7 +146,15 @@ class TeamDetailOut(TeamSummaryOut):
             **TeamSummaryOut.build(view.summary).model_dump(),
             members=[TeamMateOut.build(member) for member in view.members],
             invites=[TeamInviteOut.build(invite) for invite in view.invites],
+            invite_link_expires_at=view.link_expires_at,
         )
+
+
+class TeamLinkOut(BaseModel):
+    """A new invite link. The code is shown this once; only its hash is kept."""
+
+    code: str = Field(description="Put it in a link to the join page; anyone signed in can use it.")
+    expires_at: datetime
 
 
 class TeamList(BaseModel):
