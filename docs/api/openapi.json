@@ -2961,6 +2961,36 @@
         "title": "LimitStateOut",
         "type": "object"
       },
+      "ListedTeamPage": {
+        "properties": {
+          "items": {
+            "description": "Listed teams, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/TeamSummaryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as `cursor` for older teams.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "ListedTeamPage",
+        "type": "object"
+      },
       "LivenessResponse": {
         "properties": {
           "environment": {
@@ -3747,7 +3777,9 @@
               "report_reviewed",
               "content_removed",
               "team_invite",
-              "team_joined"
+              "team_joined",
+              "team_request",
+              "team_request_accepted"
             ],
             "title": "Kind",
             "type": "string"
@@ -3798,7 +3830,7 @@
                 "type": "null"
               }
             ],
-            "description": "For `team_invite` and `team_joined`: the team (ADR 0016).",
+            "description": "For the `team_*` kinds: the team (ADR 0016).",
             "title": "Team Id"
           }
         },
@@ -4106,7 +4138,7 @@
         "type": "object"
       },
       "PersonOut": {
-        "description": "Someone else. ``display_name`` and ``links`` are set only once you're connected.",
+        "description": "Someone else. ``display_name``, ``links`` and ``photo_url`` are set only once\nyou're connected.",
         "properties": {
           "availability": {
             "title": "Availability",
@@ -4169,6 +4201,18 @@
             },
             "title": "Offers",
             "type": "array"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Their Google account picture's address, if they chose to show it and you are connected (ADR 0017). Hosted by Google; show initials when `null`.",
+            "title": "Photo Url"
           },
           "seeks": {
             "items": {
@@ -4478,6 +4522,23 @@
             "$ref": "#/components/schemas/ParseStatus",
             "description": "`pending` while the about text is being read; poll until `parsed`."
           },
+          "photo_available": {
+            "description": "A Google account picture is on file, so `show_photo` can be turned on.",
+            "title": "Photo Available",
+            "type": "boolean"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The picture people you are connected with see: your Google account picture's address (the picture is hosted by Google, never by us), or `null` when off.",
+            "title": "Photo Url"
+          },
           "show_last_active": {
             "title": "Show Last Active",
             "type": "boolean"
@@ -4557,6 +4618,8 @@
           "available_from",
           "available_until",
           "location_precision",
+          "photo_url",
+          "photo_available",
           "show_last_active",
           "intros_only_from_strong_matches",
           "email_daily_digest",
@@ -4813,6 +4876,18 @@
             ],
             "description": "Stored; no one is shown a last-active time yet.",
             "title": "Show Last Active"
+          },
+          "show_photo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`true`: people you are connected with see your Google account picture (`photo_unavailable` when there is none, see `photo_available`). `false`: they see your initials again.",
+            "title": "Show Photo"
           },
           "timezone": {
             "anyOf": [
@@ -6185,6 +6260,17 @@
             "description": "Filled in the list of your teams.",
             "title": "Last Message At"
           },
+          "listed": {
+            "default": false,
+            "title": "Listed",
+            "type": "boolean"
+          },
+          "looking_for": {
+            "default": "",
+            "description": "Shown with a listed team.",
+            "title": "Looking For",
+            "type": "string"
+          },
           "max_members": {
             "title": "Max Members",
             "type": "integer"
@@ -6347,6 +6433,12 @@
             "title": "Kind",
             "type": "string"
           },
+          "note": {
+            "default": "",
+            "description": "What a person asking to join wrote.",
+            "title": "Note",
+            "type": "string"
+          },
           "status": {
             "description": "The owner sees `pending` for a declined invite until it expires.",
             "enum": [
@@ -6361,7 +6453,7 @@
             "$ref": "#/components/schemas/TeamSummaryOut"
           },
           "user_id": {
-            "description": "The invited person.",
+            "description": "The invited person, or the person asking.",
             "format": "uuid",
             "title": "User Id",
             "type": "string"
@@ -6629,6 +6721,31 @@
             ],
             "title": "Description"
           },
+          "listed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Listed teams can be found by any signed-in person, who may ask to join.",
+            "title": "Listed"
+          },
+          "looking_for": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who the team is looking for; shown with a listed team.",
+            "title": "Looking For"
+          },
           "name": {
             "anyOf": [
               {
@@ -6661,6 +6778,20 @@
           }
         },
         "title": "TeamPatch",
+        "type": "object"
+      },
+      "TeamRequestIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "description": "A short hello, shown to the team's owner.",
+            "maxLength": 300,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "TeamRequestIn",
         "type": "object"
       },
       "TeamSpaceOut": {
@@ -6748,6 +6879,17 @@
             ],
             "description": "Filled in the list of your teams.",
             "title": "Last Message At"
+          },
+          "listed": {
+            "default": false,
+            "title": "Listed",
+            "type": "boolean"
+          },
+          "looking_for": {
+            "default": "",
+            "description": "Shown with a listed team.",
+            "title": "Looking For",
+            "type": "string"
           },
           "max_members": {
             "title": "Max Members",
@@ -15354,6 +15496,16 @@
             },
             "description": "No profile yet (`profile_not_found`)."
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No Google account picture to show (`photo_unavailable`)."
+          },
           "415": {
             "content": {
               "application/json": {
@@ -17502,7 +17654,7 @@
             "description": "`feature_off`."
           }
         },
-        "summary": "Take back an invite (owner)",
+        "summary": "Take back an invite (owner) or your own request to join",
         "tags": [
           "teams"
         ]
@@ -17510,7 +17662,7 @@
     },
     "/api/v1/teams/invites/{invite_id}/respond": {
       "post": {
-        "description": "Accepting makes you a member. The owner is not told about a decline.",
+        "description": "An invite is answered by the invited person; a request to join by the team's owner.\nAccepting makes the person a member. The other side is not told about a decline.",
         "operationId": "respond_to_invite_api_v1_teams_invites__invite_id__respond_post",
         "parameters": [
           {
@@ -17596,7 +17748,7 @@
             "description": "`feature_off`."
           }
         },
-        "summary": "Accept or decline an invite to a team",
+        "summary": "Accept or decline an invite, or (owner) a request to join",
         "tags": [
           "teams"
         ]
@@ -17777,6 +17929,163 @@
           }
         },
         "summary": "Join a team with its invite link",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/api/v1/teams/listed": {
+      "get": {
+        "description": "Teams their owners chose to list. Your own teams are left out, and so is any team\nwith a member on either side of a block with you.",
+        "operationId": "list_listed_teams_api_v1_teams_listed_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "purpose",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "hackathon",
+                    "project",
+                    "study",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Purpose"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListedTeamPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_cursor`."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
+          }
+        },
+        "summary": "Listed teams you could ask to join",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/api/v1/teams/requests": {
+      "get": {
+        "description": "A request the owner declined looks pending until it expires.",
+        "operationId": "list_my_requests_api_v1_teams_requests_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamInviteList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
+          }
+        },
+        "summary": "Your open requests to join teams",
         "tags": [
           "teams"
         ]
@@ -18676,6 +18985,110 @@
           }
         },
         "summary": "Mark a team's chat read",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/api/v1/teams/{team_id}/requests": {
+      "post": {
+        "description": "The owner gets an in-app notification, sees your name and note, and has 14 days to\nanswer. You are not told about a decline.",
+        "operationId": "ask_to_join_api_v1_teams__team_id__requests_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Team Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamInviteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`team_not_found`: no such listed team, or it isn't available to you."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`already_member`, `team_invite_exists`, `team_full`, `too_many_pending_invites` or `too_many_teams`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A daily limit was reached."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
+          }
+        },
+        "summary": "Ask to join a listed team",
         "tags": [
           "teams"
         ]
