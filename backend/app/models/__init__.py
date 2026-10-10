@@ -121,6 +121,7 @@ from app.models.teams import (
 )
 from app.models.user import (
     EMAIL_MAX_LENGTH,
+    GOOGLE_PICTURE_URL_MAX_LENGTH,
     HIDDEN_STATUSES,
     SIGNED_IN_STATUSES,
     AuthProvider,
@@ -140,6 +141,7 @@ __all__ = [
     "EMBEDDING_DIMENSIONS",
     "GOAL_MAX_LENGTH",
     "GOAL_TITLE_MAX_LENGTH",
+    "GOOGLE_PICTURE_URL_MAX_LENGTH",
     "GRANTABLE_ROLES",
     "HEADLINE_MAX_LENGTH",
     "HIDDEN_STATUSES",

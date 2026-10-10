@@ -45,7 +45,9 @@ export default function PrivacyPage() {
         <ul className="flex list-disc flex-col gap-1 pl-5">
           <li>
             <strong>Your account:</strong> your email address, how you sign in (an email code or
-            Google), and the date you confirmed you are 18 or older and accepted the terms.
+            Google), and the date you confirmed you are 18 or older and accepted the terms. If you
+            sign in with Google, we also keep the web address of your Google account picture (not
+            the picture itself; see &quot;Who can see what&quot;).
           </li>
           <li>
             <strong>Your profile:</strong> your display name, what you write about yourself, links,
@@ -114,6 +116,13 @@ export default function PrivacyPage() {
             interests and availability, and why you were matched, but not your name or links.
           </li>
           <li>Your name and links are shown only to people you are connected with.</li>
+          <li>
+            Your Google account picture is shown to nobody unless you turn on &quot;Show my Google
+            photo&quot;. If you do, only people you are connected with see it, and you can turn it
+            off at any time. The picture stays on Google&apos;s servers: when someone sees it, their
+            browser fetches it from Google, so Google receives that person&apos;s IP address and
+            browser details.
+          </li>
           <li>
             A pair space, with its goals, skills and notes, can be seen only by the two people in
             it. We don&apos;t use AI to read it, and it isn&apos;t used for matching.
@@ -223,7 +232,10 @@ export default function PrivacyPage() {
         <ul className="flex list-disc flex-col gap-1 pl-5">
           <li>Render (runs our servers, in Singapore) and Neon (our database, in Singapore).</li>
           <li>Vercel (serves the website).</li>
-          <li>Google (sends our emails, and &quot;Sign in with Google&quot; if you use it).</li>
+          <li>
+            Google (sends our emails, &quot;Sign in with Google&quot; if you use it, and keeps and
+            serves Google account pictures).
+          </li>
           <li>Groq and Cloudflare (AI processing, as described above).</li>
           <li>Cloudflare (runs our scheduled housekeeping).</li>
         </ul>

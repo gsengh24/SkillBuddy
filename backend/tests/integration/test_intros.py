@@ -176,6 +176,37 @@ async def test_accepting_connects_both_and_shares_names(
     assert error_code(again) == "intro_not_pending"
 
 
+async def test_a_picture_is_seen_only_once_connected(
+    settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    url = migrated_database_url
+    picture = "https://lh3.googleusercontent.com/a/ACg8ocFakePicture=s96-c"
+    async with auth_client(settings, delivery) as client:
+        asha = await join(client, settings, delivery, "Asha")
+        ravi = await join(client, settings, delivery, "Ravi")
+        run_sql(
+            url,
+            "UPDATE profiles SET photo_url = :p WHERE user_id = CAST(:u AS uuid)",
+            p=picture,
+            u=asha.id,
+        )
+        _, match = matched(url, asha, ravi)
+        intro_id = (await send(client, asha, match)).json()["id"]
+        inbox = (await client.get("/api/v1/intros?box=received", headers=ravi.headers)).json()
+        accepted = await client.post(
+            f"/api/v1/intros/{intro_id}/respond", json={"accept": True}, headers=ravi.headers
+        )
+        asha_connections = (await client.get("/api/v1/connections", headers=asha.headers)).json()
+        ravi_connections = (await client.get("/api/v1/connections", headers=ravi.headers)).json()
+
+    assert inbox["items"][0]["person"]["photo_url"] is None
+    assert picture not in str(inbox)
+    assert accepted.json()["person"]["photo_url"] == picture
+    assert [c["person"]["photo_url"] for c in ravi_connections["items"]] == [picture]
+    # Ravi never switched his on.
+    assert [c["person"]["photo_url"] for c in asha_connections["items"]] == [None]
+
+
 async def test_a_decline_is_silent_to_the_sender(
     settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
 ) -> None:

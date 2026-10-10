@@ -227,6 +227,8 @@ The free database holds 0.5 GB; we budget 70% of it (numbers in
 
 1. **Cap text sizes** with validation limits on every user-written field (profile text,
    request text, messages). **No file or image uploads**: use initials avatars or links.
+   The one picture allowed is a person's Google account picture, stored as its address only
+   ([ADR 0017](docs/adr/0017-google-profile-photo.md)).
 2. **Retention from day one.** Every table that grows over time ships with its retention
    policy: expired OTP codes and sessions purged daily; `auth_events` and `events` pruned or
    aggregated after a set number of days; soft-deleted accounts hard-deleted on schedule.
@@ -301,7 +303,8 @@ mobile app were calling it tomorrow.
   - Buttons: solid ink primary (at most one per view), green outline, ghost. 44px touch
     targets on phones.
   - Avatars are white initials on green or ink, chosen only by `avatarFill(userId)` (a
-    stable hash of the id). No photos.
+    stable hash of the id). The only photo is the Google account picture the API sends
+    as `photo_url` (ADR 0017), passed to `Avatar` as `photoUrl`; no uploads, no other host.
   - Motion only as in spec section 5: `transform` and `opacity`, once, and off with
     `prefers-reduced-motion`. No animation library.
   - Contrast: text 4.5:1, large text and control edges 3:1. `muted-2` is for large text

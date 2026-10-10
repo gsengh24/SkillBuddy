@@ -169,10 +169,13 @@ async def collect(db: AsyncSession, settings: Settings, user: User) -> dict[str,
             "age_confirmed_at": _iso(user.age_confirmed_at),
             "terms_version": user.terms_version,
             "terms_accepted_at": _iso(user.terms_accepted_at),
+            "google_picture_url": user.google_picture_url,
         },
         "profile": (
             ProfileOut.from_profile(
-                profile, consent_version=settings.ai_consent_version
+                profile,
+                consent_version=settings.ai_consent_version,
+                photo_available=user.google_picture_url is not None,
             ).model_dump(mode="json")
             if profile
             else None

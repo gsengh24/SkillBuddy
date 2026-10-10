@@ -217,6 +217,22 @@ describe("Avatar", () => {
     );
   });
 
+  it("lays a picture over the initials, without telling its host which page asked", () => {
+    const photo = "https://lh3.googleusercontent.com/a/sample=s96-c";
+    render(<Avatar userId="person-7" name="Meera Kapoor" photoUrl={photo} />);
+    const avatar = screen.getByRole("img", { name: "Meera Kapoor" });
+    expect(avatar).toHaveTextContent("MK");
+    const picture = avatar.querySelector("img");
+    expect(picture).toHaveAttribute("src", photo);
+    expect(picture).toHaveAttribute("alt", "");
+    expect(picture).toHaveAttribute("referrerpolicy", "no-referrer");
+  });
+
+  it("draws no picture without one", () => {
+    const { container } = render(<Avatar userId="person-7" name="Meera Kapoor" photoUrl={null} />);
+    expect(container.querySelector("img")).toBeNull();
+  });
+
   it("can be hidden when the name is next to it", () => {
     const { container } = render(<Avatar userId="x" name="Rohan D." decorative />);
     expect(container.firstElementChild).toHaveAttribute("aria-hidden", "true");

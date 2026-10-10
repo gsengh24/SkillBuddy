@@ -4163,7 +4163,7 @@
         "type": "object"
       },
       "PersonOut": {
-        "description": "Someone else. ``display_name`` and ``links`` are set only once you're connected.",
+        "description": "Someone else. ``display_name``, ``links`` and ``photo_url`` are set only once\nyou're connected.",
         "properties": {
           "availability": {
             "title": "Availability",
@@ -4226,6 +4226,18 @@
             },
             "title": "Offers",
             "type": "array"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Their Google account picture's address, if they chose to show it and you are connected (ADR 0017). Hosted by Google; show initials when `null`.",
+            "title": "Photo Url"
           },
           "seeks": {
             "items": {
@@ -4535,6 +4547,23 @@
             "$ref": "#/components/schemas/ParseStatus",
             "description": "`pending` while the about text is being read; poll until `parsed`."
           },
+          "photo_available": {
+            "description": "A Google account picture is on file, so `show_photo` can be turned on.",
+            "title": "Photo Available",
+            "type": "boolean"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The picture people you are connected with see: your Google account picture's address (the picture is hosted by Google, never by us), or `null` when off.",
+            "title": "Photo Url"
+          },
           "show_last_active": {
             "title": "Show Last Active",
             "type": "boolean"
@@ -4614,6 +4643,8 @@
           "available_from",
           "available_until",
           "location_precision",
+          "photo_url",
+          "photo_available",
           "show_last_active",
           "intros_only_from_strong_matches",
           "email_daily_digest",
@@ -4870,6 +4901,18 @@
             ],
             "description": "Stored; no one is shown a last-active time yet.",
             "title": "Show Last Active"
+          },
+          "show_photo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`true`: people you are connected with see your Google account picture (`photo_unavailable` when there is none, see `photo_available`). `false`: they see your initials again.",
+            "title": "Show Photo"
           },
           "timezone": {
             "anyOf": [
@@ -15494,6 +15537,16 @@
               }
             },
             "description": "No profile yet (`profile_not_found`)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No Google account picture to show (`photo_unavailable`)."
           },
           "415": {
             "content": {

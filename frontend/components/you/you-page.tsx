@@ -13,6 +13,7 @@ import { SegmentedControl } from "@/components/ds/segmented-control";
 import { TopicChip } from "@/components/ds/surfaces";
 import { AiConsentText } from "@/components/profile/ai-consent";
 import { EmailToggle } from "@/components/profile/email-toggle";
+import { PhotoToggle } from "@/components/profile/photo-toggle";
 import { VisibilityToggle } from "@/components/profile/visibility-toggle";
 import { cx } from "@/components/ui/cx";
 import { TextLink } from "@/components/ui/text-link";
@@ -312,6 +313,7 @@ export function YouPage({ profile, account }: Props) {
   const [base, setBase] = useState<Draft>(() => draftFrom(profile));
   const [draft, setDraft] = useState<Draft>(base);
   const [visibility, setVisibility] = useState(profile.visibility);
+  const [photoUrl, setPhotoUrl] = useState(profile.photo_url);
   const [consent, setConsent] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -436,7 +438,7 @@ export function YouPage({ profile, account }: Props) {
         className="bg-panel border-line rounded-panel mt-5 flex flex-col gap-4 border p-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-6 lg:py-5"
       >
         <div className="flex items-center gap-3.5 lg:flex-1">
-          <Avatar userId={profile.user_id} name={name} size="xl" decorative />
+          <Avatar userId={profile.user_id} name={name} size="xl" photoUrl={photoUrl} decorative />
           <div className="min-w-0">
             <p className="font-display tracking-display text-[22px] leading-tight font-extrabold break-words lg:text-[28px]">
               {name}
@@ -747,6 +749,11 @@ export function YouPage({ profile, account }: Props) {
           <Section id="s-privacy" intro="Who can find you, and what they see.">
             <div className="flex flex-col gap-4">
               <VisibilityToggle initial={profile.visibility} onSaved={setVisibility} />
+              <PhotoToggle
+                initial={profile.photo_url}
+                available={profile.photo_available}
+                onSaved={setPhotoUrl}
+              />
               <div>
                 <Label>Location shown as</Label>
                 <SegmentedControl

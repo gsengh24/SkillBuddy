@@ -14,6 +14,7 @@ const PERSON = {
   user_id: "33333333-0000-4000-8000-000000000001",
   display_name: null,
   links: null,
+  photo_url: null,
   summary: "Final-year design student.",
   offers: ["UI design"],
   seeks: [],

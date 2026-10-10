@@ -304,6 +304,27 @@ async def test_you_page_fields_default_to_todays_behaviour(
     assert result["visibility"] == "matchable"
 
 
+async def test_an_email_code_account_has_no_picture_to_show(
+    settings: Settings, delivery: CapturingDelivery
+) -> None:
+    async with auth_client(settings, delivery) as client:
+        token = await signed_in(client, settings, delivery)
+        saved = await client.put(PROFILE, json=body(), headers=bearer(token))
+        refused = await client.patch(PROFILE, json={"show_photo": True}, headers=bearer(token))
+        off = await client.patch(PROFILE, json={"show_photo": False}, headers=bearer(token))
+        not_a_switch = await client.patch(
+            PROFILE, json={"photo_url": "https://example.com/me.png"}, headers=bearer(token)
+        )
+
+    assert (saved.json()["photo_url"], saved.json()["photo_available"]) == (None, False)
+    assert refused.status_code == 409
+    assert error_code(refused) == "photo_unavailable"
+    assert off.status_code == 200
+    assert off.json()["photo_url"] is None
+    # Nobody can point the picture at an address of their own choosing.
+    assert not_a_switch.status_code == 422
+
+
 async def test_you_page_fields_save_clear_and_survive_a_full_save(
     settings: Settings, delivery: CapturingDelivery
 ) -> None:

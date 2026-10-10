@@ -21,6 +21,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import logging
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Final
@@ -31,12 +32,16 @@ import jwt
 
 from app.core.config import Settings
 from app.core.security import constant_time_equals, keyed_hash
+from app.models import GOOGLE_PICTURE_URL_MAX_LENGTH
 
 logger = logging.getLogger(__name__)
 
 SCOPES: Final = "openid email profile"
 CLOCK_LEEWAY_SECONDS: Final = 60
 JWKS_CACHE_SECONDS: Final = 3600
+# Google serves account pictures from these hosts. Any other address in the ``picture``
+# claim is ignored, so the web app only ever loads pictures from Google (ADR 0017).
+_PICTURE_URL: Final = re.compile(r"https://lh[3-6]\.googleusercontent\.com/[\w\-./=~%]+", re.ASCII)
 
 # jwks_url -> (fetched_at, {kid: key})
 _jwks_cache: dict[str, tuple[float, dict[str, Any]]] = {}
@@ -55,6 +60,19 @@ class GoogleIdentity:
     subject: str
     email: str
     hosted_domain: str
+    # The account picture's address, or None when Google sent none we accept.
+    picture_url: str | None = None
+
+
+def picture_url_from(claim: object) -> str | None:
+    """The ``picture`` claim, if it is a Google-hosted https address of a sane length."""
+    if (
+        isinstance(claim, str)
+        and len(claim) <= GOOGLE_PICTURE_URL_MAX_LENGTH
+        and _PICTURE_URL.fullmatch(claim)
+    ):
+        return claim
+    return None
 
 
 def nonce_for(settings: Settings, state: str) -> str:
@@ -209,4 +227,9 @@ class GoogleOidcClient:
         hosted_domain = claims.get("hd")
         if not isinstance(hosted_domain, str) or hosted_domain.lower() != domain:
             raise GoogleSignInError("hosted_domain_mismatch")
-        return GoogleIdentity(subject=subject, email=email, hosted_domain=domain)
+        return GoogleIdentity(
+            subject=subject,
+            email=email,
+            hosted_domain=domain,
+            picture_url=picture_url_from(claims.get("picture")),
+        )

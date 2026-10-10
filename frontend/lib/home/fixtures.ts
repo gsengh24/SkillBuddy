@@ -13,6 +13,7 @@ export function person(overrides: Partial<Person> = {}): Person {
     user_id: "22222222-0000-4000-8000-000000000002",
     display_name: null,
     links: null,
+    photo_url: null,
     summary: "Designs mobile apps.",
     offers: ["Figma"],
     seeks: [],

@@ -11,7 +11,12 @@ import pytest
 
 from app.core.config import Settings
 from app.services.auth import google as google_module
-from app.services.auth.google import GoogleOidcClient, GoogleSignInError, nonce_for
+from app.services.auth.google import (
+    GoogleOidcClient,
+    GoogleSignInError,
+    nonce_for,
+    picture_url_from,
+)
 from app.services.auth.policy import SignInMethod, is_email_allowed
 from tests.conftest import SettingsFactory
 from tests.fake_oidc import FakeOidc
@@ -86,6 +91,33 @@ async def test_happy_path(settings: Settings, fake: FakeOidc) -> None:
     identity = await sign_in(settings, fake, "Asha@Thapar.edu")
     assert identity.email == "asha@thapar.edu"  # type: ignore[attr-defined]  # GoogleIdentity
     assert identity.hosted_domain == "thapar.edu"  # type: ignore[attr-defined]  # GoogleIdentity
+    assert identity.picture_url is None  # type: ignore[attr-defined]  # GoogleIdentity
+
+
+async def test_the_account_picture_address_is_read(settings: Settings, fake: FakeOidc) -> None:
+    picture = "https://lh3.googleusercontent.com/a/ACg8ocFakePicture_-x=s96-c"
+    fake.tamper.claims = {"picture": picture}
+    identity = await sign_in(settings, fake)
+    assert identity.picture_url == picture  # type: ignore[attr-defined]  # GoogleIdentity
+
+
+@pytest.mark.parametrize(
+    "claim",
+    [
+        None,
+        42,
+        "",
+        "http://lh3.googleusercontent.com/a/plain-http",
+        "https://evil.example/a/picture.png",
+        "https://lh3.googleusercontent.com.evil.example/a/picture",
+        "https://evil.example/?https://lh3.googleusercontent.com/a/picture",
+        "https://lh3.googleusercontent.com/a/with space",
+        'https://lh3.googleusercontent.com/a/quote"onerror=',
+        "https://lh3.googleusercontent.com/" + "a" * 300,
+    ],
+)
+def test_a_picture_address_that_is_not_googles_is_ignored(claim: object) -> None:
+    assert picture_url_from(claim) is None
 
 
 @pytest.mark.parametrize(

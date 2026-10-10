@@ -34,7 +34,7 @@ export function ChatDetail({
   return (
     <div className="flex flex-col gap-4">
       <header className="border-line flex flex-wrap items-center gap-3 border-b pb-4">
-        <Avatar userId={person.user_id} name={name} decorative />
+        <Avatar userId={person.user_id} name={name} photoUrl={person.photo_url} decorative />
         <div className="min-w-0 flex-1">
           <h2 className="text-title lg:text-title-lg break-words">{name}</h2>
           <p className="text-meta text-muted">Connected</p>

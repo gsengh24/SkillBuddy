@@ -113,7 +113,7 @@ Manrope is loaded at 400–800 and IBM Plex Mono at 400 and 500.
 | `Button`, `ButtonLink` | Thin outline pill: 1px border, transparent fill. 44px high by default, 38px on large screens with a mouse. Tones: `ink` (default) and `danger` (coral ink). `hue` colours it with a person's ink (e.g. "Connect"). |
 | `TextLink` | Underlined link in green ink (or `muted`). |
 | `IntentChip` | Dot in the intent's base plus its label. Unselected: chip fill, chip-edge border. Selected: paper fill, border in the intent's **ink** (see contrast). With `onToggle` it is a toggle button with `aria-pressed`. |
-| `Avatar` | Initials on the person's tint in its ink. Named (`role="img"`) unless `decorative`. |
+| `Avatar` | Initials on the person's tint in its ink. Named (`role="img"`) unless `decorative`. `photoUrl` lays the person's Google account picture over the initials (ADR 0017). |
 | `StrengthBar` | Ticked bar (`repeating-linear-gradient`), track and fill in one hue; a `meter` with its value. |
 | `MatchNumeral` | The big match number in the person's ink, with a small "%" and a spoken "match". |
 | `WhyBox` | Tint background, radius 12, mono title in the hue's ink, body in ink. |

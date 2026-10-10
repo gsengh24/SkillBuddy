@@ -133,6 +133,10 @@ export const profileSchema = z.object({
   available_from: z.string().nullable().default(null),
   available_until: z.string().nullable().default(null),
   location_precision: z.enum(["city", "country", "hidden"]).default("city"),
+  /** The Google account picture connections see, or null when off (ADR 0017). */
+  photo_url: z.string().nullable().default(null),
+  /** A Google account picture is on file, so it can be switched on. */
+  photo_available: z.boolean().default(false),
   parse_status: z.enum(["empty", "pending", "parsed"]),
   parse_source: z.enum(["llm", "template", "user"]).nullable(),
   understanding: understandingSchema.nullable(),
@@ -205,6 +209,8 @@ export const personSchema = z.object({
   user_id: z.string(),
   display_name: z.string().nullable(),
   links: z.array(z.string()).nullable(),
+  /** Their Google account picture; set only once connected, and only if they show it. */
+  photo_url: z.string().nullable().default(null),
   summary: z.string(),
   offers: z.array(z.string()),
   seeks: z.array(z.string()),

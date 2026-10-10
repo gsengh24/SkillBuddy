@@ -17,13 +17,28 @@ type AvatarProps = {
   userId: string;
   name: string;
   size?: keyof typeof SIZES;
+  /**
+   * The person's Google account picture (ADR 0017). The API sets it only for yourself and
+   * for people you're connected with who chose to show it; never pass any other address.
+   */
+  photoUrl?: string | null;
   /** Hide from assistive technology when the name is already shown next to it. */
   decorative?: boolean;
   className?: string;
 };
 
-/** A circle with initials: white on green or ink. No photos. */
-export function Avatar({ userId, name, size = "md", decorative = false, className }: AvatarProps) {
+/**
+ * A circle with initials: white on green or ink. A picture, when there is one, lies over
+ * the initials, so they still show if it fails to load.
+ */
+export function Avatar({
+  userId,
+  name,
+  size = "md",
+  photoUrl,
+  decorative = false,
+  className,
+}: AvatarProps) {
   return (
     <span
       role={decorative ? undefined : "img"}
@@ -31,13 +46,27 @@ export function Avatar({ userId, name, size = "md", decorative = false, classNam
       aria-hidden={decorative || undefined}
       data-fill={avatarFill(userId)}
       className={cx(
-        "text-bg inline-flex shrink-0 items-center justify-center rounded-full font-medium",
+        "text-bg relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-medium",
         FILLS[avatarFill(userId)],
         SIZES[size],
         className,
       )}
     >
       {initialsFor(name)}
+      {photoUrl ? (
+        // Plain <img>, not next/image: the picture is already small and stays on Google's
+        // servers; the optimiser would fetch and re-serve it from ours. The empty alt keeps
+        // a failed picture invisible, and Google is not told which page asked.
+        // eslint-disable-next-line @next/next/no-img-element -- see the comment above
+        <img
+          src={photoUrl}
+          alt=""
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 size-full object-cover"
+        />
+      ) : null}
     </span>
   );
 }
