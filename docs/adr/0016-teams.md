@@ -1,7 +1,6 @@
 # 16. Teams: groups of up to six, with four ways to join and a team chat
 
-- **Status:** Proposed (the owner's merge of this PR accepts it; the first code PR sets it
-  to Accepted)
+- **Status:** Accepted
 - **Date:** 2026-10-10
 - **Amends:** [ARCHITECTURE.md](../ARCHITECTURE.md) §5 (data model), §6 (modules) and §11
   (roadmap). Extends [ADR 0012](0012-chat-delivery-by-polling.md) (chat) and
@@ -198,12 +197,11 @@ One PR at a time. Each migration PR is followed by Migrate staging.
 - T7 touches the matcher, which is being changed in other work; it is last among the
   feature PRs so it can build on that.
 
-## Open questions for the owner
+## Owner decisions on the details (2026-10-10)
 
-Defaults are in the text above; say if any should differ.
-
-1. Blocking a teammate: the blocker leaves (or, if they own the team, the blocked person is
-   removed). Is that right?
-2. May any member invite, or only the owner (the default)?
-3. Should a joiner by link get in at once (the default), or wait for the owner's yes?
-4. Auto-merge for T1 to T7 once the five checks are green, with T8 stopping for review?
+1. **Blocking a teammate:** the blocker leaves the team at once; if the blocker owns the
+   team, the blocked person is removed at once.
+2. **Only the owner invites.**
+3. **A person with a valid invite link joins at once**, without waiting for the owner.
+4. **Auto-merge:** T1 to T7 may be merged once the five required checks are green. T8
+   stops for the owner's review.
