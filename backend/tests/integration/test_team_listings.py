@@ -146,7 +146,7 @@ async def test_a_decline_is_hidden_from_the_asker_and_a_request_can_be_taken_bac
 ) -> None:
     url = migrated_database_url
     async with auth_client(settings, delivery) as client:
-        asha, ravi, team = await pair_in_team(client, settings, delivery, url)
+        asha, _, team = await pair_in_team(client, settings, delivery, url)
         mina = await join(client, settings, delivery, "Mina")
         kiran = await join(client, settings, delivery, "Kiran")
         await list_it(client, asha, team)
