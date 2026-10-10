@@ -41,6 +41,16 @@ const WORDS: Record<AppNotification["kind"], { text: string; href: string; link:
     href: "/teams",
     link: "Open Teams",
   },
+  team_request: {
+    text: "Someone asked to join a team you own.",
+    href: "/teams",
+    link: "Open Teams",
+  },
+  team_request_accepted: {
+    text: "Your request to join a team was accepted.",
+    href: "/teams",
+    link: "Open Teams",
+  },
 };
 
 /** "Reason: contact details." for a content_removed notice (A7). */

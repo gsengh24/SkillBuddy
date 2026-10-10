@@ -144,11 +144,13 @@ class NotificationOut(BaseModel):
         "content_removed",
         "team_invite",
         "team_joined",
+        "team_request",
+        "team_request_accepted",
     ]
     intro_id: uuid.UUID | None
     request_id: uuid.UUID | None
     team_id: uuid.UUID | None = Field(
-        default=None, description="For `team_invite` and `team_joined`: the team (ADR 0016)."
+        default=None, description="For the `team_*` kinds: the team (ADR 0016)."
     )
     rule: str | None = Field(
         default=None,

@@ -107,6 +107,9 @@ class NotificationKind(StrEnum):
     # Teams (ADR 0016): you were invited to a team; someone joined a team you are in.
     TEAM_INVITE = "team_invite"
     TEAM_JOINED = "team_joined"
+    # Someone asked to join a team you own; your request to join was accepted.
+    TEAM_REQUEST = "team_request"
+    TEAM_REQUEST_ACCEPTED = "team_request_accepted"
 
 
 class Notification(UUIDPrimaryKeyMixin, Base):
