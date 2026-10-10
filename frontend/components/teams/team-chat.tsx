@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 
 import { Button } from "@/components/ds/button";
 import { Textarea } from "@/components/ds/fields";
+import { ReportButton } from "@/components/safety/report-button";
 import { SafetyTips } from "@/components/safety/safety-tips";
 import { cx } from "@/components/ui/cx";
 import { browserApi } from "@/lib/api/browser";
@@ -201,16 +202,27 @@ export function TeamChat({
                   {mine ? <span className="sr-only">You: </span> : null}
                   {message.body}
                 </p>
-                <time
-                  dateTime={message.created_at}
-                  suppressHydrationWarning
-                  className="text-meta text-muted"
-                >
-                  {new Date(message.created_at).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </time>
+                <div className="flex flex-wrap items-center gap-3">
+                  <time
+                    dateTime={message.created_at}
+                    suppressHydrationWarning
+                    className="text-meta text-muted"
+                  >
+                    {new Date(message.created_at).toLocaleString(undefined, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </time>
+                  {mine ? null : (
+                    <ReportButton
+                      kind="team message"
+                      targetId={message.id}
+                      blockUserId={message.sender_id}
+                      blockName={sender}
+                      compact
+                    />
+                  )}
+                </div>
               </li>
             );
           })}

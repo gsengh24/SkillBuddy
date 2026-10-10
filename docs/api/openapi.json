@@ -2225,7 +2225,8 @@
         "enum": [
           "request",
           "profile",
-          "intro"
+          "intro",
+          "team"
         ],
         "title": "FlaggedItem",
         "type": "string"
@@ -5666,7 +5667,9 @@
           "intro",
           "profile",
           "goal",
-          "progress_log"
+          "progress_log",
+          "team",
+          "team_message"
         ],
         "title": "ReportTarget",
         "type": "string"
@@ -17474,6 +17477,100 @@
         ]
       }
     },
+    "/api/v1/team-messages/{message_id}/report": {
+      "post": {
+        "description": "A message someone else sent in a team you are in. The moderator sees a copy of that\none message, not the rest of the chat. The sender is not told.",
+        "operationId": "report_team_message_api_v1_team_messages__message_id__report_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`message_not_found` (or not yours to see)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`cannot_report_own_message` or `already_reported`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Daily report limit reached."
+          }
+        },
+        "summary": "Report a team chat message",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
     "/api/v1/teams": {
       "get": {
         "operationId": "list_teams_api_v1_teams_get",
@@ -19047,6 +19144,100 @@
           }
         },
         "summary": "Mark a team's chat read",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/api/v1/teams/{team_id}/report": {
+      "post": {
+        "description": "A team you are in, were invited to, or can see listed. The moderator sees a copy of\nits name, description and \"looking for\" line, never who is in it. The report is about\nthe team's owner, who is not told.",
+        "operationId": "report_team_api_v1_teams__team_id__report_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Team Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`team_not_found` (or not yours to see)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`cannot_report_own_entry` (your own team) or `already_reported`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Daily report limit reached."
+          }
+        },
+        "summary": "Report a team",
         "tags": [
           "teams"
         ]

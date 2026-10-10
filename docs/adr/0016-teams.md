@@ -135,12 +135,25 @@ off on staging and production until the reporting PR has merged.**
 
 ### Reporting and moderation
 
-New report targets: **`team`** (its name, description and "looking for" text) and
-**`team_message`** (frozen copy of the message and the 10 before it, as for chat). Team
-goals and notes use the existing `goal` and `progress_log` targets. Moderators can remove a
-listing or close a team; both are written to the audit log. Listed-team text also goes
-through the content rules (A7), since strangers can read it. This PR, and the privacy and
-terms wording that goes with it, **stops for the owner's review**.
+Built in T8:
+
+- New report targets: **`team`** (a frozen copy of its name, description and "looking for"
+  text; the report is about the team's owner) and **`team_message`** (a frozen copy of that
+  one message, like a chat message report). A team's goals and notes use the existing `goal`
+  and `progress_log` targets. Members report messages, goals and notes; a team can be
+  reported by its members, people invited to it, and anyone while it is listed.
+- **Moderator actions:** deciding a `team` report with warn, suspend or ban takes the team
+  off the list and clears its "looking for" text. The decision is in the audit log like every
+  report decision. A moderator cannot close a team directly yet; suspending or banning the
+  owner is the stronger step.
+- **Content rules (A7)** run on a listed team's name, description and "looking for" text when
+  it is saved. A flag never blocks the save. Removing a flagged team's text clears its
+  description and "looking for" line and unlists it; the team stays.
+- "Download my data" includes the teams a person is in and their own team messages.
+
+This PR, with the privacy and terms wording that goes with it, **stops for the owner's
+review**. Known limit: a person who blocks a teammate leaves the team at once, so they must
+report a message before blocking (the report dialog offers the block afterwards).
 
 ### Notifications and email
 

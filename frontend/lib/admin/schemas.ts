@@ -314,7 +314,7 @@ export const contentRulesSchema = z.object({
 export const flagSchema = z.object({
   id: z.string(),
   rule: z.string(),
-  item_type: z.enum(["request", "profile", "intro"]),
+  item_type: z.enum(["request", "profile", "intro", "team"]),
   item_id: z.string(),
   user_id: z.string(),
   email: z.string().nullable(),

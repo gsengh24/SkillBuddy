@@ -34,6 +34,9 @@ from app.models import (
     MatchRequest,
     Message,
     Profile,
+    Team,
+    TeamMember,
+    TeamMessage,
     User,
 )
 from app.schemas.profile import ProfileOut
@@ -157,6 +160,33 @@ async def collect(db: AsyncSession, settings: Settings, user: User) -> dict[str,
             }
             for m in rows_m
         ]
+    # Teams (ADR 0016): the teams the person is in, and only their own team messages.
+    team_rows = await db.execute(
+        select(Team, TeamMember.created_at)
+        .join(TeamMember, TeamMember.team_id == Team.id)
+        .where(TeamMember.user_id == user.id, Team.closed_at.is_(None))
+        .order_by(TeamMember.created_at)
+    )
+    teams = [
+        {
+            "id": str(team.id),
+            "name": team.name,
+            "purpose": team.purpose,
+            "you_are_the_owner": team.owner_id == user.id,
+            "joined_at": _iso(joined_at),
+        }
+        for team, joined_at in team_rows.tuples()
+    ]
+    own_team_messages = await db.scalars(
+        select(TeamMessage)
+        .where(TeamMessage.sender_id == user.id)
+        .order_by(TeamMessage.created_at)
+        .limit(MAX_MESSAGES)
+    )
+    team_messages = [
+        {"team_id": str(m.team_id), "text": m.body, "sent_at": _iso(m.created_at)}
+        for m in own_team_messages
+    ]
     return {
         "format_version": FORMAT_VERSION,
         "service": settings.app_name,
@@ -214,6 +244,8 @@ async def collect(db: AsyncSession, settings: Settings, user: User) -> dict[str,
             for c in connections
         ],
         "messages": messages,
+        "teams": teams,
+        "team_messages": team_messages,
     }
 
 

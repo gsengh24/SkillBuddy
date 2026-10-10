@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ButtonLink } from "@/components/ds/button";
+import { ReportButton } from "@/components/safety/report-button";
 import { AskToJoin } from "@/components/teams/ask-to-join";
 import { TeamsPaused } from "@/components/teams/teams-paused";
 import { TextLink } from "@/components/ui/text-link";
@@ -92,6 +93,7 @@ export default async function BrowseTeamsPage({
                   ) : (
                     <AskToJoin teamId={team.id} teamName={team.name} asked={asked.has(team.id)} />
                   )}
+                  <ReportButton kind="team" targetId={team.id} compact />
                 </div>
               </li>
             );

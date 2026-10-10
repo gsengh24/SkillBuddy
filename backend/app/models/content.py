@@ -32,6 +32,8 @@ class FlaggedItem(StrEnum):
     REQUEST = "request"
     PROFILE = "profile"
     INTRO = "intro"
+    # A listed team's name, description and "looking for" line (ADR 0016).
+    TEAM = "team"
 
 
 class FlagStatus(StrEnum):

@@ -53,6 +53,10 @@ from app.models import (
     ReportStatus,
     ReportTarget,
     SpaceGoal,
+    Team,
+    TeamInvite,
+    TeamMember,
+    TeamMessage,
     User,
 )
 from app.services import blocks
@@ -108,6 +112,11 @@ class OwnEntryError(AppError):
     default_message = "You can only report what the other person wrote."
 
 
+class TeamToReportNotFoundError(NotFoundError):
+    code = "team_not_found"
+    default_message = "That team doesn't exist."
+
+
 class ReportNotFoundError(NotFoundError):
     code = "report_not_found"
     default_message = "That report doesn't exist."
@@ -149,7 +158,7 @@ async def _save(
     limiter: RateLimiter,
     user: User,
     *,
-    reported_id: uuid.UUID,
+    reported_id: uuid.UUID | None,
     connection_id: uuid.UUID | None,
     target: ReportTarget,
     target_id: uuid.UUID,
@@ -347,6 +356,103 @@ async def _attached(
     return [_copy(message, reporter_is_a) for message in messages]
 
 
+async def _in_team(db: AsyncSession, user_id: uuid.UUID, team_id: uuid.UUID) -> bool:
+    found = await db.scalar(
+        select(TeamMember.id).where(TeamMember.team_id == team_id, TeamMember.user_id == user_id)
+    )
+    return found is not None
+
+
+async def report_team(
+    db: AsyncSession,
+    settings: Settings,
+    limiter: RateLimiter,
+    user: User,
+    team_id: uuid.UUID,
+    reason: ReportReason,
+    details: str,
+) -> Report:
+    """Report a team: a copy of its name, description and "looking for" line. Open to
+    anyone who can see it: its members, people invited to it, and everyone while it is
+    listed. The report is about the team's owner."""
+    team = await db.get(Team, team_id)
+    if team is None or team.closed_at is not None or team.owner_id is None:
+        raise TeamToReportNotFoundError
+    invited = await db.scalar(
+        select(TeamInvite.id)
+        .where(TeamInvite.team_id == team.id, TeamInvite.user_id == user.id)
+        .limit(1)
+    )
+    if not (team.listed or invited is not None or await _in_team(db, user.id, team.id)):
+        raise TeamToReportNotFoundError
+    if team.owner_id == user.id:
+        raise OwnEntryError
+    parts = [("name", team.name), ("description", team.description)]
+    if team.listed:
+        parts.append(("looking for", team.looking_for))
+    return await _save(
+        db,
+        settings,
+        limiter,
+        user,
+        reported_id=team.owner_id,
+        connection_id=None,
+        target=ReportTarget.TEAM,
+        target_id=team.id,
+        reason=reason,
+        details=details,
+        snapshot=[_part(label, body, team.created_at) for label, body in parts if body],
+    )
+
+
+async def report_team_message(
+    db: AsyncSession,
+    settings: Settings,
+    limiter: RateLimiter,
+    user: User,
+    message_id: uuid.UUID,
+    reason: ReportReason,
+    details: str,
+) -> Report:
+    """Report a team chat message someone else sent (a copy of that one message). Only
+    people in the team can."""
+    message = await db.get(TeamMessage, message_id)
+    if message is None or not await _in_team(db, user.id, message.team_id):
+        raise MessageNotFoundError
+    if message.sender_id == user.id:
+        raise OwnMessageError
+    return await _save(
+        db,
+        settings,
+        limiter,
+        user,
+        reported_id=message.sender_id,
+        connection_id=None,
+        target=ReportTarget.TEAM_MESSAGE,
+        target_id=message.id,
+        reason=reason,
+        details=details,
+        snapshot=[
+            {
+                "id": str(message.id),
+                "from": "reported",
+                "body": message.body,
+                "sent_at": message.created_at.isoformat(),
+                "attached": True,
+            }
+        ],
+    )
+
+
+async def _team_entry_author(
+    db: AsyncSession, user: User, entry: SpaceGoal | ProgressLog
+) -> uuid.UUID | None:
+    """The author of a team's goal or note, if ``user`` is in that team."""
+    if entry.team_id is None or entry.author_id is None:
+        return None
+    return entry.author_id if await _in_team(db, user.id, entry.team_id) else None
+
+
 async def _space_entry_connection(
     db: AsyncSession, user: User, connection_id: uuid.UUID
 ) -> Connection | None:
@@ -369,24 +475,29 @@ async def report_goal(
 ) -> Report:
     """Report a pair-space goal the other person added (a copy of its title)."""
     goal = await db.get(SpaceGoal, goal_id)
-    # A team's goal has no connection: reporting those comes with team reports (ADR 0016).
     connection = None
     if goal is not None and goal.connection_id is not None:
         connection = await _space_entry_connection(db, user, goal.connection_id)
-    if goal is None or connection is None:
+    # A team's goal (ADR 0016): any other member of the team may report it.
+    author = await _team_entry_author(db, user, goal) if goal is not None else None
+    if goal is None or (connection is None and author is None):
         raise GoalToReportNotFoundError
-    if goal.from_a == (connection.user_a == user.id):
+    if author == user.id or (
+        connection is not None and goal.from_a == (connection.user_a == user.id)
+    ):
         raise OwnEntryError
     snapshot = [_part("goal", goal.title, goal.created_at)]
     if goal.due_on:
         snapshot.append(_part("due", goal.due_on.isoformat()))
+    if connection is not None:
+        author = connection.user_a if goal.from_a else connection.user_b
     return await _save(
         db,
         settings,
         limiter,
         user,
-        reported_id=connection.user_a if goal.from_a else connection.user_b,
-        connection_id=connection.id,
+        reported_id=author,
+        connection_id=connection.id if connection is not None else None,
         target=ReportTarget.GOAL,
         target_id=goal.id,
         reason=reason,
@@ -409,17 +520,22 @@ async def report_progress_log(
     connection = None
     if log is not None and log.connection_id is not None:
         connection = await _space_entry_connection(db, user, log.connection_id)
-    if log is None or connection is None:
+    author = await _team_entry_author(db, user, log) if log is not None else None
+    if log is None or (connection is None and author is None):
         raise LogToReportNotFoundError
-    if log.from_a == (connection.user_a == user.id):
+    if author == user.id or (
+        connection is not None and log.from_a == (connection.user_a == user.id)
+    ):
         raise OwnEntryError
+    if connection is not None:
+        author = connection.user_a if log.from_a else connection.user_b
     return await _save(
         db,
         settings,
         limiter,
         user,
-        reported_id=connection.user_a if log.from_a else connection.user_b,
-        connection_id=connection.id,
+        reported_id=author,
+        connection_id=connection.id if connection is not None else None,
         target=ReportTarget.PROGRESS_LOG,
         target_id=log.id,
         reason=reason,

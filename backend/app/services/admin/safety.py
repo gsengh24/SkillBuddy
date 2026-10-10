@@ -29,6 +29,8 @@ from app.models import (
     Report,
     ReportDecision,
     ReportStatus,
+    ReportTarget,
+    Team,
     User,
     UserStatus,
 )
@@ -251,6 +253,12 @@ async def decide(
     ):
         reported.status = UserStatus.BANNED
         reported.suspended_until = None
+    if report.target == ReportTarget.TEAM and decision is not ReportDecision.DISMISS:
+        # A team reported and found at fault is taken off the list of teams (ADR 0016).
+        team = await db.get(Team, report.target_id, with_for_update=True)
+        if team is not None:
+            team.listed = False
+            team.looking_for = ""
     report.status = ReportStatus.RESOLVED
     report.decision = decision.value
     report.decided_by = actor.user.id
