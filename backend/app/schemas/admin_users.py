@@ -21,7 +21,9 @@ class UserRow(BaseModel):
     intents: list[str]
     flagged: bool = Field(description="Open reports against them.")
     open_reports: int = Field(description="How many open reports there are against them.")
-    matches: int = Field(description="Times they were suggested to someone as a match.")
+    matches: int = Field(
+        description="Matches made for their requests, plus times they were suggested to someone."
+    )
     created_at: datetime
     last_login_at: datetime | None
 
@@ -55,6 +57,28 @@ class ProfileSummary(BaseModel):
     intents: list[str]
     visibility: str
     parse_status: str
+    skills: list[str] = Field(description="What they can give, as read from the about text.")
+    seeks: list[str] = Field(description="What they are looking for, read the same way.")
+    interests: list[str]
+
+
+class MatchPerson(BaseModel):
+    id: uuid.UUID
+    email: str
+    name: str | None
+
+
+class UserMatch(BaseModel):
+    id: uuid.UUID
+    role: Literal["requester", "candidate"] = Field(
+        description="requester: made for this user's request. candidate: this user was "
+        "suggested to the other person."
+    )
+    other: MatchPerson
+    intent: str | None = Field(description="The request's intent, once the matcher set it.")
+    rank: int
+    status: str
+    created_at: datetime
 
 
 class TimelineItem(BaseModel):
@@ -85,9 +109,10 @@ class UserDetail(BaseModel):
     sign_in_methods: list[str] = Field(description='e.g. ["email", "google"].')
     profile: ProfileSummary | None
     counts: dict[str, int] = Field(
-        description="requests, matched_as_candidate, connections, reports_against, "
-        "open_reports_against."
+        description="requests, matches_for_requests, matched_as_candidate, connections, "
+        "reports_against, open_reports_against."
     )
+    matches: list[UserMatch] = Field(description="Newest first, both roles; at most 20.")
     timeline: list[TimelineItem] = Field(description="Newest first: sign-ins and admin actions.")
     notes: list[NoteOut]
 

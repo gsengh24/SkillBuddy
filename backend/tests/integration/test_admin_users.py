@@ -154,6 +154,7 @@ async def test_detail_shows_profile_counts_timeline_and_notes(
     assert found["sign_in_methods"] == ["email"]
     assert set(found["counts"]) == {
         "requests",
+        "matches_for_requests",
         "matched_as_candidate",
         "connections",
         "reports_against",
@@ -166,6 +167,59 @@ async def test_detail_shows_profile_counts_timeline_and_notes(
     assert events[-1] == "account.created"
     assert error_code(missing) == "user_not_found"
     assert audit_count(settings, mina, "user.note_added") == 1
+
+
+async def test_detail_shows_skills_and_the_matches_on_both_sides(
+    settings: Settings, delivery: CapturingDelivery, owner_email: str
+) -> None:
+    url = settings.database_url.unicode_string()
+    tag = uuid.uuid4().hex[:8]
+    async with auth_client(settings, delivery) as client:
+        owner = await owner_of(client, settings, delivery, owner_email)
+        _, asha = await member(client, settings, delivery, f"Asha{tag}")
+        _, ben = await member(client, settings, delivery, f"Ben{tag}")
+        run_sql(
+            url,
+            "UPDATE profiles SET structured = CAST(:s AS jsonb) WHERE user_id = :u",
+            s='{"offers": ["React", "Figma"], "seeks": ["Rust"], "interests": ["Chess"]}',
+            u=asha,
+        )
+        request = run_sql(
+            url,
+            "INSERT INTO match_requests (user_id, raw_text, intent, status, expires_at) "
+            "VALUES (:u, 'Looking for a builder.', 'mentor', 'ready', "
+            "now() + interval '30 days') RETURNING id",
+            u=asha,
+        )[0]["id"]
+        run_sql(
+            url,
+            "INSERT INTO matches (request_id, candidate_id, rank, score, reason) "
+            "VALUES (:r, :c, 1, 0.9, 'Fits.')",
+            r=request,
+            c=ben,
+        )
+        asked = (await client.get(f"{USERS}/{asha}", headers=owner.headers)).json()
+        suggested = (await client.get(f"{USERS}/{ben}", headers=owner.headers)).json()
+        rows = (await client.get(USERS, params={"q": tag}, headers=owner.headers)).json()
+
+    assert asked["profile"]["skills"] == ["React", "Figma"]
+    assert asked["profile"]["seeks"] == ["Rust"]
+    assert asked["profile"]["interests"] == ["Chess"]
+    assert suggested["profile"]["skills"] == []
+    assert asked["counts"]["matches_for_requests"] == 1
+    assert asked["counts"]["matched_as_candidate"] == 0
+    assert suggested["counts"]["matched_as_candidate"] == 1
+    [made] = asked["matches"]
+    assert (made["role"], made["other"]["id"], made["other"]["name"]) == (
+        "requester",
+        ben,
+        f"Ben{tag}",
+    )
+    assert (made["intent"], made["rank"], made["status"]) == ("mentor", 1, "shown")
+    [shown] = suggested["matches"]
+    assert (shown["role"], shown["other"]["id"], shown["id"]) == ("candidate", asha, made["id"])
+    # The list counts a match for both people in it.
+    assert {row["id"]: row["matches"] for row in rows["items"]} == {asha: 1, ben: 1}
 
 
 async def test_suspend_ban_and_their_reversals_each_write_one_audit_entry(

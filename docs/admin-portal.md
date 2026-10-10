@@ -83,7 +83,7 @@ people (`perf-<n>@example.com`). It then times the admin Users queries and the O
 | Page | Who sees it | Notes |
 | --- | --- | --- |
 | Overview | Everyone | Counts only, cached for 60 seconds. |
-| Users | Everyone | Actions need "Suspend / ban users"; deletion needs "Delete users and data". |
+| Users | Everyone | Actions need "Suspend / ban users"; deletion needs "Delete users and data". A person's drawer shows the skills read from their about text and their 20 newest matches. |
 | Signup and access | Owners, admins | Mode, applications, invite codes, domains. |
 | Reports and safety | Everyone | Decisions need "Handle reports". Only messages the reporter attached are shown. |
 | Content moderation | Everyone | Keep and remove need "Handle reports"; rule switches need "Settings and switches". |

@@ -17,11 +17,13 @@ from app.api.deps import SettingsDep, require_json
 from app.models import UserStatus
 from app.schemas.admin_users import (
     ActionIn,
+    MatchPerson,
     NoteIn,
     NoteOut,
     ProfileSummary,
     TimelineItem,
     UserDetail,
+    UserMatch,
     UserPage,
     UserRow,
 )
@@ -86,10 +88,25 @@ async def get_user(user_id: uuid.UUID, _: Viewer, db: DbDep) -> UserDetail:
             intents=list(profile.intents),
             visibility=profile.visibility,
             parse_status=profile.parse_status,
+            skills=users.tags(profile, "offers"),
+            seeks=users.tags(profile, "seeks"),
+            interests=users.tags(profile, "interests"),
         )
         if profile
         else None,
         counts=found.counts,
+        matches=[
+            UserMatch(
+                id=row.id,
+                role=row.role,
+                other=MatchPerson(id=row.other_id, email=row.other_email, name=row.other_name),
+                intent=row.intent,
+                rank=row.rank,
+                status=row.status,
+                created_at=row.created_at,
+            )
+            for row in found.matches
+        ],
         timeline=[TimelineItem(at=at, event=event) for at, event in found.timeline],
         notes=[NoteOut.from_note(note) for note in found.notes],
     )

@@ -27,8 +27,12 @@ const USER: UserDetail = {
     intents: [],
     visibility: "matchable",
     parse_status: "parsed",
+    skills: [],
+    seeks: [],
+    interests: [],
   },
   counts: { requests: 2, reports_against: 0 },
+  matches: [],
   timeline: [{ at: "2026-10-01T10:00:00Z", event: "account.created" }],
   notes: [],
 };
@@ -65,6 +69,57 @@ describe("UserDrawer", () => {
     );
     expect(screen.getByText("City").nextElementSibling).toHaveTextContent("Patiala");
     expect(screen.getByText("Email verified").nextElementSibling).toHaveTextContent("Not yet");
+  });
+
+  it("shows the skills read from the about text, and the matches on both sides", () => {
+    render(
+      <UserDrawer
+        user={{
+          ...USER,
+          profile: { ...USER.profile!, skills: ["React", "Figma"], seeks: ["Rust"] },
+          matches: [
+            {
+              id: "m1",
+              role: "requester",
+              other: { id: "u2", email: "ben@example.com", name: "Ben" },
+              intent: "mentor",
+              rank: 1,
+              status: "intro_sent",
+              created_at: "2026-10-02T10:00:00Z",
+            },
+            {
+              id: "m2",
+              role: "candidate",
+              other: { id: "u3", email: "ira@example.com", name: null },
+              intent: null,
+              rank: 2,
+              status: "shown",
+              created_at: "2026-10-01T10:00:00Z",
+            },
+          ],
+        }}
+        permissions={MODERATOR}
+        closeHref="/admin/users?q=sam"
+      />,
+    );
+    expect(screen.getByText("Skills").nextElementSibling).toHaveTextContent("React, Figma");
+    expect(screen.getByText("Looking for").nextElementSibling).toHaveTextContent("Rust");
+    expect(screen.getByText("Interests").nextElementSibling).toHaveTextContent("None read yet");
+    const [made, shown] = within(
+      screen.getByRole("heading", { name: "Matches" }).parentElement!,
+    ).getAllByRole("listitem");
+    expect(made).toHaveTextContent("Matched with Ben");
+    expect(made).toHaveTextContent("rank 1 · intro sent");
+    expect(within(made!).getByRole("link", { name: "Ben" })).toHaveAttribute(
+      "href",
+      "/admin/users?q=sam&user=u2",
+    );
+    expect(shown).toHaveTextContent("Suggested to ira@example.com");
+  });
+
+  it("says so when there are no matches", () => {
+    render(<UserDrawer user={USER} permissions={MODERATOR} closeHref="/admin/users" />);
+    expect(screen.getByText("No matches yet.")).toBeInTheDocument();
   });
 
   it("hides every action from read-only admins", () => {

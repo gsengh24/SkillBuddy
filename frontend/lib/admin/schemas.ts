@@ -135,9 +135,26 @@ export const userDetailSchema = z.object({
       intents: z.array(z.string()),
       visibility: z.string(),
       parse_status: z.string(),
+      // Defaulted so the page still loads while an older API is running.
+      skills: z.array(z.string()).default([]),
+      seeks: z.array(z.string()).default([]),
+      interests: z.array(z.string()).default([]),
     })
     .nullable(),
   counts: z.record(z.string(), z.number()),
+  matches: z
+    .array(
+      z.object({
+        id: z.string(),
+        role: z.enum(["requester", "candidate"]),
+        other: z.object({ id: z.string(), email: z.string(), name: z.string().nullable() }),
+        intent: z.string().nullable(),
+        rank: z.number(),
+        status: z.string(),
+        created_at: z.string(),
+      }),
+    )
+    .default([]),
   timeline: z.array(z.object({ at: z.string(), event: z.string() })),
   notes: z.array(noteSchema),
 });
