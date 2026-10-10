@@ -67,7 +67,7 @@ export function Conversation({
   // When the last message or sign of the person was; set on mount (0 until then).
   const activityRef = useRef(0);
   const stoppedRef = useRef(false);
-  const endRef = useRef<HTMLLIElement>(null);
+  const listRef = useRef<HTMLOListElement>(null);
 
   const markRead = useCallback(() => {
     browserApi(`/connections/${connectionId}/read`, noContentSchema, { method: "POST" }).catch(
@@ -100,7 +100,9 @@ export function Conversation({
   }, [hasUnread, markRead]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView?.({ block: "end" });
+    // Keep the newest message in view by scrolling the list itself, never the page.
+    const list = listRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
   }, [messages.length]);
 
   useEffect(() => {
@@ -189,7 +191,14 @@ export function Conversation({
     <div className="flex flex-col gap-4">
       {messages.length < FIRST_CHAT_MESSAGES ? <SafetyTips /> : null}
       {messages.length ? (
-        <ol aria-label="Messages" className="flex flex-col gap-3">
+        // The list scrolls on its own, so a long chat never makes the page longer. It can
+        // take focus, so it also scrolls from the keyboard.
+        <ol
+          ref={listRef}
+          aria-label="Messages"
+          tabIndex={0}
+          className="-mx-1 flex max-h-[60dvh] flex-col gap-3 overflow-y-auto overscroll-contain px-1 py-1 pr-2"
+        >
           {messages.map((message) => {
             const mine = message.sender_id === meId;
             return (
@@ -230,7 +239,6 @@ export function Conversation({
               </li>
             );
           })}
-          <li ref={endRef} aria-hidden className="h-0" />
         </ol>
       ) : (
         <p className="text-muted text-center">No messages yet. Say hello.</p>
