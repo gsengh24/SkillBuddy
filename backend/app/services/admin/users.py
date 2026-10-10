@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import Any, Final
+from typing import Any, Final, Literal
 
 from sqlalchemy import Text, cast, delete, exists, func, or_, select, tuple_, union
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,6 +48,7 @@ COUNT_TTL_SECONDS: Final = 60
 SUSPENSION_DAYS: Final = 7
 TIMELINE_ITEMS: Final = 20
 NOTES_SHOWN: Final = 50
+MATCHES_SHOWN: Final = 20
 
 
 class UserAction(StrEnum):
@@ -135,6 +136,20 @@ def _filtered(query: Any, filters: Filters) -> Any:
 
 def list_query(filters: Filters) -> Any:
     """The page query, without paging (also used by the performance script)."""
+    # A match counts for both people in it: the one who asked and the one suggested.
+    made = (
+        select(func.count())
+        .select_from(Match)
+        .join(MatchRequest, MatchRequest.id == Match.request_id)
+        .where(MatchRequest.user_id == User.id)
+        .scalar_subquery()
+    )
+    suggested = (
+        select(func.count())
+        .select_from(Match)
+        .where(Match.candidate_id == User.id)
+        .scalar_subquery()
+    )
     return _filtered(
         select(
             User.id,
@@ -152,11 +167,7 @@ def list_query(filters: Filters) -> Any:
             .where(Report.reported_id == User.id, Report.status == ReportStatus.OPEN)
             .scalar_subquery()
             .label("open_reports"),
-            select(func.count())
-            .select_from(Match)
-            .where(Match.candidate_id == User.id)
-            .scalar_subquery()
-            .label("matches"),
+            (made + suggested).label("matches"),
         ).outerjoin(Profile, Profile.user_id == User.id),
         filters,
     )
@@ -207,13 +218,70 @@ async def page(
 
 
 @dataclass(frozen=True)
+class MatchRow:
+    """One match the person is part of, and the person on the other side of it."""
+
+    id: uuid.UUID
+    # "requester": made for their request; "candidate": they were suggested to someone.
+    role: Literal["requester", "candidate"]
+    other_id: uuid.UUID
+    other_email: str
+    other_name: str | None
+    intent: str | None
+    rank: int
+    status: str
+    created_at: datetime
+
+
+@dataclass(frozen=True)
 class Detail:
     user: User
     profile: Profile | None
     sign_in_methods: list[str]
     counts: dict[str, int]
+    matches: list[MatchRow]
     timeline: list[tuple[datetime, str]]
     notes: list[AdminNote]
+
+
+def tags(profile: Profile, key: str) -> list[str]:
+    """One list ("offers", "seeks", "interests") of what was read from the about text."""
+    value = (profile.structured or {}).get(key)
+    return [str(item) for item in value] if isinstance(value, list) else []
+
+
+async def _matches(db: AsyncSession, user_id: uuid.UUID) -> list[MatchRow]:
+    """Their newest matches on either side: two indexed lookups, merged."""
+    found: list[MatchRow] = []
+    sides: tuple[tuple[Literal["requester", "candidate"], Any, Any], ...] = (
+        ("requester", Match.candidate_id, MatchRequest.user_id),
+        ("candidate", MatchRequest.user_id, Match.candidate_id),
+    )
+    for role, other, mine in sides:
+        rows = await db.execute(
+            select(
+                Match.id,
+                User.id,
+                User.email,
+                Profile.display_name,
+                MatchRequest.intent,
+                Match.rank,
+                Match.status,
+                Match.created_at,
+            )
+            .select_from(Match)
+            .join(MatchRequest, MatchRequest.id == Match.request_id)
+            .join(User, User.id == other)
+            .outerjoin(Profile, Profile.user_id == User.id)
+            .where(mine == user_id)
+            .order_by(Match.created_at.desc(), Match.id.desc())
+            .limit(MATCHES_SHOWN)
+        )
+        found.extend(
+            MatchRow(match_id, role, other_id, email, name or None, intent, rank, status, at)
+            for match_id, other_id, email, name, intent, rank, status, at in rows.tuples()
+        )
+    return sorted(found, key=lambda row: (row.created_at, row.id), reverse=True)[:MATCHES_SHOWN]
 
 
 async def detail(db: AsyncSession, user_id: uuid.UUID) -> Detail:
@@ -233,6 +301,12 @@ async def detail(db: AsyncSession, user_id: uuid.UUID) -> Detail:
                     .where(MatchRequest.user_id == user_id)
                     .scalar_subquery()
                     .label("requests"),
+                    select(func.count())
+                    .select_from(Match)
+                    .join(MatchRequest, MatchRequest.id == Match.request_id)
+                    .where(MatchRequest.user_id == user_id)
+                    .scalar_subquery()
+                    .label("matches_for_requests"),
                     select(func.count())
                     .select_from(Match)
                     .where(Match.candidate_id == user_id)
@@ -304,6 +378,7 @@ async def detail(db: AsyncSession, user_id: uuid.UUID) -> Detail:
         profile=profile,
         sign_in_methods=methods,
         counts={key: int(value or 0) for key, value in counts_row.items()},
+        matches=await _matches(db, user_id),
         timeline=timeline,
         notes=notes,
     )

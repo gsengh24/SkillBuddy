@@ -11,8 +11,16 @@ import { STATUS_LABELS, noteSchema, type UserDetail } from "@/lib/admin/schemas"
 import { browserApi } from "@/lib/api/browser";
 import { noContentSchema } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
+import { intents as INTENTS } from "@/lib/design/tokens";
 
 const REASON_MIN = 10;
+
+/** What was read from the about text, as the drawer labels it. */
+const TAGS = [
+  ["skills", "Skills"],
+  ["seeks", "Looking for"],
+  ["interests", "Interests"],
+] as const;
 
 type Action = {
   path: string;
@@ -292,8 +300,54 @@ export function UserDrawer({
             <p className="text-meta-lg text-ink-2 whitespace-pre-wrap">
               {user.profile.about_text || "No about text."}
             </p>
+            <dl className="text-meta-lg mt-1 grid grid-cols-[130px_1fr] gap-x-3 gap-y-2">
+              {TAGS.map(([key, label]) => (
+                <div key={key} className="contents">
+                  <dt className="text-muted">{label}</dt>
+                  <dd>{user.profile?.[key].join(", ") || "None read yet"}</dd>
+                </div>
+              ))}
+            </dl>
           </section>
         ) : null}
+
+        <section aria-labelledby="matches-h" className="flex flex-col gap-1.5">
+          <h3 id="matches-h" className="text-mono text-muted font-mono uppercase">
+            Matches
+          </h3>
+          {user.matches.length ? (
+            <ul className="divide-line flex flex-col divide-y">
+              {user.matches.map((match) => (
+                <li key={`${match.id}-${match.role}`} className="text-meta-lg py-1.5">
+                  <span className="text-muted">
+                    {match.role === "requester" ? "Matched with " : "Suggested to "}
+                  </span>
+                  <Link
+                    href={`${closeHref}${closeHref.includes("?") ? "&" : "?"}user=${match.other.id}`}
+                    scroll={false}
+                    className="font-semibold break-all underline"
+                  >
+                    {match.other.name ?? match.other.email}
+                  </Link>
+                  <span className="text-muted block font-mono text-[11px]" suppressHydrationWarning>
+                    {[
+                      match.intent
+                        ? (INTENTS[match.intent as keyof typeof INTENTS]?.label ?? match.intent)
+                        : null,
+                      `rank ${match.rank}`,
+                      match.status.replaceAll("_", " "),
+                      when(match.created_at),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-meta text-muted">No matches yet.</p>
+          )}
+        </section>
 
         <section aria-labelledby="timeline-h" className="flex flex-col gap-1.5">
           <h3 id="timeline-h" className="text-mono text-muted font-mono uppercase">
