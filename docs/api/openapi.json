@@ -3290,6 +3290,37 @@
         "title": "MatchOut",
         "type": "object"
       },
+      "MatchPerson": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ],
+        "title": "MatchPerson",
+        "type": "object"
+      },
       "MatchRequestIn": {
         "additionalProperties": false,
         "properties": {
@@ -4835,9 +4866,32 @@
             "title": "Intents",
             "type": "array"
           },
+          "interests": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Interests",
+            "type": "array"
+          },
           "parse_status": {
             "title": "Parse Status",
             "type": "string"
+          },
+          "seeks": {
+            "description": "What they are looking for, read the same way.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Seeks",
+            "type": "array"
+          },
+          "skills": {
+            "description": "What they can give, as read from the about text.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Skills",
+            "type": "array"
           },
           "visibility": {
             "title": "Visibility",
@@ -4851,7 +4905,10 @@
           "about_text",
           "intents",
           "visibility",
-          "parse_status"
+          "parse_status",
+          "skills",
+          "seeks",
+          "interests"
         ],
         "title": "ProfileSummary",
         "type": "object"
@@ -6386,7 +6443,7 @@
             "additionalProperties": {
               "type": "integer"
             },
-            "description": "requests, matched_as_candidate, connections, reports_against, open_reports_against.",
+            "description": "requests, matches_for_requests, matched_as_candidate, connections, reports_against, open_reports_against.",
             "title": "Counts",
             "type": "object"
           },
@@ -6439,6 +6496,14 @@
               }
             ],
             "title": "Last Login At"
+          },
+          "matches": {
+            "description": "Newest first, both roles; at most 20.",
+            "items": {
+              "$ref": "#/components/schemas/UserMatch"
+            },
+            "title": "Matches",
+            "type": "array"
           },
           "notes": {
             "items": {
@@ -6510,10 +6575,68 @@
           "sign_in_methods",
           "profile",
           "counts",
+          "matches",
           "timeline",
           "notes"
         ],
         "title": "UserDetail",
+        "type": "object"
+      },
+      "UserMatch": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The request's intent, once the matcher set it.",
+            "title": "Intent"
+          },
+          "other": {
+            "$ref": "#/components/schemas/MatchPerson"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "role": {
+            "description": "requester: made for this user's request. candidate: this user was suggested to the other person.",
+            "enum": [
+              "requester",
+              "candidate"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "other",
+          "intent",
+          "rank",
+          "status",
+          "created_at"
+        ],
+        "title": "UserMatch",
         "type": "object"
       },
       "UserOut": {
@@ -6683,7 +6806,7 @@
             "title": "Last Login At"
           },
           "matches": {
-            "description": "Times they were suggested to someone as a match.",
+            "description": "Matches made for their requests, plus times they were suggested to someone.",
             "title": "Matches",
             "type": "integer"
           },
