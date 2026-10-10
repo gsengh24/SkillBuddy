@@ -37,7 +37,7 @@ SIGNUP_TABLES = {"app_settings", "signup_domains", "signup_applications", "invit
 CONTENT_TABLES = {"content_flags", "ai_calls"}  # 0023
 COMMS_TABLES = {"banners", "email_sends"}  # 0024
 EXPORT_CSV_TABLES = {"admin_exports"}  # 0025
-TEAM_TABLES = {"teams", "team_members", "team_invites"}  # 0026 (ADR 0016)
+TEAM_TABLES = {"teams", "team_members", "team_invites", "team_messages"}  # 0026, 0028
 ALL_TABLES = (
     PHASE_ZERO_TABLES
     | AUTH_TABLES

@@ -9,6 +9,10 @@ Retention (storage rules, CLAUDE.md): a closed team is hidden at once and delete
 membership row is deleted when the person leaves or is removed. Account deletion removes a
 person's memberships and invites (ON DELETE CASCADE); a team they owned passes to its
 longest-standing member.
+
+Team chat (``team_messages``): messages are purged daily after ``MESSAGE_RETENTION_DAYS``
+(90), like one-to-one chat; they go with the team, and a person's own messages go with
+their account. Read state is ``team_members.read_at``.
 """
 
 from __future__ import annotations
@@ -30,6 +34,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, UUIDPrimaryKeyMixin
+from app.models.chat import MESSAGE_MAX_LENGTH
 
 TEAM_NAME_MAX_LENGTH = 60
 TEAM_DESCRIPTION_MAX_LENGTH = 300
@@ -106,6 +111,8 @@ class TeamMember(UUIDPrimaryKeyMixin, Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    # Team chat: this person has read every message up to this time.
+    read_at: Mapped[datetime | None]
 
 
 class TeamInvite(UUIDPrimaryKeyMixin, Base):
@@ -134,4 +141,25 @@ class TeamInvite(UUIDPrimaryKeyMixin, Base):
     )
     responded_at: Mapped[datetime | None]
     expires_at: Mapped[datetime]
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class TeamMessage(UUIDPrimaryKeyMixin, Base):
+    """One message in a team's chat. The sender is a user id: a team has more than two
+    people, so the ``from_a`` flag of one-to-one chat cannot be used."""
+
+    __tablename__ = "team_messages"
+    __table_args__ = (
+        CheckConstraint(
+            f"char_length(body) BETWEEN 1 AND {MESSAGE_MAX_LENGTH}", name="body_length"
+        ),
+        # History and polling: one team, in time order.
+        Index("ix_team_messages_team_id_created_at", "team_id", "created_at", "id"),
+        # The daily retention purge (a BRIN index is a few KB for an append-only time column).
+        Index("ix_team_messages_created_at_brin", "created_at", postgresql_using="brin"),
+    )
+
+    team_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
+    sender_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

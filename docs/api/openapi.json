@@ -3621,6 +3621,14 @@
             ],
             "description": "Set when the shared daily budget is spent: wait at least this long before the next poll.",
             "title": "Poll After Seconds"
+          },
+          "team_items": {
+            "description": "New messages in your teams, oldest first; the same cursor covers both lists. Empty while teams are switched off.",
+            "items": {
+              "$ref": "#/components/schemas/TeamMessageOut"
+            },
+            "title": "Team Items",
+            "type": "array"
           }
         },
         "required": [
@@ -6151,6 +6159,19 @@
             "title": "Invites",
             "type": "array"
           },
+          "last_message_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Filled in the list of your teams.",
+            "title": "Last Message At"
+          },
           "max_members": {
             "title": "Max Members",
             "type": "integer"
@@ -6193,6 +6214,12 @@
             ],
             "title": "Purpose",
             "type": "string"
+          },
+          "unread": {
+            "default": 0,
+            "description": "Team chat messages from others not yet read. Filled in the list of teams.",
+            "title": "Unread",
+            "type": "integer"
           }
         },
         "required": [
@@ -6462,6 +6489,80 @@
         "title": "TeamMemberOut",
         "type": "object"
       },
+      "TeamMessageOut": {
+        "description": "A message in a team's chat (ADR 0016).",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "sender_id": {
+            "format": "uuid",
+            "title": "Sender Id",
+            "type": "string"
+          },
+          "team_id": {
+            "format": "uuid",
+            "title": "Team Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "team_id",
+          "sender_id",
+          "body",
+          "created_at"
+        ],
+        "title": "TeamMessageOut",
+        "type": "object"
+      },
+      "TeamMessagePage": {
+        "properties": {
+          "items": {
+            "description": "Newest first.",
+            "items": {
+              "$ref": "#/components/schemas/TeamMessageOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as `before` for older messages.",
+            "title": "Next Cursor"
+          },
+          "retention_days": {
+            "description": "Messages are deleted this many days after sending.",
+            "title": "Retention Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "retention_days"
+        ],
+        "title": "TeamMessagePage",
+        "type": "object"
+      },
       "TeamOut": {
         "properties": {
           "items": {
@@ -6601,6 +6702,19 @@
             "title": "Id",
             "type": "string"
           },
+          "last_message_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Filled in the list of your teams.",
+            "title": "Last Message At"
+          },
           "max_members": {
             "title": "Max Members",
             "type": "integer"
@@ -6635,6 +6749,12 @@
             ],
             "title": "Purpose",
             "type": "string"
+          },
+          "unread": {
+            "default": 0,
+            "description": "Team chat messages from others not yet read. Filled in the list of teams.",
+            "title": "Unread",
+            "type": "integer"
           }
         },
         "required": [
@@ -17903,6 +18023,277 @@
           }
         },
         "summary": "Leave a team, or remove a member (owner)",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/api/v1/teams/{team_id}/messages": {
+      "get": {
+        "description": "A new member can read what was said before they joined.",
+        "operationId": "list_team_messages_api_v1_teams__team_id__messages_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Team Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMessagePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`invalid_cursor`."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`team_not_found`: no such open team, or you are not in it."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
+          }
+        },
+        "summary": "Messages in a team's chat, newest first",
+        "tags": [
+          "teams"
+        ]
+      },
+      "post": {
+        "description": "Counts against the same daily limit as one-to-one messages. Deleted\n`MESSAGE_RETENTION_DAYS` (90) after sending.",
+        "operationId": "send_team_message_api_v1_teams__team_id__messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Team Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMessageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`team_not_found`: no such open team, or you are not in it."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed, or `message_too_long` (the length limit)."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Daily message limit (see Retry-After)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
+          }
+        },
+        "summary": "Send a message to a team",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/api/v1/teams/{team_id}/read": {
+      "post": {
+        "operationId": "mark_team_read_api_v1_teams__team_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Team Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`team_not_found`: no such open team, or you are not in it."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`feature_off`."
+          }
+        },
+        "summary": "Mark a team's chat read",
         "tags": [
           "teams"
         ]

@@ -8,6 +8,7 @@
   per-minute limit, and everyone shares a daily budget; past the budget, each person may
   poll once a minute until the next UTC day, so chat slows down instead of stopping.
 - Messages are purged ``MESSAGE_RETENTION_DAYS`` after they were sent.
+- The same poll also carries new team messages (``app.services.team_chat``, ADR 0016).
 """
 
 from __future__ import annotations
@@ -25,8 +26,8 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from app.core.config import Settings
 from app.core.errors import AppError, NotFoundError, RateLimitedError
-from app.models import SIGNED_IN_STATUSES, Connection, Message, User
-from app.services import app_settings, blocks
+from app.models import SIGNED_IN_STATUSES, Connection, Message, TeamMessage, User
+from app.services import app_settings, blocks, team_chat
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 
@@ -70,6 +71,8 @@ class MessageView:
 @dataclass(frozen=True)
 class Updates:
     items: list[MessageView]
+    # New messages in the person's teams (ADR 0016), oldest first; same cursor.
+    team_items: list[TeamMessage]
     cursor: str
     has_more: bool
     # Set when the daily poll budget is spent: wait this long before the next poll.
@@ -182,7 +185,7 @@ class ChatService:
         db_now = (await self._db.execute(select(func.now()))).scalar_one()
         horizon = (db_now - VISIBILITY_LAG, _NO_ID)
         if after is None:
-            return Updates([], encode(*horizon), has_more=False, poll_after_seconds=poll_after)
+            return Updates([], [], encode(*horizon), has_more=False, poll_after_seconds=poll_after)
 
         start = decode_cursor(after)
         query = (
@@ -202,13 +205,26 @@ class ChatService:
         rows = (
             await self._db.execute(query.order_by(Message.created_at, Message.id).limit(limit + 1))
         ).all()
-        has_more = len(rows) > limit
-        rows = rows[:limit]
-        items = [MessageView(message, _sender(connection, message)) for message, connection in rows]
-        last = (rows[-1][0].created_at, rows[-1][0].id) if rows else start
+        team_rows: list[TeamMessage] = []
+        if await app_settings.is_on(self._db, app_settings.Feature.TEAMS):
+            team_rows = await team_chat.new_messages(self._db, user.id, start, limit + 1)
+        # One stream in time order, cut at ``limit``, so one cursor serves both kinds.
+        merged: list[tuple[datetime, uuid.UUID, MessageView | TeamMessage]] = [
+            (message.created_at, message.id, MessageView(message, _sender(connection, message)))
+            for message, connection in rows
+        ]
+        merged += [(message.created_at, message.id, message) for message in team_rows]
+        merged.sort(key=lambda entry: entry[:2])
+        has_more = len(merged) > limit
+        merged = merged[:limit]
+        items = [entry for _, _, entry in merged if isinstance(entry, MessageView)]
+        team_items = [entry for _, _, entry in merged if isinstance(entry, TeamMessage)]
+        last = merged[-1][:2] if merged else start
         # Never move past the horizon: a message that commits late is still picked up.
         cursor = min(max(last, start), max(horizon, start))
-        return Updates(items, encode(*cursor), has_more=has_more, poll_after_seconds=poll_after)
+        return Updates(
+            items, team_items, encode(*cursor), has_more=has_more, poll_after_seconds=poll_after
+        )
 
     async def mark_read(self, user: User, connection_id: uuid.UUID) -> None:
         """Everything in this conversation up to now counts as read by ``user``."""
@@ -246,7 +262,9 @@ async def purge_old_messages(db: AsyncSession, settings: Settings, now: datetime
     """Daily: delete messages older than ``MESSAGE_RETENTION_DAYS``."""
     cutoff = now - timedelta(days=settings.message_retention_days)
     result = await db.execute(delete(Message).where(Message.created_at < cutoff))
+    team_result = await db.execute(delete(TeamMessage).where(TeamMessage.created_at < cutoff))
     await db.commit()
     deleted = int(getattr(result, "rowcount", 0) or 0)
+    deleted += int(getattr(team_result, "rowcount", 0) or 0)
     logger.info("messages_purged", extra={"deleted": deleted})
     return deleted

@@ -8,7 +8,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from app.models import MESSAGE_MAX_LENGTH
+from app.models import MESSAGE_MAX_LENGTH, TeamMessage
 from app.services.chat import MessageView, Updates
 
 
@@ -39,6 +39,32 @@ class MessageOut(BaseModel):
         )
 
 
+class TeamMessageOut(BaseModel):
+    """A message in a team's chat (ADR 0016)."""
+
+    id: uuid.UUID
+    team_id: uuid.UUID
+    sender_id: uuid.UUID
+    body: str
+    created_at: datetime
+
+    @classmethod
+    def build(cls, message: TeamMessage) -> TeamMessageOut:
+        return cls(
+            id=message.id,
+            team_id=message.team_id,
+            sender_id=message.sender_id,
+            body=message.body,
+            created_at=message.created_at,
+        )
+
+
+class TeamMessagePage(BaseModel):
+    items: list[TeamMessageOut] = Field(description="Newest first.")
+    next_cursor: str | None = Field(description="Pass as `before` for older messages.")
+    retention_days: int = Field(description="Messages are deleted this many days after sending.")
+
+
 class MessagePage(BaseModel):
     items: list[MessageOut] = Field(description="Newest first.")
     next_cursor: str | None = Field(description="Pass as `before` for older messages.")
@@ -49,6 +75,11 @@ class MessageUpdates(BaseModel):
     items: list[MessageOut] = Field(
         description="New messages in all your conversations, oldest first. A recent message "
         "can appear in two polls in a row: de-duplicate by `id`."
+    )
+    team_items: list[TeamMessageOut] = Field(
+        default_factory=list,
+        description="New messages in your teams, oldest first; the same cursor covers both "
+        "lists. Empty while teams are switched off.",
     )
     cursor: str = Field(description="Pass as `after` on the next poll.")
     has_more: bool = Field(description="More are waiting: poll again right away.")
@@ -61,6 +92,7 @@ class MessageUpdates(BaseModel):
     def build(cls, updates: Updates) -> MessageUpdates:
         return cls(
             items=[MessageOut.build(view) for view in updates.items],
+            team_items=[TeamMessageOut.build(message) for message in updates.team_items],
             cursor=updates.cursor,
             has_more=updates.has_more,
             poll_after_seconds=updates.poll_after_seconds,
