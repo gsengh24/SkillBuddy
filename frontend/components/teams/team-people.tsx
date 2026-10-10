@@ -18,6 +18,7 @@ import {
 import { describeError } from "@/lib/auth/messages";
 
 import { SELECT } from "./create-team";
+import { InviteLink } from "./invite-link";
 
 export type Invitable = { userId: string; name: string };
 
@@ -198,6 +199,10 @@ export function TeamPeople({
             </p>
           )}
         </div>
+      ) : null}
+
+      {isOwner ? (
+        <InviteLink teamId={team.id} expiresAt={team.invite_link_expires_at} full={full} />
       ) : null}
 
       {error ? <InlineError announce>{error}</InlineError> : null}

@@ -10,6 +10,7 @@ import {
   teamMessagePageSchema,
   teamSchema,
   teamSpaceSchema,
+  teamSummarySchema,
 } from "@/lib/api/schemas";
 
 async function cookieHeader(): Promise<Record<string, string>> {
@@ -55,4 +56,11 @@ export async function getTeamChat(teamId: string) {
     { headers },
   );
   return { page, cursor: start.cursor };
+}
+
+/** The team behind an invite link: name, purpose and size only. */
+export async function getTeamByLink(code: string) {
+  return apiRequest(`/api/v1/teams/join/${encodeURIComponent(code)}`, teamSummarySchema, {
+    headers: await cookieHeader(),
+  });
 }
