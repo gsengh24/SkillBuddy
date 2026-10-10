@@ -61,7 +61,7 @@ const INTRO: Intro = {
   note: "Hi! I'm building a budgeting app and would love your design eye.",
   request_text: "A designer for my budgeting app",
   reason: "You design mobile apps; they're building one.",
-  person: { ...CANDIDATE, display_name: null, links: null },
+  person: { ...CANDIDATE, display_name: null, links: null, photo_url: null },
   created_at: "2026-10-07T10:00:00Z",
   expires_at: "2026-10-14T10:00:00Z",
   responded_at: null,

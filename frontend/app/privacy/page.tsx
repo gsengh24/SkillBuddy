@@ -119,9 +119,9 @@ export default function PrivacyPage() {
           <li>
             Your Google account picture is shown to nobody unless you turn on &quot;Show my Google
             photo&quot;. If you do, only people you are connected with see it, and you can turn it
-            off at any time. The picture stays on Google&apos;s servers: when someone sees it,
-            their browser fetches it from Google, so Google receives that person&apos;s IP address
-            and browser details.
+            off at any time. The picture stays on Google&apos;s servers: when someone sees it, their
+            browser fetches it from Google, so Google receives that person&apos;s IP address and
+            browser details.
           </li>
           <li>
             A pair space, with its goals, skills and notes, can be seen only by the two people in

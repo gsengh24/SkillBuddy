@@ -40,7 +40,12 @@ export default async function SpacesPage() {
             const name = person.display_name ?? "Your connection";
             return (
               <li key={id} className="border-line flex items-center gap-3 border-b py-3">
-                <Avatar userId={person.user_id} name={name} photoUrl={person.photo_url} decorative />
+                <Avatar
+                  userId={person.user_id}
+                  name={name}
+                  photoUrl={person.photo_url}
+                  decorative
+                />
                 <div className="min-w-0 flex-1">
                   <h2 className="text-title truncate">{name}</h2>
                   {person.summary ? (
