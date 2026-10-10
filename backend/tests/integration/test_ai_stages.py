@@ -134,6 +134,44 @@ async def test_understand_invalid_output_twice_uses_the_template(
     assert len(groq.requests) == 2
 
 
+async def test_explain_sends_the_requesters_profile_without_who_they_are(
+    make_settings: SettingsFactory,
+    migrated_database_url: str,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    settings = make_settings(database_url=migrated_database_url)
+    requester = CandidateSummary(
+        user_id=uuid.uuid4(),
+        skills=["React"],
+        interests=["Chess with Aarav"],
+        goals=["A designer"],
+        name_hints=["Aarav Sharma"],
+    )
+    verdicts = [{"id": "C1", "need": 3, "shared": 2, "reason": "Designs in Figma, as asked."}]
+    groq = _fake(json.dumps({"verdicts": verdicts}))
+    result = await explain(
+        _gateway(settings, session_factory, [groq]),
+        TEXT,
+        Understanding(seeks=["designer"]),
+        _candidates(3),
+        user_id=str(uuid.uuid4()),
+        name_hints=["Aarav Sharma"],
+        requester=requester,
+    )
+
+    assert result.source is Source.LLM
+    body = groq.requests[0].user
+    sent = json.loads(body)
+    assert sent["student"] == {
+        "skills": ["React"],
+        "interests": ["Chess with [name]"],
+        "goals": ["A designer"],
+        "availability": "",
+    }
+    assert str(requester.user_id) not in body
+    assert "Aarav" not in body
+
+
 async def test_explain_maps_aliases_and_drops_unknown_or_repeated_ids(
     make_settings: SettingsFactory,
     migrated_database_url: str,
@@ -158,13 +196,15 @@ async def test_explain_maps_aliases_and_drops_unknown_or_repeated_ids(
     )
 
     assert result.source is Source.LLM
-    assert result.prompt_version == "explain_v2"
+    assert result.prompt_version == "explain_v3"
     assert [(p.user_id, p.reason) for p in result.picks] == [
         (candidates[2].summary.user_id, "Designs in Figma, which you need."),
         (candidates[0].summary.user_id, "Works on similar projects."),
     ]
     sent = json.loads(groq.requests[0].user)
     assert [c["id"] for c in sent["candidates"]] == [f"C{i}" for i in range(1, 16)]
+    # Nobody was passed as the requester, so no profile of theirs is sent.
+    assert "student" not in sent
     body = groq.requests[0].user
     for secret in ("Aarav", "Person2", *(str(c.summary.user_id) for c in candidates)):
         assert secret not in body
@@ -265,7 +305,7 @@ async def test_explain_when_the_judge_finds_nobody_good_enough(
         user_id=str(uuid.uuid4()),
     )
     # The judge answered and nobody passed: no picks, and no fall back to the template.
-    assert (result.picks, result.source, result.prompt_version) == ([], Source.LLM, "explain_v2")
+    assert (result.picks, result.source, result.prompt_version) == ([], Source.LLM, "explain_v3")
 
 
 async def test_explain_with_ai_off_and_no_candidates(

@@ -1,7 +1,8 @@
 """Match requests, the matcher and its housekeeping, against real PostgreSQL + pgvector.
 
-No AI provider is called: the AI is switched off, so the template stages run. Retrieval
-tests place unit vectors by hand so the expected order is known.
+No real AI provider is called: most tests run the template stages, and the one that
+checks what the judge is sent uses a fake provider. Retrieval tests place unit vectors
+by hand so the expected order is known.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.ai.embeddings import EmbedKind
 from app.ai.gateway import AIGateway
+from app.ai.providers import ChatRequest, FakeProvider
 from app.ai.stages import Intent
 from app.core.config import Settings
 from app.db.engine import create_engine
@@ -254,6 +256,87 @@ async def test_at_most_matches_per_request_and_names_never_in_reasons(
     assert len(rows) == 3
     assert [row["rank"] for row in rows] == [1, 2, 3]
     assert all("Zarathustra" not in row["reason"] for row in rows)
+
+
+async def test_the_judge_gets_both_profiles_and_nothing_that_says_who_they_are(
+    make_settings: SettingsFactory,
+    migrated_database_url: str,
+    session_factory: async_sessionmaker[AsyncSession],
+    model: str,
+) -> None:
+    url = migrated_database_url
+    settings = make_settings(database_url=url)
+    run_sql(url, "DELETE FROM rate_limit_counters WHERE key LIKE 'ai:%'")
+    axis = 300 + uuid.uuid4().int % 60
+    me = person(
+        url,
+        model=model,
+        offer=unit((axis + 1, 1.0)),
+        display_name="Asha Hiddenname",
+        structured={"summary": "Builds apps.", "offers": ["Python"], "seeks": ["Firmware help"]},
+    )
+    candidate = person(
+        url,
+        model=model,
+        offer=unit((axis, 1.0)),
+        display_name="Ishaan Secretname",
+        structured={"summary": "Writes firmware.", "offers": ["Firmware"], "seeks": ["A team"]},
+    )
+    run_sql(
+        url,
+        "UPDATE profiles SET goal = 'Build a line follower with Ishaan', "
+        "available_days = ARRAY['sat', 'sun'], weekly_hours = '4_6', city = 'Secretcity', "
+        "experience_level = '1_3_years' WHERE user_id = :u",
+        u=candidate,
+    )
+    run_sql(url, "UPDATE profiles SET goal = 'My private goal' WHERE user_id = :u", u=me)
+    request = new_request(url, me, "Need someone for firmware.", "build_together")
+
+    def judge(sent: ChatRequest) -> str:
+        # Other tests' people may be candidates too: rate only the one who writes firmware.
+        verdicts = [
+            {"id": c["id"], "need": 3, "shared": 2, "reason": "They write firmware, as asked."}
+            for c in json.loads(sent.user)["candidates"]
+            if "Firmware" in c["skills"]
+        ]
+        return json.dumps({"verdicts": verdicts})
+
+    groq = FakeProvider(
+        name=f"groq-{uuid.uuid4().hex[:6]}",
+        replies=[json.dumps({"intent": "build_together", "seeks": ["Firmware"]}), judge],
+    )
+    gateway = AIGateway(settings, session_factory, [groq], cooling_until={})
+    await run_match_request(
+        session_factory, gateway, FixedEmbedder(unit((axis, 1.0)), model), settings, request
+    )
+
+    body = groq.requests[-1].user
+    sent = json.loads(body)
+    # The requester: only what was read from their description.
+    assert sent["student"] == {
+        "skills": ["Python"],
+        "interests": [],
+        "goals": ["Firmware help"],
+        "availability": "",
+    }
+    mine = next(c for c in sent["candidates"] if "Firmware" in c["skills"])
+    assert set(mine) == {"id", "skills", "interests", "goals", "availability"}
+    # Their goal in their own words (names removed), then the parsed tags.
+    assert mine["goals"] == ["Build a line follower with [name]", "A team"]
+    assert mine["availability"] == "Sat, Sun; 4 to 6 hours a week"
+    for secret in (
+        "Ishaan",
+        "Secretname",
+        "Asha",
+        "Hiddenname",
+        "Secretcity",
+        "1_3_years",
+        "private goal",
+        str(candidate),
+        str(me),
+    ):
+        assert secret not in body
+    assert [row["candidate_id"] for row in matches(url, request)] == [candidate]
 
 
 async def test_weak_fits_are_not_suggested_unless_their_words_match(

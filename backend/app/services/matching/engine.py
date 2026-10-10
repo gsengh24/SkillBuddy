@@ -17,9 +17,10 @@ ranking never use an LLM.
   a diverse set with maximal marginal relevance.
 - **Gate:** a candidate whose relevance is under ``MATCH_MIN_RELEVANCE`` is not suggested.
   Too few good people means fewer matches, or none, never weak ones.
-- **Explain:** the best 15 go, anonymised, to ``explain()``. With the AI on, the model
-  judges each one on a rubric and code keeps up to ``MATCHES_PER_REQUEST`` of those at or
-  above ``MATCH_MIN_JUDGE_SCORE``; with it off, the template keeps the top of the ranking.
+- **Explain:** the best 15 go, anonymised, to ``explain()``, with the requester's own
+  profile beside them. With the AI on, the model judges each one on a rubric and code
+  keeps up to ``MATCHES_PER_REQUEST`` of those at or above ``MATCH_MIN_JUDGE_SCORE``;
+  with it off, the template keeps the top of the ranking.
 """
 
 from __future__ import annotations
@@ -129,6 +130,10 @@ class Retrieved:
     structured: dict[str, Any]
     display_name: str
     vector: list[float] | None
+    # Their own goal and availability fields, for the judge (stage 4).
+    goal: str = ""
+    days: Sequence[str] = ()
+    weekly_hours: str = ""
     # The share of the request's word stems found in their text for this facet (0 to 1).
     keyword: float = 0.0
 
@@ -241,7 +246,8 @@ async def _search(
     )
     candidates = (
         f"SELECT pe.user_id, 1 - (pe.embedding <=> CAST(:q AS vector)) AS fit, "  # noqa: S608  # fixed fragments, values are bound
-        f"{reciprocity} AS reciprocity, u.last_login_at, p.structured, p.display_name"
+        f"{reciprocity} AS reciprocity, u.last_login_at, p.structured, p.display_name, "
+        "p.goal, p.available_days, p.weekly_hours"
         f"{vector_column}, "
         f"(SELECT count(*) FROM unnest(tsvector_to_array({_keyword_document(search)})) AS stem "
         f" WHERE stem = ANY({request_stems})) AS stems_shared, "
@@ -282,6 +288,9 @@ async def _search(
                 last_login_at=row["last_login_at"],
                 structured=dict(row["structured"] or {}),
                 display_name=row["display_name"] or "",
+                goal=row["goal"] or "",
+                days=list(row["available_days"] or []),
+                weekly_hours=row["weekly_hours"] or "",
                 vector=json.loads(row["vector"]) if with_vectors else None,
                 keyword=int(row["stems_shared"]) / stems_asked if stems_asked else 0.0,
             )
@@ -390,20 +399,39 @@ async def _history(
     return seen, counts
 
 
+def _items(data: dict[str, Any], key: str) -> list[str]:
+    value = data.get(key)
+    return [str(v) for v in value] if isinstance(value, list) else []
+
+
 def _summary(candidate: Retrieved) -> CandidateSummary:
     data = candidate.structured
-
-    def items(key: str) -> list[str]:
-        value = data.get(key)
-        return [str(v) for v in value] if isinstance(value, list) else []
-
     return CandidateSummary(
         user_id=candidate.user_id,
-        skills=items("offers"),
-        interests=items("interests"),
-        goals=items("seeks"),
+        skills=_items(data, "offers"),
+        interests=_items(data, "interests"),
+        # Their goal in their own words leads: it says more than the parsed tags.
+        goals=[*([candidate.goal] if candidate.goal.strip() else []), *_items(data, "seeks")],
         availability=str(data.get("availability", "")),
+        days=candidate.days,
+        weekly_hours=candidate.weekly_hours,
         name_hints=[candidate.display_name] if candidate.display_name else [],
+    )
+
+
+def _requester_summary(profile: Profile | None, names: Sequence[str]) -> CandidateSummary | None:
+    """The asking person for the judge: only what was read from their own description
+    (the privacy policy's "we send your description"), never their other fields."""
+    data = (profile.structured if profile else None) or {}
+    if profile is None or not data:
+        return None
+    return CandidateSummary(
+        user_id=profile.user_id,
+        skills=_items(data, "offers"),
+        interests=_items(data, "interests"),
+        goals=_items(data, "seeks"),
+        availability=str(data.get("availability", "")),
+        name_hints=list(names),
     )
 
 
@@ -427,6 +455,7 @@ async def run_match_request(
         requester_id = request.user_id
         requested_intent = request.requested_intent
         names = [profile.display_name] if profile and profile.display_name.strip() else []
+        requester = _requester_summary(profile, names)
 
     # --- 1. understand (AI, or the template) -----------------------------------------------
     understood = await understand(gateway, raw_text, user_id=str(requester_id), name_hints=names)
@@ -487,6 +516,7 @@ async def run_match_request(
         [Candidate(_summary(item.candidate), item.score) for item in shortlist],
         user_id=str(requester_id),
         name_hints=names,
+        requester=requester,
         max_picks=settings.matches_per_request,
         min_judged=settings.match_min_judge_score,
     )

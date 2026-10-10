@@ -10,7 +10,7 @@ import httpx
 import pytest
 from pydantic import SecretStr, ValidationError
 
-from app.ai.candidates import MAX_CANDIDATES, CandidateSummary, anonymise
+from app.ai.candidates import MAX_CANDIDATES, CandidateSummary, anonymise, describe
 from app.ai.privacy import find_leaks, name_hints_from_email, redact
 from app.ai.providers import (
     CLOUDFLARE_BASE_URL,
@@ -97,6 +97,26 @@ def test_candidates_become_c1_to_cn_with_no_ids_names_or_contacts() -> None:
     assert "rohan" not in sent.lower()
     assert "[email]" in sent
     assert "[name]" in sent
+
+
+def test_a_summary_holds_only_the_four_fields_the_policy_names() -> None:
+    person = CandidateSummary(
+        user_id=uuid.uuid4(),
+        skills=["Firmware"],
+        goals=["Ship a line follower with Meera, ping @meera_k", "A robotics team"],
+        availability="evenings",
+        days=["sun", "sat", "someday"],
+        weekly_hours="4_6",
+        name_hints=["Meera"],
+    )
+    sent = describe(person)
+
+    assert set(sent) == {"skills", "interests", "goals", "availability"}
+    # Days in week order, unknown values dropped, hours in words.
+    assert sent["availability"] == "evenings; Sat, Sun; 4 to 6 hours a week"
+    assert sent["goals"][1] == "A robotics team"
+    assert "meera" not in json.dumps(sent).lower()
+    assert describe(CandidateSummary(user_id=uuid.uuid4()))["availability"] == ""
 
 
 def test_at_most_fifteen_candidates() -> None:

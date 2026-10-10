@@ -138,6 +138,7 @@ def test_explain_template_keeps_the_top_scores_in_order() -> None:
 def test_prompts_load_by_id_only() -> None:
     assert "C1" in load_prompt("explain_v1")
     assert "verdicts" in load_prompt("explain_v2")
+    assert '"student"' in load_prompt("explain_v3")
     assert "intent" in load_prompt("understand_v1")
     assert '"title"' in load_prompt("understand_v2")
     with pytest.raises(FileNotFoundError):
