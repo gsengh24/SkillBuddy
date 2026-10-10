@@ -44,7 +44,8 @@ data; events kept raw for 30 days.
 | `intros` + `connections` + `notifications` | Intros (note up to 500 characters), connections, in-app notifications (migration 0008) | A few intros and about 20 notifications per 90 days; notifications purged after `NOTIFICATION_RETENTION_DAYS` (90) | ~6 KB | ~6 KB |
 | `space_goals` + `space_skills` + `progress_logs` | Pair spaces (migration 0014, [ADR 0013](adr/0013-pair-spaces-v1.md)): shared goals (title up to 120 characters), skills to grow (up to 60) and progress notes (up to 500), keyed by the connection, or by the team (migration 0027, [ADR 0016](adr/0016-teams.md)) | Notes deleted 90 days after writing; the whole space 90 days after its connection ends (`SPACE_RETENTION_DAYS`); at most 30 goals and 10 skills per person per space or team; a team's rows go with the team | ~3 KB | ~3 KB |
 | `teams` + `team_members` + `team_invites` | Teams (migration 0026, [ADR 0016](adr/0016-teams.md)): name (up to 60 characters), purpose, description (up to 300); one row per member; one per invite | A closed team is deleted `TEAM_RETENTION_DAYS` (90) after closing; invites expire after 14 days and are deleted 90 days later; at most 5 teams per person, 6 people per team, 20 open invites per team | ~2 KB | ~2 KB |
-| **Total** | | | **~143 KB** | **~156 KB** |
+| `team_messages` | Team chat (migration 0028, [ADR 0016](adr/0016-teams.md)): body up to 2,000 characters and the sender's id, stored once however many members read it; plus one read time per member | Deleted `MESSAGE_RETENTION_DAYS` (90) after sending; about 60 kept per user at a time × ~300 B, plus ~60 B of index each | ~20 KB | ~20 KB |
+| **Total** | | | **~163 KB** | **~176 KB** |
 
 Tables that do not grow per user (migration 0003, [ADR 0008](adr/0008-free-runtime-jobs-and-email.md)):
 
@@ -78,10 +79,10 @@ Allowing ~20 MB for PostgreSQL's own catalog and empty-table overhead:
 
 | Embedding dimension | Budget (350 MB) | Protect threshold (450 MB) |
 | --- | --- | --- |
-| 384 | about **2,400 users** | about 3,100 users |
-| 768 | about 2,200 users | about 2,800 users |
+| 384 | about **2,000 users** | about 2,600 users |
+| 768 | about 1,900 users | about 2,400 users |
 
-Updated 2026-10-03 for match requests (migration 0007), intros and notifications (0008) and chat (0009); before them the budget fitted about
+Updated 2026-10-10 for teams and team chat (migrations 0026 to 0028, an estimate: (350 MB − 20 MB) ÷ 163 KB). Updated 2026-10-03 for match requests (migration 0007), intros and notifications (0008) and chat (0009); before them the budget fitted about
 4,000 users. Match history, events and messages dominate, not embeddings. Shorter
 `MATCH_REQUEST_RETENTION_DAYS` (for example 45 days halves the match share), shorter event
 retention and a message history cap are the biggest levers if space gets tight. Shorter event retention (or aggregating

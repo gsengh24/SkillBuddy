@@ -58,6 +58,7 @@ def test_metadata_contains_all_tables() -> None:
         "teams",
         "team_members",
         "team_invites",
+        "team_messages",
     }
 
 

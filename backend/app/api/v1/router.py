@@ -28,6 +28,7 @@ from app.api.v1 import (
     requests,
     social,
     spaces,
+    team_chat,
     team_spaces,
     teams,
 )
@@ -47,6 +48,7 @@ api_router.include_router(spaces.router)
 api_router.include_router(spaces.report_router)
 api_router.include_router(teams.router)
 api_router.include_router(team_spaces.router)
+api_router.include_router(team_chat.router)
 api_router.include_router(moderation.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_portal.router)

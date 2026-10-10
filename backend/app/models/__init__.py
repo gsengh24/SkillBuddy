@@ -113,6 +113,7 @@ from app.models.teams import (
     TeamInviteKind,
     TeamInviteStatus,
     TeamMember,
+    TeamMessage,
     TeamPurpose,
 )
 from app.models.user import (
@@ -239,6 +240,7 @@ __all__ = [
     "TeamInviteKind",
     "TeamInviteStatus",
     "TeamMember",
+    "TeamMessage",
     "TeamPurpose",
     "User",
     "UserSession",

@@ -67,6 +67,13 @@ class TeamSummaryOut(BaseModel):
     member_count: int
     max_members: int
     created_at: datetime
+    unread: int = Field(
+        default=0,
+        description="Team chat messages from others not yet read. Filled in the list of teams.",
+    )
+    last_message_at: datetime | None = Field(
+        default=None, description="Filled in the list of your teams."
+    )
 
     @classmethod
     def build(cls, summary: TeamSummary) -> TeamSummaryOut:

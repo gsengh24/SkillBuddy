@@ -26,7 +26,7 @@ from app.schemas.teams import (
     TeamPatch,
     TeamSummaryOut,
 )
-from app.services import app_settings
+from app.services import app_settings, team_chat
 from app.services.auth.rate_limit import RateLimiter
 from app.services.matching.requests import DAY_SECONDS
 from app.services.teams import TeamService
@@ -64,10 +64,16 @@ _429: dict[str, Any] = {"model": ErrorResponse, "description": "A daily limit wa
 
 
 @router.get("", summary="Teams you are in", responses={401: _401})
-async def list_teams(auth: AuthDep, service: ServiceDep) -> TeamList:
-    return TeamList(
-        items=[TeamSummaryOut.build(summary) for summary in await service.mine(auth.user)]
-    )
+async def list_teams(auth: AuthDep, service: ServiceDep, db: DbDep) -> TeamList:
+    chats = await team_chat.summaries(db, auth.user.id)
+    items = []
+    for summary in await service.mine(auth.user):
+        item = TeamSummaryOut.build(summary)
+        chat = chats.get(item.id)
+        if chat is not None:
+            item.unread, item.last_message_at = chat.unread, chat.last_message_at
+        items.append(item)
+    return TeamList(items=items)
 
 
 @router.post(
