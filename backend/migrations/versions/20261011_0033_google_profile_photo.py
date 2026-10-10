@@ -1,7 +1,7 @@
 """Google account picture: its address on the account, and the copy a profile shows (ADR 0017).
 
-Revision ID: 0031
-Revises: 0030
+Revision ID: 0033
+Revises: 0032
 Create Date: 2026-10-11 01:00:00+00:00
 
 Additive only: two nullable columns, both null for every existing row, so nobody's picture
@@ -27,8 +27,8 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0031"
-down_revision: str | Sequence[str] | None = "0030"
+revision: str = "0033"
+down_revision: str | Sequence[str] | None = "0032"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
