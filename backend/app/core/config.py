@@ -163,6 +163,8 @@ class Settings(BaseSettings):
     teams_created_per_day: int = Field(default=5, ge=1, le=100)
     # Team invites a person may send per UTC day.
     team_invites_per_day: int = Field(default=10, ge=1, le=200)
+    # Requests to join listed teams a person may send per UTC day.
+    team_requests_per_day: int = Field(default=5, ge=1, le=100)
     # Times a person may open or use a team invite link per UTC day (stops code guessing).
     team_link_tries_per_day: int = Field(default=30, ge=1, le=500)
     # A closed team, and answered or expired invites, are deleted after this many days.

@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ds/button";
 import { Panel } from "@/components/ds/surfaces";
 import { CreateTeam } from "@/components/teams/create-team";
+import { MyTeamRequests } from "@/components/teams/ask-to-join";
 import { MyTeamInvites } from "@/components/teams/my-invites";
 import { TeamsPaused } from "@/components/teams/teams-paused";
 import { TextLink } from "@/components/ui/text-link";
 import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getFeatures } from "@/lib/features";
 import { PURPOSE_LABELS, teamSize } from "@/lib/teams/labels";
-import { getTeamInvites, getTeams } from "@/lib/teams/server";
+import { getMyTeamRequests, getTeamInvites, getTeams } from "@/lib/teams/server";
 
 export const metadata: Metadata = { title: "Teams" };
 export const dynamic = "force-dynamic";
@@ -19,9 +20,10 @@ export default async function TeamsPage() {
   const featuresCall = getFeatures();
   const invitesCall = startEarly(getTeamInvites());
   const teamsCall = startEarly(getTeams());
+  const requestsCall = startEarly(getMyTeamRequests());
   await withUser("/login?next=/teams", featuresCall);
   if (!(await featuresCall).features.teams) return <TeamsPaused />;
-  const [teams, invites] = await Promise.all([teamsCall, invitesCall]);
+  const [teams, invites, requests] = await Promise.all([teamsCall, invitesCall, requestsCall]);
   const atLimit = teams.items.length >= teams.max_teams;
 
   return (
@@ -42,6 +44,7 @@ export default async function TeamsPage() {
       </header>
 
       <MyTeamInvites initial={invites.items} />
+      <MyTeamRequests initial={requests.items} />
 
       <section aria-labelledby="my-teams-h" className="flex flex-col gap-3">
         <h2 id="my-teams-h" className="text-title">
@@ -70,6 +73,9 @@ export default async function TeamsPage() {
         ) : (
           <p className="text-muted">You&apos;re not in a team yet. Make one below.</p>
         )}
+        <ButtonLink href="/teams/browse" variant="outline" className="self-start">
+          Find a team to join
+        </ButtonLink>
       </section>
 
       <section aria-labelledby="new-team-h" className="flex flex-col gap-3">

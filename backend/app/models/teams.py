@@ -38,6 +38,8 @@ from app.models.chat import MESSAGE_MAX_LENGTH
 
 TEAM_NAME_MAX_LENGTH = 60
 TEAM_DESCRIPTION_MAX_LENGTH = 300
+TEAM_LOOKING_FOR_MAX_LENGTH = 200
+TEAM_REQUEST_NOTE_MAX_LENGTH = 300
 MAX_TEAM_MEMBERS = 6
 MAX_TEAMS_PER_PERSON = 5
 MAX_TEAMS_OWNED = 3
@@ -60,8 +62,9 @@ class TeamPurpose(StrEnum):
 class TeamInviteKind(StrEnum):
     # The owner invited someone they are connected with.
     INVITE = "invite"
-    # Later routes (ADR 0016): someone asked to join a listed team; the matcher suggested them.
+    # Someone asked to join a listed team; the owner answers.
     REQUEST = "request"
+    # A later route (ADR 0016): the matcher suggested them.
     SUGGESTED = "suggested"
 
 
@@ -84,6 +87,16 @@ class Team(UUIDPrimaryKeyMixin, Base):
             f"char_length(description) <= {TEAM_DESCRIPTION_MAX_LENGTH}", name="description_length"
         ),
         CheckConstraint(f"purpose IN ({_in(tuple(TeamPurpose))})", name="purpose_valid"),
+        CheckConstraint(
+            f"char_length(looking_for) <= {TEAM_LOOKING_FOR_MAX_LENGTH}", name="looking_for_length"
+        ),
+        # Browsing listed teams, newest first.
+        Index(
+            "ix_teams_listed_created_at",
+            "created_at",
+            "id",
+            postgresql_where=text("listed AND closed_at IS NULL"),
+        ),
         # The daily purge of teams closed long enough ago.
         Index("ix_teams_closed_at", "closed_at", postgresql_where=text("closed_at IS NOT NULL")),
     )
@@ -103,6 +116,10 @@ class Team(UUIDPrimaryKeyMixin, Base):
     # a new link replaces the old one.
     invite_code_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
     invite_expires_at: Mapped[datetime | None]
+    # A listed team can be found by any signed-in person, who may ask to join. The
+    # "looking for" line is shown with it.
+    listed: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
+    looking_for: Mapped[str] = mapped_column(Text, default="", server_default=text("''"))
 
 
 class TeamMember(UUIDPrimaryKeyMixin, Base):
@@ -127,6 +144,7 @@ class TeamInvite(UUIDPrimaryKeyMixin, Base):
     __table_args__ = (
         CheckConstraint(f"kind IN ({_in(tuple(TeamInviteKind))})", name="kind_valid"),
         CheckConstraint(f"status IN ({_in(tuple(TeamInviteStatus))})", name="status_valid"),
+        CheckConstraint(f"char_length(note) <= {TEAM_REQUEST_NOTE_MAX_LENGTH}", name="note_length"),
         # One open invite per team and person.
         Index(
             "uq_team_invites_pending",
@@ -144,6 +162,8 @@ class TeamInvite(UUIDPrimaryKeyMixin, Base):
     status: Mapped[str] = mapped_column(
         String(16), default=TeamInviteStatus.PENDING, server_default=text("'pending'")
     )
+    # What someone asking to join wrote to the owner; empty for invites.
+    note: Mapped[str] = mapped_column(Text, default="", server_default=text("''"))
     responded_at: Mapped[datetime | None]
     expires_at: Mapped[datetime]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

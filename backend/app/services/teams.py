@@ -10,6 +10,9 @@
 - Joining by link: the owner makes an invite link (a random code, kept only as a keyed
   hash, good for TEAM_LINK_TTL_DAYS; a new link replaces the old). Anyone signed in who
   has it can see the team's name and size and join at once, while there is room.
+- Listed teams: the owner can list a team with a "looking for" line. Any signed-in person
+  can browse listed teams and ask to join with a short note; the owner accepts or
+  declines. A decline is not shown to the asker: it looks pending until it expires.
 - Nobody can be invited to, or join, a team with a member on either side of a block with
   them (``app.services.blocks``). They are told only that it can't be done, never who.
 - Caps: MAX_TEAM_MEMBERS people, MAX_TEAMS_PER_PERSON teams each, MAX_TEAMS_OWNED owned,
@@ -28,7 +31,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, func, or_, select, tuple_, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -56,6 +59,7 @@ from app.models import (
 )
 from app.services import blocks
 from app.services.auth.rate_limit import RateLimiter
+from app.services.cursors import decode_cursor, encode
 from app.services.notifications import add_notification
 
 logger = logging.getLogger(__name__)
@@ -302,7 +306,12 @@ class TeamService:
                 .outerjoin(Profile, Profile.user_id == TeamInvite.user_id)
                 .where(
                     TeamInvite.team_id == team.id,
-                    TeamInvite.status.in_(_OPEN),
+                    # A request the owner declined is done; a declined invite still shows.
+                    or_(
+                        TeamInvite.status == TeamInviteStatus.PENDING,
+                        (TeamInvite.status == TeamInviteStatus.DECLINED)
+                        & (TeamInvite.kind != TeamInviteKind.REQUEST),
+                    ),
                     TeamInvite.expires_at > datetime.now(UTC),
                 )
                 .order_by(TeamInvite.created_at, TeamInvite.id)
@@ -317,10 +326,11 @@ class TeamService:
         return TeamView(summary, members, invites, link)
 
     async def update(self, user: User, team_id: uuid.UUID, changes: dict[str, Any]) -> TeamView:
-        """``changes`` holds only the fields the client sent: name, purpose, description."""
+        """``changes`` holds only the fields the client sent: name, purpose, description,
+        listed, looking_for."""
         team = await self._owned(user, team_id)
         await self._write(user)
-        for field in ("name", "purpose", "description"):
+        for field in ("name", "purpose", "description", "listed", "looking_for"):
             if changes.get(field) is not None:
                 setattr(team, field, changes[field])
         await self._db.commit()
@@ -371,31 +381,37 @@ class TeamService:
 
     # --- invites ------------------------------------------------------------------------
 
-    async def invite(self, user: User, team_id: uuid.UUID, invitee_id: uuid.UUID) -> InviteView:
-        team = await self._owned(user, team_id, lock=True)
-        now = datetime.now(UTC)
-        members = await self._member_ids(team.id)
-        if invitee_id in members:
-            raise AlreadyMemberError
-        # An invite that ran out but hasn't been swept yet must not block a new one.
+    async def _open_invitees(
+        self, team_id: uuid.UUID, person_id: uuid.UUID, now: datetime
+    ) -> list[uuid.UUID]:
+        """Everyone with an open invite or request for the team."""
+        # One of ``person_id``'s that ran out but hasn't been swept yet must not block a new one.
         await self._db.execute(
             update(TeamInvite)
             .where(
-                TeamInvite.team_id == team.id,
-                TeamInvite.user_id == invitee_id,
+                TeamInvite.team_id == team_id,
+                TeamInvite.user_id == person_id,
                 TeamInvite.status.in_(_OPEN),
                 TeamInvite.expires_at <= now,
             )
             .values(status=TeamInviteStatus.EXPIRED)
             .execution_options(synchronize_session=False)
         )
-        open_invites = list(
+        return list(
             await self._db.scalars(
                 select(TeamInvite.user_id).where(
-                    TeamInvite.team_id == team.id, TeamInvite.status.in_(_OPEN)
+                    TeamInvite.team_id == team_id, TeamInvite.status.in_(_OPEN)
                 )
             )
         )
+
+    async def invite(self, user: User, team_id: uuid.UUID, invitee_id: uuid.UUID) -> InviteView:
+        team = await self._owned(user, team_id, lock=True)
+        now = datetime.now(UTC)
+        members = await self._member_ids(team.id)
+        if invitee_id in members:
+            raise AlreadyMemberError
+        open_invites = await self._open_invitees(team.id, invitee_id, now)
         if invitee_id in open_invites:
             raise TeamInviteExistsError
         if not await self._can_invite(user, invitee_id, members):
@@ -476,11 +492,17 @@ class TeamService:
 
     async def respond(self, user: User, invite_id: uuid.UUID, *, accept: bool) -> InviteView:
         found = await self._db.get(TeamInvite, invite_id)
-        if found is None or found.user_id != user.id or found.kind != TeamInviteKind.INVITE:
+        if found is None:
             raise TeamInviteNotFoundError
         # The team row is the lock for its member count.
         team = await self._db.scalar(select(Team).where(Team.id == found.team_id).with_for_update())
         await self._db.refresh(found)
+        # An invite is answered by the invited person; a request to join by the team's owner.
+        is_request = found.kind == TeamInviteKind.REQUEST
+        answerer = team.owner_id if is_request and team is not None else found.user_id
+        if answerer != user.id:
+            raise TeamInviteNotFoundError
+        joiner = found.user_id
         now = datetime.now(UTC)
         if (
             team is None
@@ -490,17 +512,24 @@ class TeamService:
         ):
             raise TeamInviteNotPendingError
         members = await self._member_ids(team.id)
-        if accept and user.id not in members:
-            if (await blocks.blocked_with(self._db, user.id)).intersection(members):
+        if accept and joiner not in members:
+            if (await blocks.blocked_with(self._db, joiner)).intersection(members):
                 raise TeamNotAvailableError
             if len(members) >= MAX_TEAM_MEMBERS:
                 raise TeamFullError
-            if await self._teams_of(user.id) >= MAX_TEAMS_PER_PERSON:
+            if await self._teams_of(joiner) >= MAX_TEAMS_PER_PERSON:
                 raise TooManyTeamsError
-            self._db.add(TeamMember(id=uuid.uuid4(), team_id=team.id, user_id=user.id))
+            self._db.add(TeamMember(id=uuid.uuid4(), team_id=team.id, user_id=joiner))
             for member_id in members:
-                add_notification(self._db, member_id, NotificationKind.TEAM_JOINED, team_id=team.id)
-            members.append(user.id)
+                if member_id != user.id:  # the owner who said yes doesn't need telling
+                    add_notification(
+                        self._db, member_id, NotificationKind.TEAM_JOINED, team_id=team.id
+                    )
+            if is_request:
+                add_notification(
+                    self._db, joiner, NotificationKind.TEAM_REQUEST_ACCEPTED, team_id=team.id
+                )
+            members.append(joiner)
         status = TeamInviteStatus.ACCEPTED if accept else TeamInviteStatus.DECLINED
         found.status = status
         found.responded_at = now
@@ -509,6 +538,120 @@ class TeamService:
         await self._db.refresh(team)
         logger.info("team_invite_answered", extra={"accepted": accept})
         return InviteView(found, TeamSummary(team, len(members)), "", status)
+
+    # --- listed teams and asking to join ------------------------------------------------
+
+    async def listed(
+        self, user: User, *, purpose: str | None, cursor: str | None, limit: int
+    ) -> tuple[list[TeamSummary], str | None]:
+        """Listed open teams ``user`` could ask to join, newest first: not their own, and none
+        with a member on either side of a block with them."""
+        member = aliased(TeamMember)
+        count = (
+            select(func.count())
+            .select_from(member)
+            .where(member.team_id == Team.id)
+            .correlate(Team)
+            .scalar_subquery()
+        )
+        hidden = {user.id, *await blocks.blocked_with(self._db, user.id)}
+        query = select(Team, count).where(
+            Team.listed.is_(True),
+            Team.closed_at.is_(None),
+            Team.id.not_in(select(TeamMember.team_id).where(TeamMember.user_id.in_(hidden))),
+        )
+        if purpose is not None:
+            query = query.where(Team.purpose == purpose)
+        if cursor:
+            created_at, identifier = decode_cursor(cursor)
+            query = query.where(tuple_(Team.created_at, Team.id) < (created_at, identifier))
+        rows = (
+            await self._db.execute(
+                query.order_by(Team.created_at.desc(), Team.id.desc()).limit(limit + 1)
+            )
+        ).all()
+        items = [TeamSummary(team, members) for team, members in rows[:limit]]
+        last = items[-1].team if items else None
+        next_cursor = encode(last.created_at, last.id) if last and len(rows) > limit else None
+        return items, next_cursor
+
+    async def request_to_join(self, user: User, team_id: uuid.UUID, note: str) -> InviteView:
+        team = await self._db.scalar(
+            select(Team)
+            .where(Team.id == team_id, Team.closed_at.is_(None), Team.listed.is_(True))
+            .with_for_update()
+        )
+        if team is None:
+            raise TeamNotFoundError
+        now = datetime.now(UTC)
+        members = await self._member_ids(team.id)
+        if user.id in members:
+            raise AlreadyMemberError
+        if (await blocks.blocked_with(self._db, user.id)).intersection(members):
+            raise TeamNotFoundError
+        open_invites = await self._open_invitees(team.id, user.id, now)
+        if user.id in open_invites:
+            raise TeamInviteExistsError
+        if len(members) >= MAX_TEAM_MEMBERS:
+            raise TeamFullError
+        if len(open_invites) >= MAX_PENDING_PER_TEAM:
+            raise TooManyPendingInvitesError
+        if await self._teams_of(user.id) >= MAX_TEAMS_PER_PERSON:
+            raise TooManyTeamsError
+        await self._limiter.hit(
+            f"team-request:{user.id}", limit=self._settings.team_requests_per_day
+        )
+        request = TeamInvite(
+            id=uuid.uuid4(),
+            team_id=team.id,
+            user_id=user.id,
+            kind=TeamInviteKind.REQUEST,
+            status=TeamInviteStatus.PENDING,
+            note=note,
+            expires_at=now + timedelta(days=TEAM_INVITE_TTL_DAYS),
+        )
+        self._db.add(request)
+        if team.owner_id is not None:
+            add_notification(
+                self._db, team.owner_id, NotificationKind.TEAM_REQUEST, team_id=team.id
+            )
+        try:
+            await self._db.commit()
+        except IntegrityError:
+            await self._db.rollback()
+            raise TeamInviteExistsError from None
+        await self._db.refresh(request)
+        await self._db.refresh(team)
+        logger.info("team_join_requested")
+        return InviteView(request, TeamSummary(team, len(members)), "", TeamInviteStatus.PENDING)
+
+    async def my_requests(self, user: User) -> list[InviteView]:
+        """``user``'s requests to join that are still open, newest first. One the owner
+        declined looks pending until it expires."""
+        member = aliased(TeamMember)
+        count = (
+            select(func.count())
+            .select_from(member)
+            .where(member.team_id == Team.id)
+            .correlate(Team)
+            .scalar_subquery()
+        )
+        rows = await self._db.execute(
+            select(TeamInvite, Team, count)
+            .join(Team, Team.id == TeamInvite.team_id)
+            .where(
+                TeamInvite.user_id == user.id,
+                TeamInvite.kind == TeamInviteKind.REQUEST,
+                TeamInvite.status.in_(_OPEN),
+                TeamInvite.expires_at > datetime.now(UTC),
+                Team.closed_at.is_(None),
+            )
+            .order_by(TeamInvite.created_at.desc(), TeamInvite.id)
+        )
+        return [
+            InviteView(request, TeamSummary(team, members), "", TeamInviteStatus.PENDING)
+            for request, team, members in rows.tuples()
+        ]
 
     # --- invite link --------------------------------------------------------------------
 
@@ -590,10 +733,13 @@ class TeamService:
         return await self.get(user, team.id)
 
     async def withdraw(self, user: User, invite_id: uuid.UUID) -> None:
-        """The owner takes back an open invite."""
+        """The owner takes back an open invite, or someone takes back their request to join."""
         invite = await self._db.get(TeamInvite, invite_id)
         team = await self._db.get(Team, invite.team_id) if invite is not None else None
-        if invite is None or team is None or team.owner_id != user.id or team.closed_at:
+        if invite is None or team is None or team.closed_at:
+            raise TeamInviteNotFoundError
+        mine = invite.user_id if invite.kind == TeamInviteKind.REQUEST else team.owner_id
+        if mine != user.id:
             raise TeamInviteNotFoundError
         if invite.status not in _OPEN:
             raise TeamInviteNotPendingError

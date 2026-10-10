@@ -13,7 +13,9 @@ from app.models import (
     MAX_TEAMS_OWNED,
     MAX_TEAMS_PER_PERSON,
     TEAM_DESCRIPTION_MAX_LENGTH,
+    TEAM_LOOKING_FOR_MAX_LENGTH,
     TEAM_NAME_MAX_LENGTH,
+    TEAM_REQUEST_NOTE_MAX_LENGTH,
 )
 from app.services.teams import InviteView, MemberView, TeamSummary, TeamView
 
@@ -23,6 +25,10 @@ Name = Annotated[
 ]
 Description = Annotated[
     str, StringConstraints(strip_whitespace=True, max_length=TEAM_DESCRIPTION_MAX_LENGTH)
+]
+
+LookingFor = Annotated[
+    str, StringConstraints(strip_whitespace=True, max_length=TEAM_LOOKING_FOR_MAX_LENGTH)
 ]
 
 
@@ -42,12 +48,27 @@ class TeamPatch(BaseModel):
     name: Name | None = None
     purpose: Purpose | None = None
     description: Description | None = None
+    listed: bool | None = Field(
+        default=None,
+        description="Listed teams can be found by any signed-in person, who may ask to join.",
+    )
+    looking_for: LookingFor | None = Field(
+        default=None, description="Who the team is looking for; shown with a listed team."
+    )
 
 
 class TeamInviteIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     user_id: uuid.UUID = Field(description="Someone you have an open connection with.")
+
+
+class TeamRequestIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    note: Annotated[
+        str, StringConstraints(strip_whitespace=True, max_length=TEAM_REQUEST_NOTE_MAX_LENGTH)
+    ] = Field(default="", description="A short hello, shown to the team's owner.")
 
 
 class TeamInviteResponseIn(BaseModel):
@@ -67,6 +88,8 @@ class TeamSummaryOut(BaseModel):
     member_count: int
     max_members: int
     created_at: datetime
+    listed: bool = False
+    looking_for: str = Field(default="", description="Shown with a listed team.")
     unread: int = Field(
         default=0,
         description="Team chat messages from others not yet read. Filled in the list of teams.",
@@ -87,6 +110,8 @@ class TeamSummaryOut(BaseModel):
             member_count=summary.member_count,
             max_members=MAX_TEAM_MEMBERS,
             created_at=team.created_at,
+            listed=team.listed,
+            looking_for=team.looking_for,
         )
 
 
@@ -111,7 +136,8 @@ class TeamInviteOut(BaseModel):
         description="The owner sees `pending` for a declined invite until it expires."
     )
     team: TeamSummaryOut
-    user_id: uuid.UUID = Field(description="The invited person.")
+    user_id: uuid.UUID = Field(description="The invited person, or the person asking.")
+    note: str = Field(default="", description="What a person asking to join wrote.")
     display_name: str = Field(description="Their name, in the owner's list; otherwise empty.")
     expires_at: datetime
     created_at: datetime
@@ -125,6 +151,7 @@ class TeamInviteOut(BaseModel):
             status=view.status.value,  # type: ignore[arg-type]  # only these three are returned
             team=TeamSummaryOut.build(view.summary),
             user_id=invite.user_id,
+            note=invite.note,
             display_name=view.display_name,
             expires_at=invite.expires_at,
             created_at=invite.created_at,
@@ -161,6 +188,11 @@ class TeamList(BaseModel):
     items: list[TeamSummaryOut] = Field(description="Most recently joined first.")
     max_teams: int = MAX_TEAMS_PER_PERSON
     max_owned: int = MAX_TEAMS_OWNED
+
+
+class ListedTeamPage(BaseModel):
+    items: list[TeamSummaryOut] = Field(description="Listed teams, newest first.")
+    next_cursor: str | None = Field(description="Pass as `cursor` for older teams.")
 
 
 class TeamInviteList(BaseModel):

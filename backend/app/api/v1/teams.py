@@ -8,7 +8,7 @@ import uuid
 from http import HTTPStatus
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Path, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import SettingsDep, require_feature, require_json, require_storage_capacity
@@ -16,6 +16,8 @@ from app.api.v1.auth import AuthDep
 from app.db.session import get_db_session
 from app.schemas.errors import ErrorResponse
 from app.schemas.teams import (
+    ListedTeamPage,
+    Purpose,
     TeamDetailOut,
     TeamIn,
     TeamInviteIn,
@@ -25,6 +27,7 @@ from app.schemas.teams import (
     TeamLinkOut,
     TeamList,
     TeamPatch,
+    TeamRequestIn,
     TeamSummaryOut,
 )
 from app.services import app_settings, team_chat
@@ -104,7 +107,40 @@ async def create_team(body: TeamIn, auth: AuthDep, service: ServiceDep) -> TeamD
     )
 
 
-# Declared before `/{team_id}` so "invites" is not read as a team id.
+# Declared before `/{team_id}` so "listed", "requests" and "invites" are not read as a team id.
+@router.get(
+    "/listed",
+    summary="Listed teams you could ask to join",
+    responses={
+        400: {"model": ErrorResponse, "description": "`invalid_cursor`."},
+        401: _401,
+    },
+)
+async def list_listed_teams(
+    auth: AuthDep,
+    service: ServiceDep,
+    purpose: Annotated[Purpose | None, Query()] = None,
+    cursor: Annotated[str | None, Query(max_length=200)] = None,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+) -> ListedTeamPage:
+    """Teams their owners chose to list. Your own teams are left out, and so is any team
+    with a member on either side of a block with you."""
+    items, next_cursor = await service.listed(
+        auth.user, purpose=purpose, cursor=cursor, limit=limit
+    )
+    return ListedTeamPage(
+        items=[TeamSummaryOut.build(summary) for summary in items], next_cursor=next_cursor
+    )
+
+
+@router.get("/requests", summary="Your open requests to join teams", responses={401: _401})
+async def list_my_requests(auth: AuthDep, service: ServiceDep) -> TeamInviteList:
+    """A request the owner declined looks pending until it expires."""
+    return TeamInviteList(
+        items=[TeamInviteOut.build(view) for view in await service.my_requests(auth.user)]
+    )
+
+
 @router.get("/invites", summary="Open invites to you", responses={401: _401})
 async def list_my_invites(auth: AuthDep, service: ServiceDep) -> TeamInviteList:
     return TeamInviteList(
@@ -114,7 +150,7 @@ async def list_my_invites(auth: AuthDep, service: ServiceDep) -> TeamInviteList:
 
 @router.post(
     "/invites/{invite_id}/respond",
-    summary="Accept or decline an invite to a team",
+    summary="Accept or decline an invite, or (owner) a request to join",
     dependencies=WRITE,
     responses={
         401: _401,
@@ -130,14 +166,15 @@ async def list_my_invites(auth: AuthDep, service: ServiceDep) -> TeamInviteList:
 async def respond_to_invite(
     invite_id: uuid.UUID, body: TeamInviteResponseIn, auth: AuthDep, service: ServiceDep
 ) -> TeamInviteOut:
-    """Accepting makes you a member. The owner is not told about a decline."""
+    """An invite is answered by the invited person; a request to join by the team's owner.
+    Accepting makes the person a member. The other side is not told about a decline."""
     return TeamInviteOut.build(await service.respond(auth.user, invite_id, accept=body.accept))
 
 
 @router.delete(
     "/invites/{invite_id}",
     status_code=HTTPStatus.NO_CONTENT,
-    summary="Take back an invite (owner)",
+    summary="Take back an invite (owner) or your own request to join",
     responses={
         401: _401,
         404: _404_INVITE,
@@ -283,3 +320,31 @@ async def make_invite_link(team_id: uuid.UUID, auth: AuthDep, service: ServiceDe
 )
 async def revoke_invite_link(team_id: uuid.UUID, auth: AuthDep, service: ServiceDep) -> None:
     await service.revoke_link(auth.user, team_id)
+
+
+@router.post(
+    "/{team_id}/requests",
+    status_code=HTTPStatus.CREATED,
+    summary="Ask to join a listed team",
+    dependencies=WRITE,
+    responses={
+        401: _401,
+        404: {
+            "model": ErrorResponse,
+            "description": "`team_not_found`: no such listed team, or it isn't available to you.",
+        },
+        409: {
+            "model": ErrorResponse,
+            "description": "`already_member`, `team_invite_exists`, `team_full`, "
+            "`too_many_pending_invites` or `too_many_teams`.",
+        },
+        422: _422,
+        429: _429,
+    },
+)
+async def ask_to_join(
+    team_id: uuid.UUID, body: TeamRequestIn, auth: AuthDep, service: ServiceDep
+) -> TeamInviteOut:
+    """The owner gets an in-app notification, sees your name and note, and has 14 days to
+    answer. You are not told about a decline."""
+    return TeamInviteOut.build(await service.request_to_join(auth.user, team_id, body.note))
