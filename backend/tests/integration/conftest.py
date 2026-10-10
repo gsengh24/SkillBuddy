@@ -30,6 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_otp_delivery
 from app.core.config import Settings
 from app.main import create_app
+from app.services import app_settings
 from tests.conftest import SettingsFactory
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -161,3 +162,17 @@ def run_sql(database_url: str, statement: str, **params: Any) -> list[dict[str, 
             return [dict(row) for row in result.mappings()] if result.returns_rows else []
     finally:
         engine.dispose()
+
+
+@pytest.fixture
+def teams_on(migrated_database_url: str) -> Iterator[None]:
+    """Teams are off by default (ADR 0016): switch them on for one test, then back."""
+    run_sql(
+        migrated_database_url,
+        "INSERT INTO app_settings (key, value) VALUES ('feature:teams', 'true'::jsonb) "
+        "ON CONFLICT (key) DO UPDATE SET value = 'true'::jsonb",
+    )
+    app_settings.cache.invalidate()
+    yield
+    run_sql(migrated_database_url, "DELETE FROM app_settings WHERE key = 'feature:teams'")
+    app_settings.cache.invalidate()

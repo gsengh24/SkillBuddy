@@ -369,7 +369,10 @@ async def report_goal(
 ) -> Report:
     """Report a pair-space goal the other person added (a copy of its title)."""
     goal = await db.get(SpaceGoal, goal_id)
-    connection = await _space_entry_connection(db, user, goal.connection_id) if goal else None
+    # A team's goal has no connection: reporting those comes with team reports (ADR 0016).
+    connection = None
+    if goal is not None and goal.connection_id is not None:
+        connection = await _space_entry_connection(db, user, goal.connection_id)
     if goal is None or connection is None:
         raise GoalToReportNotFoundError
     if goal.from_a == (connection.user_a == user.id):
@@ -403,7 +406,9 @@ async def report_progress_log(
 ) -> Report:
     """Report a progress note the other person wrote (a copy of its text)."""
     log = await db.get(ProgressLog, log_id)
-    connection = await _space_entry_connection(db, user, log.connection_id) if log else None
+    connection = None
+    if log is not None and log.connection_id is not None:
+        connection = await _space_entry_connection(db, user, log.connection_id)
     if log is None or connection is None:
         raise LogToReportNotFoundError
     if log.from_a == (connection.user_a == user.id):
