@@ -14,7 +14,8 @@ export const dynamic = "force-dynamic";
 export default async function SpacesPage() {
   const featuresCall = getFeatures();
   const { data: connections } = await withUser("/login?next=/spaces", getConnections());
-  if (!(await featuresCall).features.pair_spaces) return <SpacesPaused />;
+  const { features } = await featuresCall;
+  if (!features.pair_spaces) return <SpacesPaused />;
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
@@ -25,6 +26,14 @@ export default async function SpacesPage() {
           grow, and progress notes. Only the two of you can see it.
         </p>
       </header>
+      {features.teams ? (
+        <div className="border-line flex flex-wrap items-center justify-between gap-3 border-y py-3">
+          <p className="text-ink-2">Working with more than one person? Make a team of up to six.</p>
+          <ButtonLink href="/teams" variant="outline" size="compact">
+            Open teams
+          </ButtonLink>
+        </div>
+      ) : null}
       {connections.items.length ? (
         <ul className="border-line border-t">
           {connections.items.map(({ id, person }) => {
