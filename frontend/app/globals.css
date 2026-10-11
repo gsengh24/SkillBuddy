@@ -8,6 +8,7 @@
 
 /* The palette, once, as CSS variables. */
 :root {
+  color-scheme: light;
   --bg: #ffffff;
   --panel: #f6f7f5;
   --line: #e4e6e2;
@@ -26,13 +27,65 @@
   --mint: #7be0a8;
   --mint-text: #9fd1b6;
   --danger: #b3261e;
+  --card: #ffffff;
   --pane: #0f100f;
   --pane-2: #1a1c1a;
   --pane-line: #262826;
   --on-dark: #f3f4f1;
   --on-dark-2: #a9ada7;
   --on-dark-3: #8a8e88;
+  --pane-green: #0f4a34;
+  --pane-ink: #2b2d2b;
   --amber: #e8a06f;
+}
+
+/*
+ * Dark theme (Home reference). The same variable names, so every component that uses the
+ * palette follows. It applies when the device prefers dark, unless the page says
+ * data-theme="light"; data-theme="dark" forces it. The ink inbox pane keeps its own colours.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b0c0b;
+    --panel: #141614;
+    --line: #262826;
+    --line-strong: #323532;
+    --ink: #f3f4f1;
+    --ink-hover: #ffffff;
+    --ink-2: #c9ccc6;
+    --muted: #a9ada7;
+    --muted-2: #8a8e88;
+    --faint: #4a4d49;
+    --green: #7be0a8;
+    --green-hover: #9fd1b6;
+    --green-tint: #142219;
+    --green-line: #2a4536;
+    --green-soft: #101a14;
+    --danger: #ff8a80;
+    --card: #111311;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0c0b;
+  --panel: #141614;
+  --line: #262826;
+  --line-strong: #323532;
+  --ink: #f3f4f1;
+  --ink-hover: #ffffff;
+  --ink-2: #c9ccc6;
+  --muted: #a9ada7;
+  --muted-2: #8a8e88;
+  --faint: #4a4d49;
+  --green: #7be0a8;
+  --green-hover: #9fd1b6;
+  --green-tint: #142219;
+  --green-line: #2a4536;
+  --green-soft: #101a14;
+  --danger: #ff8a80;
+  --card: #111311;
 }
 
 @theme inline {
@@ -57,12 +110,15 @@
   --color-mint: var(--mint);
   --color-mint-text: var(--mint-text);
   --color-danger: var(--danger);
+  --color-card: var(--card);
   --color-pane: var(--pane);
   --color-pane-2: var(--pane-2);
   --color-pane-line: var(--pane-line);
   --color-on-dark: var(--on-dark);
   --color-on-dark-2: var(--on-dark-2);
   --color-on-dark-3: var(--on-dark-3);
+  --color-pane-green: var(--pane-green);
+  --color-pane-ink: var(--pane-ink);
   --color-amber: var(--amber);
 
   /* Older names, used by components/ui until each screen is restyled. */

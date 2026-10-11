@@ -7,8 +7,10 @@ import { cx } from "@/components/ui/cx";
 /** Three bordered cells: a mono label over a large numeral. Counts come from data already loaded. */
 export function SummaryStrip({
   counts,
+  className,
 }: {
   counts: { requests: number; messages: number; spaces: number };
+  className?: string;
 }) {
   const cells = [
     { label: "Requests", value: counts.requests, hint: "open requests" },
@@ -18,7 +20,7 @@ export function SummaryStrip({
   return (
     <dl
       aria-label="Summary"
-      className="border-line grid grid-cols-3 gap-2 rounded-[14px] border p-[18px]"
+      className={cx("border-line grid grid-cols-3 gap-2 rounded-[14px] border p-[18px]", className)}
     >
       {cells.map((cell) => (
         <div key={cell.label} className="grid gap-1.5">
@@ -58,7 +60,7 @@ export function SpacesBand({ className }: { className?: string }) {
         </ButtonLink>
       </div>
       <Image
-        src="/home/home_pair_space.jpg"
+        src="/art/home/home_pair_space.jpg"
         alt=""
         width={170}
         height={170}

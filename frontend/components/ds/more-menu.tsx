@@ -48,7 +48,7 @@ export function MoreMenu({
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((current) => !current)}
-        className="rounded-control border-line text-ink lg:hover:bg-panel inline-flex size-11 items-center justify-center border pointer-fine:size-9"
+        className="border-line bg-card text-ink lg:hover:bg-panel inline-flex size-11 items-center justify-center rounded-full border pointer-fine:size-10"
       >
         <svg
           aria-hidden

@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { intents } from "@/lib/design/tokens";
+import { agoLabel } from "@/lib/home/activity";
 
 import { MatchCard } from "./match-card";
 
@@ -85,6 +86,10 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
     <section aria-labelledby={`${ids}-h`} className="flex flex-col">
       <p className="text-green font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase">
         Your request
+        <span suppressHydrationWarning>
+          {" · "}
+          {agoLabel(request.created_at, new Date()).toUpperCase()}
+        </span>
         {!open ? (
           <>
             {" · "}
@@ -127,7 +132,7 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
 
       {pending ? (
         <StateBlock
-          image="/home/home_finding.jpg"
+          image="/art/home/home_finding.jpg"
           alt="A ring of light around a few spheres picked out from a wider field."
           label="Finding matches"
           title={gaveUp ? "This is taking longer than usual." : "We're reading through people now."}
@@ -141,7 +146,7 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
 
       {nobody ? (
         <StateBlock
-          image="/home/home_nobody_fits.jpg"
+          image="/art/home/home_nobody_fits.jpg"
           alt="One green sphere on a pedestal beside three empty pedestals."
           label="No matches"
           title="Nobody fits yet."
@@ -160,7 +165,7 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
           <ul className="grid gap-3">
             {matches.map((match) => (
               <li key={match.id}>
-                <MatchCard match={match} />
+                <MatchCard match={match} teamId={request.team_id} />
               </li>
             ))}
           </ul>

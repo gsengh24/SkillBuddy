@@ -20,6 +20,12 @@ export async function getReceivedIntros() {
   });
 }
 
+export async function getSentIntros() {
+  return apiRequest("/api/v1/intros?box=sent&limit=30", introPageSchema, {
+    headers: await cookieHeader(),
+  });
+}
+
 export async function getNotifications() {
   return apiRequest("/api/v1/notifications?limit=30", notificationPageSchema, {
     headers: await cookieHeader(),

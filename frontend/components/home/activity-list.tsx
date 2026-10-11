@@ -2,10 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment, useState } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 
 import { Avatar } from "@/components/ds/avatar";
-import { SearchIcon, UserPlusIcon } from "@/components/ds/icons";
 import { cx } from "@/components/ui/cx";
 import { itemHref, type ActivityRow, type Filter } from "@/lib/home/activity";
 
@@ -14,19 +13,19 @@ type Sub = "mine" | "intros";
 /** What an empty list says, per filter, with the picture that goes with it. */
 const EMPTY: Record<Filter, { image: string; title: string; text: string; start: boolean }> = {
   all: {
-    image: "/home/home_empty_inbox.jpg",
+    image: "/art/home/home_empty_inbox.jpg",
     title: "No requests yet.",
     text: "Describe what you're building and we'll find people.",
     start: true,
   },
   requests: {
-    image: "/home/home_empty_inbox.jpg",
+    image: "/art/home/home_empty_inbox.jpg",
     title: "No requests yet.",
     text: "Describe what you're building and we'll find people.",
     start: true,
   },
   messages: {
-    image: "/home/home_no_chats.jpg",
+    image: "/art/home/home_no_chats.jpg",
     title: "No chats yet.",
     text: "Accept an intro, or have one of yours accepted, and a chat opens here.",
     start: false,
@@ -36,6 +35,24 @@ const EMPTY: Record<Filter, { image: string; title: string; text: string; start:
 const TILE =
   "bg-on-dark/6 border-on-dark/8 text-on-dark inline-flex size-[38px] items-center justify-center rounded-[10px] border [&_svg]:size-[17px]";
 
+/** The reference's row icons: 20px, 1.6 stroke. */
+function RowIcon({ children, join }: { children: ReactNode; join?: boolean }) {
+  return (
+    <svg
+      aria-hidden
+      focusable="false"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin={join ? "round" : undefined}
+    >
+      {children}
+    </svg>
+  );
+}
+
 function Tile({ row }: { row: ActivityRow }) {
   if (row.type === "chat" && row.person) {
     return (
@@ -44,20 +61,36 @@ function Tile({ row }: { row: ActivityRow }) {
         name={row.person.name}
         photoUrl={row.person.photoUrl}
         decorative
-        className="ring-on-dark/15 size-[38px] ring-1"
+        tone="pane"
+        className="size-[38px] text-[14px] font-semibold"
       />
+    );
+  }
+  if (row.type === "intro" && !row.sent) {
+    return (
+      <span className={cx(TILE, "border-on-dark-3 border-dashed bg-transparent")}>
+        <RowIcon>
+          <circle cx="8" cy="7" r="3" />
+          <path d="M2.5 16.5c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5M15.5 6v5M13 8.5h5" />
+        </RowIcon>
+      </span>
     );
   }
   if (row.type === "intro") {
     return (
-      <span className={cx(TILE, "border-on-dark-3 border-dashed bg-transparent")}>
-        <UserPlusIcon />
+      <span className={TILE}>
+        <RowIcon join>
+          <path d="M3 10 17 3l-4 14-3-6z" />
+        </RowIcon>
       </span>
     );
   }
   return (
     <span className={TILE}>
-      <SearchIcon />
+      <RowIcon>
+        <circle cx="9" cy="9" r="5.5" />
+        <path d="m13.2 13.2 3.8 3.8" />
+      </RowIcon>
     </span>
   );
 }
@@ -109,8 +142,17 @@ function InboxRow({ row, selected }: { row: ActivityRow; selected: boolean }) {
   );
 }
 
-function Count({ children }: { children: number }) {
-  return <b className="ml-[5px] font-mono text-[10.5px] font-medium">{children}</b>;
+function Count({ children, on }: { children: number; on: boolean }) {
+  return (
+    <b
+      className={cx(
+        "ml-[5px] inline-grid h-[18px] min-w-[18px] place-items-center rounded-[9px] px-[5px] font-mono text-[10.5px] leading-none font-medium",
+        on ? "bg-mint text-pane" : "bg-on-dark/12",
+      )}
+    >
+      {children}
+    </b>
+  );
 }
 
 /**
@@ -165,7 +207,7 @@ export function ActivityList({
               filter === value ? "bg-on-dark/10 text-on-dark" : "text-on-dark-2 hover:text-on-dark",
             )}
           >
-            {label} <Count>{count[value]}</Count>
+            {label} <Count on={filter === value}>{count[value]}</Count>
           </button>
         ))}
       </div>
@@ -241,7 +283,7 @@ export function ActivityList({
           {empty.start ? (
             <Link
               href="#new-request"
-              className="bg-mint text-ink inline-flex min-h-11 items-center rounded-[10px] px-4 text-[14px] font-semibold pointer-fine:min-h-10"
+              className="bg-mint text-pane inline-flex min-h-11 items-center rounded-[10px] px-4 text-[14px] font-semibold pointer-fine:min-h-10"
             >
               Write a request
             </Link>

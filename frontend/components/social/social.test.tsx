@@ -107,7 +107,7 @@ describe("IntroCard", () => {
     expect(screen.getByRole("heading", { name: "Someone wants to meet you." })).toBeInTheDocument();
     expect(screen.getByText(/A designer for my budgeting app/)).toBeInTheDocument();
     expect(screen.getByText(INTRO.reason)).toBeInTheDocument();
-    expect(screen.getByText(INTRO.note)).toBeInTheDocument();
+    expect(screen.getByText(`"${INTRO.note}"`)).toBeInTheDocument();
     expect(screen.getByText(/they won't be told/)).toBeInTheDocument();
   });
 

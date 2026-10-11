@@ -51,7 +51,7 @@ export function ChatDetail({
           size="compact"
           className="rounded-[10px]"
         >
-          Open pair space
+          Pair space
         </ButtonLink>
         <MoreMenu label={`More actions for ${name}`}>
           <ReportButton

@@ -17,7 +17,7 @@ import { APP_LINKS, currentPlace } from "./links";
 export function AppHeader({ actions }: { actions: ReactNode }) {
   const current = currentPlace(usePathname());
   return (
-    <header className="max-w-content mx-auto flex w-full items-center justify-between gap-4 px-4 pt-[calc(14px+env(safe-area-inset-top))] pb-3.5 lg:px-8">
+    <header className="max-w-content mx-auto flex w-full items-center justify-between gap-4 px-4 pt-[calc(14px+env(safe-area-inset-top))] pb-3.5">
       <Link href="/home" className="rounded-control">
         <Logo />
       </Link>

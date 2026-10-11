@@ -177,7 +177,6 @@ describe("MatchCard", () => {
     // The heading is a short label; the sentence about them is body text.
     expect(screen.getByRole("heading", { name: "UI design · Figma" })).toBeInTheDocument();
     expect(screen.getByText("Final-year design student.")).toBeInTheDocument();
-    expect(screen.getByText("Can help with")).toBeInTheDocument();
     expect(screen.getByText("UI design")).toBeInTheDocument();
     expect(screen.getByText("Available weekends")).toBeInTheDocument();
     expect(screen.getByText("Why this match")).toBeInTheDocument();

@@ -89,9 +89,10 @@ describe("Conversation", () => {
     const items = within(screen.getByRole("list", { name: "Messages" }))
       .getAllByRole("listitem")
       .filter((li) => li.textContent);
+    // Each bubble ends with its time.
     expect(items.map((li) => li.querySelector("p")?.textContent)).toEqual([
-      "You: Hello",
-      "Asha: Hi back",
+      expect.stringMatching(/^You: Hello/),
+      expect.stringMatching(/^Asha: Hi back/),
     ]);
     expect(screen.getByText("Messages are deleted 90 days after they're sent.")).toBeVisible();
   });

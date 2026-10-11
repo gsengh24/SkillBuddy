@@ -48,7 +48,7 @@ describe("buildActivity", () => {
     expect(introRow).toMatchObject({
       group: "requests",
       title: "New intro received",
-      secondary: "“React basics”",
+      secondary: "React basics",
     });
     expect(unreadChat).toMatchObject({
       group: "messages",
@@ -71,7 +71,7 @@ describe("buildActivity", () => {
     expect(row?.title).toBe("Your connection");
   });
 
-  it("lists only intros received and still waiting", () => {
+  it("lists intros still waiting, received (needs a reply) and sent", () => {
     const rows = buildActivity(
       {
         requests: [],
@@ -84,7 +84,13 @@ describe("buildActivity", () => {
       },
       NOW,
     );
-    expect(rows.map((row) => row.id)).toEqual(["waiting"]);
+    expect(rows.map((row) => row.id).sort()).toEqual(["sent", "waiting"]);
+    expect(rows.find((row) => row.id === "sent")).toMatchObject({
+      sent: true,
+      needsReply: false,
+      title: "Waiting for a reply",
+    });
+    expect(rows.find((row) => row.id === "waiting")?.needsReply).toBe(true);
   });
 
   it.each([

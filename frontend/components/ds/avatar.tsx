@@ -10,7 +10,12 @@ const SIZES = {
   xl: "font-display size-16 text-[22px] font-extrabold lg:size-20 lg:text-[28px]",
 } as const;
 
-const FILLS = { green: "bg-green", ink: "bg-ink" } as const;
+const FILLS = { green: "bg-green text-bg", ink: "bg-ink text-bg" } as const;
+/** On the ink inbox pane the fills do not follow the theme. */
+const PANE_FILLS = {
+  green: "bg-pane-green text-on-dark",
+  ink: "bg-pane-ink text-on-dark",
+} as const;
 
 type AvatarProps = {
   /** Picks the fill (green or ink): a stable hash of the id, never anything about the person. */
@@ -24,6 +29,8 @@ type AvatarProps = {
   photoUrl?: string | null;
   /** Hide from assistive technology when the name is already shown next to it. */
   decorative?: boolean;
+  /** "pane": for the ink inbox pane, where the fills stay the same in every theme. */
+  tone?: "default" | "pane";
   className?: string;
 };
 
@@ -37,6 +44,7 @@ export function Avatar({
   size = "md",
   photoUrl,
   decorative = false,
+  tone = "default",
   className,
 }: AvatarProps) {
   return (
@@ -46,8 +54,8 @@ export function Avatar({
       aria-hidden={decorative || undefined}
       data-fill={avatarFill(userId)}
       className={cx(
-        "text-bg relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-medium",
-        FILLS[avatarFill(userId)],
+        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-medium",
+        (tone === "pane" ? PANE_FILLS : FILLS)[avatarFill(userId)],
         SIZES[size],
         className,
       )}

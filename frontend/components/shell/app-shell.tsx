@@ -83,7 +83,7 @@ export function AppShell({ user, children, rightRail, hasNotifications = false }
 
       <div
         className={cx(
-          "max-w-content mx-auto w-full flex-1 px-4 pt-4 pb-8 lg:px-8 lg:pt-8",
+          "max-w-content mx-auto w-full flex-1 px-4 pt-4 pb-8 lg:pt-8",
           rightRail ? "xl:grid xl:grid-cols-[minmax(0,1fr)_284px] xl:gap-6" : null,
         )}
       >

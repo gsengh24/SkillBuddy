@@ -1,36 +1,19 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { RequestCard } from "@/components/discover/request-card";
-import { ArrowLeftIcon } from "@/components/ds/icons";
-import { Panel, TopicChip } from "@/components/ds/surfaces";
-import { ButtonLink } from "@/components/ds/button";
-import { TwoToneHeadline } from "@/components/ds/page-parts";
-import { ActivityList } from "@/components/home/activity-list";
 import { ChatDetail } from "@/components/home/chat-detail";
-import { Greeting } from "@/components/home/greeting";
-import { HomeComposer } from "@/components/home/home-composer";
-import { EscapeToComposer } from "@/components/home/escape-to-composer";
-import { NotAvailable, SpacesBand, SummaryStrip } from "@/components/home/parts";
-import { TryAgain } from "@/components/home/try-again";
+import { HomeView } from "@/components/home/home-view";
+import { NotAvailable } from "@/components/home/parts";
 import { IntroCard } from "@/components/social/intro-card";
-import { TextLink } from "@/components/ui/text-link";
-import { cx } from "@/components/ui/cx";
 import { ApiError } from "@/lib/api/errors";
 import type { Connection, Intro, MatchRequest, User } from "@/lib/api/schemas";
 import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getConversation } from "@/lib/chat/server";
-import {
-  buildActivity,
-  parseFilter,
-  parseItem,
-  summaryCounts,
-  type ItemType,
-} from "@/lib/home/activity";
+import { buildActivity, parseFilter, parseItem, type ItemType } from "@/lib/home/activity";
 import { getMyRequests } from "@/lib/matching/server";
 import { getMyProfile } from "@/lib/profile/server";
-import { getConnections, getReceivedIntros } from "@/lib/social/server";
+import { getConnections, getReceivedIntros, getSentIntros } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Home" };
 export const dynamic = "force-dynamic";
@@ -60,146 +43,39 @@ export default async function HomePage({ searchParams }: Props) {
   const conversation = item?.type === "chat" ? startEarly(getConversation(item.id)) : null;
   const {
     user,
-    data: [profile, requestsOrNull, introPage, connectionList],
+    data: [profile, requestsOrNull, introPage, sentPage, connectionList],
   } = await withUser(
     "/login?next=/home",
     Promise.all([
       getMyProfile(),
       orNull(getMyRequests()),
       orNull(getReceivedIntros()),
+      orNull(getSentIntros()),
       orNull(getConnections()),
     ]),
   );
 
   // Without a profile there are no requests to list, whatever that call said.
   const requests = profile ? requestsOrNull : [];
-  const intros = introPage?.items ?? null;
+  const intros = introPage && sentPage ? [...introPage.items, ...sentPage.items] : null;
   const connections = connectionList?.items ?? null;
   const failed = requests === null || intros === null || connections === null;
 
   const lists = { requests: requests ?? [], intros: intros ?? [], connections: connections ?? [] };
   const rows = buildActivity(lists, new Date());
-  const composerHref = filter === "all" ? "/home" : `/home?filter=${filter}`;
   const detail = item ? await renderDetail(item, { user, ...lists, conversation }) : null;
-  const hasConnections = lists.connections.length > 0;
-  const needReply = rows.filter((row) => row.needsReply).length;
-  const withMatches = rows.filter((row) => row.ready).length;
 
   return (
-    <>
-      <div className="border-line bg-bg flex flex-col lg:grid lg:min-h-[min(820px,calc(100dvh-8rem))] lg:grid-cols-[360px_minmax(0,1fr)] lg:overflow-hidden lg:rounded-[18px] lg:border">
-        <h1 className="sr-only">Home</h1>
-
-        <aside
-          aria-labelledby="inbox-h"
-          className={cx(
-            "bg-pane text-on-dark order-2 mt-4 flex flex-col gap-3.5 rounded-[18px] px-3.5 pt-5 pb-3.5 lg:order-1 lg:mt-0 lg:rounded-none lg:px-[18px] lg:pt-6 lg:pb-4",
-            item && "hidden lg:flex",
-          )}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2
-                id="inbox-h"
-                className="font-display text-[26px] leading-none font-extrabold tracking-[-0.03em]"
-              >
-                Inbox
-              </h2>
-              <p className="text-on-dark-2 mt-1.5 text-[12.5px]">
-                {needReply} {needReply === 1 ? "intro needs" : "intros need"} a reply ·{" "}
-                {withMatches} {withMatches === 1 ? "request" : "requests"} with matches
-              </p>
-            </div>
-            <Link
-              href={`${composerHref}#new-request`}
-              className="border-pane-line text-on-dark hover:border-on-dark-3 hover:bg-on-dark/5 inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium whitespace-nowrap"
-            >
-              <span aria-hidden>+</span> New request
-            </Link>
-          </div>
-          {failed ? (
-            <TryAgain message="We couldn't load your activity just now." />
-          ) : (
-            <ActivityList
-              rows={rows}
-              initialFilter={filter}
-              selectedKey={item ? `${item.type}-${item.id}` : null}
-            />
-          )}
-        </aside>
-
-        <section
-          aria-label={item ? "Opened item" : "New request"}
-          className={cx(
-            "order-1 min-w-0 lg:order-2 lg:px-8 lg:pt-[72px] lg:pb-10",
-            item && "lg:pt-8",
-          )}
-        >
-          {item ? (
-            <>
-              <EscapeToComposer href={composerHref} />
-              <TextLink
-                href={composerHref}
-                tone="muted"
-                className="mb-1.5 inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold lg:hidden"
-              >
-                <ArrowLeftIcon className="size-4" />
-                Inbox
-              </TextLink>
-              {detail}
-            </>
-          ) : (
-            <div
-              id="new-request"
-              className="mx-auto w-full max-w-[640px] scroll-mt-20 pt-2 lg:pt-0"
-            >
-              <Greeting className="text-green font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase" />
-              <TwoToneHeadline
-                as="h2"
-                lead="What are you building today?"
-                rest="Say it in a sentence."
-                size="greeting"
-                className="mt-2.5 mb-4 lg:mb-6"
-              />
-              {profile ? (
-                <HomeComposer />
-              ) : (
-                <Panel tone="green" className="flex flex-col gap-2">
-                  <TopicChip tone="soft" className="self-start">
-                    Start here
-                  </TopicChip>
-                  <p className="text-title-lg">Tell us about you</p>
-                  <p className="text-ink-2 max-w-md">
-                    A few lines about what you do and what you&apos;re looking for. We use it to
-                    find people worth meeting.
-                  </p>
-                  <ButtonLink href="/onboarding" variant="primary" className="self-start">
-                    Create your profile
-                  </ButtonLink>
-                </Panel>
-              )}
-              <div
-                className={cx(
-                  "mt-[22px] grid gap-3",
-                  hasConnections ? "lg:grid-cols-2" : "hidden lg:grid",
-                )}
-              >
-                <div className="hidden lg:block">
-                  <SummaryStrip counts={summaryCounts(lists)} />
-                </div>
-                {hasConnections ? <SpacesBand /> : null}
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
-      <p className="text-muted mt-4 text-[13px]">
-        You&apos;re signed in as <strong className="text-ink break-all">{user.email}</strong>.{" "}
-        <TextLink href="/you#s-security" tone="muted">
-          Account settings
-        </TextLink>
-      </p>
-    </>
+    <HomeView
+      email={user.email}
+      hasProfile={Boolean(profile)}
+      failed={failed}
+      rows={rows}
+      filter={filter}
+      item={item}
+      detail={detail}
+      lists={lists}
+    />
   );
 }
 

@@ -68,7 +68,7 @@ function cynergiPairs(): ColourPair[] {
   pairs.push(pair("on-dark-3 on pane", colors.onDark3, colors.pane, "text"));
   pairs.push(pair("amber on pane (needs a reply)", colors.amber, colors.pane, "text"));
   pairs.push(pair("mint text on pane (matches ready)", colors.mintText, colors.pane, "text"));
-  pairs.push(pair("ink on mint (write a request)", colors.ink, colors.mint, "text"));
+  pairs.push(pair("pane on mint (write a request, count chip)", colors.pane, colors.mint, "text"));
   pairs.push(pair("mint on pane (selected underline, unread dot)", colors.mint, colors.pane, "ui"));
   return pairs;
 }
