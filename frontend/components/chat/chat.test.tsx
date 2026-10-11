@@ -178,6 +178,39 @@ describe("Conversation", () => {
     expect(screen.getByLabelText("Message Asha")).toHaveValue("");
   });
 
+  it("sends on Enter, and Shift+Enter adds a new line", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) =>
+      init?.method === "POST" && String(url).endsWith("/messages")
+        ? json(201, message(3, ME, "Hi"))
+        : json(200, updates([])),
+    );
+    renderConversation();
+    const box = screen.getByLabelText("Message Asha");
+
+    await user.type(box, "Hi{Shift>}{Enter}{/Shift}there");
+    expect(box).toHaveValue("Hi\nthere");
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+
+    await user.type(box, "{Enter}");
+    const post = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+    expect(JSON.parse(post?.[1]?.body as string)).toEqual({ body: "Hi\nthere" });
+  });
+
+  it("keeps Enter as a new line on a touch device", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    try {
+      renderConversation();
+      const box = screen.getByLabelText("Message Asha");
+      await user.type(box, "Hi{Enter}there");
+      expect(box).toHaveValue("Hi\nthere");
+      expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("polls every 3 s, adds new messages once, and marks theirs read", async () => {
     const incoming = message(4, THEM, "See you then");
     let call = 0;
