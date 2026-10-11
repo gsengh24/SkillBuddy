@@ -183,7 +183,7 @@ describe("YouPage", () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
     await user.type(
-      screen.getByRole("textbox", { name: "Add a skill you can offer" }),
+      screen.getByRole("combobox", { name: "Add a skill you can offer" }),
       "Figma{Enter}",
     );
     await user.click(screen.getByRole("button", { name: "Remove React" }));

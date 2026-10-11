@@ -148,6 +148,10 @@ export const profileSchema = z.object({
 });
 export type Profile = z.infer<typeof profileSchema>;
 
+export const skillSuggestionsSchema = z.object({
+  items: z.array(z.object({ name: z.string() })),
+});
+
 export const authMethodsSchema = z.object({
   email_code: z.boolean(),
   google: z.boolean(),
