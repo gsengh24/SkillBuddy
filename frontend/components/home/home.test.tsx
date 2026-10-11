@@ -11,7 +11,7 @@ import { Greeting, greetingFor } from "./greeting";
 import { EscapeToComposer } from "./escape-to-composer";
 import { HomeComposer } from "./home-composer";
 
-const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
+const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("@/lib/api/browser", () => ({ browserApi: vi.fn() }));
 
@@ -33,8 +33,26 @@ function listItems() {
     : [];
 }
 
+function screenIs(desktop: boolean) {
+  window.matchMedia = vi.fn().mockReturnValue({ matches: desktop }) as never;
+  router.replace.mockClear();
+}
+
 describe("ActivityList", () => {
+  it("opens the newest item of a tab on desktop, and leaves the list alone on a phone", async () => {
+    screenIs(true);
+    render(<ActivityList rows={ROWS} initialFilter="all" selectedKey={null} />);
+    expect(router.replace).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: /^Messages/ }));
+    expect(router.replace).toHaveBeenCalledWith("/home?item=chat-conn-1");
+
+    screenIs(false);
+    await userEvent.click(screen.getByRole("button", { name: /^Requests/ }));
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
   it("filters All, Requests and Messages, from the keyboard too", async () => {
+    screenIs(false);
     render(<ActivityList rows={ROWS} initialFilter="all" selectedKey={null} />);
     expect(listItems()).toEqual([
       "/home?item=request-req-1",

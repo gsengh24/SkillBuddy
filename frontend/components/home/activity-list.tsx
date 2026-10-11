@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Avatar } from "@/components/ds/avatar";
 import { cx } from "@/components/ui/cx";
@@ -187,6 +188,26 @@ export function ActivityList({
         : requestRows.filter((row) => row.sub === sub);
   const empty = EMPTY[filter];
 
+  // On desktop the right side is never left blank behind a list: choosing a tab opens its
+  // newest item (unless the open one is already in it). Phones keep the list, since an
+  // open item covers the whole screen there. Also runs once for /messages, which lands on
+  // the Messages tab. The composer stays one click away: "New request" clears the item
+  // without changing the tab, so nothing re-opens.
+  const router = useRouter();
+  const openFirst = useRef(initialFilter !== "all");
+  const first = shown[0];
+  const selectedShown = shown.some((row) => row.key === selectedKey);
+  useEffect(() => {
+    if (!openFirst.current || !first) return;
+    openFirst.current = false;
+    if (selectedShown || !window.matchMedia("(min-width: 1024px)").matches) return;
+    router.replace(itemHref(first.type, first.id));
+  }, [first, selectedShown, router]);
+  const choose = (next: () => void) => {
+    openFirst.current = true;
+    next();
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3.5">
       <div role="group" aria-label="Filter" className="bg-on-dark/5 flex gap-1 rounded-full p-1">
@@ -201,7 +222,7 @@ export function ActivityList({
             key={value}
             type="button"
             aria-pressed={filter === value}
-            onClick={() => setFilter(value)}
+            onClick={() => choose(() => setFilter(value))}
             className={cx(
               "min-h-11 flex-1 rounded-full px-1.5 py-2 text-[13px] whitespace-nowrap pointer-fine:min-h-[38px]",
               filter === value ? "bg-on-dark/10 text-on-dark" : "text-on-dark-2 hover:text-on-dark",
@@ -228,7 +249,7 @@ export function ActivityList({
               key={value}
               type="button"
               aria-pressed={sub === value}
-              onClick={() => setSub(value)}
+              onClick={() => choose(() => setSub(value))}
               className={cx(
                 "-mb-px min-h-9 border-b-[1.5px] pb-[9px] text-[12.5px]",
                 sub === value
