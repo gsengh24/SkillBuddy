@@ -51,7 +51,7 @@ export function TeamListing({
 
   return (
     <form onSubmit={save} className="flex flex-col gap-3">
-      <h3 className="text-title text-ink">Let people find this team</h3>
+      <h3 className="text-title text-ink">Let people find this pair space</h3>
       <label className="flex min-h-11 items-start gap-3">
         <input
           type="checkbox"
@@ -60,7 +60,7 @@ export function TeamListing({
           className="accent-green mt-1 size-4 shrink-0"
         />
         <span className="flex flex-col">
-          <span className="text-ink font-medium">List this team</span>
+          <span className="text-ink font-medium">List this pair space</span>
           <span className="text-meta-lg text-muted">
             Anyone signed in can see its name, purpose, size and the line below, and ask to join.
             You decide who gets in.
@@ -82,7 +82,7 @@ export function TeamListing({
           Save listing
         </Button>
         <p className="text-meta-lg text-muted" role="status">
-          {saved.on ? "This team is listed." : "This team is not listed."}
+          {saved.on ? "This pair space is listed." : "This pair space is not listed."}
         </p>
       </div>
     </form>

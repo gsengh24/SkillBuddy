@@ -26,7 +26,7 @@ type AppShellProps = {
 
 const ICONS: Record<(typeof APP_LINKS)[number]["href"], ReactNode> = {
   "/home": <HomeIcon />,
-  "/spaces": <PeopleIcon />,
+  "/teams": <PeopleIcon />,
   "/you": <YouIcon />,
 };
 

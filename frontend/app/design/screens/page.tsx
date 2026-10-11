@@ -8,7 +8,14 @@ import { AIStatusView } from "@/components/moderation/ai-status";
 import { ReportReview } from "@/components/moderation/report-review";
 import { IntroCard } from "@/components/social/intro-card";
 import { SpaceView } from "@/components/spaces/space-view";
-import type { AIStatus, Intro, Match, Message, ModerationReport, Space } from "@/lib/api/schemas";
+import type {
+  AIStatus,
+  Intro,
+  Match,
+  Message,
+  ModerationReport,
+  TeamSpace,
+} from "@/lib/api/schemas";
 import { isStyleGuideEnabled } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -84,8 +91,8 @@ const MESSAGES: Message[] = [
   created_at: at as string,
 }));
 
-const SPACE: Space = {
-  connection_id: "sample-connection",
+const SPACE: TeamSpace = {
+  team_id: "sample-team",
   goals: [
     {
       id: "sample-goal-1",
@@ -228,7 +235,11 @@ export default function ScreensPage() {
       </Section>
       <Section id="screens-space" title="A pair space">
         <div className="max-w-3xl">
-          <SpaceView space={SPACE} meId={ME} otherId={THEM} otherName="Aarav R." />
+          <SpaceView
+            space={SPACE}
+            meId={ME}
+            team={{ base: "/teams/sample-team/space", names: { [THEM]: "Aarav R." } }}
+          />
         </div>
       </Section>
       <Section id="screens-moderation" title="Moderation">

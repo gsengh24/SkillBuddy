@@ -1,6 +1,6 @@
 # 13. Pair spaces v1: shared goals, skills to grow and progress logs
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0018](0018-pair-spaces-are-teams.md) (the one-to-one spaces were removed; a pair space is now a team)
 - **Date:** 2026-10-04
 - **Amends:** [ARCHITECTURE.md](../ARCHITECTURE.md) §5 (data model: `spaces / goals /
   skill_logs`) and §11 (Phase 5 deliverables)

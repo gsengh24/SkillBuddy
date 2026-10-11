@@ -540,3 +540,49 @@ def test_safety_migration_downgrades_to_0019(empty_database_url: str, engine: En
 
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
+
+
+def test_connection_spaces_migration_deletes_old_rows_and_keeps_teams(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "0033")
+    with engine.begin() as connection:
+        ids = sorted(
+            connection.scalars(
+                text(
+                    "INSERT INTO users (email) "
+                    "VALUES ('e@example.com'), ('f@example.com') RETURNING id"
+                )
+            )
+        )
+        pair = connection.scalar(
+            text("INSERT INTO connections (user_a, user_b) VALUES (:a, :b) RETURNING id"),
+            {"a": ids[0], "b": ids[1]},
+        )
+        team = connection.scalar(
+            text(
+                "INSERT INTO teams (name, purpose, owner_id) "
+                "VALUES ('Crew', 'project', :o) RETURNING id"
+            ),
+            {"o": ids[0]},
+        )
+        connection.execute(
+            text("INSERT INTO space_goals (connection_id, from_a, title) VALUES (:c, true, 'old')"),
+            {"c": pair},
+        )
+        connection.execute(
+            text("INSERT INTO space_goals (team_id, author_id, title) VALUES (:t, :a, 'kept')"),
+            {"t": team, "a": ids[0]},
+        )
+
+    command.upgrade(config, "0034")
+    with engine.connect() as connection:
+        titles = connection.scalars(text("SELECT title FROM space_goals")).all()
+        columns = {column["name"] for column in inspect(engine).get_columns("space_goals")}
+    assert titles == ["kept"]
+    assert not {"connection_id", "from_a"} & columns
+
+    command.downgrade(config, "0033")
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES

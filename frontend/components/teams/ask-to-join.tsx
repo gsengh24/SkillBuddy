@@ -75,8 +75,8 @@ export function AskToJoin({
         onChange={(event) => setNote(event.target.value)}
       />
       <p className="text-meta-lg text-muted">
-        The owner will see your name and this note. If they say yes, everyone in the team will see
-        your name.
+        The owner will see your name and this note. If they say yes, everyone in the pair space will
+        see your name.
       </p>
       {error ? <InlineError announce>{error}</InlineError> : null}
       <div className="flex flex-wrap gap-2">
@@ -114,7 +114,7 @@ export function MyTeamRequests({ initial }: { initial: TeamInvite[] }) {
   return (
     <section aria-labelledby="team-requests-h" className="flex flex-col gap-3">
       <h2 id="team-requests-h" className="text-title">
-        Teams you asked to join
+        Pair spaces you asked to join
       </h2>
       <ul className="border-line border-t">
         {requests.map((request) => (

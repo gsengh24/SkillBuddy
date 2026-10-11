@@ -44,16 +44,12 @@ function page(connectionId: string) {
 }
 
 describe("/messages/[connectionId]", () => {
-  it("still opens the chat, with links back to Home's messages and to the pair space", async () => {
+  it("still opens the chat, with a link back to Home's messages", async () => {
     render(await page("conn-1"));
     expect(screen.getByRole("heading", { name: "Aarav R.", level: 1 })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "All messages" })).toHaveAttribute(
       "href",
       "/home?filter=messages",
-    );
-    expect(screen.getByRole("link", { name: "Open pair space" })).toHaveAttribute(
-      "href",
-      "/spaces/conn-1",
     );
     // Block and Report sit in the header's "⋯" menu.
     await userEvent

@@ -49,7 +49,7 @@ export function CreateTeam() {
   return (
     <form onSubmit={submit} className="flex flex-col gap-3">
       <Input
-        label="Team name"
+        label="Pair space name"
         maxLength={NAME_MAX}
         value={name}
         onChange={(event) => setName(event.target.value)}
@@ -84,7 +84,7 @@ export function CreateTeam() {
         className="self-start"
         disabled={busy || !name.trim()}
       >
-        {busy ? "Creating…" : "Create team"}
+        {busy ? "Creating…" : "Create pair space"}
       </Button>
     </form>
   );

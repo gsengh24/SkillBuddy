@@ -131,9 +131,7 @@ async def test_a_switch_turned_off_blocks_its_endpoints(
         owner = await owner_of(client, settings, delivery)
         asha, _, connection = await connect(client, settings, delivery, fresh_url)
         before = await say(client, asha, connection, "before")
-        assert [
-            await switch(owner, f, False) for f in ("chats", "intro_requests", "pair_spaces")
-        ] == [
+        assert [await switch(owner, f, False) for f in ("chats", "intro_requests", "teams")] == [
             204,
             204,
             204,
@@ -145,7 +143,7 @@ async def test_a_switch_turned_off_blocks_its_endpoints(
         intro = await client.post(
             f"/api/v1/matches/{uuid.uuid4()}/intro", json={"note": "Hi"}, headers=asha.headers
         )
-        space = await client.get(f"/api/v1/connections/{connection}/space", headers=asha.headers)
+        space = await client.get(f"/api/v1/teams/{uuid.uuid4()}/space", headers=asha.headers)
         public = (await client.get(FEATURES)).json()["features"]
         assert await switch(owner, "chats", True) == 204
         after = await say(client, asha, connection, "after")
@@ -161,7 +159,6 @@ async def test_a_switch_turned_off_blocks_its_endpoints(
         "intro_requests": False,
         "chats": False,
         "ai_matching": True,
-        "pair_spaces": False,
         "email_notifications": True,
         "teams": False,
     }
@@ -174,7 +171,7 @@ async def test_a_switch_turned_off_blocks_its_endpoints(
     assert [(row["action"], row["target_id"]) for row in actions] == [
         ("settings.feature_off", "chats"),
         ("settings.feature_off", "intro_requests"),
-        ("settings.feature_off", "pair_spaces"),
+        ("settings.feature_off", "teams"),
         ("settings.feature_on", "chats"),
     ]
 

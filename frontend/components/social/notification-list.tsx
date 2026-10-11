@@ -32,24 +32,24 @@ const WORDS: Record<AppNotification["kind"], { text: string; href: string; link:
     link: "Read the terms",
   },
   team_invite: {
-    text: "You were invited to a team.",
+    text: "You were invited to a pair space.",
     href: "/teams",
     link: "See the invite",
   },
   team_joined: {
-    text: "Someone joined one of your teams.",
+    text: "Someone joined one of your pair spaces.",
     href: "/teams",
-    link: "Open Teams",
+    link: "Open pair spaces",
   },
   team_request: {
-    text: "Someone asked to join a team you own.",
+    text: "Someone asked to join a pair space you own.",
     href: "/teams",
-    link: "Open Teams",
+    link: "Open pair spaces",
   },
   team_request_accepted: {
-    text: "Your request to join a team was accepted.",
+    text: "Your request to join a pair space was accepted.",
     href: "/teams",
-    link: "Open Teams",
+    link: "Open pair spaces",
   },
 };
 

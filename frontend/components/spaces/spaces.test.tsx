@@ -2,14 +2,14 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Goal, ProgressLog, Skill, Space } from "@/lib/api/schemas";
+import type { Goal, ProgressLog, Skill, TeamSpace } from "@/lib/api/schemas";
 
 import { SpaceView } from "./space-view";
 
 const ME = "11111111-0000-4000-8000-000000000001";
 const THEM = "11111111-0000-4000-8000-000000000002";
-const CONNECTION = "55555555-0000-4000-8000-000000000001";
-const BASE = `/api/v1/connections/${CONNECTION}/space`;
+const TEAM = "55555555-0000-4000-8000-000000000001";
+const BASE = `/api/v1/teams/${TEAM}/space`;
 
 const GOAL: Goal = {
   id: "g1",
@@ -48,9 +48,9 @@ const THEIR_LOG: ProgressLog = {
   goal_id: null,
 };
 
-function space(overrides: Partial<Space> = {}): Space {
+function space(overrides: Partial<TeamSpace> = {}): TeamSpace {
   return {
-    connection_id: CONNECTION,
+    team_id: TEAM,
     goals: [GOAL],
     skills: [MY_SKILL, THEIR_SKILL],
     logs: [THEIR_LOG, MY_LOG],
@@ -80,7 +80,13 @@ afterEach(() => {
 });
 
 function renderSpace(initial = space()) {
-  return render(<SpaceView space={initial} meId={ME} otherId={THEM} otherName="Asha" />);
+  return render(
+    <SpaceView
+      space={initial}
+      meId={ME}
+      team={{ base: `/teams/${TEAM}/space`, names: { [THEM]: "Asha" } }}
+    />,
+  );
 }
 
 function lastCall() {
@@ -93,7 +99,7 @@ function lastCall() {
 }
 
 describe("SpaceView", () => {
-  it("shows the goals, both people's skills and the notes", () => {
+  it("shows the goals, everyone's skills and the notes", () => {
     renderSpace();
     expect(screen.getByRole("checkbox", { name: /Ship the MVP/ })).not.toBeChecked();
     expect(screen.getByText(/due 2026-12-01/)).toBeVisible();
@@ -119,7 +125,7 @@ describe("SpaceView", () => {
     expect(within(notes[1]!).getByRole("button", { name: "Delete" })).toBeInTheDocument();
   });
 
-  it("offers Report only on what the other person wrote, and says notes expire", () => {
+  it("offers Report only on what someone else wrote, and says notes expire", () => {
     const theirGoal: Goal = { ...GOAL, id: "g9", title: "Their goal", created_by: THEM };
     renderSpace(space({ goals: [GOAL, theirGoal] }));
     const goalRows = within(screen.getByRole("region", { name: "Shared goals" })).getAllByRole(

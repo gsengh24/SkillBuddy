@@ -11,7 +11,7 @@ import { getFeatures } from "@/lib/features";
 import { PURPOSE_LABELS, teamSize } from "@/lib/teams/labels";
 import { getListedTeams, getMyTeamRequests } from "@/lib/teams/server";
 
-export const metadata: Metadata = { title: "Find a team" };
+export const metadata: Metadata = { title: "Find a pair space" };
 export const dynamic = "force-dynamic";
 
 /** Teams their owners chose to list. Asking to join is a request the owner answers. */
@@ -40,12 +40,12 @@ export default async function BrowseTeamsPage({
           tone="muted"
           className="text-meta-lg inline-flex min-h-11 items-center self-start"
         >
-          Your teams
+          Your pair spaces
         </TextLink>
-        <h1 className="text-headline lg:text-headline-lg">Find a team</h1>
+        <h1 className="text-headline lg:text-headline-lg">Find a pair space</h1>
         <p className="text-ink-2">
-          Teams that are looking for people. Ask to join and the team&apos;s owner decides. You only
-          see who is in a team once you are in it.
+          Pair spaces that are looking for people. Ask to join and the pair space&apos;s owner
+          decides. You only see who is in a pair space once you are in it.
         </p>
       </header>
 
@@ -89,7 +89,7 @@ export default async function BrowseTeamsPage({
                 ) : null}
                 <div className="flex flex-wrap items-center gap-3">
                   {full ? (
-                    <p className="text-meta-lg text-muted">This team is full.</p>
+                    <p className="text-meta-lg text-muted">This pair space is full.</p>
                   ) : (
                     <AskToJoin teamId={team.id} teamName={team.name} asked={asked.has(team.id)} />
                   )}
@@ -100,7 +100,7 @@ export default async function BrowseTeamsPage({
           })}
         </ul>
       ) : (
-        <p className="text-muted">No teams are looking for people right now.</p>
+        <p className="text-muted">No pair spaces are looking for people right now.</p>
       )}
 
       {teams.next_cursor ? (

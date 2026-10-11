@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { Conversation } from "@/components/chat/conversation";
 import { Avatar } from "@/components/ds/avatar";
-import { ButtonLink } from "@/components/ds/button";
 import { MoreMenu } from "@/components/ds/more-menu";
 import { FeaturePaused } from "@/components/feature-paused";
 import { BlockButton } from "@/components/safety/block-button";
@@ -70,11 +69,6 @@ export default async function ConversationPage({
             </div>
           </div>
           <div className="flex flex-wrap items-start gap-3">
-            {features.pair_spaces ? (
-              <ButtonLink href={`/spaces/${connectionId}`} variant="outline" size="compact">
-                Open pair space
-              </ButtonLink>
-            ) : null}
             <MoreMenu label={`More actions for ${name}`}>
               <ReportButton
                 kind="profile"

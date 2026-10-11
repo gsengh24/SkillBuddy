@@ -124,8 +124,8 @@ PostgreSQL is the single source of truth, with the pgvector extension holding em
 | conversations / messages | id, connection\_id, sender, body, sent\_at | Chat, delivered by polling ([ADR 0012](adr/0012-chat-delivery-by-polling.md)); retained per privacy policy |
 | events | id, user\_id, type, payload, ts | Append-only behavioural log; training data for the ranker |
 | feedback | match\_id, rater, rating, tags, comment | Post-conversation signal |
-| space\_goals / space\_skills / progress\_logs | id, connection\_id, from\_a, title or name or note, status | Pair space v1 on the connection itself, no spaces table ([ADR 0013](adr/0013-pair-spaces-v1.md)); hidden when the connection ends and deleted 90 days later; logs deleted 90 days after writing |
-| teams / team\_members / team\_invites / team\_messages | id, team\_id, user\_id, name or note or body, status | Teams of up to six with a team chat ([ADR 0016](adr/0016-teams.md)); team goals, skills and notes reuse the pair-space tables; messages deleted after 90 days, a closed team 90 days after closing |
+| space\_goals / space\_skills / progress\_logs | id, team\_id, author\_id, title or name or note, status | A pair space's goals, skills and notes, keyed by the team ([ADR 0013](adr/0013-pair-spaces-v1.md), [ADR 0018](adr/0018-pair-spaces-are-teams.md)); notes deleted 90 days after writing, the rest with the team |
+| teams / team\_members / team\_invites / team\_messages | id, team\_id, user\_id, name or note or body, status | Pair spaces (teams) of up to six with a chat ([ADR 0016](adr/0016-teams.md), [ADR 0018](adr/0018-pair-spaces-are-teams.md)); their goals, skills and notes use the tables above; messages deleted after 90 days, a closed team 90 days after closing |
 | blocks / reports | id, reporter, target, reason, status | Safety; blocks are hard filters in retrieval |
 
 **Design rules**
@@ -148,7 +148,7 @@ Start as a **modular monolith** (one deployable, strict internal module boundari
 | Connection | Intro send, accept, decline, block, report |
 | Messaging | Chat over REST with adaptive client polling ([ADR 0012](adr/0012-chat-delivery-by-polling.md)), read state, history |
 | Notification | Email, push and in-app; preference centre and digests |
-| Spaces | Shared goals, skills to grow and progress logs ([ADR 0013](adr/0013-pair-spaces-v1.md)) |
+| Spaces | Shared goals, skills to grow and progress logs, now inside a team ([ADR 0013](adr/0013-pair-spaces-v1.md), [ADR 0018](adr/0018-pair-spaces-are-teams.md)) |
 | Teams | Groups of up to six: invites, invite links, listed teams, matcher-found teammates, team chat ([ADR 0016](adr/0016-teams.md)) |
 | Admin / Trust | Moderation queue, bans, audit log, metrics |
 
@@ -277,7 +277,7 @@ The build runs in seven phases, and no phase starts until the previous gate is p
 | 3 Chat, safety, closed beta | 12 to 16 | Chat (polled, ADR 0012), block and report, moderation queue, automated screening, rate limits, privacy pages, 100 to 300 invited users |
 | 4 Public launch | 17 to 22 | Waitlist and invites, onboarding polish, analytics dashboards, feedback capture, performance tuning, launch in the first community |
 | 5 Pair spaces and skills | 23 to 30 | Shared goals, skills to grow and progress logs (v1, ADR 0013); after launch: reminders, conversation starters, project templates |
-| 5b Teams | after 5 | Groups of up to six beside pair spaces, four ways to join, team chat ([ADR 0016](adr/0016-teams.md)) |
+| 5b Teams | after 5 | Groups of up to six, four ways to join, chat ([ADR 0016](adr/0016-teams.md)); these became the pair spaces and the one-to-one spaces were removed ([ADR 0018](adr/0018-pair-spaces-are-teams.md)) |
 | 6 Ranker, mobile, scale | 31 onward | Learned ranker trained on feedback, mobile app, dedicated vector store if needed, autoscaling, multilingual interface |
 
 Timelines assume one to two developers working full time with AI-assisted coding; part-time work roughly doubles them. Phase 0 is next: it produces a running, deployable skeleton, and everything after builds on it.

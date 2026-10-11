@@ -34,9 +34,9 @@ const WHAT_IS_SEEN: Record<ReportKind, string> = {
   profile: "Our moderator will see a copy of their profile as you can see it.",
   goal: "Our moderator will see a copy of this goal.",
   note: "Our moderator will see a copy of this note.",
-  team: "Our moderator will see a copy of this team's name, description and who it is looking for, not who is in it.",
+  team: "Our moderator will see a copy of this pair space's name, description and who it is looking for, not who is in it.",
   "team message":
-    "Our moderator will see a copy of this one message, not the rest of the team chat.",
+    "Our moderator will see a copy of this one message, not the rest of the pair space chat.",
 };
 
 /**

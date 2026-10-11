@@ -1,6 +1,6 @@
 """A team's goals, skills to grow and progress notes (ADR 0016).
 
-The same shapes as a pair space (``app.api.v1.spaces``), under /teams/{id}/space. Only
+The shapes are in ``app.api.v1.spaces``; they sit under /teams/{id}/space. Only
 members of an open team can use it.
 """
 
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import uuid
 from http import HTTPStatus
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field
@@ -61,11 +61,6 @@ _422: dict[str, Any] = {"model": ErrorResponse, "description": "Validation faile
 _429: dict[str, Any] = {"model": ErrorResponse, "description": "Daily space write limit."}
 
 
-def _author(row: SpaceGoal | SpaceSkill | ProgressLog) -> uuid.UUID:
-    # A team's row always has its author (the one_parent CHECK).
-    return cast(uuid.UUID, row.author_id)
-
-
 def _goal(goal: SpaceGoal) -> GoalOut:
     return GoalOut(
         id=goal.id,
@@ -73,14 +68,14 @@ def _goal(goal: SpaceGoal) -> GoalOut:
         status=goal.status,  # type: ignore[arg-type]  # CHECK-constrained column
         due_on=goal.due_on,
         done_at=goal.done_at,
-        created_by=_author(goal),
+        created_by=goal.author_id,
         created_at=goal.created_at,
     )
 
 
 def _skill(skill: SpaceSkill) -> SkillOut:
     return SkillOut(
-        id=skill.id, name=skill.name, owner_id=_author(skill), created_at=skill.created_at
+        id=skill.id, name=skill.name, owner_id=skill.author_id, created_at=skill.created_at
     )
 
 
@@ -88,7 +83,7 @@ def _log(log: ProgressLog) -> LogOut:
     return LogOut(
         id=log.id,
         note=log.note,
-        author_id=_author(log),
+        author_id=log.author_id,
         goal_id=log.goal_id,
         skill_id=log.skill_id,
         created_at=log.created_at,

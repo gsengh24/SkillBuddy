@@ -9,13 +9,13 @@ export function SummaryStrip({
   counts,
   className,
 }: {
-  counts: { requests: number; messages: number; spaces: number };
+  counts: { requests: number; messages: number; connections: number };
   className?: string;
 }) {
   const cells = [
     { label: "Requests", value: counts.requests, hint: "open requests" },
     { label: "Messages", value: counts.messages, hint: "unread messages" },
-    { label: "Spaces", value: counts.spaces, hint: "pair spaces" },
+    { label: "Connections", value: counts.connections, hint: "connections" },
   ];
   return (
     <dl
@@ -51,7 +51,7 @@ export function SpacesBand({ className }: { className?: string }) {
           Turn a connection <span className="text-mint-text">into a shared goal.</span>
         </h2>
         <ButtonLink
-          href="/spaces"
+          href="/teams"
           variant="white"
           size="compact"
           className="self-start rounded-[10px] font-semibold"

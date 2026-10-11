@@ -38,7 +38,6 @@ class Feature(StrEnum):
     INTRO_REQUESTS = "intro_requests"
     CHATS = "chats"
     AI_MATCHING = "ai_matching"
-    PAIR_SPACES = "pair_spaces"
     EMAIL_NOTIFICATIONS = "email_notifications"
     TEAMS = "teams"
 
@@ -79,9 +78,8 @@ _OFF_MESSAGES: Final[dict[Feature, str]] = {
     Feature.INTRO_REQUESTS: "Sending intros is paused right now. Please try again later.",
     Feature.CHATS: "Chats are paused right now. Please try again later.",
     Feature.AI_MATCHING: "AI matching is paused right now.",
-    Feature.PAIR_SPACES: "Pair spaces are paused right now. Please try again later.",
     Feature.EMAIL_NOTIFICATIONS: "Email notifications are paused right now.",
-    Feature.TEAMS: "Teams are paused right now. Please try again later.",
+    Feature.TEAMS: "Pair spaces are paused right now. Please try again later.",
 }
 
 

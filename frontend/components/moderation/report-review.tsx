@@ -23,8 +23,8 @@ const WHAT: Record<ModerationReport["target"], string> = {
   profile: "Profile",
   goal: "Goal",
   progress_log: "Progress note",
-  team: "Team",
-  team_message: "Team chat message",
+  team: "Pair space",
+  team_message: "Pair space chat message",
 };
 
 const PART: Record<string, string> = {

@@ -89,7 +89,9 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
       await shoot(page, `${shot}-${name}`);
     }
     await page.goto("/spaces");
-    await expect(page.getByRole("heading", { name: "Pair spaces", level: 1 })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Pair spaces aren't available right now", level: 1 }),
+    ).toBeVisible();
     await shoot(page, `spaces-${name}`);
     if (existsSync(REFERENCE)) {
       await page.goto(`file://${REFERENCE}`);

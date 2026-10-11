@@ -16,7 +16,7 @@ import {
   type Goal,
   type ProgressLog,
   type Skill,
-  type Space,
+  type TeamSpace,
 } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 
@@ -42,27 +42,21 @@ function when(iso: string) {
 }
 
 /**
- * A pair space (ADR 0013): shared goals either person can change, the skills each person
- * wants to grow (only the owner removes them) and progress notes (only the author deletes).
- *
- * A team's space (ADR 0016) is the same thing for more people: pass `team` with the API path
- * and the members' names.
+ * A pair space (ADR 0013, 0017): the goals everyone in the team shares and can change, the
+ * skills each person wants to grow (only the owner removes them) and progress notes (only the
+ * author deletes). `team` has the API path and the members' names.
  */
 export function SpaceView({
   space,
   meId,
-  otherId,
-  otherName,
   team,
 }: {
-  space: Omit<Space, "connection_id"> & { connection_id?: string };
+  space: TeamSpace;
   meId: string;
-  otherId: string;
-  otherName: string;
-  team?: { base: `/${string}`; names: Record<string, string> };
+  team: { base: `/${string}`; names: Record<string, string> };
 }) {
-  const base: `/${string}` = team?.base ?? `/connections/${space.connection_id}/space`;
-  const nameOf = (userId: string) => team?.names[userId] ?? otherName;
+  const base = team.base;
+  const nameOf = (userId: string) => team.names[userId] ?? "A teammate";
   const [goals, setGoals] = useState<Goal[]>(space.goals);
   const [skills, setSkills] = useState<Skill[]>(space.skills);
   const [logs, setLogs] = useState<ProgressLog[]>(space.logs);
@@ -92,14 +86,12 @@ export function SpaceView({
 
   const mySkills = skills.filter((skill) => skill.owner_id === meId);
   const theirSkills = skills.filter((skill) => skill.owner_id !== meId);
-  // One group per other person: the one connection, or each teammate with skills.
-  const otherGroups = team
-    ? [...new Set(theirSkills.map((skill) => skill.owner_id))].map((ownerId) => ({
-        key: ownerId,
-        name: nameOf(ownerId),
-        skills: theirSkills.filter((skill) => skill.owner_id === ownerId),
-      }))
-    : [{ key: otherId, name: otherName, skills: theirSkills }];
+  // One group per teammate with skills.
+  const otherGroups = [...new Set(theirSkills.map((skill) => skill.owner_id))].map((ownerId) => ({
+    key: ownerId,
+    name: nameOf(ownerId),
+    skills: theirSkills.filter((skill) => skill.owner_id === ownerId),
+  }));
   const goalTitleById = new Map(goals.map((goal) => [goal.id, goal.title]));
   const skillNameById = new Map(skills.map((skill) => [skill.id, skill.name]));
 
@@ -220,7 +212,7 @@ export function SpaceView({
                       <ReportButton
                         kind="goal"
                         targetId={goal.id}
-                        blockUserId={team ? goal.created_by : otherId}
+                        blockUserId={goal.created_by}
                         blockName={nameOf(goal.created_by)}
                         compact
                       />
@@ -238,9 +230,7 @@ export function SpaceView({
               ))}
             </ul>
           ) : (
-            <p className="text-muted">
-              No goals yet. Add one {team ? "the team wants" : "you both want"} to reach.
-            </p>
+            <p className="text-muted">No goals yet. Add one everyone wants to reach.</p>
           )}
           <form onSubmit={addGoal} className="flex flex-col gap-3">
             <Input
@@ -413,7 +403,7 @@ export function SpaceView({
                       <ReportButton
                         kind="note"
                         targetId={log.id}
-                        blockUserId={team ? log.author_id : otherId}
+                        blockUserId={log.author_id}
                         blockName={nameOf(log.author_id)}
                         compact
                       />

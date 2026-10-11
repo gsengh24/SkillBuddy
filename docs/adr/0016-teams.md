@@ -15,7 +15,8 @@ author of each is one flag (`from_a`). Hackathons and projects need more than tw
 The owner set the scope on 2026-10-10:
 
 1. Add **teams**: groups made for a hackathon, a project or any other purpose.
-2. **Pair spaces stay** as they are; teams are a second feature beside them.
+2. **Pair spaces stay** as they are; teams are a second feature beside them. (Replaced by
+   [ADR 0018](0018-pair-spaces-are-teams.md): teams became the pair spaces.)
 3. A team holds **up to 6 people**.
 4. A team has what a pair space has (shared goals, skills to grow, progress notes) **plus a
    team chat**.

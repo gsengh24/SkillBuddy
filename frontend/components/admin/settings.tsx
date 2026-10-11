@@ -18,8 +18,7 @@ const FEATURES: Record<string, { label: string; hint: string }> = {
     label: "AI matching",
     hint: "Use AI to suggest matches. Off: the rule-based matcher is used instead",
   },
-  pair_spaces: { label: "Pair spaces", hint: "Shared goal spaces for two people" },
-  teams: { label: "Teams", hint: "Groups of up to six. Off until reporting for teams is ready" },
+  teams: { label: "Pair spaces", hint: "Groups of up to six, with a chat and shared goals" },
   email_notifications: {
     label: "Email notifications",
     hint: "Intro emails. Sign-in codes are always sent",

@@ -1,6 +1,5 @@
 import { Conversation } from "@/components/chat/conversation";
 import { Avatar } from "@/components/ds/avatar";
-import { ButtonLink } from "@/components/ds/button";
 import { MoreMenu } from "@/components/ds/more-menu";
 import { BlockButton } from "@/components/safety/block-button";
 import { ReportButton } from "@/components/safety/report-button";
@@ -43,16 +42,8 @@ export function ChatDetail({
         />
         <div className="min-w-0 flex-1">
           <h2 className="text-[16px] leading-[1.3] font-semibold break-words">{name}</h2>
-          <p className="text-muted text-[12.5px]">Connected · pair space open</p>
+          <p className="text-muted text-[12.5px]">Connected</p>
         </div>
-        <ButtonLink
-          href={`/spaces/${connection.id}`}
-          variant="outline"
-          size="compact"
-          className="rounded-[10px]"
-        >
-          Pair space
-        </ButtonLink>
         <MoreMenu label={`More actions for ${name}`}>
           <ReportButton
             kind="profile"

@@ -179,7 +179,7 @@ def retention_rules(settings: Settings) -> list[tuple[str, str]]:
         ("Chat messages", f"{s.message_retention_days} days after sending"),
         ("Match requests and matches", f"{s.match_request_retention_days} days"),
         ("Notifications", f"{s.notification_retention_days} days"),
-        ("Pair spaces", f"{s.space_retention_days} days after the connection ends"),
+        ("Pair spaces", f"Notes: {s.space_retention_days} days after writing"),
         ("Reports and decided appeals", f"{s.report_retention_days} days after the decision"),
         ("Moderator actions", f"{s.moderation_log_retention_days} days"),
         ("Content flags", "Decided: 90 days after the decision; open: 180 days"),
