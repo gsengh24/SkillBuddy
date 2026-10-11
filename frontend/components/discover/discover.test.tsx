@@ -118,6 +118,26 @@ describe("RequestCard", () => {
     expect(screen.getByText("1 match ready.")).toBeInTheDocument();
   });
 
+  it("shows the matches the page already loaded, without asking the API again", () => {
+    render(<RequestCard initial={{ ...REQUEST, status: "ready" }} initialMatches={[MATCH]} />);
+    expect(screen.getByText("Final-year design student.")).toBeInTheDocument();
+    expect(screen.getByText("1 match ready.")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("does not trust loaded matches while pending: it fetches them once the request is ready", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fetchMock
+      .mockResolvedValueOnce(json(200, { ...REQUEST, status: "ready", match_count: 1 }))
+      .mockResolvedValueOnce(json(200, { items: [MATCH] }));
+    render(<RequestCard initial={REQUEST} initialMatches={[]} />);
+
+    expect(screen.getByText("Finding people for this…")).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(3100));
+    expect(await screen.findByText("Final-year design student.")).toBeInTheDocument();
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(`/api/v1/requests/${REQUEST.id}/matches`);
+  });
+
   it("is headed by the matcher's wording, not the person's", async () => {
     fetchMock.mockResolvedValueOnce(json(200, { items: [] }));
     render(

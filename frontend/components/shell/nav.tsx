@@ -18,7 +18,7 @@ export function AppHeader({ actions }: { actions: ReactNode }) {
   const current = currentPlace(usePathname());
   return (
     <header className="max-w-content mx-auto flex w-full items-center justify-between gap-4 px-4 pt-[calc(14px+env(safe-area-inset-top))] pb-3.5">
-      <Link href="/home" className="rounded-control">
+      <Link href="/home" prefetch={false} className="rounded-control">
         <Logo />
       </Link>
       <nav
@@ -31,6 +31,7 @@ export function AppHeader({ actions }: { actions: ReactNode }) {
             <Link
               key={href}
               href={href}
+              prefetch={false}
               aria-current={isCurrent ? "page" : undefined}
               className={cx(
                 "rounded-full px-[18px] py-2 text-[14px] font-medium",

@@ -36,6 +36,7 @@ function BellLink({ hasNotifications }: { hasNotifications: boolean }) {
   return (
     <Link
       href="/notifications"
+      prefetch={false}
       aria-label={hasNotifications ? "Notifications (new)" : "Notifications"}
       className={ICON_LINK}
     >
@@ -66,6 +67,7 @@ export function AppShell({ user, children, rightRail, hasNotifications = false }
             <BellLink hasNotifications={hasNotifications} />
             <Link
               href="/you#s-security"
+              prefetch={false}
               aria-label="Your account"
               title={user.email}
               className="inline-flex size-11 items-center justify-center rounded-full"
