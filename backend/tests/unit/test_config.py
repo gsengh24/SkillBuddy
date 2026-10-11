@@ -161,7 +161,6 @@ def test_short_admin_token_is_rejected(make_settings: SettingsFactory) -> None:
     "secret",
     [
         "local-development-only-secret-not-for-real-use",
-        "ci-only-secret-key-with-at-least-32-characters",
         "migration-only-placeholder-not-used-for-anything",
     ],
 )

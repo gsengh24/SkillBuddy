@@ -48,12 +48,12 @@ MIN_REASON_CHARS: Final = 10
 # echoing obfuscated contact details ("g m a i l dot com") or the candidate aliases, so the
 # output is checked as well as the input (OWASP A03/A04); anything odd falls back to the
 # template.
-_ALIAS_IN_REASON: Final = re.compile(r"C\d{1,2}")
+_ALIAS_IN_REASON: Final = re.compile(r"\bC\d{1,2}\b")
 _CONTACT_HINT: Final = re.compile(
-    r"(?:dm|pm|text|call|ping|add|message|contact)\s+(?:me|us|him|her|them)"
-    r"|(?:whats\s?app|telegram|discord|signal|snapchat|instagram|gmail|hotmail|outlook|"
-    r"yahoo|linktree)"
-    r"|\w+\s+(?:dot|at)\s+(?:com|net|org|io|me|co)|t\.me",
+    r"\b(?:dm|pm|text|call|ping|add|message|contact)\s+(?:me|us|him|her|them)\b"
+    r"|\b(?:whats\s?app|telegram|discord|signal|snapchat|instagram|gmail|hotmail|outlook|"
+    r"yahoo|linktree)\b"
+    r"|\b\w+\s+(?:dot|at)\s+(?:com|net|org|io|me|co)\b|\bt\.me\b",
     re.IGNORECASE,
 )
 

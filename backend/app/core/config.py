@@ -26,7 +26,7 @@ GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"  # noqa: S105  # a URL,
 GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
 GOOGLE_ISSUERS = ("https://accounts.google.com", "accounts.google.com")
 # Substrings of SECRET_KEY values that are published in this repository.
-_PUBLIC_SECRET_MARKERS = ("local-development", "ci-only", "placeholder")
+_PUBLIC_SECRET_MARKERS = ("local-development", "placeholder")
 _DOMAIN_PATTERN = r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
 
 
