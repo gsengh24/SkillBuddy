@@ -55,7 +55,14 @@ test("ask for matches from Discover and see the request finish", async ({ page, 
   await expect(
     page.getByText("“A designer to build a small budgeting app with, on weekends.”"),
   ).toBeVisible();
-  await expect(page.getByText(/matches? ready\.|Nobody fits yet/).first()).toBeVisible({
+  // Inside the opened item: the inbox row repeats the words, and on a phone it is hidden
+  // while an item is open.
+  await expect(
+    page
+      .getByRole("region", { name: "Opened item" })
+      .getByText(/matches? ready\.|Nobody fits yet/)
+      .first(),
+  ).toBeVisible({
     timeout: 120_000,
   });
   await expectNoViolations(page);
