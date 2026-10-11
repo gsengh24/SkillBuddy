@@ -2,9 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ButtonLink } from "@/components/ds/button";
+import { Tilt } from "@/components/ds/tilt";
 import { cx } from "@/components/ui/cx";
 
-/** Three bordered cells: a mono label over a large numeral. Counts come from data already loaded. */
+/** Three bordered cards, each tilting on its own: a mono label over a large numeral. Counts come from data already loaded. */
 export function SummaryStrip({
   counts,
   className,
@@ -18,12 +19,12 @@ export function SummaryStrip({
     { label: "Connections", value: counts.connections, hint: "connections" },
   ];
   return (
-    <dl
-      aria-label="Summary"
-      className={cx("border-line grid grid-cols-3 gap-2 rounded-[14px] border p-[18px]", className)}
-    >
+    <dl aria-label="Summary" className={cx("grid grid-cols-3 gap-2", className)}>
       {cells.map((cell) => (
-        <div key={cell.label} className="grid gap-1.5">
+        <Tilt
+          key={cell.label}
+          className="border-line grid content-start gap-1.5 rounded-[14px] border p-[18px]"
+        >
           <dt className="text-muted font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase">
             {cell.label}
             <span className="sr-only"> ({cell.hint})</span>
@@ -31,7 +32,7 @@ export function SummaryStrip({
           <dd className="font-display text-[34px] leading-none font-extrabold tracking-[-0.04em] tabular-nums">
             {cell.value}
           </dd>
-        </div>
+        </Tilt>
       ))}
     </dl>
   );
@@ -40,7 +41,9 @@ export function SummaryStrip({
 /** The green band under the composer: from a connection to a shared goal. */
 export function SpacesBand({ className }: { className?: string }) {
   return (
-    <div
+    <Tilt
+      maxTilt={4}
+      scale={1.03}
       className={cx(
         "bg-green relative flex items-stretch gap-3.5 overflow-hidden rounded-[14px] p-[18px]",
         className,
@@ -48,7 +51,7 @@ export function SpacesBand({ className }: { className?: string }) {
     >
       <div className="flex flex-col justify-between gap-3.5">
         <h2 className="font-display text-bg max-w-[18ch] text-[19px] leading-[1.15] font-bold tracking-[-0.02em]">
-          Turn a connection <span className="text-mint-text">into a shared goal.</span>
+          Turn a connection <span className="text-on-green-2">into a shared goal.</span>
         </h2>
         <ButtonLink
           href="/teams"
@@ -65,9 +68,9 @@ export function SpacesBand({ className }: { className?: string }) {
         width={170}
         height={170}
         unoptimized
-        className="ml-auto aspect-square w-[42%] max-w-[170px] self-center rounded-[10px] object-cover"
+        className="tilt-shift ml-auto aspect-square w-[42%] max-w-[170px] self-center rounded-[10px] object-cover"
       />
-    </div>
+    </Tilt>
   );
 }
 
