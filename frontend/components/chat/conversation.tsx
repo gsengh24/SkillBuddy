@@ -208,8 +208,8 @@ export function Conversation({
               >
                 <p
                   className={cx(
-                    "rounded-panel max-w-[85%] px-3.5 py-2.5 break-words whitespace-pre-wrap lg:max-w-[70%]",
-                    mine ? "bg-ink text-bg" : "border-line bg-panel text-ink border",
+                    "max-w-[85%] rounded-[14px] px-3.5 py-2.5 text-[15px] break-words whitespace-pre-wrap lg:max-w-[78%]",
+                    mine ? "bg-ink text-bg rounded-br-[4px]" : "bg-panel text-ink rounded-bl-[4px]",
                   )}
                 >
                   <span className="sr-only">{mine ? "You: " : `${otherName}: `}</span>
@@ -219,7 +219,7 @@ export function Conversation({
                   <time
                     dateTime={message.created_at}
                     suppressHydrationWarning
-                    className="text-meta text-muted"
+                    className="text-muted font-mono text-[10.5px]"
                   >
                     {new Date(message.created_at).toLocaleString(undefined, {
                       dateStyle: "medium",

@@ -1,4 +1,5 @@
-import { Panel, TopicChip, WhyPanel } from "@/components/ds/surfaces";
+import { YouIcon } from "@/components/ds/icons";
+import { TopicChip, WhyPanel } from "@/components/ds/surfaces";
 import { ReportButton } from "@/components/safety/report-button";
 import { SendIntro } from "@/components/social/send-intro";
 import { InviteMatchToTeam } from "@/components/teams/find-teammate";
@@ -10,8 +11,10 @@ function PersonDot() {
   return (
     <span
       aria-hidden="true"
-      className="bg-green-tint border-green-line inline-flex size-[34px] shrink-0 rounded-full border"
-    />
+      className="bg-panel text-muted border-muted-2 inline-flex size-[42px] shrink-0 items-center justify-center rounded-full border border-dashed"
+    >
+      <YouIcon className="size-[18px]" />
+    </span>
   );
 }
 
@@ -43,16 +46,18 @@ export function MatchCard({ match, teamId }: { match: Match; teamId?: string | n
   const { candidate } = match;
   const view = presentMatch(candidate);
   return (
-    <Panel interactive className="flex flex-col gap-4">
+    <article className="border-line bg-bg hover:border-green-line flex flex-col gap-3 rounded-[14px] border p-[18px] transition-colors">
       <div className="flex items-start gap-3">
         <PersonDot />
         <div className="flex min-w-0 flex-col gap-0.5">
           <p className="text-mono-lg text-muted font-mono uppercase">Match {match.rank}</p>
-          <h4 className="text-title lg:text-title-lg text-ink">{view.title}</h4>
+          <h3 className="text-title lg:text-title-lg text-ink">{view.title}</h3>
           {view.meta ? <p className="text-meta-lg text-muted">{view.meta}</p> : null}
         </div>
       </div>
-      <WhyPanel title="Why this match">{match.reason}</WhyPanel>
+      <WhyPanel title="Why this match" className="bg-green-soft rounded-xl px-3.5 py-3">
+        {match.reason}
+      </WhyPanel>
       {view.summary ? <p className="text-ink-2">{view.summary}</p> : null}
       <Tags label="Can help with" items={view.offers} />
       <Tags label="Interested in" items={view.interests} tone="soft" />
@@ -62,6 +67,6 @@ export function MatchCard({ match, teamId }: { match: Match; teamId?: string | n
         <SendIntro match={match} />
       )}
       <ReportButton kind="profile" targetId={candidate.user_id} compact />
-    </Panel>
+    </article>
   );
 }

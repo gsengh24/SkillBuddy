@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import Image from "next/image";
+import { useEffect, useId, useState, type ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
-import { IntentChip } from "@/components/ui/intent-chip";
+import { Button } from "@/components/ds/button";
 import { browserApi } from "@/lib/api/browser";
 import {
   matchListSchema,
@@ -12,6 +12,7 @@ import {
   type MatchRequest,
 } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
+import { intents } from "@/lib/design/tokens";
 
 import { MatchCard } from "./match-card";
 
@@ -78,28 +79,39 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
 
   const intent = request.intent ?? request.requested_intent;
   const open = request.status === "pending" || request.status === "ready";
+  const nobody = !pending && matches !== null && matches.length === 0;
 
   return (
-    <section aria-labelledby={`${ids}-h`} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {intent ? <IntentChip intent={intent} /> : null}
-          {!open ? (
-            <span className="text-small text-muted">
-              {request.status === "closed" ? "Closed" : "Expired"}
-            </span>
-          ) : null}
-        </div>
-        <h3 id={`${ids}-h`} className="text-title lg:text-title-lg text-ink">
-          {request.title?.trim() || "Your request"}
-        </h3>
-        {/* Their own words stay, but small: the heading is the platform's. */}
-        <p className="text-meta-lg text-muted">
-          You asked: <span>“{request.text}”</span>
+    <section aria-labelledby={`${ids}-h`} className="flex flex-col">
+      <p className="text-green font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase">
+        Your request
+        {!open ? (
+          <>
+            {" · "}
+            <span>{request.status === "closed" ? "Closed" : "Expired"}</span>
+          </>
+        ) : null}
+      </p>
+      <h2
+        id={`${ids}-h`}
+        className="font-display mt-1.5 mb-1 text-[26px] leading-[1.05] font-extrabold tracking-[-0.03em] text-balance lg:text-[30px]"
+      >
+        {request.title?.trim() || "Your request"}
+      </h2>
+      {/* Their own words stay, but small: the heading is the platform's. */}
+      <p className="text-meta-lg text-muted mb-3">
+        You asked: <span>“{request.text}”</span>
+      </p>
+      {intent ? (
+        <p className="mb-[22px]">
+          <span className="bg-green-tint text-green inline-flex items-center gap-1.5 rounded-full px-2.5 py-[5px] text-[12.5px] font-medium">
+            <span aria-hidden className="bg-green size-1.5 rounded-full" />
+            {intents[intent].label}
+          </span>
         </p>
-      </div>
+      ) : null}
 
-      <p role="status" aria-live="polite" className={pending ? "text-muted" : "sr-only"}>
+      <p role="status" aria-live="polite" className="sr-only">
         {pending && !gaveUp ? "Finding people for this…" : null}
         {gaveUp ? "This is taking longer than usual. Check back in a few minutes." : null}
         {!pending && matches !== null
@@ -108,32 +120,106 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
       </p>
 
       {error ? (
-        <p role="alert" className="text-small text-coral-ink font-semibold">
+        <p role="alert" className="text-small text-coral-ink mb-3 font-semibold">
           {error}
         </p>
       ) : null}
 
-      {!pending && matches !== null && matches.length === 0 ? (
-        <p className="text-muted">
-          Nobody fits yet. We keep looking as people join, so check back soon.
-        </p>
+      {pending ? (
+        <StateBlock
+          image="/home/home_finding.jpg"
+          alt="A ring of light around a few spheres picked out from a wider field."
+          label="Finding matches"
+          title={gaveUp ? "This is taking longer than usual." : "We're reading through people now."}
+          scanning={!gaveUp}
+        >
+          {gaveUp
+            ? "Check back in a few minutes. We'll tell you when your matches are ready."
+            : "This usually takes a minute or two. We'll tell you when your matches are ready, with a reason for each one."}
+        </StateBlock>
+      ) : null}
+
+      {nobody ? (
+        <StateBlock
+          image="/home/home_nobody_fits.jpg"
+          alt="One green sphere on a pedestal beside three empty pedestals."
+          label="No matches"
+          title="Nobody fits yet."
+        >
+          We&apos;d rather show you no one than the wrong people. We keep looking as people join, so
+          check back soon, or try saying more about what you want to talk about.
+        </StateBlock>
       ) : null}
 
       {matches && matches.length ? (
-        <ul className="grid gap-4 md:grid-cols-2">
-          {matches.map((match) => (
-            <li key={match.id}>
-              <MatchCard match={match} teamId={request.team_id} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="text-ink-2 mb-[22px]">
+            {matches.length} {matches.length === 1 ? "person" : "people"}, each with a reason.
+            You&apos;ll see their name only if they accept your intro.
+          </p>
+          <ul className="grid gap-3">
+            {matches.map((match) => (
+              <li key={match.id}>
+                <MatchCard match={match} />
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
 
       {open ? (
-        <Button type="button" onClick={close} disabled={closing} className="self-start">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={close}
+          disabled={closing}
+          className="border-line-strong mt-5 self-start rounded-[10px] border"
+        >
           {closing ? "Closing…" : "Close this request"}
         </Button>
       ) : null}
     </section>
+  );
+}
+
+/** A dashed panel for a request that is still being matched, or has no matches. */
+function StateBlock({
+  image,
+  alt,
+  label,
+  title,
+  scanning = false,
+  children,
+}: {
+  image: string;
+  alt: string;
+  label: string;
+  title: string;
+  scanning?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className="border-line-strong grid justify-items-start gap-3 rounded-[14px] border border-dashed px-[22px] py-7">
+      <Image
+        src={image}
+        alt={alt}
+        width={360}
+        height={270}
+        unoptimized
+        className="aspect-[4/3] h-auto w-full max-w-[360px] rounded-xl object-cover"
+      />
+      <span className="text-green font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase">
+        {label}
+      </span>
+      <h3 className="font-display text-[24px] leading-[1.1] font-extrabold tracking-[-0.03em]">
+        {title}
+      </h3>
+      <p className="text-ink-2 max-w-[52ch]">{children}</p>
+      {scanning ? (
+        <div aria-hidden className="bg-line h-[3px] w-full overflow-hidden rounded-[3px]">
+          <i className="bg-green animate-scan block h-full w-2/5 rounded-[3px]" />
+        </div>
+      ) : null}
+    </div>
   );
 }

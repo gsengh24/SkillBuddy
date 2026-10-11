@@ -1,3 +1,4 @@
+import { intents } from "@/lib/design/tokens";
 import type { Connection, Intro, MatchRequest } from "@/lib/api/schemas";
 
 /**
@@ -22,6 +23,16 @@ export type ActivityRow = {
   /** Short relative time: "2m", "1h", "Yesterday", "3 Oct". */
   time: string;
   unread: boolean;
+  /** The small caps line over the title: "Request · Build together", "Intro", "Message". */
+  kind: string;
+  /** Intros waiting for an answer: the kind line says "Needs a reply" in amber. */
+  needsReply: boolean;
+  /** A request whose matches are ready: the second line is green. */
+  ready: boolean;
+  /** Under Requests: your own requests, or the intros you were sent. */
+  sub: "mine" | "intros" | null;
+  /** Latest activity within the last 24 hours (the inbox groups "Today" and "Earlier"). */
+  today: boolean;
   /** Messages only: who it's with (for the avatar). */
   person?: { userId: string; name: string; photoUrl?: string | null };
 };
@@ -62,6 +73,15 @@ function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`;
 }
 
+function isToday(iso: string, now: Date): boolean {
+  return now.getTime() - new Date(iso).getTime() < DAY;
+}
+
+function requestKind(request: MatchRequest): string {
+  const intent = request.intent ?? request.requested_intent;
+  return intent ? `Request · ${intents[intent].label}` : "Request";
+}
+
 function requestLine(request: MatchRequest): string {
   switch (request.status) {
     case "pending":
@@ -98,6 +118,11 @@ export function buildActivity(
       at,
       time: relativeTime(at, now),
       unread: false,
+      kind: requestKind(request),
+      needsReply: false,
+      ready: request.status === "ready" && request.match_count > 0,
+      sub: "mine",
+      today: isToday(at, now),
     });
   }
   for (const intro of intros) {
@@ -112,6 +137,11 @@ export function buildActivity(
       at: intro.created_at,
       time: relativeTime(intro.created_at, now),
       unread: false,
+      kind: "Intro",
+      needsReply: true,
+      ready: false,
+      sub: "intros",
+      today: isToday(intro.created_at, now),
     });
   }
   for (const connection of connections) {
@@ -128,6 +158,11 @@ export function buildActivity(
       at,
       time: relativeTime(at, now),
       unread: unread > 0,
+      kind: "Message",
+      needsReply: false,
+      ready: false,
+      sub: null,
+      today: isToday(at, now),
       person: { userId: connection.person.user_id, name, photoUrl: connection.person.photo_url },
     });
   }

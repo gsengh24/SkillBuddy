@@ -70,9 +70,10 @@ export function SendIntro({
       <Button
         ref={openRef}
         type="button"
-        variant="outline"
+        variant="primary"
+        size="compact"
         onClick={() => setStage("writing")}
-        className="self-start"
+        className="self-start rounded-[10px] font-semibold"
       >
         Send intro
       </Button>

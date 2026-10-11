@@ -26,6 +26,13 @@
   --mint: #7be0a8;
   --mint-text: #9fd1b6;
   --danger: #b3261e;
+  --pane: #0f100f;
+  --pane-2: #1a1c1a;
+  --pane-line: #262826;
+  --on-dark: #f3f4f1;
+  --on-dark-2: #a9ada7;
+  --on-dark-3: #8a8e88;
+  --amber: #e8a06f;
 }
 
 @theme inline {
@@ -50,6 +57,13 @@
   --color-mint: var(--mint);
   --color-mint-text: var(--mint-text);
   --color-danger: var(--danger);
+  --color-pane: var(--pane);
+  --color-pane-2: var(--pane-2);
+  --color-pane-line: var(--pane-line);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-2: var(--on-dark-2);
+  --color-on-dark-3: var(--on-dark-3);
+  --color-amber: var(--amber);
 
   /* Older names, used by components/ui until each screen is restyled. */
   --color-ground: var(--bg);
@@ -181,6 +195,7 @@
 
   /* Motion (ADR 0014): transform and opacity only, off for reduced motion. */
   --animate-fade-up: fade-up 450ms ease both;
+  --animate-scan: scan 1.4s cubic-bezier(0.2, 0.7, 0.1, 1) infinite;
   --animate-pulse-soft: pulse-soft 1.6s ease-in-out infinite;
 
   @keyframes fade-up {
@@ -191,6 +206,15 @@
     to {
       opacity: 1;
       transform: none;
+    }
+  }
+
+  @keyframes scan {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
     }
   }
 

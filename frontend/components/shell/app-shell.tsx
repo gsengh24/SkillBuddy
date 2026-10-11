@@ -4,11 +4,10 @@ import type { ReactNode } from "react";
 import { Avatar } from "@/components/ds/avatar";
 import { BottomNav } from "@/components/ds/bottom-nav";
 import { BellIcon, HomeIcon, PeopleIcon, YouIcon } from "@/components/ds/icons";
-import { Logo } from "@/components/ds/logo";
 import { cx } from "@/components/ui/cx";
 
 import { APP_LINKS, DOT, ICON_LINK } from "./links";
-import { AppTopBar } from "./nav";
+import { AppHeader } from "./nav";
 
 export type ShellUser = { id: string; email: string };
 
@@ -18,7 +17,10 @@ type AppShellProps = {
   /** Optional 284px right rail, shown from 1280px up. */
   rightRail?: ReactNode;
   hasNotifications?: boolean;
-  /** Profile completeness, 0 to 100; null when the user has no profile yet. */
+  /**
+   * Profile completeness, 0 to 100; null before there is a profile. The Home header design
+   * has no progress meter, so the shell no longer shows it (the You page still does).
+   */
   profileComplete?: number | null;
 };
 
@@ -43,43 +45,12 @@ function BellLink({ hasNotifications }: { hasNotifications: boolean }) {
   );
 }
 
-/** How complete the profile is, linking to it (or to onboarding before there is one). */
-function ProfileProgress({ value }: { value: number | null }) {
-  return (
-    <Link
-      href={value === null ? "/onboarding" : "/you"}
-      className="rounded-control text-meta-lg text-ink hover:bg-panel flex min-h-11 items-center gap-2 px-2"
-    >
-      <span>Your profile</span>
-      <span
-        role="meter"
-        aria-label="Profile complete"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={value ?? 0}
-        className="bg-green-tint border-green-line h-1.5 w-12 overflow-hidden rounded-full border"
-      >
-        <span className="bg-green block h-full" style={{ width: `${value ?? 0}%` }} />
-      </span>
-      <span className="text-muted font-mono text-[11px]">
-        {value === null ? "Not started" : `${value}%`}
-      </span>
-    </Link>
-  );
-}
-
 /**
- * The signed-in app frame (ADR 0014). Desktop (1024px+): the top bar with Home, Spaces
- * and You, plus profile progress, the bell and the account. Phone: a slim top row
- * (logo, bell) and the bottom nav with the same three places. Chats count as Home.
+ * The signed-in app frame (ADR 0014, Home reference). One header: logo, the Home / Spaces /
+ * You pill switcher from 1024px up, the bell and the account. Phones get the bottom nav
+ * with the same three places. Chats count as Home.
  */
-export function AppShell({
-  user,
-  children,
-  rightRail,
-  hasNotifications = false,
-  profileComplete = null,
-}: AppShellProps) {
+export function AppShell({ user, children, rightRail, hasNotifications = false }: AppShellProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -89,31 +60,26 @@ export function AppShell({
         Skip to content
       </a>
 
-      <div className="max-w-content mx-auto hidden w-full px-8 lg:block">
-        <AppTopBar
-          actions={
-            <>
-              <ProfileProgress value={profileComplete} />
-              <BellLink hasNotifications={hasNotifications} />
-              <Link
-                href="/you#s-security"
-                aria-label="Your account"
-                title={user.email}
-                className="inline-flex size-11 items-center justify-center rounded-full"
-              >
-                <Avatar userId={user.id} name={user.email} decorative />
-              </Link>
-            </>
-          }
-        />
-      </div>
-
-      <header className="border-line flex h-14 items-center justify-between gap-3 border-b px-4 lg:hidden">
-        <Link href="/home" className="rounded-control inline-flex min-h-11 items-center">
-          <Logo />
-        </Link>
-        <BellLink hasNotifications={hasNotifications} />
-      </header>
+      <AppHeader
+        actions={
+          <>
+            <BellLink hasNotifications={hasNotifications} />
+            <Link
+              href="/you#s-security"
+              aria-label="Your account"
+              title={user.email}
+              className="inline-flex size-11 items-center justify-center rounded-full"
+            >
+              <Avatar
+                userId={user.id}
+                name={user.email}
+                decorative
+                className="size-11! text-[15px]"
+              />
+            </Link>
+          </>
+        }
+      />
 
       <div
         className={cx(

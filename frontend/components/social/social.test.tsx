@@ -104,7 +104,7 @@ describe("SendIntro", () => {
 describe("IntroCard", () => {
   it("shows the request, reason and note without a name", () => {
     render(<IntroCard initial={INTRO} />);
-    expect(screen.getByRole("heading", { name: "Someone wants to meet you" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Someone wants to meet you." })).toBeInTheDocument();
     expect(screen.getByText(/A designer for my budgeting app/)).toBeInTheDocument();
     expect(screen.getByText(INTRO.reason)).toBeInTheDocument();
     expect(screen.getByText(INTRO.note)).toBeInTheDocument();
@@ -126,7 +126,7 @@ describe("IntroCard", () => {
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(JSON.parse(init.body as string)).toEqual({ accept: true });
     expect(
-      await screen.findByRole("heading", { name: "Asha wants to meet you" }),
+      await screen.findByRole("heading", { name: "Asha wants to meet you." }),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "https://github.com/asha" })).toBeInTheDocument();
   });

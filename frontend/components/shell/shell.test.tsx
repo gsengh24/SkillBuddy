@@ -73,7 +73,7 @@ describe("AppShell", () => {
   it("gives icon-only and touch controls labels and 44px targets", () => {
     renderShell({ hasNotifications: true });
     const bells = screen.getAllByRole("link", { name: "Notifications (new)" });
-    expect(bells).toHaveLength(2); // phone top row and desktop
+    expect(bells).toHaveLength(1);
     for (const bell of bells) {
       expect(bell).toHaveAttribute("href", "/notifications");
       expect(bell.className).toMatch(/\bsize-11\b/);
@@ -100,25 +100,11 @@ describe("AppShell", () => {
     expect(order).toEqual(PLACES);
   });
 
-  it("shows profile progress and the account link", () => {
-    renderShell({ profileComplete: 78 });
-    expect(screen.getByRole("meter", { name: "Profile complete" })).toHaveAttribute(
-      "aria-valuenow",
-      "78",
-    );
-    expect(screen.getByRole("link", { name: /Your profile/ })).toHaveAttribute("href", "/you");
+  it("has an account link with the email as its title", () => {
+    renderShell();
     const account = screen.getByRole("link", { name: "Your account" });
     expect(account).toHaveAttribute("href", "/you#s-security");
     expect(account).toHaveAttribute("title", USER.email);
-  });
-
-  it("sends people without a profile to onboarding", () => {
-    renderShell({ profileComplete: null });
-    expect(screen.getByRole("link", { name: /Your profile/ })).toHaveAttribute(
-      "href",
-      "/onboarding",
-    );
-    expect(screen.getByText("Not started")).toBeInTheDocument();
   });
 
   it("shows the right rail only when given one", () => {

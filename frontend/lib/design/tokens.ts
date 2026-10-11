@@ -50,6 +50,16 @@ export const colors = {
   mintText: "#9FD1B6",
   /** Errors, report and block confirmations. */
   danger: "#B3261E",
+  /** The inbox pane on Home: ink in every theme, like the landing page's dark sections. */
+  pane: "#0F100F",
+  pane2: "#1A1C1A",
+  paneLine: "#262826",
+  /** Text on the pane: primary, secondary, tertiary (all 4.5:1 or better on `pane`). */
+  onDark: "#F3F4F1",
+  onDark2: "#A9ADA7",
+  onDark3: "#8A8E88",
+  /** "Needs a reply" on the pane. Text on `pane` only. */
+  amber: "#E8A06F",
 } as const;
 
 export type ColorName = keyof typeof colors;

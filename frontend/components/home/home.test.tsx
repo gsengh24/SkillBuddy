@@ -47,15 +47,17 @@ describe("ActivityList", () => {
     requests.focus();
     await user.keyboard("{Enter}");
     expect(requests).toHaveAttribute("aria-pressed", "true");
-    expect(listItems()).toEqual(["/home?item=request-req-1", "/home?item=intro-intro-1"]);
+    // Requests splits into your requests and the intros you were sent.
+    expect(listItems()).toEqual(["/home?item=request-req-1"]);
+    await user.click(screen.getByRole("button", { name: "Intros 1" }));
+    expect(listItems()).toEqual(["/home?item=intro-intro-1"]);
+    await user.click(screen.getByRole("button", { name: "Your requests 1" }));
+    expect(listItems()).toEqual(["/home?item=request-req-1"]);
 
-    await user.tab();
-    const messages = screen.getByRole("button", { name: "Messages 1" });
-    expect(messages).toHaveFocus();
-    await user.keyboard(" ");
+    await user.click(screen.getByRole("button", { name: "Messages 1" }));
     expect(listItems()).toEqual(["/home?item=chat-conn-1"]);
 
-    await user.click(screen.getByRole("button", { name: "All" }));
+    await user.click(screen.getByRole("button", { name: "All 3" }));
     expect(listItems()).toHaveLength(3);
   });
 
@@ -80,7 +82,7 @@ describe("ActivityList", () => {
 
   it("says why the list is empty, with the old Messages wording for chats", () => {
     render(<ActivityList rows={[]} initialFilter="messages" selectedKey={null} />);
-    expect(screen.getByText(/No connections yet/)).toBeInTheDocument();
+    expect(screen.getByText(/No chats yet/)).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 });
@@ -112,7 +114,7 @@ describe("HomeComposer", () => {
       "Explore",
     ]);
     await user.keyboard("learn React");
-    expect(screen.getByText("11/1000")).toBeInTheDocument();
+    expect(screen.getByText("11 / 1000")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "learn React" })).not.toBeInTheDocument();
   });
 

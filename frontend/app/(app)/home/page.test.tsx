@@ -116,10 +116,7 @@ describe("Home", () => {
       "href",
       "/home#new-request",
     );
-    expect(within(pane).getByRole("link", { name: /Back to Home/ })).toHaveAttribute(
-      "href",
-      "/home",
-    );
+    expect(within(pane).getByRole("link", { name: /Inbox/ })).toHaveAttribute("href", "/home");
   });
 
   it("opens an intro from ?item, with accept, decline, block and report", async () => {
@@ -173,7 +170,7 @@ describe("Home", () => {
     });
     await renderHome();
     expect(
-      screen.getByText("No requests yet. Describe what you're building and we'll find people."),
+      screen.getByText("Describe what you're building and we'll find people."),
     ).toBeInTheDocument();
     expect(screen.getByRole("form", { name: "New request" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open pair spaces" })).not.toBeInTheDocument();
