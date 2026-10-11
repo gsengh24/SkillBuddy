@@ -13,37 +13,37 @@
 
 export const colors = {
   /** Page background. */
-  bg: "#FFFFFF",
+  bg: "#0B0C0B",
   /** Cards, composer, inactive segments. */
-  panel: "#F6F7F5",
+  panel: "#141614",
   /** Hairline borders and dividers (decorative: never the only edge of a control). */
-  line: "#E4E6E2",
+  line: "#262826",
   /** Outer frames. */
-  lineStrong: "#D9DBD6",
+  lineStrong: "#323532",
   /** Primary text and the primary button. */
-  ink: "#0A0A0A",
+  ink: "#F3F4F1",
   /** The primary button's hover fill (from the reference HTML). */
-  inkHover: "#222222",
+  inkHover: "#FFFFFF",
   /** Body text. */
-  ink2: "#4A4F4A",
+  ink2: "#C9CCC6",
   /**
    * Muted text that must stay readable. The spec gives #6B6F6A, which is 4.44:1 on
    * green-tint; this is two steps darker so it passes 4.5:1 on every surface (ADR 0014).
    */
-  muted: "#696D68",
+  muted: "#A9ADA7",
   /** Second half of two-tone headlines (large bold text only), and field borders (3:1). */
-  muted2: "#8A8F89",
+  muted2: "#8A8E88",
   /** Decorative only, never text (2.1:1 on white). Numerals 01, 02, 03 use `muted`. */
-  faint: "#B0B4AE",
+  faint: "#4A4D49",
   /** The brand: links, outline buttons, eyebrows, the CTA band. */
-  green: "#0F4A34",
-  greenHover: "#0B3828",
+  green: "#7BE0A8",
+  greenHover: "#9FD1B6",
   /** Hero panel, soft badges. */
-  greenTint: "#E8F1EC",
+  greenTint: "#142219",
   /** Borders inside green-tint areas (decorative). */
-  greenLine: "#B9D3C5",
+  greenLine: "#2A4536",
   /** Chip fill on tint. */
-  greenSoft: "#F3F9F5",
+  greenSoft: "#101A14",
   /** Pixel-art fills and dots only. Never text. */
   mint: "#7BE0A8",
   /** Second line of a headline on the green CTA band. */
@@ -52,11 +52,11 @@ export const colors = {
    * Second half of a two-tone headline on a green band. Light: mint on the dark green. Dark
    * theme overrides it (see `darkBand`) because the band turns mint there.
    */
-  onGreen2: "#9FD1B6",
+  onGreen2: "#256040",
   /** Errors, report and block confirmations. */
-  danger: "#B3261E",
+  danger: "#FF8A80",
   /** The surface of cards and text boxes: white in light, a step above the page in dark. */
-  card: "#FFFFFF",
+  card: "#111311",
   /** The inbox pane on Home: ink in every theme, like the landing page's dark sections. */
   pane: "#0F100F",
   pane2: "#1A1C1A",
@@ -147,38 +147,38 @@ export const hues: Record<HueName, Hue> = {
   },
   amber: {
     base: "#D08A1E",
-    ink: "#6E4608",
-    tint: "#FDF3DC",
-    edge: "#EBD2A8",
-    track: "#F3DFB2",
+    ink: "#F0C377",
+    tint: "#2B2110",
+    edge: "#5A4420",
+    track: "#3F2F14",
   },
   coral: {
     base: "#E2573E",
-    ink: "#9A3B27",
-    tint: "#FCEAE4",
-    edge: "#F0BFB2",
-    track: "#F6D4CB",
+    ink: "#F4A08F",
+    tint: "#2D1814",
+    edge: "#5E2F26",
+    track: "#432019",
   },
   blue: {
     base: "#3F78B5",
-    ink: "#2A5683",
-    tint: "#E4EFF9",
-    edge: "#B5CCE0",
-    track: "#CCDCE8",
+    ink: "#9CC3EA",
+    tint: "#121F2C",
+    edge: "#2B4A68",
+    track: "#1F3448",
   },
   violet: {
     base: "#7B63C2",
-    ink: "#54428F",
-    tint: "#F0EBF9",
-    edge: "#D2C7EA",
-    track: "#DFD6F1",
+    ink: "#C5B6EE",
+    tint: "#1D1830",
+    edge: "#44386E",
+    track: "#2D2549",
   },
   teal: {
     base: "#1F8A8C",
-    ink: "#1B6466",
-    tint: "#DFF2F1",
-    edge: "#B5DCDA",
-    track: "#C8E5E3",
+    ink: "#7FD0D2",
+    tint: "#0F2625",
+    edge: "#24605F",
+    track: "#183B3A",
   },
 };
 
@@ -195,7 +195,7 @@ export const greenSurfaces = {
  * The filled notification badge. The coral base (#E2573E) gives only 3.6:1 under white
  * text, so the badge uses this darker coral (5.62:1).
  */
-export const badge = { fill: "#B83D28", text: colors.bg } as const;
+export const badge = { fill: "#FF8E7A", text: colors.bg } as const;
 
 /** Focus ring colour: the brand green, on every focusable element. */
 export const focusRing = colors.green;
