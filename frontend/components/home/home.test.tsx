@@ -1,9 +1,10 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { buildActivity } from "@/lib/home/activity";
+import { HOME_CHANGED, notifyChatRead } from "@/lib/home/changed";
 import { connection, intro, NOW, request } from "@/lib/home/fixtures";
 
 import { ActivityList } from "./activity-list";
@@ -49,6 +50,40 @@ describe("ActivityList", () => {
     screenIs(false);
     await userEvent.click(screen.getByRole("button", { name: /^Requests/ }));
     expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("clears a chat's unread dot when it is read, until the server sends new rows", () => {
+    screenIs(false);
+    const { rerender } = render(
+      <ActivityList rows={ROWS} initialFilter="all" selectedKey={null} />,
+    );
+    expect(screen.getByText("Unread messages")).toBeInTheDocument();
+
+    act(() => notifyChatRead("conn-1"));
+    expect(screen.queryByText("Unread messages")).not.toBeInTheDocument();
+    // Only that chat's dot: its row is still there.
+    expect(listItems()).toContain("/home?item=chat-conn-1");
+
+    // A read of some other chat changes nothing here.
+    act(() => notifyChatRead("conn-other"));
+    expect(screen.queryByText("Unread messages")).not.toBeInTheDocument();
+
+    // Fresh rows from the server (a new message came in) replace what was cleared locally.
+    rerender(
+      <ActivityList
+        rows={buildActivity(
+          {
+            requests: [request()],
+            intros: [intro()],
+            connections: [connection({ id: "conn-1", unread_messages: 1 })],
+          },
+          NOW,
+        )}
+        initialFilter="all"
+        selectedKey={null}
+      />,
+    );
+    expect(screen.getByText("Unread messages")).toBeInTheDocument();
   });
 
   it("filters All, Requests and Messages, from the keyboard too", async () => {
@@ -172,6 +207,33 @@ describe("HomeComposer", () => {
       body: { text: "A designer for a budgeting app", intent: null },
     });
     expect(router.push).toHaveBeenCalledWith("/home?item=request-new-1");
+  });
+
+  it("tells the inbox to re-fetch once the new request is opened, and not when sending fails", async () => {
+    const { browserApi } = await import("@/lib/api/browser");
+    const changed = vi.fn();
+    window.addEventListener(HOME_CHANGED, changed);
+    router.push.mockClear();
+    try {
+      vi.mocked(browserApi).mockRejectedValueOnce(new Error("503"));
+      render(<HomeComposer />);
+      const user = userEvent.setup();
+      await user.type(screen.getByLabelText("Describe it in your own words"), "A designer, please");
+      await user.click(screen.getByRole("button", { name: "Find matches" }));
+      expect(changed).not.toHaveBeenCalled();
+      expect(router.push).not.toHaveBeenCalled();
+
+      vi.mocked(browserApi).mockResolvedValueOnce(request({ id: "new-2", status: "pending" }));
+      await user.type(screen.getByLabelText("Describe it in your own words"), " for budgeting");
+      await user.click(screen.getByRole("button", { name: "Find matches" }));
+      expect(changed).toHaveBeenCalledTimes(1);
+      // Queued after the navigation, so the refreshed lists include the new request.
+      expect(router.push.mock.invocationCallOrder[0]).toBeLessThan(
+        changed.mock.invocationCallOrder[0] ?? 0,
+      );
+    } finally {
+      window.removeEventListener(HOME_CHANGED, changed);
+    }
   });
 });
 

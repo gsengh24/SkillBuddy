@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/api/client";
 import {
   connectionListSchema,
   introPageSchema,
+  introSchema,
   notificationPageSchema,
   unreadCountSchema,
 } from "@/lib/api/schemas";
@@ -22,6 +23,13 @@ export async function getReceivedIntros() {
 
 export async function getSentIntros() {
   return apiRequest("/api/v1/intros?box=sent&limit=30", introPageSchema, {
+    headers: await cookieHeader(),
+  });
+}
+
+/** One intro the signed-in user sent or received (404 if it is not theirs, or is hidden). */
+export async function getIntro(introId: string) {
+  return apiRequest(`/api/v1/intros/${encodeURIComponent(introId)}`, introSchema, {
     headers: await cookieHeader(),
   });
 }

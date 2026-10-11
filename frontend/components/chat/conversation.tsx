@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { delayAfterError, nextPollDelay } from "@/lib/chat/cadence";
+import { notifyChatRead } from "@/lib/home/changed";
 
 // The column's cap (MESSAGE_MAX_LENGTH); admins may set a lower limit (A6), which the API
 // also enforces.
@@ -82,11 +83,12 @@ export function Conversation({
   const listRef = useRef<HTMLOListElement>(null);
 
   const markRead = useCallback(() => {
-    browserApi(`/connections/${connectionId}/read`, noContentSchema, { method: "POST" }).catch(
-      () => {
+    browserApi(`/connections/${connectionId}/read`, noContentSchema, { method: "POST" })
+      // Home's inbox still shows the unread dot until told.
+      .then(() => notifyChatRead(connectionId))
+      .catch(() => {
         // Unread counts catch up on the next visit.
-      },
-    );
+      });
   }, [connectionId]);
 
   /** Add messages not seen yet; returns how many were new. */

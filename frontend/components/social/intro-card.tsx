@@ -13,6 +13,7 @@ import { browserApi } from "@/lib/api/browser";
 import { introSchema, type Intro } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { agoLabel } from "@/lib/home/activity";
+import { notifyHomeChanged } from "@/lib/home/changed";
 
 /**
  * An intro someone sent you: what they asked for, why you were matched, their note and
@@ -35,6 +36,7 @@ export function IntroCard({ initial }: { initial: Intro }) {
           body: { accept },
         }),
       );
+      notifyHomeChanged();
     } catch (caught) {
       setError(describeError(caught));
     } finally {

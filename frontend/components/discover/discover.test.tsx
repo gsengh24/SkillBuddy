@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Match, MatchRequest } from "@/lib/api/schemas";
+import { HOME_CHANGED } from "@/lib/home/changed";
 
 import { MatchCard } from "./match-card";
 import { RequestCard } from "./request-card";
@@ -136,6 +137,42 @@ describe("RequestCard", () => {
     await act(() => vi.advanceTimersByTimeAsync(3100));
     expect(await screen.findByText("Final-year design student.")).toBeInTheDocument();
     expect(fetchMock.mock.calls[1]?.[0]).toBe(`/api/v1/requests/${REQUEST.id}/matches`);
+  });
+
+  it("tells Home's inbox when its request turns ready, but not while it is still pending", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const changed = vi.fn();
+    window.addEventListener(HOME_CHANGED, changed);
+    try {
+      fetchMock
+        .mockResolvedValueOnce(json(200, REQUEST)) // first poll: still pending
+        .mockResolvedValueOnce(json(200, { ...REQUEST, status: "ready", match_count: 0 }))
+        .mockResolvedValueOnce(json(200, { items: [] }));
+      render(<RequestCard initial={REQUEST} />);
+      await act(() => vi.advanceTimersByTimeAsync(3100));
+      expect(changed).not.toHaveBeenCalled();
+      await act(() => vi.advanceTimersByTimeAsync(3100));
+      expect(changed).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(HOME_CHANGED, changed);
+    }
+  });
+
+  it("tells Home's inbox when the request is closed", async () => {
+    const user = userEvent.setup();
+    const changed = vi.fn();
+    window.addEventListener(HOME_CHANGED, changed);
+    try {
+      fetchMock
+        .mockResolvedValueOnce(json(200, { items: [] }))
+        .mockResolvedValueOnce(json(200, { ...REQUEST, status: "closed" }));
+      render(<RequestCard initial={{ ...REQUEST, status: "ready" }} />);
+      await user.click(await screen.findByRole("button", { name: "Close this request" }));
+      await screen.findByText("Closed");
+      expect(changed).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(HOME_CHANGED, changed);
+    }
   });
 
   it("is headed by the matcher's wording, not the person's", async () => {

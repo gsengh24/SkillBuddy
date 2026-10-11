@@ -14,6 +14,7 @@ import {
 import { describeError } from "@/lib/auth/messages";
 import { intents } from "@/lib/design/tokens";
 import { agoLabel } from "@/lib/home/activity";
+import { notifyHomeChanged } from "@/lib/home/changed";
 
 import { MatchCard } from "./match-card";
 
@@ -51,7 +52,10 @@ export function RequestCard({
     if (!pending || gaveUp) return;
     const timer = window.setTimeout(async () => {
       try {
-        setRequest(await browserApi(`/requests/${request.id}`, matchRequestSchema));
+        const next = await browserApi(`/requests/${request.id}`, matchRequestSchema);
+        setRequest(next);
+        // Its row in the inbox still says "Finding people…".
+        if (next.status !== "pending") notifyHomeChanged();
       } catch {
         // Retried on the next tick.
       }
@@ -82,6 +86,7 @@ export function RequestCard({
       setRequest(
         await browserApi(`/requests/${request.id}/close`, matchRequestSchema, { method: "POST" }),
       );
+      notifyHomeChanged();
     } catch (caught) {
       setError(describeError(caught));
     } finally {
