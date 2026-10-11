@@ -48,6 +48,8 @@ export const userSchema = z.object({
   is_moderator: z.boolean().default(false),
   /** "paused": hidden from matching and new intros; older APIs omit it. */
   status: z.enum(["active", "paused"]).default("active"),
+  /** When this session began (its sign-in). Older APIs omit it. */
+  session_started_at: z.string().optional(),
 });
 export type User = z.infer<typeof userSchema>;
 

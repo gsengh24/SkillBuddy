@@ -36,7 +36,19 @@ vi.mock("@/lib/api/browser", () => ({ browserApi: vi.fn(() => new Promise(() => 
 vi.mock("@/lib/api/client", () => ({ apiRequest: vi.fn() }));
 
 const USER = { id: "11111111-0000-4000-8000-000000000001", email: "dev@example.com" };
-const PROFILE = { about_text: "I build things.", links: [], languages: [], timezone: null };
+const PROFILE = {
+  display_name: "Dev",
+  city: "",
+  headline: "",
+  about_text: "I build things.",
+  goal: "",
+  intents: [],
+  available_days: [],
+  location_precision: "city",
+  links: [],
+  languages: [],
+  timezone: null,
+};
 
 /** What the Home list may call (design spec 6.2); the shell adds the unread count. */
 const LIST_CALLS = [
