@@ -39,6 +39,7 @@ const LIST_CALLS = [
   "/api/v1/me/profile",
   "/api/v1/requests?limit=10",
   "/api/v1/intros?box=received&limit=30",
+  "/api/v1/intros?box=sent&limit=30",
   "/api/v1/connections",
 ];
 
@@ -52,6 +53,7 @@ beforeEach(() => {
     if (path === "/api/v1/auth/me") return USER;
     if (path === "/api/v1/me/profile") return PROFILE;
     if (path.startsWith("/api/v1/requests")) return { items: [request()], next_cursor: null };
+    if (path.startsWith("/api/v1/intros?box=sent")) return { items: [], next_cursor: null };
     if (path.startsWith("/api/v1/intros")) return { items: [intro()], next_cursor: null };
     if (path === "/api/v1/connections") return { items: [connection()] };
     if (path === "/api/v1/messages/updates") {
@@ -81,7 +83,7 @@ describe("Home", () => {
     expect(screen.getByRole("link", { name: /Aarav R\./ })).toBeInTheDocument();
     expect(new Set(calledPaths())).toEqual(new Set(LIST_CALLS));
     expect(screen.getByText(/You're signed in as/)).toHaveTextContent(USER.email);
-    // The band shows twice: after the list on phones, beside the summary on desktop.
+    // The band sits under the composer.
     for (const band of screen.getAllByRole("link", { name: "Open pair spaces" })) {
       expect(band).toHaveAttribute("href", "/spaces");
     }
@@ -116,10 +118,7 @@ describe("Home", () => {
       "href",
       "/home#new-request",
     );
-    expect(within(pane).getByRole("link", { name: /Back to Home/ })).toHaveAttribute(
-      "href",
-      "/home",
-    );
+    expect(within(pane).getByRole("link", { name: /Inbox/ })).toHaveAttribute("href", "/home");
   });
 
   it("opens an intro from ?item, with accept, decline, block and report", async () => {
@@ -134,7 +133,7 @@ describe("Home", () => {
     await renderHome({ item: "chat-conn-1" });
     const pane = screen.getByRole("region", { name: "Opened item" });
     expect(within(pane).getByRole("heading", { name: "Aarav R." })).toBeInTheDocument();
-    expect(within(pane).getByRole("link", { name: "Open pair space" })).toHaveAttribute(
+    expect(within(pane).getByRole("link", { name: "Pair space" })).toHaveAttribute(
       "href",
       "/spaces/conn-1",
     );
@@ -173,7 +172,7 @@ describe("Home", () => {
     });
     await renderHome();
     expect(
-      screen.getByText("No requests yet. Describe what you're building and we'll find people."),
+      screen.getByText("Describe what you're building and we'll find people."),
     ).toBeInTheDocument();
     expect(screen.getByRole("form", { name: "New request" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open pair spaces" })).not.toBeInTheDocument();

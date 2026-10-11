@@ -22,7 +22,7 @@ test("notifications and messages pages are accessible on a phone", async ({ page
 
   await page.goto("/messages");
   await expect(page.getByRole("heading", { name: "Home", level: 1 })).toBeVisible();
-  await expect(page.getByText(/No connections yet/)).toBeVisible();
+  await expect(page.getByText(/No chats yet/)).toBeVisible();
   results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

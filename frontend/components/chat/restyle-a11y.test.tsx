@@ -91,7 +91,7 @@ describe("match card", () => {
 describe("received intro", () => {
   it("is an article named by its heading, with Accept and Decline reachable by Tab", async () => {
     render(<IntroCard initial={intro()} />);
-    const card = screen.getByRole("article", { name: "Someone wants to meet you" });
+    const card = screen.getByRole("article", { name: "Someone wants to meet you." });
     const user = userEvent.setup();
     await user.tab();
     expect(within(card).getByRole("button", { name: "Accept" })).toHaveFocus();

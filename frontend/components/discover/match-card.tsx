@@ -1,4 +1,5 @@
-import { Panel, TopicChip, WhyPanel } from "@/components/ds/surfaces";
+import { YouIcon } from "@/components/ds/icons";
+import { WhyPanel } from "@/components/ds/surfaces";
 import { ReportButton } from "@/components/safety/report-button";
 import { SendIntro } from "@/components/social/send-intro";
 import { InviteMatchToTeam } from "@/components/teams/find-teammate";
@@ -10,27 +11,10 @@ function PersonDot() {
   return (
     <span
       aria-hidden="true"
-      className="bg-green-tint border-green-line inline-flex size-[34px] shrink-0 rounded-full border"
-    />
-  );
-}
-
-/** A labelled row of tags, cut off at MAX_TAGS with a count of the rest. */
-function Tags({ label, items, tone }: { label: string; items: string[]; tone?: "soft" }) {
-  if (!items.length) return null;
-  const more = items.length - MAX_TAGS;
-  return (
-    <div className="flex flex-col gap-1.5">
-      <p className="text-mono-lg text-muted font-mono uppercase">{label}</p>
-      <ul className="flex flex-wrap items-center gap-2">
-        {items.slice(0, MAX_TAGS).map((item) => (
-          <li key={item}>
-            <TopicChip tone={tone}>{item}</TopicChip>
-          </li>
-        ))}
-        {more > 0 ? <li className="text-meta-lg text-muted">+{more} more</li> : null}
-      </ul>
-    </div>
+      className="bg-panel text-muted border-muted-2 inline-flex size-[42px] shrink-0 items-center justify-center rounded-full border border-dashed"
+    >
+      <YouIcon className="size-[18px]" />
+    </span>
   );
 }
 
@@ -42,26 +26,47 @@ function Tags({ label, items, tone }: { label: string; items: string[]; tone?: "
 export function MatchCard({ match, teamId }: { match: Match; teamId?: string | null }) {
   const { candidate } = match;
   const view = presentMatch(candidate);
+  const tags = [...view.offers, ...view.interests];
   return (
-    <Panel interactive className="flex flex-col gap-4">
+    <article className="border-line bg-card hover:border-green-line flex flex-col gap-3 rounded-[14px] border p-[18px] transition-colors">
       <div className="flex items-start gap-3">
         <PersonDot />
         <div className="flex min-w-0 flex-col gap-0.5">
-          <p className="text-mono-lg text-muted font-mono uppercase">Match {match.rank}</p>
-          <h4 className="text-title lg:text-title-lg text-ink">{view.title}</h4>
+          <h3 className="text-title lg:text-title-lg text-ink">{view.title}</h3>
           {view.meta ? <p className="text-meta-lg text-muted">{view.meta}</p> : null}
         </div>
       </div>
-      <WhyPanel title="Why this match">{match.reason}</WhyPanel>
+      <WhyPanel title="Why this match" className="bg-green-soft! rounded-xl px-3.5 py-3">
+        {match.reason}
+      </WhyPanel>
       {view.summary ? <p className="text-ink-2">{view.summary}</p> : null}
-      <Tags label="Can help with" items={view.offers} />
-      <Tags label="Interested in" items={view.interests} tone="soft" />
-      {teamId ? (
-        <InviteMatchToTeam teamId={teamId} matchId={match.id} />
-      ) : (
-        <SendIntro match={match} />
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        {tags.length ? (
+          <ul aria-label="Skills and interests" className="flex flex-wrap gap-1.5">
+            {tags.slice(0, MAX_TAGS).map((tag) => (
+              <li
+                key={tag}
+                className="border-line text-ink-2 rounded-full border px-[9px] py-1 text-[12.5px]"
+              >
+                {tag}
+              </li>
+            ))}
+            {tags.length > MAX_TAGS ? (
+              <li className="text-muted text-[12.5px] leading-[1.9]">
+                +{tags.length - MAX_TAGS} more
+              </li>
+            ) : null}
+          </ul>
+        ) : null}
+        <div className="ml-auto max-w-full [&:has(form)]:w-full">
+          {teamId ? (
+            <InviteMatchToTeam teamId={teamId} matchId={match.id} />
+          ) : (
+            <SendIntro match={match} />
+          )}
+        </div>
+      </div>
       <ReportButton kind="profile" targetId={candidate.user_id} compact />
-    </Panel>
+    </article>
   );
 }

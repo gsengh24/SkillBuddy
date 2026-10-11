@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 import { ReportButton } from "@/components/safety/report-button";
 import { SafetyTips } from "@/components/safety/safety-tips";
@@ -23,6 +23,18 @@ import { delayAfterError, nextPollDelay } from "@/lib/chat/cadence";
 const MESSAGE_MAX_LENGTH = 2000;
 // Safety tips show at the start of a conversation, until it has this many messages.
 const FIRST_CHAT_MESSAGES = 10;
+
+/** "Today", "Yesterday", or a short date: the label over the first message of a day. */
+function dayLabel(iso: string | undefined): string {
+  if (!iso) return "";
+  const then = new Date(iso);
+  const midnight = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const days = Math.round((midnight(new Date()) - midnight(then)) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return then.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
 
 type ConversationProps = {
   connectionId: string;
@@ -199,44 +211,61 @@ export function Conversation({
           tabIndex={0}
           className="-mx-1 flex max-h-[60dvh] flex-col gap-3 overflow-y-auto overscroll-contain px-1 py-1 pr-2"
         >
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             const mine = message.sender_id === meId;
+            const day = dayLabel(message.created_at);
+            const newDay = day !== dayLabel(messages[index - 1]?.created_at);
             return (
-              <li
-                key={message.id}
-                className={cx("flex flex-col gap-1", mine ? "items-end" : "items-start")}
-              >
-                <p
-                  className={cx(
-                    "rounded-panel max-w-[85%] px-3.5 py-2.5 break-words whitespace-pre-wrap lg:max-w-[70%]",
-                    mine ? "bg-ink text-bg" : "border-line bg-panel text-ink border",
-                  )}
-                >
-                  <span className="sr-only">{mine ? "You: " : `${otherName}: `}</span>
-                  {message.body}
-                </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <time
-                    dateTime={message.created_at}
+              <Fragment key={message.id}>
+                {newDay ? (
+                  <li
+                    aria-hidden
                     suppressHydrationWarning
-                    className="text-meta text-muted"
+                    className="text-muted self-center py-1.5 font-mono text-[11px] tracking-[0.08em] uppercase"
                   >
-                    {new Date(message.created_at).toLocaleString(undefined, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </time>
-                  {mine ? null : (
-                    <ReportButton
-                      kind="message"
-                      targetId={message.id}
-                      blockUserId={otherId}
-                      blockName={otherName}
-                      compact
-                    />
-                  )}
-                </div>
-              </li>
+                    {day}
+                  </li>
+                ) : null}
+                <li className={cx("flex flex-col gap-1", mine ? "items-end" : "items-start")}>
+                  <p
+                    className={cx(
+                      "max-w-[85%] rounded-[14px] px-3.5 py-2.5 text-[15px] break-words whitespace-pre-wrap lg:max-w-[78%]",
+                      mine
+                        ? "bg-ink text-bg rounded-br-[4px]"
+                        : "bg-panel text-ink rounded-bl-[4px]",
+                    )}
+                  >
+                    <span className="sr-only">{mine ? "You: " : `${otherName}: `}</span>
+                    {message.body}
+                    <time
+                      dateTime={message.created_at}
+                      suppressHydrationWarning
+                      title={new Date(message.created_at).toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                      className="mt-1 block font-mono text-[10.5px] opacity-60"
+                    >
+                      {new Date(message.created_at).toLocaleTimeString(undefined, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </time>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {mine ? null : (
+                      <ReportButton
+                        kind="message"
+                        targetId={message.id}
+                        blockUserId={otherId}
+                        blockName={otherName}
+                        compact
+                      />
+                    )}
+                  </div>
+                </li>
+              </Fragment>
             );
           })}
         </ol>
@@ -255,29 +284,37 @@ export function Conversation({
         </div>
       ) : null}
 
-      <form onSubmit={send} className="border-line flex flex-col gap-3 border-t pt-4">
-        <Textarea
-          label={`Message ${otherName}`}
-          hideLabel
-          rows={2}
-          maxLength={maxLength}
-          showCounter={false}
-          value={body}
-          onChange={(event) => {
-            setBody(event.target.value);
-            wake();
-          }}
-          placeholder={`Message ${otherName}`}
-          error={error}
-        />
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-meta text-muted">
-            Messages are deleted {retentionDays} days after they&apos;re sent.
-          </p>
-          <Button type="submit" variant="primary" disabled={sending || !body.trim()}>
+      <form onSubmit={send} className="flex flex-col gap-2">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <Textarea
+              label={`Message ${otherName}`}
+              hideLabel
+              rows={1}
+              maxLength={maxLength}
+              showCounter={false}
+              value={body}
+              onChange={(event) => {
+                setBody(event.target.value);
+                wake();
+              }}
+              placeholder="Write a message"
+              error={error}
+              className="bg-card min-h-12! resize-none rounded-xl px-3.5 py-3 text-[16px]"
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={sending || !body.trim()}
+            className="min-h-12 rounded-xl px-[22px] text-[15px] font-semibold"
+          >
             {sending ? "Sending…" : "Send"}
           </Button>
         </div>
+        <p className="text-meta text-muted">
+          Messages are deleted {retentionDays} days after they&apos;re sent.
+        </p>
       </form>
     </div>
   );

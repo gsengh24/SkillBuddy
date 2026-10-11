@@ -4,7 +4,7 @@
  */
 export function SafetyTips() {
   return (
-    <div className="bg-green-tint border-green-line rounded-card flex flex-col gap-1.5 border px-4 py-3">
+    <div className="border-line flex flex-col gap-1.5 rounded-xl border px-3.5 py-2.5">
       <p className="text-mono-lg text-green font-mono uppercase">Staying safe</p>
       <ul className="text-meta-lg text-ink-2 flex list-disc flex-col gap-1 pl-5">
         <li>

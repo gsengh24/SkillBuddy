@@ -1,3 +1,4 @@
+import { intents } from "@/lib/design/tokens";
 import type { Connection, Intro, MatchRequest } from "@/lib/api/schemas";
 
 /**
@@ -22,6 +23,18 @@ export type ActivityRow = {
   /** Short relative time: "2m", "1h", "Yesterday", "3 Oct". */
   time: string;
   unread: boolean;
+  /** The small caps line over the title: "Request · Build together", "Intro", "Message". */
+  kind: string;
+  /** An intro you sent and are waiting on. */
+  sent: boolean;
+  /** Intros waiting for an answer: the kind line says "Needs a reply" in amber. */
+  needsReply: boolean;
+  /** A request whose matches are ready: the second line is green. */
+  ready: boolean;
+  /** Under Requests: your own requests, or the intros you were sent. */
+  sub: "mine" | "intros" | null;
+  /** Latest activity within the last 24 hours (the inbox groups "Today" and "Earlier"). */
+  today: boolean;
   /** Messages only: who it's with (for the avatar). */
   person?: { userId: string; name: string; photoUrl?: string | null };
 };
@@ -58,8 +71,27 @@ export function relativeTime(iso: string, now: Date): string {
   return then.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 }
 
+/** "now", "14m", "2h", "yday", "2d": the short age used in the opened item's label. */
+export function agoLabel(iso: string, now: Date): string {
+  const minutes = Math.max(0, Math.floor((now.getTime() - new Date(iso).getTime()) / MINUTE));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1440) return `${Math.round(minutes / 60)}h ago`;
+  if (minutes < 2880) return "yday";
+  return `${Math.round(minutes / 1440)}d ago`;
+}
+
 function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`;
+}
+
+function isToday(iso: string, now: Date): boolean {
+  return now.getTime() - new Date(iso).getTime() < DAY;
+}
+
+function requestKind(request: MatchRequest): string {
+  const intent = request.intent ?? request.requested_intent;
+  return intent ? `Request · ${intents[intent].label}` : "Request";
 }
 
 function requestLine(request: MatchRequest): string {
@@ -98,20 +130,33 @@ export function buildActivity(
       at,
       time: relativeTime(at, now),
       unread: false,
+      kind: requestKind(request),
+      sent: false,
+      needsReply: false,
+      ready: request.status === "ready" && request.match_count > 0,
+      sub: "mine",
+      today: isToday(at, now),
     });
   }
   for (const intro of intros) {
-    if (intro.direction !== "received" || intro.status !== "pending") continue;
+    if (intro.status !== "pending") continue;
+    const sent = intro.direction === "sent";
     rows.push({
       key: `intro-${intro.id}`,
       type: "intro",
       id: intro.id,
       group: "requests",
-      title: "New intro received",
-      secondary: `“${intro.request_text}”`,
+      title: sent ? "Waiting for a reply" : "New intro received",
+      secondary: sent ? `For: ${intro.request_text}` : intro.request_text,
       at: intro.created_at,
       time: relativeTime(intro.created_at, now),
       unread: false,
+      kind: sent ? "Intro · Sent" : "Intro",
+      sent,
+      needsReply: !sent,
+      ready: false,
+      sub: "intros",
+      today: isToday(intro.created_at, now),
     });
   }
   for (const connection of connections) {
@@ -128,6 +173,12 @@ export function buildActivity(
       at,
       time: relativeTime(at, now),
       unread: unread > 0,
+      kind: "Message",
+      sent: false,
+      needsReply: false,
+      ready: false,
+      sub: null,
+      today: isToday(at, now),
       person: { userId: connection.person.user_id, name, photoUrl: connection.person.photo_url },
     });
   }

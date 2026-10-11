@@ -33,14 +33,25 @@ export function ChatDetail({
   const name = person.display_name ?? "Your connection";
   return (
     <div className="flex flex-col gap-4">
-      <header className="border-line flex flex-wrap items-center gap-3 border-b pb-4">
-        <Avatar userId={person.user_id} name={name} photoUrl={person.photo_url} decorative />
+      <header className="border-line flex flex-wrap items-center gap-3 border-b pb-3">
+        <Avatar
+          userId={person.user_id}
+          name={name}
+          photoUrl={person.photo_url}
+          decorative
+          className="size-10!"
+        />
         <div className="min-w-0 flex-1">
-          <h2 className="text-title lg:text-title-lg break-words">{name}</h2>
-          <p className="text-meta text-muted">Connected</p>
+          <h2 className="text-[16px] leading-[1.3] font-semibold break-words">{name}</h2>
+          <p className="text-muted text-[12.5px]">Connected · pair space open</p>
         </div>
-        <ButtonLink href={`/spaces/${connection.id}`} variant="outline" size="compact">
-          Open pair space
+        <ButtonLink
+          href={`/spaces/${connection.id}`}
+          variant="outline"
+          size="compact"
+          className="rounded-[10px]"
+        >
+          Pair space
         </ButtonLink>
         <MoreMenu label={`More actions for ${name}`}>
           <ReportButton

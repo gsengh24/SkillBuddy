@@ -93,6 +93,8 @@ test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
     await shoot(page, `spaces-${name}`);
     if (existsSync(REFERENCE)) {
       await page.goto(`file://${REFERENCE}`);
+      // The reference loads its sample inbox after a short skeleton.
+      await page.waitForTimeout(1500);
       await shoot(page, `reference-home-${name}`);
     }
   }

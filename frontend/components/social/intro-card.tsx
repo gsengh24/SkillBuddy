@@ -6,11 +6,13 @@ import { BlockButton } from "@/components/safety/block-button";
 import { ReportButton } from "@/components/safety/report-button";
 import { Button } from "@/components/ds/button";
 import { InlineError } from "@/components/ds/fields";
-import { Panel, TopicChip, WhyPanel } from "@/components/ds/surfaces";
+import { TopicChip, WhyPanel } from "@/components/ds/surfaces";
+import { YouIcon } from "@/components/ds/icons";
 import { TextLink } from "@/components/ui/text-link";
 import { browserApi } from "@/lib/api/browser";
 import { introSchema, type Intro } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
+import { agoLabel } from "@/lib/home/activity";
 
 /**
  * An intro someone sent you: what they asked for, why you were matched, their note and
@@ -41,73 +43,117 @@ export function IntroCard({ initial }: { initial: Intro }) {
   }
 
   return (
-    <Panel className="flex flex-col gap-4" role="article" aria-labelledby={`${ids}-h`}>
-      <div className="flex flex-col gap-1">
-        <h3 id={`${ids}-h`} className="text-title lg:text-title-lg text-ink">
-          {intro.status === "accepted" && person.display_name
-            ? `${person.display_name} wants to meet you`
-            : "Someone wants to meet you"}
-        </h3>
-        <p className="text-meta-lg text-muted">They&apos;re looking for: “{intro.request_text}”</p>
-      </div>
-      {person.summary ? <p className="text-ink-2">{person.summary}</p> : null}
-      {person.offers.length ? (
-        <ul className="flex flex-wrap gap-2" aria-label="They offer">
-          {person.offers.map((item) => (
-            <li key={item}>
-              <TopicChip>{item}</TopicChip>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <WhyPanel title="Why you were matched">{intro.reason}</WhyPanel>
-      {intro.note ? (
-        <blockquote className="border-green-line text-ink border-l-2 pl-3">{intro.note}</blockquote>
-      ) : null}
-
-      {intro.status === "pending" ? (
-        <div className="flex flex-col gap-3">
-          <p className="text-meta-lg text-ink-2">
-            If you accept, you&apos;ll both see each other&apos;s name and links. If you decline,
-            they won&apos;t be told.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button type="button" variant="primary" disabled={busy} onClick={() => answer(true)}>
-              Accept
-            </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => answer(false)}>
-              Decline
-            </Button>
+    <article aria-labelledby={`${ids}-h`} className="flex flex-col">
+      <p className="text-green font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase">
+        Intro
+        <span suppressHydrationWarning>
+          {" · "}
+          {agoLabel(intro.created_at, new Date()).toUpperCase()}
+        </span>
+      </p>
+      <h2
+        id={`${ids}-h`}
+        className="font-display mt-1.5 mb-1 text-[26px] leading-[1.05] font-extrabold tracking-[-0.03em] text-balance lg:text-[30px]"
+      >
+        {intro.status === "accepted" && person.display_name
+          ? `${person.display_name} wants to meet you.`
+          : "Someone wants to meet you."}
+      </h2>
+      <div className="border-line bg-card flex flex-col gap-3.5 rounded-[14px] border p-5">
+        <div className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className="bg-panel text-muted border-muted-2 inline-flex size-[42px] shrink-0 items-center justify-center rounded-full border border-dashed"
+          >
+            <YouIcon className="size-[18px]" />
+          </span>
+          <div className="min-w-0">
+            {person.summary ? <p className="line-clamp-2 font-semibold">{person.summary}</p> : null}
+            {person.availability ? (
+              <p className="text-muted text-[13px]">{person.availability}</p>
+            ) : null}
           </div>
-          {intro.direction === "received" ? (
-            <div className="flex flex-wrap items-start gap-3">
-              <ReportButton kind="intro" targetId={intro.id} blockUserId={person.user_id} />
-              <BlockButton userId={person.user_id} name="this person" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="text-muted font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase">
+            What they asked for
+          </span>
+          <p>{intro.request_text}</p>
+        </div>
+        {person.offers.length ? (
+          <ul className="flex flex-wrap gap-2" aria-label="They offer">
+            {person.offers.map((item) => (
+              <li key={item}>
+                <TopicChip>{item}</TopicChip>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {intro.note ? (
+          <blockquote className="border-green bg-panel text-ink m-0 rounded-r-[10px] border-l-2 px-3.5 py-3 text-[15px]">
+            &quot;{intro.note}&quot;
+          </blockquote>
+        ) : null}
+        <WhyPanel title="Why you were matched" className="bg-green-soft! rounded-xl px-3.5 py-3">
+          {intro.reason}
+        </WhyPanel>
+
+        {intro.status === "pending" ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2.5">
+              <Button
+                type="button"
+                variant="primary"
+                disabled={busy}
+                onClick={() => answer(true)}
+                className="min-h-12 rounded-xl px-[22px] text-[15px] font-semibold"
+              >
+                Accept
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => answer(false)}
+                className="border-line-strong! min-h-12 rounded-xl px-[22px] text-[15px] font-semibold"
+              >
+                Decline
+              </Button>
             </div>
-          ) : null}
-        </div>
-      ) : null}
-      {intro.status === "accepted" ? (
-        <div className="flex flex-col gap-1" role="status">
-          <p className="text-ink font-medium">You&apos;re connected.</p>
-          {person.links?.length ? (
-            <ul className="flex flex-col gap-1">
-              {person.links.map((link) => (
-                <li key={link}>
-                  <TextLink href={link}>{link}</TextLink>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
-      {intro.status === "declined" ? (
-        <p role="status" className="text-muted">
-          Declined. They won&apos;t be told.
-        </p>
-      ) : null}
-      {intro.status === "expired" ? <p className="text-muted">This intro has expired.</p> : null}
-      {error ? <InlineError announce>{error}</InlineError> : null}
-    </Panel>
+            <p className="text-muted text-[13px]">
+              If you accept, you&apos;ll both see each other&apos;s name and links. If you decline,
+              they won&apos;t be told.
+            </p>
+            {intro.direction === "received" ? (
+              <div className="flex flex-wrap items-start gap-3">
+                <ReportButton kind="intro" targetId={intro.id} blockUserId={person.user_id} />
+                <BlockButton userId={person.user_id} name="this person" />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {intro.status === "accepted" ? (
+          <div className="flex flex-col gap-1" role="status">
+            <p className="text-ink font-medium">You&apos;re connected.</p>
+            {person.links?.length ? (
+              <ul className="flex flex-col gap-1">
+                {person.links.map((link) => (
+                  <li key={link}>
+                    <TextLink href={link}>{link}</TextLink>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+        {intro.status === "declined" ? (
+          <p role="status" className="text-muted">
+            Declined. They won&apos;t be told.
+          </p>
+        ) : null}
+        {intro.status === "expired" ? <p className="text-muted">This intro has expired.</p> : null}
+        {error ? <InlineError announce>{error}</InlineError> : null}
+      </div>
+    </article>
   );
 }
