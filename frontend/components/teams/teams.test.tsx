@@ -13,6 +13,7 @@ import { JoinByLink } from "./join-by-link";
 import { MyTeamInvites } from "./my-invites";
 import { TeamChat } from "./team-chat";
 import { TeamListing } from "./team-listing";
+import { SpaceCard } from "./space-card";
 import { TeamPeople } from "./team-people";
 
 const push = vi.fn();
@@ -100,7 +101,7 @@ describe("CreateTeam", () => {
     render(<CreateTeam />);
     expect(screen.getByRole("button", { name: "Create pair space" })).toBeDisabled();
     await user.type(screen.getByLabelText("Pair space name"), "Hack night");
-    await user.selectOptions(screen.getByLabelText("What is it for?"), "project");
+    await user.click(screen.getByRole("radio", { name: "Project" }));
     await user.click(screen.getByRole("button", { name: "Create pair space" }));
     expect(lastCall()).toEqual({
       url: "/api/v1/teams",
@@ -122,6 +123,78 @@ describe("CreateTeam", () => {
     await user.click(screen.getByRole("button", { name: "Create pair space" }));
     expect(await screen.findByRole("alert")).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
+  });
+});
+
+describe("CreateTeam picker and preview", () => {
+  it("moves the purpose with the arrow keys and previews the card as you type", async () => {
+    const user = userEvent.setup();
+    render(<CreateTeam me={{ id: ME, name: "Asha" }} />);
+    const group = screen.getByRole("radiogroup", { name: "What is it for?" });
+    expect(within(group).getByRole("radio", { name: "Hackathon" })).toBeChecked();
+    within(group).getByRole("radio", { name: "Hackathon" }).focus();
+    await user.keyboard("{ArrowRight}");
+    expect(within(group).getByRole("radio", { name: "Project" })).toBeChecked();
+    await user.keyboard("{ArrowLeft}{ArrowLeft}");
+    expect(within(group).getByRole("radio", { name: "Other" })).toBeChecked();
+
+    await user.type(screen.getByLabelText("Pair space name"), "Night owls");
+    expect(screen.getByText("10 / 60")).toBeInTheDocument();
+    // The preview card is hidden from assistive technology and shows the typed name.
+    expect(document.querySelector("[aria-hidden] h3")).toHaveTextContent("Night owls");
+  });
+
+  it("needs a name of two letters", async () => {
+    const user = userEvent.setup();
+    render(<CreateTeam />);
+    await user.type(screen.getByLabelText("Pair space name"), "A");
+    expect(screen.getByRole("button", { name: "Create pair space" })).toBeDisabled();
+    await user.type(screen.getByLabelText("Pair space name"), "b");
+    expect(screen.getByRole("button", { name: "Create pair space" })).toBeEnabled();
+  });
+});
+
+describe("SpaceCard", () => {
+  it("shows the owner mark, who is in it and goals done, and links in", () => {
+    render(
+      <SpaceCard
+        href={`/teams/${TEAM_ID}`}
+        purpose="study"
+        name="GATE circle"
+        description=""
+        isOwner
+        people={[{ id: ME, name: "Asha" }]}
+        memberCount={2}
+        maxMembers={6}
+        goals={{ done: 1, total: 4 }}
+      />,
+    );
+    expect(screen.getByRole("link", { name: /GATE circle/ })).toHaveAttribute(
+      "href",
+      `/teams/${TEAM_ID}`,
+    );
+    expect(screen.getByText("Study")).toBeInTheDocument();
+    expect(screen.getByText("Owner")).toBeInTheDocument();
+    expect(screen.getByText("No description yet.")).toBeInTheDocument();
+    expect(screen.getByText("2 of 6")).toBeInTheDocument();
+    expect(screen.getByText("1 of 4 done")).toBeInTheDocument();
+  });
+
+  it("says no goals yet, and leaves the goals row out when they could not load", () => {
+    const base = {
+      purpose: "project" as const,
+      name: "X",
+      description: "d",
+      isOwner: false,
+      people: [],
+      memberCount: 1,
+      maxMembers: 6,
+    };
+    const { rerender } = render(<SpaceCard {...base} goals={{ done: 0, total: 0 }} />);
+    expect(screen.getByText("No goals yet")).toBeInTheDocument();
+    rerender(<SpaceCard {...base} goals={null} />);
+    expect(screen.queryByText("Goals")).not.toBeInTheDocument();
+    expect(screen.queryByText("Owner")).not.toBeInTheDocument();
   });
 });
 
