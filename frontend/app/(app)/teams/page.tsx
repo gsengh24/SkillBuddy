@@ -6,13 +6,12 @@ import { CreateTeam } from "@/components/teams/create-team";
 import { MyTeamRequests } from "@/components/teams/ask-to-join";
 import { MyTeamInvites } from "@/components/teams/my-invites";
 import { TeamsPaused } from "@/components/teams/teams-paused";
-import { TextLink } from "@/components/ui/text-link";
 import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getFeatures } from "@/lib/features";
 import { PURPOSE_LABELS, teamSize } from "@/lib/teams/labels";
 import { getMyTeamRequests, getTeamInvites, getTeams } from "@/lib/teams/server";
 
-export const metadata: Metadata = { title: "Teams" };
+export const metadata: Metadata = { title: "Pair spaces" };
 export const dynamic = "force-dynamic";
 
 /** The person's teams, invites waiting for an answer, and a form to make a team. */
@@ -29,17 +28,10 @@ export default async function TeamsPage() {
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <TextLink
-          href="/spaces"
-          tone="muted"
-          className="text-meta-lg inline-flex min-h-11 items-center self-start"
-        >
-          Spaces
-        </TextLink>
-        <h1 className="text-headline lg:text-headline-lg">Teams</h1>
+        <h1 className="text-headline lg:text-headline-lg">Pair spaces</h1>
         <p className="text-ink-2">
-          A group of up to six for a hackathon, a project or anything else: a team chat, shared
-          goals, skills you want to grow, and progress notes. Only the people in a team can see it.
+          A group of up to six for a hackathon, a project or anything else: a chat, shared goals,
+          skills you want to grow, and progress notes. Only the people in a pair space can see it.
         </p>
       </header>
 
@@ -48,7 +40,7 @@ export default async function TeamsPage() {
 
       <section aria-labelledby="my-teams-h" className="flex flex-col gap-3">
         <h2 id="my-teams-h" className="text-title">
-          Your teams
+          Your pair spaces
         </h2>
         {teams.items.length ? (
           <ul className="border-line border-t">
@@ -65,22 +57,22 @@ export default async function TeamsPage() {
                   </p>
                 </div>
                 <ButtonLink href={`/teams/${team.id}`} variant="outline" size="compact">
-                  Open team
+                  Open pair space
                 </ButtonLink>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-muted">You&apos;re not in a team yet. Make one below.</p>
+          <p className="text-muted">You&apos;re not in a pair space yet. Make one below.</p>
         )}
         <ButtonLink href="/teams/browse" variant="outline" className="self-start">
-          Find a team to join
+          Find a pair space to join
         </ButtonLink>
       </section>
 
       <section aria-labelledby="new-team-h" className="flex flex-col gap-3">
         <h2 id="new-team-h" className="text-title">
-          Make a team
+          Make a pair space
         </h2>
         {atLimit ? (
           <p className="text-muted">

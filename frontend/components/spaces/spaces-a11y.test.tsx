@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Space } from "@/lib/api/schemas";
+import type { TeamSpace } from "@/lib/api/schemas";
 
 import { SpaceView } from "./space-view";
 
@@ -13,8 +13,8 @@ import { SpaceView } from "./space-view";
 
 const ME = "me";
 const THEM = "them";
-const SPACE: Space = {
-  connection_id: "c1",
+const SPACE: TeamSpace = {
+  team_id: "t1",
   goals: [
     {
       id: "g1",
@@ -45,7 +45,13 @@ afterEach(() => {
 });
 
 function renderSpace() {
-  return render(<SpaceView space={SPACE} meId={ME} otherId={THEM} otherName="Asha" />);
+  return render(
+    <SpaceView
+      space={SPACE}
+      meId={ME}
+      team={{ base: "/teams/t1/space", names: { [THEM]: "Asha" } }}
+    />,
+  );
 }
 
 describe("pair space, from the keyboard", () => {
@@ -76,7 +82,7 @@ describe("pair space, from the keyboard", () => {
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("New goal"), "Launch{Enter}");
     const [url, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
-    expect(url).toContain("/connections/c1/space/goals");
+    expect(url).toContain("/teams/t1/space/goals");
     expect(init.method).toBe("POST");
   });
 

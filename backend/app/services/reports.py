@@ -8,7 +8,7 @@
   can report their profile (a copy of what they could see: name and links only if
   connected). From a chat they may attach up to ``MAX_ATTACHED_MESSAGES`` (5) messages
   of it, copied at that moment.
-- Either person in a pair space can report a goal or a progress note the other person
+- Any member of a pair space can report a goal or a progress note another member
   wrote (a copy of its text), also after a block. All of these share REPORTS_PER_DAY.
 - The reported person is not told who reported them. Once the team decides, the reporter
   gets a "we reviewed your report" notice (never the outcome).
@@ -114,7 +114,7 @@ class OwnEntryError(AppError):
 
 class TeamToReportNotFoundError(NotFoundError):
     code = "team_not_found"
-    default_message = "That team doesn't exist."
+    default_message = "That pair space doesn't exist."
 
 
 class ReportNotFoundError(NotFoundError):
@@ -448,20 +448,7 @@ async def _team_entry_author(
     db: AsyncSession, user: User, entry: SpaceGoal | ProgressLog
 ) -> uuid.UUID | None:
     """The author of a team's goal or note, if ``user`` is in that team."""
-    if entry.team_id is None or entry.author_id is None:
-        return None
     return entry.author_id if await _in_team(db, user.id, entry.team_id) else None
-
-
-async def _space_entry_connection(
-    db: AsyncSession, user: User, connection_id: uuid.UUID
-) -> Connection | None:
-    """The entry's connection if ``user`` is in it. Ended connections (a block) still
-    count: like messages, space entries can be reported after a block."""
-    connection = await db.get(Connection, connection_id)
-    if connection is None or user.id not in (connection.user_a, connection.user_b):
-        return None
-    return connection
 
 
 async def report_goal(
@@ -473,31 +460,23 @@ async def report_goal(
     reason: ReportReason,
     details: str,
 ) -> Report:
-    """Report a pair-space goal the other person added (a copy of its title)."""
+    """Report a goal another member of your pair space added (a copy of its title)."""
     goal = await db.get(SpaceGoal, goal_id)
-    connection = None
-    if goal is not None and goal.connection_id is not None:
-        connection = await _space_entry_connection(db, user, goal.connection_id)
-    # A team's goal (ADR 0016): any other member of the team may report it.
     author = await _team_entry_author(db, user, goal) if goal is not None else None
-    if goal is None or (connection is None and author is None):
+    if goal is None or author is None:
         raise GoalToReportNotFoundError
-    if author == user.id or (
-        connection is not None and goal.from_a == (connection.user_a == user.id)
-    ):
+    if author == user.id:
         raise OwnEntryError
     snapshot = [_part("goal", goal.title, goal.created_at)]
     if goal.due_on:
         snapshot.append(_part("due", goal.due_on.isoformat()))
-    if connection is not None:
-        author = connection.user_a if goal.from_a else connection.user_b
     return await _save(
         db,
         settings,
         limiter,
         user,
         reported_id=author,
-        connection_id=connection.id if connection is not None else None,
+        connection_id=None,
         target=ReportTarget.GOAL,
         target_id=goal.id,
         reason=reason,
@@ -515,27 +494,20 @@ async def report_progress_log(
     reason: ReportReason,
     details: str,
 ) -> Report:
-    """Report a progress note the other person wrote (a copy of its text)."""
+    """Report a progress note another member wrote (a copy of its text)."""
     log = await db.get(ProgressLog, log_id)
-    connection = None
-    if log is not None and log.connection_id is not None:
-        connection = await _space_entry_connection(db, user, log.connection_id)
     author = await _team_entry_author(db, user, log) if log is not None else None
-    if log is None or (connection is None and author is None):
+    if log is None or author is None:
         raise LogToReportNotFoundError
-    if author == user.id or (
-        connection is not None and log.from_a == (connection.user_a == user.id)
-    ):
+    if author == user.id:
         raise OwnEntryError
-    if connection is not None:
-        author = connection.user_a if log.from_a else connection.user_b
     return await _save(
         db,
         settings,
         limiter,
         user,
         reported_id=author,
-        connection_id=connection.id if connection is not None else None,
+        connection_id=None,
         target=ReportTarget.PROGRESS_LOG,
         target_id=log.id,
         reason=reason,

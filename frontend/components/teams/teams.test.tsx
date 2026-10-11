@@ -94,14 +94,14 @@ function lastCall() {
 }
 
 describe("CreateTeam", () => {
-  it("makes a team and opens it", async () => {
+  it("makes a pair space and opens it", async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(json(201, { ...TEAM, invites: [] }));
     render(<CreateTeam />);
-    expect(screen.getByRole("button", { name: "Create team" })).toBeDisabled();
-    await user.type(screen.getByLabelText("Team name"), "Hack night");
+    expect(screen.getByRole("button", { name: "Create pair space" })).toBeDisabled();
+    await user.type(screen.getByLabelText("Pair space name"), "Hack night");
     await user.selectOptions(screen.getByLabelText("What is it for?"), "project");
-    await user.click(screen.getByRole("button", { name: "Create team" }));
+    await user.click(screen.getByRole("button", { name: "Create pair space" }));
     expect(lastCall()).toEqual({
       url: "/api/v1/teams",
       method: "POST",
@@ -114,12 +114,12 @@ describe("CreateTeam", () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(
       json(409, {
-        error: { code: "too_many_teams_owned", message: "You own the most teams allowed." },
+        error: { code: "too_many_teams_owned", message: "You own the most pair spaces allowed." },
       }),
     );
     render(<CreateTeam />);
-    await user.type(screen.getByLabelText("Team name"), "One more");
-    await user.click(screen.getByRole("button", { name: "Create team" }));
+    await user.type(screen.getByLabelText("Pair space name"), "One more");
+    await user.click(screen.getByRole("button", { name: "Create pair space" }));
     expect(await screen.findByRole("alert")).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
@@ -131,7 +131,7 @@ describe("MyTeamInvites", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("joins a team, or declines and drops the invite", async () => {
+  it("joins a pair space, or declines and drops the invite", async () => {
     const user = userEvent.setup();
     const other: TeamInvite = { ...INVITE, id: "i2", team: { ...SUMMARY, id: "t2", name: "Lab" } };
     fetchMock.mockResolvedValueOnce(json(200, { ...other, status: "declined" }));
@@ -192,10 +192,10 @@ describe("TeamPeople", () => {
     render(<TeamPeople team={{ ...TEAM, invites: [] }} meId={RAVI} invitable={[]} />);
     expect(screen.queryByLabelText("Invite a connection")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Remove/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Close team" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Close pair space" })).not.toBeInTheDocument();
 
     fetchMock.mockResolvedValueOnce(json(204));
-    await user.click(screen.getByRole("button", { name: "Leave team" }));
+    await user.click(screen.getByRole("button", { name: "Leave pair space" }));
     expect(lastCall()).toMatchObject({
       url: `/api/v1/teams/${TEAM_ID}/members/${RAVI}`,
       method: "DELETE",
@@ -204,7 +204,7 @@ describe("TeamPeople", () => {
   });
 });
 
-describe("Listed teams", () => {
+describe("Listed pair spaces", () => {
   const REQUEST: TeamInvite = {
     ...INVITE,
     id: "r1",
@@ -214,15 +214,15 @@ describe("Listed teams", () => {
     note: "I draw maps.",
   };
 
-  it("lets the owner list the team and say who it is looking for", async () => {
+  it("lets the owner list the pair space and say who it is looking for", async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(
       json(200, { ...TEAM, invites: [], listed: true, looking_for: "A designer" }),
     );
     render(<TeamListing teamId={TEAM_ID} listed={false} lookingFor="" />);
     expect(screen.getByRole("button", { name: "Save listing" })).toBeDisabled();
-    expect(screen.getByText("This team is not listed.")).toBeVisible();
-    await user.click(screen.getByRole("checkbox", { name: /List this team/ }));
+    expect(screen.getByText("This pair space is not listed.")).toBeVisible();
+    await user.click(screen.getByRole("checkbox", { name: /List this pair space/ }));
     await user.type(screen.getByLabelText("Who are you looking for?"), "A designer");
     await user.click(screen.getByRole("button", { name: "Save listing" }));
     expect(lastCall()).toEqual({
@@ -230,7 +230,7 @@ describe("Listed teams", () => {
       method: "PATCH",
       body: { listed: true, looking_for: "A designer" },
     });
-    expect(await screen.findByText("This team is listed.")).toBeVisible();
+    expect(await screen.findByText("This pair space is listed.")).toBeVisible();
   });
 
   it("sends a request to join with a note", async () => {
@@ -280,7 +280,7 @@ describe("Listed teams", () => {
 });
 
 describe("Finding a teammate", () => {
-  it("asks the matcher with the team attached, then opens the request", async () => {
+  it("asks the matcher with the pair space attached, then opens the request", async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(
       json(202, {
@@ -300,7 +300,7 @@ describe("Finding a teammate", () => {
     render(<FindTeammate teamId={TEAM_ID} full={false} />);
     expect(screen.getByRole("button", { name: "Find people" })).toBeDisabled();
     await user.type(
-      screen.getByLabelText("Who does the team need?"),
+      screen.getByLabelText("Who does the pair space need?"),
       "A designer who can prototype fast",
     );
     await user.click(screen.getByRole("button", { name: "Find people" }));
@@ -312,23 +312,23 @@ describe("Finding a teammate", () => {
     expect(push).toHaveBeenCalledTimes(1);
   });
 
-  it("has no form when the team is full", () => {
+  it("has no form when the pair space is full", () => {
     render(<FindTeammate teamId={TEAM_ID} full />);
-    expect(screen.queryByLabelText("Who does the team need?")).not.toBeInTheDocument();
-    expect(screen.getByText(/The team is full/)).toBeVisible();
+    expect(screen.queryByLabelText("Who does the pair space need?")).not.toBeInTheDocument();
+    expect(screen.getByText(/The pair space is full/)).toBeVisible();
   });
 
-  it("invites a match to the team", async () => {
+  it("invites a match to the pair space", async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(json(201, { ...INVITE, kind: "suggested" }));
     render(<InviteMatchToTeam teamId={TEAM_ID} matchId="match1" />);
-    await user.click(screen.getByRole("button", { name: "Invite to team" }));
+    await user.click(screen.getByRole("button", { name: "Invite to pair space" }));
     expect(lastCall()).toEqual({
       url: `/api/v1/teams/${TEAM_ID}/invites`,
       method: "POST",
       body: { match_id: "match1" },
     });
-    expect(await screen.findByText(/Invited to the team/)).toBeVisible();
+    expect(await screen.findByText(/Invited to the pair space/)).toBeVisible();
   });
 });
 
@@ -360,13 +360,13 @@ describe("InviteLink", () => {
   it("says a link is active without showing it", () => {
     render(<InviteLink teamId={TEAM_ID} expiresAt="2026-10-17T10:00:00Z" full />);
     expect(screen.getByText(/A link is active until/)).toBeVisible();
-    expect(screen.getByText("The team is full, so nobody can join.")).toBeVisible();
+    expect(screen.getByText("The pair space is full, so nobody can join.")).toBeVisible();
     expect(screen.queryByLabelText("Link to share")).not.toBeInTheDocument();
   });
 });
 
 describe("JoinByLink", () => {
-  it("joins and opens the team", async () => {
+  it("joins and opens the pair space", async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(json(200, { ...TEAM, invites: [] }));
     render(<JoinByLink code="abcDEF123456_-abcDEF12" teamName="Hack night" />);
@@ -408,19 +408,19 @@ describe("TeamChat", () => {
     );
   }
 
-  it("names who said what and says the whole team can read it", () => {
+  it("names who said what and says the whole pair space can read it", () => {
     const gone: TeamMessage = { ...MESSAGE, id: "m0", sender_id: MINA, body: "Bye all" };
     renderChat([MESSAGE, gone]);
     const rows = within(screen.getByRole("list", { name: "Messages" })).getAllByRole("listitem");
     expect(rows[0]).toHaveTextContent("A teammate"); // someone who has left
     expect(rows[1]).toHaveTextContent("Ravi");
     expect(rows[1]).toHaveTextContent("Kick-off at six?");
-    expect(screen.getByText(/Everyone in the team can read this/)).toBeVisible();
+    expect(screen.getByText(/Everyone in the pair space can read this/)).toBeVisible();
     // Other people's messages can be reported; there are two here.
     expect(screen.getAllByRole("button", { name: "Report" })).toHaveLength(2);
   });
 
-  it("sends a message to the team", async () => {
+  it("sends a message to the pair space", async () => {
     const user = userEvent.setup();
     const sent: TeamMessage = { ...MESSAGE, id: "m2", sender_id: ME, body: "Works for me" };
     fetchMock.mockResolvedValue(json(201, sent));
@@ -432,7 +432,7 @@ describe("TeamChat", () => {
   });
 });
 
-describe("SpaceView for a team", () => {
+describe("SpaceView for a pair space", () => {
   const SPACE: TeamSpace = {
     team_id: TEAM_ID,
     goals: [
@@ -465,14 +465,12 @@ describe("SpaceView for a team", () => {
     max_skills_per_person: 10,
   };
 
-  it("groups skills by teammate, names note authors and uses the team's API path", async () => {
+  it("groups skills by teammate, names note authors and uses the pair space's API path", async () => {
     const user = userEvent.setup();
     render(
       <SpaceView
         space={SPACE}
         meId={ME}
-        otherId=""
-        otherName="A teammate"
         team={{ base: `/teams/${TEAM_ID}/space`, names: { [RAVI]: "Ravi" } }}
       />,
     );

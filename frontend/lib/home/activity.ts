@@ -185,7 +185,7 @@ export function buildActivity(
   return rows.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }
 
-/** The summary strip: open requests, unread messages, pair spaces (one per connection). */
+/** The summary strip: open requests, unread messages and connections. */
 export function summaryCounts({
   requests,
   connections,
@@ -196,6 +196,6 @@ export function summaryCounts({
   return {
     requests: requests.filter((r) => r.status === "pending" || r.status === "ready").length,
     messages: connections.reduce((total, c) => total + c.unread_messages, 0),
-    spaces: connections.length,
+    connections: connections.length,
   };
 }

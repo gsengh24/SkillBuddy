@@ -153,11 +153,10 @@ class Settings(BaseSettings):
     # each person is limited to one poll a minute until the next UTC day.
     chat_polls_per_day: int = Field(default=16_000, ge=1, le=1_000_000)
 
-    # --- Pair spaces (ADR 0013) --------------------------------------------------------
+    # --- Pair spaces (ADR 0013, 0018) --------------------------------------------------
     # Adds, edits and deletes in pair spaces per person per UTC day.
     space_writes_per_day: int = Field(default=100, ge=1, le=2000)
-    # Progress logs are deleted this many days after writing, and a whole space this many
-    # days after its connection ends.
+    # Progress logs are deleted this many days after writing.
     space_retention_days: int = Field(default=90, ge=7, le=730)
 
     # --- Teams (ADR 0016) ---------------------------------------------------------------

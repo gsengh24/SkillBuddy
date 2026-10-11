@@ -54,7 +54,7 @@ function Label({ children }: { children: ReactNode }) {
 
 const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: <HomeIcon /> },
-  { href: "/spaces", label: "Spaces", icon: <PeopleIcon /> },
+  { href: "/teams", label: "Spaces", icon: <PeopleIcon /> },
   { href: "/saved", label: "Saved", icon: <SavedIcon /> },
   { href: "/you", label: "You", icon: <YouIcon /> },
 ];

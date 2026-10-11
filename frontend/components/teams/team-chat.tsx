@@ -228,7 +228,7 @@ export function TeamChat({
           })}
         </ol>
       ) : (
-        <p className="text-muted">No messages yet. Say hello to the team.</p>
+        <p className="text-muted">No messages yet. Say hello to the pair space.</p>
       )}
 
       {paused ? (
@@ -259,8 +259,8 @@ export function TeamChat({
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-meta text-muted">
-            Everyone in the team can read this. Messages are deleted {retentionDays} days after
-            they&apos;re sent.
+            Everyone in the pair space can read this. Messages are deleted {retentionDays} days
+            after they&apos;re sent.
           </p>
           <Button type="submit" variant="primary" disabled={sending || !body.trim()}>
             {sending ? "Sending…" : "Send"}

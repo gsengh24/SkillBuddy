@@ -77,7 +77,7 @@ export function InviteLink({
       <h3 className="text-title text-ink">Invite link</h3>
       <p className="text-meta-lg text-muted">
         Anyone signed in who has the link can join straight away, while there is room. Share it only
-        with people you want in the team.
+        with people you want in the pair space.
       </p>
       {link ? (
         <div className="flex flex-col gap-2">
@@ -94,7 +94,7 @@ export function InviteLink({
         </p>
       ) : null}
       {full ? (
-        <p className="text-meta-lg text-muted">The team is full, so nobody can join.</p>
+        <p className="text-meta-lg text-muted">The pair space is full, so nobody can join.</p>
       ) : null}
       <div className="flex flex-wrap gap-2">
         {link ? (

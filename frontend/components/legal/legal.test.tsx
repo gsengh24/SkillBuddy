@@ -26,10 +26,10 @@ describe("privacy policy", () => {
       "Pair-space progress notes: 90 days after each is written",
     );
     expect(container.querySelector("#retention")).toHaveTextContent(
-      "hidden from both people as soon as the connection ends, and deleted 90 days later",
+      "hidden from everyone as soon as it is closed, and deleted with everything in it 90 days later",
     );
     expect(container.querySelector("#who-sees")).toHaveTextContent(
-      "can be seen only by the two people in it",
+      "can be seen only by the people in it",
     );
     expect(container.querySelector("#emails")).toHaveTextContent(
       "We email you when someone sends you an intro or accepts yours",

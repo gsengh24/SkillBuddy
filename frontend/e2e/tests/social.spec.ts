@@ -40,9 +40,11 @@ test("a conversation you're not part of is not found", async ({ page, request })
 
 test("the pair spaces page is accessible on a phone", async ({ page, request }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await signUp(page, request, "/spaces");
-  await expect(page.getByRole("heading", { name: "Pair spaces", level: 1 })).toBeVisible();
-  await expect(page.getByText(/No connections yet/)).toBeVisible();
+  await signUp(page, request, "/teams");
+  // Pair spaces start switched off (ADR 0016), so the paused notice is what shows.
+  await expect(
+    page.getByRole("heading", { name: "Pair spaces aren't available right now", level: 1 }),
+  ).toBeVisible();
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

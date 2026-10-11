@@ -1,8 +1,8 @@
 """Reporting a team or a team chat message (ADR 0016).
 
 Outside the teams router on purpose: like other reports, these still work while the teams
-feature is switched off. A team's goals and notes are reported through the pair-space
-report endpoints (`/space-goals/{id}/report`, `/progress-logs/{id}/report`).
+feature is switched off. A team's goals and notes are reported through the report
+endpoints in ``spaces.py`` (`/space-goals/{id}/report`, `/progress-logs/{id}/report`).
 """
 
 from __future__ import annotations

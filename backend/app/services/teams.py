@@ -79,7 +79,7 @@ _OPEN = (TeamInviteStatus.PENDING, TeamInviteStatus.DECLINED)
 
 class TeamNotFoundError(NotFoundError):
     code = "team_not_found"
-    default_message = "That team doesn't exist."
+    default_message = "That pair space doesn't exist."
 
 
 class TeamInviteNotFoundError(NotFoundError):
@@ -89,7 +89,7 @@ class TeamInviteNotFoundError(NotFoundError):
 
 class TeamMemberNotFoundError(NotFoundError):
     code = "team_member_not_found"
-    default_message = "That person isn't in this team."
+    default_message = "That person isn't in this pair space."
 
 
 class TeamLinkInvalidError(NotFoundError):
@@ -101,49 +101,49 @@ class TeamLinkInvalidError(NotFoundError):
 
 class NotTeamOwnerError(PermissionDeniedError):
     code = "not_team_owner"
-    default_message = "Only the team's owner can do this."
+    default_message = "Only the pair space's owner can do this."
 
 
 class TooManyTeamsError(ConflictError):
     code = "too_many_teams"
-    default_message = "You're in the most teams allowed. Leave one first."
+    default_message = "You're in the most pair spaces allowed. Leave one first."
 
 
 class TooManyTeamsOwnedError(ConflictError):
     code = "too_many_teams_owned"
-    default_message = "You own the most teams allowed. Close one first."
+    default_message = "You own the most pair spaces allowed. Close one first."
 
 
 class TeamFullError(ConflictError):
     code = "team_full"
-    default_message = "This team is full."
+    default_message = "This pair space is full."
 
 
 class TooManyPendingInvitesError(ConflictError):
     code = "too_many_pending_invites"
-    default_message = "This team has the most open invites allowed."
+    default_message = "This pair space has the most open invites allowed."
 
 
 class AlreadyMemberError(ConflictError):
     code = "already_member"
-    default_message = "This person is already in the team."
+    default_message = "This person is already in the pair space."
 
 
 class TeamInviteExistsError(ConflictError):
     code = "team_invite_exists"
-    default_message = "This person already has an invite to this team."
+    default_message = "This person already has an invite to this pair space."
 
 
 class CannotInviteError(ConflictError):
     """Not connected, not available, or a block somewhere: the owner isn't told which."""
 
     code = "cannot_invite"
-    default_message = "This person can't be invited to this team."
+    default_message = "This person can't be invited to this pair space."
 
 
 class TeamNotAvailableError(ConflictError):
     code = "team_not_available"
-    default_message = "This team isn't available."
+    default_message = "This pair space isn't available."
 
 
 class TeamInviteNotPendingError(ConflictError):

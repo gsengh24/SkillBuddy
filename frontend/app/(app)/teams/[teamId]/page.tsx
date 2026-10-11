@@ -13,13 +13,13 @@ import { getConnections } from "@/lib/social/server";
 import { PURPOSE_LABELS, teamSize } from "@/lib/teams/labels";
 import { getTeam, getTeamChat, getTeamSpace, getTeams } from "@/lib/teams/server";
 
-export const metadata: Metadata = { title: "Team" };
+export const metadata: Metadata = { title: "Pair space" };
 export const dynamic = "force-dynamic";
 
 /** Section headings in the display face, as in a pair space. */
 const SECTION_HEADING = "font-display tracking-display text-[20px] leading-tight font-extrabold";
 
-/** One team: its chat, its people, and its goals, skills and notes. Members only. */
+/** One pair space (a team): its chat, its people, and its goals, skills and notes. Members only. */
 export default async function TeamPage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
   const featuresCall = getFeatures();
@@ -64,7 +64,7 @@ export default async function TeamPage({ params }: { params: Promise<{ teamId: s
           tone="muted"
           className="text-meta-lg inline-flex min-h-11 items-center self-start"
         >
-          All teams
+          All pair spaces
         </TextLink>
         <h1 className="text-headline lg:text-headline-lg break-words">{team.name}</h1>
         <p className="text-meta-lg text-muted">
@@ -75,7 +75,7 @@ export default async function TeamPage({ params }: { params: Promise<{ teamId: s
 
       <section aria-labelledby="team-chat-h" className="flex flex-col gap-3">
         <h2 id="team-chat-h" className={SECTION_HEADING}>
-          Team chat
+          Chat
         </h2>
         {chat ? (
           <TeamChat
@@ -103,13 +103,7 @@ export default async function TeamPage({ params }: { params: Promise<{ teamId: s
         <TeamPeople team={team} meId={user.id} invitable={invitable} />
       </section>
 
-      <SpaceView
-        space={space}
-        meId={user.id}
-        otherId=""
-        otherName="A teammate"
-        team={{ base: `/teams/${team.id}/space`, names }}
-      />
+      <SpaceView space={space} meId={user.id} team={{ base: `/teams/${team.id}/space`, names }} />
     </div>
   );
 }

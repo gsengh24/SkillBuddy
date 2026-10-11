@@ -53,7 +53,6 @@ const MESSAGES: Record<string, string> = {
   message_not_found: "That message no longer exists.",
   cannot_report_own_message: "You can only report messages the other person sent.",
   moderator_only: "Only moderators can do this.",
-  space_not_found: "This pair space isn't available.",
   goal_not_found: "That goal no longer exists.",
   skill_not_found: "That skill no longer exists.",
   log_not_found: "That note no longer exists.",

@@ -207,8 +207,8 @@ async def _ai_probe(ctx: JobContext) -> None:
 
 
 async def _purge_spaces(ctx: JobContext) -> None:
-    """Daily: old progress logs, and spaces whose connection ended long enough ago. Also
-    teams (ADR 0016): expired invites, and teams closed long enough ago."""
+    """Daily: old progress logs. Also teams (ADR 0016): expired invites, and teams closed
+    long enough ago."""
     async with ctx.session_factory() as db:
         await purge_spaces(db, ctx.settings, datetime.now(UTC))
         await purge_teams(db, ctx.settings, datetime.now(UTC))

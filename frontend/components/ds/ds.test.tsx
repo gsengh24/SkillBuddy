@@ -38,7 +38,7 @@ import {
   TwoToneHeadline,
 } from "./index";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/spaces/abc" }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/teams/abc" }));
 
 describe("Button", () => {
   it("is a real button, operable from the keyboard", async () => {
@@ -276,7 +276,7 @@ describe("Navigation", () => {
       <BottomNav
         items={[
           { href: "/home", label: "Home", icon: <HomeIcon /> },
-          { href: "/spaces", label: "Spaces", icon: <PeopleIcon /> },
+          { href: "/teams", label: "Spaces", icon: <PeopleIcon /> },
         ]}
       />,
     );

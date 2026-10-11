@@ -133,7 +133,7 @@ export const profileSchema = z.object({
   available_from: z.string().nullable().default(null),
   available_until: z.string().nullable().default(null),
   location_precision: z.enum(["city", "country", "hidden"]).default("city"),
-  /** The Google account picture connections see, or null when off (ADR 0017). */
+  /** The Google account picture connections see, or null when off (ADR 0018). */
   photo_url: z.string().nullable().default(null),
   /** A Google account picture is on file, so it can be switched on. */
   photo_available: z.boolean().default(false),
@@ -382,7 +382,7 @@ export type ModerationAccount = z.infer<typeof moderationAccountSchema>;
 
 export const moderationAccountListSchema = z.object({ items: z.array(moderationAccountSchema) });
 
-/** Pair spaces v1 (ADR 0013): a shared goal. */
+/** A goal shared in a pair space (ADR 0013). */
 export const goalSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -414,20 +414,15 @@ export const progressLogSchema = z.object({
 });
 export type ProgressLog = z.infer<typeof progressLogSchema>;
 
-export const spaceSchema = z.object({
-  connection_id: z.string(),
+/** A pair space is a team's: its goals, every member's skills and the newest notes (ADR 0018). */
+export const teamSpaceSchema = z.object({
+  team_id: z.string(),
   goals: z.array(goalSchema),
   skills: z.array(skillSchema),
   logs: z.array(progressLogSchema),
   retention_days: z.number(),
   max_goals: z.number(),
   max_skills_per_person: z.number(),
-});
-export type Space = z.infer<typeof spaceSchema>;
-
-/** A team's goals, every member's skills and the newest notes (ADR 0016). */
-export const teamSpaceSchema = spaceSchema.omit({ connection_id: true }).extend({
-  team_id: z.string(),
 });
 export type TeamSpace = z.infer<typeof teamSpaceSchema>;
 
@@ -528,9 +523,8 @@ export const featuresSchema = z.object({
     intro_requests: z.boolean(),
     chats: z.boolean(),
     ai_matching: z.boolean(),
-    pair_spaces: z.boolean(),
     email_notifications: z.boolean(),
-    // Off until an admin turns teams on (ADR 0016).
+    // Pair spaces (teams of up to six): off until an admin turns them on (ADR 0016, 0018).
     teams: z.boolean().default(false),
   }),
   message_max_length: z.number(),

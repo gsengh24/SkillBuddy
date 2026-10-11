@@ -85,7 +85,7 @@ describe("Home", () => {
     expect(screen.getByText(/You're signed in as/)).toHaveTextContent(USER.email);
     // The band sits under the composer.
     for (const band of screen.getAllByRole("link", { name: "Open pair spaces" })) {
-      expect(band).toHaveAttribute("href", "/spaces");
+      expect(band).toHaveAttribute("href", "/teams");
     }
   });
 
@@ -133,10 +133,6 @@ describe("Home", () => {
     await renderHome({ item: "chat-conn-1" });
     const pane = screen.getByRole("region", { name: "Opened item" });
     expect(within(pane).getByRole("heading", { name: "Aarav R." })).toBeInTheDocument();
-    expect(within(pane).getByRole("link", { name: "Pair space" })).toHaveAttribute(
-      "href",
-      "/spaces/conn-1",
-    );
     // Block and Report sit in the header's "⋯" menu.
     await userEvent
       .setup()

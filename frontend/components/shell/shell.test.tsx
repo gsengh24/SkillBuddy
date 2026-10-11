@@ -52,7 +52,7 @@ describe("AppShell", () => {
 
   it.each([
     ["/home", "Home"],
-    ["/spaces/42", "Spaces"],
+    ["/teams/42", "Spaces"],
     ["/you", "You"],
     ["/settings/blocked", "You"],
   ])("marks the current place on %s in both navs", (pathname, label) => {

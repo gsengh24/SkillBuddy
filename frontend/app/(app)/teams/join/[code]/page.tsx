@@ -9,7 +9,7 @@ import { getFeatures } from "@/lib/features";
 import { PURPOSE_LABELS, teamSize } from "@/lib/teams/labels";
 import { getTeamByLink } from "@/lib/teams/server";
 
-export const metadata: Metadata = { title: "Join a team" };
+export const metadata: Metadata = { title: "Join a pair space" };
 export const dynamic = "force-dynamic";
 
 /** Where an invite link lands: what the team is, and one button to join it. */
@@ -35,7 +35,7 @@ export default async function JoinTeamPage({ params }: { params: Promise<{ code:
           It may have run out or been turned off. Ask the person who sent it for a new one.
         </p>
         <ButtonLink href="/teams" variant="outline" className="self-start">
-          Go to Teams
+          Go to pair spaces
         </ButtonLink>
       </div>
     );
@@ -44,18 +44,18 @@ export default async function JoinTeamPage({ params }: { params: Promise<{ code:
   const full = team.member_count >= team.max_members;
   return (
     <div className="flex max-w-2xl flex-col gap-4">
-      <p className="text-meta-lg text-muted">You&apos;ve been invited to join a team</p>
+      <p className="text-meta-lg text-muted">You&apos;ve been invited to join a pair space</p>
       <h1 className="text-headline lg:text-headline-lg break-words">{team.name}</h1>
       <p className="text-meta-lg text-muted">
         {PURPOSE_LABELS[team.purpose]} · {teamSize(team.member_count, team.max_members)}
       </p>
       {team.description ? <p className="text-ink-2 break-words">{team.description}</p> : null}
       <p className="text-ink-2">
-        If you join, everyone in the team will see your name and can message you in the team chat.
-        You can leave at any time.
+        If you join, everyone in the pair space will see your name and can message you in the pair
+        space chat. You can leave at any time.
       </p>
       {full ? (
-        <p className="text-muted">This team is full right now.</p>
+        <p className="text-muted">This pair space is full right now.</p>
       ) : (
         <JoinByLink code={code} teamName={team.name} />
       )}

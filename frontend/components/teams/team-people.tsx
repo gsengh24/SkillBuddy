@@ -228,7 +228,7 @@ export function TeamPeople({
             </div>
           ) : null}
           {full ? (
-            <p className="text-meta-lg text-muted">This team is full.</p>
+            <p className="text-meta-lg text-muted">This pair space is full.</p>
           ) : choices.length ? (
             <form onSubmit={invite} className="flex flex-col gap-3">
               <label className="flex flex-col gap-1">
@@ -276,11 +276,11 @@ export function TeamPeople({
 
       <div className="border-line flex flex-wrap gap-3 border-t pt-4">
         <Button variant="outline" size="compact" disabled={busy} onClick={leave}>
-          Leave team
+          Leave pair space
         </Button>
         {isOwner ? (
           <Button variant="danger" size="compact" disabled={busy} onClick={close}>
-            Close team
+            Close pair space
           </Button>
         ) : null}
       </div>

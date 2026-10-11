@@ -1,7 +1,7 @@
 """Goals, skills to grow and progress notes inside a team (ADR 0016).
 
-The same three tables and the same rules as pair spaces (``app.services.spaces``), with the
-team in place of the connection:
+A pair space is a team (ADR 0018). The errors and the daily purge are in
+``app.services.spaces``; the rules:
 
 - Only members of an open team can see or change anything; anyone else gets "team not
   found".

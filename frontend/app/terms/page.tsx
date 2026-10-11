@@ -32,17 +32,17 @@ export default function TermsPage() {
         <p>
           {brand.displayName} suggests people you might want to build, learn or talk with, and
           explains why. Nobody is contacted unless both people agree to the introduction. Once you
-          are connected, you can chat and share a pair space (goals, skills to grow and progress
-          notes). Chat messages are deleted {retention.messageDays} days after they are sent, and
-          progress notes {retention.spaceDays} days after they are written.
+          are connected, you can chat. Chat messages are deleted {retention.messageDays} days after
+          they are sent.
         </p>
         <p>
-          You can also make or join a team of up to 6 people, with a team chat and shared goals,
-          skills and notes. You join a team only by your own choice: by accepting an invite, using
-          an invite link or asking to join a listed team. The people in a team can see your name and
-          message you in the team chat, even if you are not connected with them. A team&apos;s owner
-          can remove members and close the team, and is responsible for who they invite and for what
-          the team&apos;s listing says. You can leave a team at any time.
+          You can also make or join a pair space of up to 6 people, with a chat and shared goals,
+          skills to grow and progress notes. Progress notes are deleted {retention.spaceDays} days
+          after they are written. You join a pair space only by your own choice: by accepting an
+          invite, using an invite link or asking to join a listed pair space. The people in a pair
+          space can see your name and message you in its chat, even if you are not connected with
+          them. A pair space&apos;s owner can remove members and close it, and is responsible for
+          who they invite and for what its listing says. You can leave a pair space at any time.
         </p>
       </LegalSection>
 
@@ -73,11 +73,11 @@ export default function TermsPage() {
       <LegalSection id="reporting" title="Reporting and moderation">
         <p>
           You can report a message, an intro, a profile, or a goal or note in a pair space. In a
-          team you can report a chat message, a goal, a note or the team itself. Our moderator
-          reviews reports, using only the copy kept with each report, never whole conversations. We
-          may suspend accounts that break these terms. A suspended account is signed out and
-          can&apos;t sign in, be messaged or be suggested to anyone. How long report copies are kept
-          is in the{" "}
+          pair space you can report a chat message, a goal, a note or the pair space itself. Our
+          moderator reviews reports, using only the copy kept with each report, never whole
+          conversations. We may suspend accounts that break these terms. A suspended account is
+          signed out and can&apos;t sign in, be messaged or be suggested to anyone. How long report
+          copies are kept is in the{" "}
           <Link href="/privacy#reports" className={textLinkClasses()}>
             Privacy Policy
           </Link>

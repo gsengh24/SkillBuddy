@@ -47,12 +47,12 @@ export function FindTeammate({ teamId, full }: { teamId: string; full: boolean }
       <h3 className="text-title text-ink">Find a teammate</h3>
       {full ? (
         <p className="text-meta-lg text-muted">
-          The team is full, so there is no room to add anyone.
+          The pair space is full, so there is no room to add anyone.
         </p>
       ) : (
         <>
           <Textarea
-            label="Who does the team need?"
+            label="Who does the pair space need?"
             rows={2}
             maxLength={TEXT_MAX}
             showCounter={false}
@@ -61,8 +61,8 @@ export function FindTeammate({ teamId, full }: { teamId: string; full: boolean }
             placeholder="A designer who can prototype fast, free this weekend"
           />
           <p className="text-meta-lg text-muted">
-            We suggest people who fit. You can invite a suggestion to the team; they see why they
-            were suggested and decide. This counts as one of your requests for today.
+            We suggest people who fit. You can invite a suggestion to the pair space; they see why
+            they were suggested and decide. This counts as one of your requests for today.
           </p>
           {error ? <InlineError announce>{error}</InlineError> : null}
           <Button
@@ -103,18 +103,18 @@ export function InviteMatchToTeam({ teamId, matchId }: { teamId: string; matchId
   if (state === "sent") {
     return (
       <p className="text-meta-lg text-ink font-medium" role="status">
-        Invited to the team. They have 14 days to answer.
+        Invited to the pair space. They have 14 days to answer.
       </p>
     );
   }
   return (
     <div className="flex flex-col items-start gap-2">
       <Button variant="outline" disabled={state === "busy"} onClick={invite}>
-        Invite to team
+        Invite to pair space
       </Button>
       <p className="text-meta-lg text-muted">
-        They&apos;ll see the team&apos;s name and size and why they were suggested, not who is in
-        it.
+        They&apos;ll see the pair space&apos;s name and size and why they were suggested, not who is
+        in it.
       </p>
       {error ? <InlineError announce>{error}</InlineError> : null}
     </div>

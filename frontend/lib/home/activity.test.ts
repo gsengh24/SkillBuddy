@@ -142,12 +142,12 @@ describe("items and filters in the address", () => {
 });
 
 describe("summaryCounts", () => {
-  it("counts open requests, unread messages and pair spaces", () => {
+  it("counts open requests, unread messages and connections", () => {
     expect(
       summaryCounts({
         requests: [request(), request({ status: "pending" }), request({ status: "closed" })],
         connections: [connection({ unread_messages: 2 }), connection({ unread_messages: 1 })],
       }),
-    ).toEqual({ requests: 2, messages: 3, spaces: 2 });
+    ).toEqual({ requests: 2, messages: 3, connections: 2 });
   });
 });
