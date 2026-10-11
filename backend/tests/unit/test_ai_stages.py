@@ -16,6 +16,7 @@ from app.ai.stages.explain import (
     Judgement,
     Verdict,
     judged_score,
+    reason_is_safe,
     template_reason,
 )
 from app.ai.stages.understand import detect_intent
@@ -165,3 +166,29 @@ def test_quality_script_reports_on_every_pair(capsys: pytest.CaptureFixture[str]
 def test_auc_counts_ties_as_half() -> None:
     assert quality.auc([1.0, 0.5], [0.5]) == 0.75
     assert math.isnan(quality.auc([], [1.0]))
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "Both want to build a small web app and share an interest in climbing.",
+        "She offers Python tutoring and you are looking to learn Python.",
+    ],
+)
+def test_ordinary_reasons_are_kept(reason: str) -> None:
+    assert reason_is_safe(reason)
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "short",
+        "Great fit, reach out at someone@example.com for more.",
+        "Great fit, add them on t.me/someone today.",
+        "Great fit, DM me on telegram to start.",
+        "Great fit, write to jo gmail dot com after reading this.",
+        "C3 is a better match than C1 for your goal.",
+    ],
+)
+def test_reasons_with_contact_details_or_aliases_are_replaced(reason: str) -> None:
+    assert not reason_is_safe(reason)

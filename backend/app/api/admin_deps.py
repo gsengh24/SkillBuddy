@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Final
 
 from fastapi import Depends, Request
@@ -31,6 +32,7 @@ from app.services.admin.core import (
     AdminIdentity,
     AdminService,
     NotAdminError,
+    RecentSignInRequiredError,
     TwoStepRequiredError,
     identity,
     require,
@@ -57,6 +59,16 @@ class AdminContext:
     who: AdminIdentity
     session: AdminSession
     auth: AuthContext
+
+
+# Enrolling the first authenticator turns an ordinary session into an admin one, so a session
+# that was stolen (or left open) must not be enough: the person has just signed in.
+ENROLMENT_MAX_SESSION_AGE: Final = timedelta(minutes=15)
+
+
+async def require_recent_sign_in(auth: Annotated[AuthContext, Depends(get_auth)]) -> None:
+    if datetime.now(UTC) - auth.session.created_at > ENROLMENT_MAX_SESSION_AGE:
+        raise RecentSignInRequiredError
 
 
 def client_ip(request: Request) -> str | None:

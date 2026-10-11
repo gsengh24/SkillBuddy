@@ -154,3 +154,29 @@ def test_empty_environment_values_count_as_unset(
 def test_short_admin_token_is_rejected(make_settings: SettingsFactory) -> None:
     with pytest.raises(ValidationError, match="admin_api_token"):
         make_settings(admin_api_token="too-short")
+
+
+@pytest.mark.parametrize("environment", [Environment.STAGING, Environment.PRODUCTION])
+@pytest.mark.parametrize(
+    "secret",
+    [
+        "local-development-only-secret-not-for-real-use",
+        "migration-only-placeholder-not-used-for-anything",
+    ],
+)
+def test_deployed_environments_reject_public_secret_keys(
+    make_settings: SettingsFactory, environment: Environment, secret: str
+) -> None:
+    with pytest.raises(ValidationError, match="SECRET_KEY"):
+        make_settings(
+            environment=environment,
+            secret_key=secret,
+            cors_allow_origins=["https://app.example.com"],
+            email_backend="smtp",
+            embedding_backend="fastembed",
+        )
+
+
+def test_staging_rejects_debug(make_settings: SettingsFactory) -> None:
+    with pytest.raises(ValidationError, match="DEBUG"):
+        make_settings(environment=Environment.STAGING, debug=True)

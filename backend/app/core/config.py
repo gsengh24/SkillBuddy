@@ -25,6 +25,8 @@ GOOGLE_AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"  # noqa: S105  # a URL, not a secret
 GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
 GOOGLE_ISSUERS = ("https://accounts.google.com", "accounts.google.com")
+# Substrings of SECRET_KEY values that are published in this repository.
+_PUBLIC_SECRET_MARKERS = ("local-development", "placeholder")
 _DOMAIN_PATTERN = r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
 
 
@@ -405,14 +407,22 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _guard_production(self) -> Self:
-        if self.environment is Environment.PRODUCTION:
+        deployed = self.environment in {Environment.STAGING, Environment.PRODUCTION}
+        if deployed:
+            # Starlette's debug handler serves tracebacks with local variables, and staging
+            # holds real data too.
             if self.debug:
-                raise ValueError("DEBUG must be false in production")
+                raise ValueError("DEBUG must be false in staging and production")
+            # The keys below are public (compose file, CI, docs): anyone could forge the
+            # HMACs (one-time codes, CSRF, appeal tokens) made with them.
+            key = self.secret_key.get_secret_value().lower()
+            if any(marker in key for marker in _PUBLIC_SECRET_MARKERS):
+                raise ValueError("SECRET_KEY is a public development value; set a random one")
+        if self.environment is Environment.PRODUCTION:
             if "*" in self.cors_allow_origins:
                 raise ValueError("CORS_ALLOW_ORIGINS must not contain '*' in production")
             if self.db_echo:
                 raise ValueError("DB_ECHO must be false in production")
-        deployed = self.environment in {Environment.STAGING, Environment.PRODUCTION}
         if deployed and not self.session_cookie_secure:
             raise ValueError("SESSION_COOKIE_SECURE must be true in staging and production")
         if deployed and self.email_backend == "console":

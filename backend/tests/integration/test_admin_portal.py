@@ -222,6 +222,25 @@ async def test_each_role_is_held_to_the_permission_table(
 # --- the second step -----------------------------------------------------------------------
 
 
+async def test_two_step_enrolment_needs_a_recent_sign_in(
+    settings: Settings, delivery: CapturingDelivery, owner_email: str
+) -> None:
+    async with auth_client(settings, delivery) as client:
+        owner = await join(client, settings, delivery, owner_email)
+        run_sql(
+            settings.database_url.unicode_string(),
+            "UPDATE sessions SET created_at = now() - interval '1 hour'",
+        )
+        setup = await client.post(f"{ADMIN}/two-step/setup", headers=owner.headers)
+        confirm = await client.post(
+            f"{ADMIN}/two-step/confirm", json={"code": "123456"}, headers=owner.headers
+        )
+
+    assert setup.status_code == 403
+    assert error_code(setup) == "recent_sign_in_required"
+    assert error_code(confirm) == "recent_sign_in_required"
+
+
 async def test_two_step_login_with_codes_and_recovery_codes(
     settings: Settings, delivery: CapturingDelivery, owner_email: str
 ) -> None:

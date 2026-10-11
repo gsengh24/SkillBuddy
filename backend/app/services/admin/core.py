@@ -67,6 +67,12 @@ class TwoStepRequiredError(AppError):
     default_message = "Enter the code from your authenticator app to continue."
 
 
+class RecentSignInRequiredError(AppError):
+    status_code = HTTPStatus.FORBIDDEN
+    code = "recent_sign_in_required"
+    default_message = "Sign in again to set up two-step login."
+
+
 class TwoStepAlreadyEnabledError(ConflictError):
     code = "two_step_already_enabled"
     default_message = "Two-step login is already set up for this account."
