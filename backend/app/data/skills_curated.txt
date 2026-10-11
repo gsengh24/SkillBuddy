@@ -1,0 +1,98 @@
+# Hand-written skills and interests that O*NET's technology list does not cover. One per line;
+# lines starting with # are ignored. Earlier lines rank higher in suggestions.
+Python
+JavaScript
+TypeScript
+React
+Next.js
+Node.js
+SQL
+Machine learning
+Data analysis
+Data science
+UI design
+UX design
+Figma
+Product management
+Public speaking
+Writing
+Copywriting
+Content creation
+Video editing
+Photography
+Graphic design
+Illustration
+Music production
+Guitar
+Piano
+Singing
+Drawing
+Painting
+Chess
+Football
+Cricket
+Badminton
+Basketball
+Running
+Yoga
+Gym training
+Hiking
+Cycling
+Swimming
+Cooking
+Baking
+Gardening
+Reading
+Creative writing
+Poetry
+Languages
+English speaking
+Hindi
+Punjabi
+Spanish
+French
+German
+Japanese
+Korean
+Mandarin
+Entrepreneurship
+Startups
+Marketing
+Social media
+Sales
+Finance
+Investing
+Accounting
+Mathematics
+Statistics
+Physics
+Electronics
+Robotics
+Arduino
+3D printing
+Game development
+Unity
+Open source
+Competitive programming
+Cybersecurity
+Cloud computing
+DevOps
+Mobile app development
+Android development
+iOS development
+Flutter
+Technical writing
+Teaching
+Mentoring
+Research
+Debating
+Travel
+Film making
+Stand-up comedy
+Dancing
+Meditation
+Journaling
+Time management
+Interview preparation
+Resume writing
+Networking

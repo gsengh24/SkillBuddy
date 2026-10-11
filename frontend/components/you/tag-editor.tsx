@@ -1,13 +1,19 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { cx } from "@/components/ui/cx";
 import { MAX_PHRASES, PHRASE_MAX } from "@/lib/profile/limits";
+import { SKILL_SUGGEST_DELAY_MS } from "@/lib/profile/skills";
 
 /**
  * Tags with add-by-Enter and suggestions. "learn" tags are dashed, as in the reference.
- * Each tag has its own remove button; suggestions add on click.
+ * Each tag has its own remove button.
+ *
+ * With `search`, typing shows matching names in a dropdown (a combobox: arrow keys move,
+ * Enter picks, Escape closes). Enter with nothing highlighted still adds what was typed, so
+ * a skill the list does not know is never blocked. While nothing is typed, `suggestions`
+ * show as quick-add chips.
  */
 export function TagEditor({
   label,
@@ -15,6 +21,7 @@ export function TagEditor({
   placeholder,
   tags,
   suggestions,
+  search,
   variant = "offer",
   onChange,
 }: {
@@ -23,18 +30,58 @@ export function TagEditor({
   placeholder: string;
   tags: string[];
   suggestions: string[];
+  search?: (query: string) => Promise<string[]>;
   variant?: "offer" | "learn";
   onChange: (tags: string[]) => void;
 }) {
   const ids = useId();
   const [text, setText] = useState("");
+  const [found, setFound] = useState<string[]>([]);
+  const [active, setActive] = useState(-1);
   const full = tags.length >= MAX_PHRASES;
   const has = (value: string) => tags.some((t) => t.toLowerCase() === value.toLowerCase());
+  const options = found.filter((name) => !has(name));
+  const open = options.length > 0 && !full;
+
+  useEffect(() => {
+    const query = text.trim();
+    if (!search || !query) return;
+    // Results arriving after the text moved on (or the editor went away) are dropped.
+    let current = true;
+    const timer = setTimeout(() => {
+      search(query)
+        .then((names) => {
+          if (!current) return;
+          setFound(names);
+          setActive(-1);
+        })
+        .catch(() => {
+          if (current) setFound([]);
+        });
+    }, SKILL_SUGGEST_DELAY_MS);
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
+  }, [text, search]);
+
+  function change(value: string) {
+    setText(value);
+    if (!value.trim()) {
+      setFound([]);
+      setActive(-1);
+    }
+  }
 
   function add(value: string) {
     const clean = value.trim().slice(0, PHRASE_MAX);
     if (!clean || has(clean) || full) return;
     onChange([...tags, clean]);
+  }
+
+  function pick(value: string) {
+    add(value);
+    change("");
   }
 
   return (
@@ -67,29 +114,75 @@ export function TagEditor({
           ))}
         </ul>
       ) : null}
-      <input
-        id={`${ids}-input`}
-        aria-label={inputLabel}
-        aria-describedby={full ? `${ids}-full` : undefined}
-        placeholder={placeholder}
-        maxLength={PHRASE_MAX}
-        disabled={full}
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key !== "Enter") return;
-          event.preventDefault();
-          add(text);
-          setText("");
-        }}
-        className="rounded-input border-muted-2 bg-bg text-ink placeholder:text-muted focus:border-green sm:text-body disabled:bg-panel h-11 w-full border px-3 text-[16px]"
-      />
+      <div className="relative">
+        <input
+          id={`${ids}-input`}
+          role={search ? "combobox" : undefined}
+          aria-expanded={search ? open : undefined}
+          aria-controls={search && open ? `${ids}-list` : undefined}
+          aria-autocomplete={search ? "list" : undefined}
+          aria-activedescendant={open && active >= 0 ? `${ids}-option-${active}` : undefined}
+          aria-label={inputLabel}
+          aria-describedby={full ? `${ids}-full` : undefined}
+          placeholder={placeholder}
+          maxLength={PHRASE_MAX}
+          disabled={full}
+          autoComplete="off"
+          value={text}
+          onChange={(event) => change(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown" && open) {
+              event.preventDefault();
+              setActive((i) => (i + 1) % options.length);
+            } else if (event.key === "ArrowUp" && open) {
+              event.preventDefault();
+              setActive((i) => (i <= 0 ? options.length - 1 : i - 1));
+            } else if (event.key === "Escape" && open) {
+              event.preventDefault();
+              setFound([]);
+              setActive(-1);
+            } else if (event.key === "Enter") {
+              event.preventDefault();
+              pick((open ? options[active] : undefined) ?? text);
+            }
+          }}
+          className="rounded-input border-muted-2 bg-bg text-ink placeholder:text-muted focus:border-green sm:text-body disabled:bg-panel h-11 w-full border px-3 text-[16px]"
+        />
+        {open ? (
+          <ul
+            id={`${ids}-list`}
+            role="listbox"
+            aria-label={`${inputLabel}: suggestions`}
+            className="rounded-input border-line bg-bg absolute inset-x-0 top-full z-10 mt-1 max-h-64 overflow-auto border py-1"
+          >
+            {options.map((name, index) => (
+              <li
+                key={name}
+                id={`${ids}-option-${index}`}
+                role="option"
+                aria-selected={index === active}
+                // Mouse down, not click: the input must not lose focus first.
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  pick(name);
+                }}
+                className={cx(
+                  "text-ink text-body flex min-h-11 cursor-pointer items-center px-3",
+                  index === active ? "bg-panel" : "hover:bg-panel",
+                )}
+              >
+                {name}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
       {full ? (
         <p id={`${ids}-full`} className="text-meta text-muted">
           That&apos;s {MAX_PHRASES}, the most you can add. Remove one to add another.
         </p>
       ) : null}
-      {suggestions.some((s) => !has(s)) && !full ? (
+      {!text && suggestions.some((s) => !has(s)) && !full ? (
         <div className="flex flex-wrap gap-1.5">
           {suggestions
             .filter((s) => !has(s))

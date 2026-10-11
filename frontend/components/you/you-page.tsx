@@ -28,6 +28,7 @@ import {
 import { describeError } from "@/lib/auth/messages";
 import { brand } from "@/lib/brand";
 import { ABOUT_MAX, ABOUT_MIN, LANGUAGES, LINK_PATTERN, NAME_MAX } from "@/lib/profile/limits";
+import { searchSkills } from "@/lib/profile/skills";
 import {
   CITY_MAX,
   DAYS,
@@ -595,6 +596,7 @@ export function YouPage({ profile, account }: Props) {
                 placeholder="Add a skill and press Enter"
                 tags={draft.offers}
                 suggestions={OFFER_SUGGESTIONS}
+                search={searchSkills}
                 onChange={(tags) => set("offers", tags)}
               />
               <TagEditor
@@ -603,6 +605,7 @@ export function YouPage({ profile, account }: Props) {
                 placeholder="Add a topic and press Enter"
                 tags={draft.seeks}
                 suggestions={LEARN_SUGGESTIONS}
+                search={searchSkills}
                 variant="learn"
                 onChange={(tags) => set("seeks", tags)}
               />
