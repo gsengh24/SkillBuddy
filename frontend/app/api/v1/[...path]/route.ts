@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { clientIpFromHeaders } from "@/lib/client-ip";
 import { getServerEnv } from "@/lib/env";
 
 /**
@@ -56,8 +57,13 @@ async function forward(
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
-  // Pass the client address on so per-IP rate limits apply to the person, not this server.
-  const clientIp = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip");
+  // Pass one trusted client address on so per-IP rate limits apply to the person, not this
+  // server. Never copy the visitor's own X-Forwarded-For: they could pick any address.
+  const clientIp = clientIpFromHeaders(
+    request.headers.get("x-forwarded-for"),
+    request.headers.get("x-real-ip"),
+    getServerEnv().TRUSTED_PROXY_HOPS,
+  );
   if (clientIp) headers.set("x-forwarded-for", clientIp);
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";

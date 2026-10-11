@@ -302,7 +302,11 @@ async def build_export(db: AsyncSession, settings: Settings, export_id: uuid.UUI
 
 
 async def download(db: AsyncSession, user: User, export_id: uuid.UUID, token: str) -> bytes:
-    """The JSON file, for its owner with the emailed token, until the link expires."""
+    """The JSON file, once, for its owner with the emailed token, before the link expires.
+
+    The file and the token are dropped as soon as it is served, so a leaked link or a copied
+    token is worthless afterwards and the stored copy of personal data is gone early. The
+    person can ask for a new export."""
     export = await db.get(DataExport, export_id)
     if export is None or export.user_id != user.id:
         raise DataExportNotFoundError
@@ -317,6 +321,8 @@ async def download(db: AsyncSession, user: User, export_id: uuid.UUID, token: st
         raise DataExportUnavailableError
     export.downloaded_at = now
     data = gzip.decompress(export.payload)
+    export.payload = None
+    export.token_hash = None
     await db.commit()
     return data
 

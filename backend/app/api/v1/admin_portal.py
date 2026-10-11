@@ -16,6 +16,7 @@ from app.api.admin_deps import (
     DbDep,
     client_ip,
     require_admin,
+    require_recent_sign_in,
 )
 from app.api.deps import SettingsDep, require_json
 from app.api.session_cookies import clear_admin_session_cookie, set_admin_session_cookie
@@ -72,6 +73,7 @@ async def two_step_status(who: AdminIdentityDep) -> TwoStepStatusOut:
 @router.post(
     "/two-step/setup",
     summary="Start setting up two-step login",
+    dependencies=[Depends(require_recent_sign_in)],
     responses={HTTPStatus.CONFLICT.value: {"model": ErrorResponse}},
 )
 async def two_step_setup(who: AdminIdentityDep, service: AdminServiceDep) -> TwoStepSetupOut:
@@ -83,7 +85,7 @@ async def two_step_setup(who: AdminIdentityDep, service: AdminServiceDep) -> Two
 @router.post(
     "/two-step/confirm",
     summary="Turn two-step login on with a first code",
-    dependencies=[Depends(require_json)],
+    dependencies=[Depends(require_json), Depends(require_recent_sign_in)],
     responses={
         HTTPStatus.BAD_REQUEST.value: {"model": ErrorResponse},
         HTTPStatus.CONFLICT.value: {"model": ErrorResponse},

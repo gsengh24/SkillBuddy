@@ -186,6 +186,9 @@ async def test_data_export_is_built_in_a_job_emailed_and_downloaded(
         download = await client.get(
             f"{EXPORTS}/{link_export}/download", params={"token": token}, headers=asha.headers
         )
+        second_download = await client.get(
+            f"{EXPORTS}/{link_export}/download", params={"token": token}, headers=asha.headers
+        )
         wrong_token = await client.get(
             f"{EXPORTS}/{link_export}/download", params={"token": "x" * 43}, headers=asha.headers
         )
@@ -219,6 +222,7 @@ async def test_data_export_is_built_in_a_job_emailed_and_downloaded(
     assert data["connections"][0]["other_display_name"] == "Ravi"
     assert data["intros"][0]["direction"] == "sent"
     assert error_code(wrong_token) == "data_export_unavailable"
+    assert error_code(second_download) == "data_export_unavailable"
     assert error_code(not_hers) == "data_export_not_found"
     assert listed[0]["status"] == "ready"
     assert listed[0]["downloaded_at"] is not None

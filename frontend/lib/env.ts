@@ -12,6 +12,11 @@ import { z } from "zod";
 const serverEnvSchema = z.object({
   /** Base URL the Next.js server uses to reach the API, e.g. http://api:8000 in Docker. */
   API_INTERNAL_URL: z.url().transform((url) => url.replace(/\/+$/, "")),
+  /**
+   * How many reverse proxies sit in front of this server (Render: 1; Cloudflare in front of
+   * Render: 2). Used to read the visitor's address from the right of X-Forwarded-For.
+   */
+  TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

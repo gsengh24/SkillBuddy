@@ -27,6 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.ai.candidates import MAX_CANDIDATES, CandidateSummary, anonymise, describe
 from app.ai.gateway import AIGateway, Prompt, Source, Task
+from app.ai.privacy import find_leaks
 from app.ai.prompts import load_prompt
 from app.ai.stages.understand import Understanding
 
@@ -43,6 +44,27 @@ DEFAULT_MIN_JUDGED: Final = 0.4
 JUDGED_WEIGHT: Final = 0.7
 # A shorter reason than this is treated as missing (the template writes one instead).
 MIN_REASON_CHARS: Final = 10
+# A reason is prose about two profiles. A candidate's own text could talk the model into
+# echoing obfuscated contact details ("g m a i l dot com") or the candidate aliases, so the
+# output is checked as well as the input (OWASP A03/A04); anything odd falls back to the
+# template.
+_ALIAS_IN_REASON: Final = re.compile(r"C\d{1,2}")
+_CONTACT_HINT: Final = re.compile(
+    r"(?:dm|pm|text|call|ping|add|message|contact)\s+(?:me|us|him|her|them)"
+    r"|(?:whats\s?app|telegram|discord|signal|snapchat|instagram|gmail|hotmail|outlook|"
+    r"yahoo|linktree)"
+    r"|\w+\s+(?:dot|at)\s+(?:com|net|org|io|me|co)|t\.me",
+    re.IGNORECASE,
+)
+
+
+def reason_is_safe(reason: str) -> bool:
+    """Whether a model-written reason may be shown to the requester as it is."""
+    if len(reason) < MIN_REASON_CHARS:
+        return False
+    if find_leaks(reason):
+        return False
+    return not (_ALIAS_IN_REASON.search(reason) or _CONTACT_HINT.search(reason))
 _WORD: Final = re.compile(r"[a-z0-9+#.]+")
 _STOP: Final = frozenset(
     [
@@ -240,7 +262,7 @@ async def explain(
                     Explained(
                         candidate.summary.user_id,
                         found.reason
-                        if len(found.reason) >= MIN_REASON_CHARS
+                        if reason_is_safe(found.reason)
                         else template_reason(request, candidate.summary),
                     )
                     for _, candidate, found in kept[:max_picks]
