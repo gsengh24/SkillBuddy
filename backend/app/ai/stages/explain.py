@@ -65,6 +65,8 @@ def reason_is_safe(reason: str) -> bool:
     if find_leaks(reason):
         return False
     return not (_ALIAS_IN_REASON.search(reason) or _CONTACT_HINT.search(reason))
+
+
 _WORD: Final = re.compile(r"[a-z0-9+#.]+")
 _STOP: Final = frozenset(
     [
