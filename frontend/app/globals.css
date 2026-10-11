@@ -40,34 +40,11 @@
 }
 
 /*
- * Dark theme (Home reference). The same variable names, so every component that uses the
- * palette follows. It applies when the device prefers dark, unless the page says
- * data-theme="light"; data-theme="dark" forces it. The ink inbox pane keeps its own colours.
+ * Dark only (ADR 0017): the app is always dark, whatever the device prefers. The same variable
+ * names as above, so every component that uses the palette follows. The ink inbox pane keeps
+ * its own colours. (The landing page is a separate static document and is not touched.)
  */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #0b0c0b;
-    --panel: #141614;
-    --line: #262826;
-    --line-strong: #323532;
-    --ink: #f3f4f1;
-    --ink-hover: #ffffff;
-    --ink-2: #c9ccc6;
-    --muted: #a9ada7;
-    --muted-2: #8a8e88;
-    --faint: #4a4d49;
-    --green: #7be0a8;
-    --green-hover: #9fd1b6;
-    --green-tint: #142219;
-    --green-line: #2a4536;
-    --green-soft: #101a14;
-    --danger: #ff8a80;
-    --card: #111311;
-  }
-}
-
-:root[data-theme="dark"] {
+:root {
   color-scheme: dark;
   --bg: #0b0c0b;
   --panel: #141614;
