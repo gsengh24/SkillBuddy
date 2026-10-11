@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ds/avatar";
 import { QuickRespond } from "@/components/home/quick-respond";
 import { cx } from "@/components/ui/cx";
 import { itemHref, type ActivityRow, type Filter } from "@/lib/home/activity";
+import { CHAT_READ } from "@/lib/home/changed";
 
 type Sub = "mine" | "intros";
 
@@ -185,6 +186,18 @@ export function ActivityList({
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [sub, setSub] = useState<Sub>("mine");
   const [answered, setAnswered] = useState<string[]>([]);
+  // Chats opened since these rows were loaded: their unread dot is cleared here, with no
+  // re-fetch (the server has marked them read). New rows from the server replace this.
+  const [read, setRead] = useState<{ rows: ActivityRow[]; ids: string[] }>({ rows, ids: [] });
+  useEffect(() => {
+    const onRead = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail;
+      setRead((current) => ({ rows, ids: [...(current.rows === rows ? current.ids : []), id] }));
+    };
+    window.addEventListener(CHAT_READ, onRead);
+    return () => window.removeEventListener(CHAT_READ, onRead);
+  }, [rows]);
+  const readIds = read.rows === rows ? read.ids : [];
   const requestRows = rows.filter((row) => row.group === "requests");
   const count = {
     all: rows.length,
@@ -199,7 +212,13 @@ export function ActivityList({
       : filter === "messages"
         ? rows.filter((row) => row.group === "messages")
         : requestRows.filter((row) => row.sub === sub)
-  ).filter((row) => !answered.includes(row.key));
+  )
+    .filter((row) => !answered.includes(row.key))
+    .map((row) =>
+      row.type === "chat" && row.unread && readIds.includes(row.id)
+        ? { ...row, unread: false }
+        : row,
+    );
   const empty = EMPTY[filter];
 
   // On desktop the right side is never left blank behind a list: choosing a tab opens its

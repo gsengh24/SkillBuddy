@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AppNotification, Intro, Match } from "@/lib/api/schemas";
+import { HOME_CHANGED } from "@/lib/home/changed";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 
@@ -77,6 +78,23 @@ describe("SendIntro", () => {
     expect(await screen.findByText(/Intro sent/)).toBeInTheDocument();
   });
 
+  it("tells Home's inbox to re-fetch once the intro is sent", async () => {
+    const user = userEvent.setup();
+    const changed = vi.fn();
+    window.addEventListener(HOME_CHANGED, changed);
+    try {
+      fetchMock.mockResolvedValueOnce(json(201, { ...INTRO, direction: "sent" }));
+      render(<SendIntro match={MATCH} hue="green" />);
+      await user.click(screen.getByRole("button", { name: "Send intro" }));
+      expect(changed).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Send intro" }));
+      await screen.findByText(/Intro sent/);
+      expect(changed).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(HOME_CHANGED, changed);
+    }
+  });
+
   it("shows the state of an intro already sent or accepted", () => {
     const { rerender } = render(
       <SendIntro match={{ ...MATCH, status: "intro_sent" }} hue="green" />,
@@ -137,6 +155,28 @@ describe("IntroCard", () => {
     render(<IntroCard initial={INTRO} />);
     await user.click(screen.getByRole("button", { name: "Decline" }));
     expect(await screen.findByText(/Declined. They won't be told./)).toBeInTheDocument();
+  });
+
+  it("tells Home's inbox to re-fetch after an answer, not after a failed one", async () => {
+    const user = userEvent.setup();
+    const changed = vi.fn();
+    window.addEventListener(HOME_CHANGED, changed);
+    try {
+      fetchMock.mockResolvedValueOnce(
+        json(500, { error: { code: "x", message: "x", request_id: null, details: null } }),
+      );
+      render(<IntroCard initial={INTRO} />);
+      await user.click(screen.getByRole("button", { name: "Accept" }));
+      await screen.findByRole("alert");
+      expect(changed).not.toHaveBeenCalled();
+
+      fetchMock.mockResolvedValueOnce(json(200, { ...INTRO, status: "accepted" }));
+      await user.click(screen.getByRole("button", { name: "Accept" }));
+      await screen.findByText(/You're connected/);
+      expect(changed).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(HOME_CHANGED, changed);
+    }
   });
 });
 

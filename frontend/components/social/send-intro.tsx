@@ -8,6 +8,7 @@ import { browserApi } from "@/lib/api/browser";
 import { introSchema, type Match } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import type { HueName } from "@/lib/design/tokens";
+import { notifyHomeChanged } from "@/lib/home/changed";
 
 const NOTE_MAX = 500;
 
@@ -90,6 +91,7 @@ export function SendIntro({
         body: { note: note.trim() },
       });
       setStage("sent");
+      notifyHomeChanged();
     } catch (caught) {
       setError(describeError(caught));
     } finally {

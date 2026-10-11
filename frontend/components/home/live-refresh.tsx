@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+import { HOME_CHANGED } from "@/lib/home/changed";
+
 const FAST_MS = 20_000;
 const SLOW_MS = 60_000;
 // Coming back to the tab refreshes at once, unless it refreshed a moment ago.
@@ -12,6 +14,7 @@ const MIN_GAP_MS = 30_000;
  * Keeps Home current without a reload while the tab is visible: every 20 s while a request is
  * still being matched (`fast`), otherwise every 60 s, and when the person comes back to the
  * tab. Each refresh re-runs the whole page and the shell on the server, so it is kept sparing.
+ * It also refreshes at once when something the inbox shows has changed (`notifyHomeChanged`).
  * Renders nothing.
  */
 export function LiveRefresh({ fast = false }: { fast?: boolean }) {
@@ -33,9 +36,11 @@ export function LiveRefresh({ fast = false }: { fast?: boolean }) {
     };
     const timer = window.setInterval(tick, fast ? FAST_MS : SLOW_MS);
     document.addEventListener("visibilitychange", comeBack);
+    window.addEventListener(HOME_CHANGED, refresh);
     return () => {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", comeBack);
+      window.removeEventListener(HOME_CHANGED, refresh);
     };
   }, [router, fast]);
   return null;

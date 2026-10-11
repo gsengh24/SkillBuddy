@@ -9,6 +9,7 @@ import type { Match, MatchRequest } from "@/lib/api/schemas";
 import { connection, intro, request } from "@/lib/home/fixtures";
 
 import MessagesPage from "../messages/page";
+import HomeLayout from "./layout";
 import HomePage from "./page";
 
 vi.mock("server-only", () => ({}));
@@ -16,7 +17,8 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ has: () => true, toString: () => "session=x" }),
 }));
 const REDIRECT = vi.hoisted(() => new Error("NEXT_REDIRECT"));
-const navigation = vi.hoisted(() => ({ redirect: vi.fn() }));
+// `search` is what the inbox and detail panes read from the address (useSearchParams).
+const navigation = vi.hoisted(() => ({ redirect: vi.fn(), search: "" }));
 vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
     navigation.redirect(to);
@@ -26,6 +28,7 @@ vi.mock("next/navigation", () => ({
     throw new Error("NEXT_NOT_FOUND");
   },
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(navigation.search),
   usePathname: () => "/home",
 }));
 // The opened item's own components talk to the API from the browser; keep them quiet.
@@ -74,6 +77,13 @@ beforeEach(() => {
     if (path === "/api/v1/auth/me") return USER;
     if (path === "/api/v1/me/profile") return PROFILE;
     if (path === "/api/v1/requests/req-1/matches") return { items: [MATCH] };
+    // One item, by its own endpoint (a request that is not in the list yet is still there).
+    if (path === "/api/v1/requests/req-1") return request({ status: requestStatus });
+    if (path === "/api/v1/requests/req-2") return request({ id: "req-2", text: "Just created" });
+    if (path === "/api/v1/intros/intro-1") return intro();
+    if (path.startsWith("/api/v1/requests/") || path.startsWith("/api/v1/intros/")) {
+      throw new ApiError(404, undefined, undefined);
+    }
     if (path.startsWith("/api/v1/requests")) {
       return { items: [request({ status: requestStatus })], next_cursor: null };
     }
@@ -94,8 +104,10 @@ function calledPaths(): string[] {
   return vi.mocked(apiRequest).mock.calls.map(([path]) => path);
 }
 
+/** Home as the app renders it: the layout (frame and inbox) around the page (the open item). */
 async function renderHome(params: { item?: string; filter?: string } = {}) {
-  render(await HomePage({ searchParams: Promise.resolve(params) }));
+  navigation.search = new URLSearchParams(params).toString();
+  render(await HomeLayout({ children: await HomePage({ searchParams: Promise.resolve(params) }) }));
 }
 
 describe("Home", () => {
@@ -150,7 +162,7 @@ describe("Home", () => {
     const pane = screen.getByRole("region", { name: "Opened item" });
     expect(within(pane).getByText("Final-year design student.")).toBeInTheDocument();
     expect(new Set(calledPaths())).toEqual(
-      new Set([...LIST_CALLS, "/api/v1/requests/req-1/matches"]),
+      new Set([...LIST_CALLS, "/api/v1/requests/req-1", "/api/v1/requests/req-1/matches"]),
     );
     expect(browserApi).not.toHaveBeenCalled();
   });
@@ -230,8 +242,79 @@ describe("Home", () => {
     vi.mocked(apiRequest).mockImplementation(async () => {
       throw new ApiError(401, undefined, undefined);
     });
-    await expect(HomePage({ searchParams: Promise.resolve({}) })).rejects.toBe(REDIRECT);
+    await expect(HomeLayout({ children: null })).rejects.toBe(REDIRECT);
     expect(navigation.redirect).toHaveBeenCalledWith("/login?next=/home");
+    navigation.redirect.mockClear();
+    // An open item checks the session itself: the layout does not re-run when it changes.
+    await expect(
+      HomePage({ searchParams: Promise.resolve({ item: "request-req-1" }) }),
+    ).rejects.toBe(REDIRECT);
+    expect(navigation.redirect).toHaveBeenCalledWith("/login?next=/home");
+  });
+});
+
+describe("Home, opening an item", () => {
+  // The layout (with the lists) does not re-run when only ?item= changes, so a click renders
+  // the page alone. Its calls are the whole cost of the click.
+  it("a request costs the session check, the request and its matches: no lists", async () => {
+    render(await HomePage({ searchParams: Promise.resolve({ item: "request-req-1" }) }));
+    expect(new Set(calledPaths())).toEqual(
+      new Set(["/api/v1/auth/me", "/api/v1/requests/req-1", "/api/v1/requests/req-1/matches"]),
+    );
+    expect(await screen.findByText("Final-year design student.")).toBeInTheDocument();
+  });
+
+  it("an intro costs the session check and the intro", async () => {
+    render(await HomePage({ searchParams: Promise.resolve({ item: "intro-intro-1" }) }));
+    expect(new Set(calledPaths())).toEqual(new Set(["/api/v1/auth/me", "/api/v1/intros/intro-1"]));
+    expect(screen.getByRole("button", { name: /Accept/ })).toBeInTheDocument();
+  });
+
+  it("a chat costs the session check, the connections and its own messages", async () => {
+    render(await HomePage({ searchParams: Promise.resolve({ item: "chat-conn-1" }) }));
+    expect(new Set(calledPaths())).toEqual(
+      new Set([
+        "/api/v1/auth/me",
+        "/api/v1/connections",
+        "/api/v1/messages/updates",
+        "/api/v1/connections/conn-1/messages?limit=50",
+      ]),
+    );
+    expect(screen.getByRole("heading", { name: "Aarav R." })).toBeInTheDocument();
+  });
+
+  it("with nothing open the page renders nothing and calls nothing: the layout has the composer", async () => {
+    expect(await HomePage({ searchParams: Promise.resolve({}) })).toBeNull();
+    expect(await HomePage({ searchParams: Promise.resolve({ item: "junk" }) })).toBeNull();
+    expect(calledPaths()).toEqual([]);
+  });
+
+  it("the layout alone makes the list calls, and none for an item", async () => {
+    navigation.search = "";
+    render(await HomeLayout({ children: null }));
+    expect(new Set(calledPaths())).toEqual(new Set(LIST_CALLS));
+  });
+
+  it("opens a request that is not in the inbox list yet, such as one just made", async () => {
+    await renderHome({ item: "request-req-2" });
+    const pane = screen.getByRole("region", { name: "Opened item" });
+    expect(within(pane).getByText("“Just created”")).toBeInTheDocument();
+  });
+
+  it.each(["request-gone", "intro-gone"])(
+    "says %s is not available when it is not there",
+    async (item) => {
+      await renderHome({ item });
+      expect(screen.getByText("This isn't available any more.")).toBeInTheDocument();
+    },
+  );
+
+  it("takes the first ?item= when the address has several, as the panes do", async () => {
+    const page = await HomePage({
+      searchParams: Promise.resolve({ item: ["request-req-1", "intro-intro-1"] }),
+    });
+    expect(page).not.toBeNull();
+    expect(calledPaths()).toContain("/api/v1/requests/req-1");
   });
 });
 

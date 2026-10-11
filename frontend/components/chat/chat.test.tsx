@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Message } from "@/lib/api/schemas";
 import { delayAfterError, nextPollDelay } from "@/lib/chat/cadence";
+import { CHAT_READ } from "@/lib/home/changed";
 
 import { Conversation } from "./conversation";
 
@@ -112,6 +113,49 @@ describe("Conversation", () => {
     renderConversation([message(1, THEM, "Hi")], true);
     await act(() => vi.advanceTimersByTimeAsync(0));
     expect(readCalls()).toHaveLength(1);
+  });
+
+  it("tells Home's inbox which chat was marked read, so its unread dot clears", async () => {
+    const read = vi.fn();
+    window.addEventListener(CHAT_READ, read);
+    try {
+      renderConversation([message(1, THEM, "Hi")], true);
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      expect(read).toHaveBeenCalledTimes(1);
+      expect((read.mock.calls[0]?.[0] as CustomEvent<string>).detail).toBe(CONNECTION);
+    } finally {
+      window.removeEventListener(CHAT_READ, read);
+    }
+  });
+
+  it("does not tell the inbox anything when there was nothing to mark read", async () => {
+    const read = vi.fn();
+    window.addEventListener(CHAT_READ, read);
+    try {
+      renderConversation([message(1, THEM, "Hi")], false);
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      expect(read).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener(CHAT_READ, read);
+    }
+  });
+
+  it("does not tell the inbox when marking read failed", async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url).endsWith("/read")
+        ? json(500, { error: { code: "x", message: "x" } })
+        : json(200, updates([])),
+    );
+    const read = vi.fn();
+    window.addEventListener(CHAT_READ, read);
+    try {
+      renderConversation([message(1, THEM, "Hi")], true);
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      expect(readCalls()).toHaveLength(1);
+      expect(read).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener(CHAT_READ, read);
+    }
   });
 
   it("sends a message and shows it", async () => {

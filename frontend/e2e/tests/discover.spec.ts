@@ -61,5 +61,6 @@ test("ask for matches from Discover and see the request finish", async ({ page, 
   await expectNoViolations(page);
 
   await page.getByRole("button", { name: "Close this request" }).click();
-  await expect(page.getByText("Closed")).toBeVisible();
+  // The opened request says it is closed; its row in the inbox says so too, at once.
+  await expect(page.getByRole("region", { name: "Opened item" }).getByText("Closed")).toBeVisible();
 });

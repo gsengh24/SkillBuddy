@@ -1,6 +1,8 @@
 import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { notifyHomeChanged } from "@/lib/home/changed";
+
 import { LiveRefresh } from "./live-refresh";
 
 const router = vi.hoisted(() => ({ refresh: vi.fn() }));
@@ -68,11 +70,20 @@ describe("LiveRefresh", () => {
     expect(router.refresh).toHaveBeenCalledTimes(1);
   });
 
+  it("refreshes at once when something the inbox shows has changed, even just after a refresh", () => {
+    render(<LiveRefresh />);
+    notifyHomeChanged();
+    expect(router.refresh).toHaveBeenCalledTimes(1);
+    notifyHomeChanged();
+    expect(router.refresh).toHaveBeenCalledTimes(2);
+  });
+
   it("stops when it is removed", () => {
     const { unmount } = render(<LiveRefresh fast />);
     unmount();
     vi.advanceTimersByTime(120_000);
     comeBackToTab();
+    notifyHomeChanged();
     expect(router.refresh).not.toHaveBeenCalled();
   });
 });

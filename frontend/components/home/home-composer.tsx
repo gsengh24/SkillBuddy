@@ -10,6 +10,7 @@ import { matchRequestSchema } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { INTENTS, intents, type Intent } from "@/lib/design/tokens";
 import { itemHref } from "@/lib/home/activity";
+import { notifyHomeChanged } from "@/lib/home/changed";
 
 const MIN = 10;
 // The request limit the API and the old composer use.
@@ -167,8 +168,10 @@ export function HomeComposer() {
       setText("");
       setIntent(null);
       setStatus("Looking for matches…");
-      // Open the new request: it shows its matches as they arrive.
+      // Open the new request: it shows its matches as they arrive. The inbox does not know it
+      // yet, so it re-fetches its lists (queued after the navigation, so it sees the new item).
       router.push(itemHref("request", created.id));
+      notifyHomeChanged();
     } catch (caught) {
       setError(describeError(caught));
     } finally {
