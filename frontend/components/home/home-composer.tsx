@@ -226,11 +226,11 @@ export function HomeComposer() {
         </div>
         <fieldset
           className={cx(
-            "m-0 min-w-0 border-0 p-0",
+            "m-0 mt-[18px] min-w-0 border-0 p-0",
             open ? "flex flex-col" : "hidden lg:flex lg:flex-col",
           )}
         >
-          <legend className="text-green mt-[18px] mb-2.5 p-0 font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase">
+          <legend className="text-green mb-2.5 block w-full p-0 font-mono text-[11px] leading-[1.4] font-medium tracking-[0.08em] uppercase">
             What kind of help
           </legend>
           <div className="flex flex-wrap gap-2">

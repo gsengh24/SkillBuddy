@@ -173,7 +173,7 @@ export function RequestCard({ initial }: { initial: MatchRequest }) {
           variant="ghost"
           onClick={close}
           disabled={closing}
-          className="border-line-strong mt-5 self-start rounded-[10px] border"
+          className="border-line-strong! mt-5 self-start rounded-[10px]"
         >
           {closing ? "Closing…" : "Close this request"}
         </Button>
