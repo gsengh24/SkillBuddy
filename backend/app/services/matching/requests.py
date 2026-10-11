@@ -24,8 +24,10 @@ from app.models import (
     Match,
     MatchRequest,
     Profile,
+    ProfileVisibility,
     RequestStatus,
     User,
+    UserStatus,
 )
 from app.services import app_settings, blocks, content_rules, teams
 from app.services.auth.rate_limit import RateLimiter
@@ -172,8 +174,15 @@ class MatchRequestService:
         request = await self._owned(user, request_id)
         query = (
             select(Match, Profile)
-            .outerjoin(Profile, Profile.user_id == Match.candidate_id)
-            .where(Match.request_id == request.id)
+            .join(User, User.id == Match.candidate_id)
+            .join(Profile, Profile.user_id == Match.candidate_id)
+            .where(
+                Match.request_id == request.id,
+                # Someone who paused, hid their profile, was suspended or is leaving since
+                # this request ran no longer appears in it (they chose to be less visible).
+                User.status == UserStatus.ACTIVE,
+                Profile.visibility == ProfileVisibility.MATCHABLE,
+            )
             .order_by(Match.rank)
         )
         blocked = await blocks.blocked_with(self._db, user.id)

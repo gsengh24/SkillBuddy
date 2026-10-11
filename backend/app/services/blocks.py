@@ -127,13 +127,8 @@ async def block(
         .values(id=uuid.uuid4(), blocker_id=user.id, blocked_id=other)
         .on_conflict_do_nothing(constraint="uq_blocks_blocker_id_blocked_id")
     )
-    user_a, user_b = min(user.id, other), max(user.id, other)
-    await db.execute(
-        update(Connection)
-        .where(Connection.user_a == user_a, Connection.user_b == user_b)
-        .where(Connection.ended_at.is_(None))
-        .values(ended_at=func.now())
-    )
+    # Intros first: if the other person accepts one at this very moment, this waits for that
+    # to commit, and the connection it created is then ended by the next statement.
     await db.execute(
         update(Intro)
         .where(
@@ -144,6 +139,13 @@ async def block(
             Intro.status.in_((IntroStatus.PENDING, IntroStatus.DECLINED)),
         )
         .values(status=IntroStatus.WITHDRAWN)
+    )
+    user_a, user_b = min(user.id, other), max(user.id, other)
+    await db.execute(
+        update(Connection)
+        .where(Connection.user_a == user_a, Connection.user_b == user_b)
+        .where(Connection.ended_at.is_(None))
+        .values(ended_at=func.now())
     )
     await team_blocks.separate(db, blocker=user.id, blocked=other)
     await db.commit()

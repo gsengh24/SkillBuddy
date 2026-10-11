@@ -57,12 +57,14 @@ from app.models import (
     MatchRequest,
     NotificationKind,
     Profile,
+    ProfileVisibility,
     Team,
     TeamInvite,
     TeamInviteKind,
     TeamInviteStatus,
     TeamMember,
     User,
+    UserStatus,
 )
 from app.services import blocks, content_rules
 from app.services.auth.rate_limit import RateLimiter
@@ -393,6 +395,20 @@ class TeamService:
         if not _rows(result):
             await self._db.rollback()
             raise TeamMemberNotFoundError
+        # The person must not walk straight back in: the link they may still hold stops
+        # working (the owner can make a new one) and their open invites end.
+        team.invite_code_hash = None
+        team.invite_expires_at = None
+        await self._db.execute(
+            update(TeamInvite)
+            .where(
+                TeamInvite.team_id == team.id,
+                TeamInvite.user_id == member_id,
+                TeamInvite.status.in_(_OPEN),
+            )
+            .values(status=TeamInviteStatus.WITHDRAWN, responded_at=datetime.now(UTC))
+            .execution_options(synchronize_session=False)
+        )
         await self._db.commit()
         logger.info("team_member_removed")
 
@@ -512,6 +528,13 @@ class TeamService:
         invitee = await self._db.get(User, invitee_id)
         if invitee is None or invitee.status not in SIGNED_IN_STATUSES:
             return False
+        if not need_connection:
+            # A stranger the matcher suggested: only while they are still matchable.
+            visibility = await self._db.scalar(
+                select(Profile.visibility).where(Profile.user_id == invitee_id)
+            )
+            if invitee.status != UserStatus.ACTIVE or visibility != ProfileVisibility.MATCHABLE:
+                return False
         return not (await blocks.blocked_with(self._db, invitee_id)).intersection(members)
 
     async def my_invites(self, user: User) -> list[InviteView]:

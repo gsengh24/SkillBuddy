@@ -129,7 +129,8 @@ async def list_listed_teams(
         auth.user, purpose=purpose, cursor=cursor, limit=limit
     )
     return ListedTeamPage(
-        items=[TeamSummaryOut.build(summary) for summary in items], next_cursor=next_cursor
+        items=[TeamSummaryOut.build(summary, show_owner=False) for summary in items],
+        next_cursor=next_cursor,
     )
 
 
@@ -197,7 +198,7 @@ async def withdraw_invite(invite_id: uuid.UUID, auth: AuthDep, service: ServiceD
 )
 async def preview_invite_link(code: LinkCode, auth: AuthDep, service: ServiceDep) -> TeamSummaryOut:
     """Its name, purpose and size, so the person can decide. Nothing is joined."""
-    return TeamSummaryOut.build(await service.preview_link(auth.user, code))
+    return TeamSummaryOut.build(await service.preview_link(auth.user, code), show_owner=False)
 
 
 @router.post(
