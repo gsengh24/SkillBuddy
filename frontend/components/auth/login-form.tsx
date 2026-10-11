@@ -24,7 +24,7 @@ const CONSENT_MESSAGE = "To continue, confirm that you are 18 or older and accep
 const INPUT =
   "h-11 w-full rounded-lg border border-line-strong bg-bg/60 px-3 text-body text-ink placeholder:text-muted focus:border-green focus:outline-none aria-invalid:border-coral-ink";
 const PRIMARY =
-  "bg-mint text-mint-text hover:bg-green-hover inline-flex h-11 w-full items-center justify-center rounded-lg text-[15px] font-semibold disabled:cursor-not-allowed disabled:opacity-60";
+  "bg-mint text-bg hover:bg-green-hover inline-flex h-11 w-full items-center justify-center rounded-lg text-[15px] font-semibold disabled:cursor-not-allowed disabled:opacity-60";
 
 type Step = "email" | "code";
 
