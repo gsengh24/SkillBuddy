@@ -1,4 +1,13 @@
-import { badge, colors, focusRing, greenSurfaces, HUE_NAMES, hues, neutrals } from "./tokens";
+import {
+  badge,
+  colors,
+  darkBand,
+  focusRing,
+  greenSurfaces,
+  HUE_NAMES,
+  hues,
+  neutrals,
+} from "./tokens";
 
 /**
  * Every foreground/background pairing the design system allows, with the WCAG level it
@@ -56,6 +65,18 @@ function cynergiPairs(): ColourPair[] {
   pairs.push(pair("white on danger", colors.bg, colors.danger, "text"));
   pairs.push(pair("ink on white button on green", colors.ink, colors.bg, "text"));
   pairs.push(pair("mint text on green (CTA second line)", colors.mintText, colors.green, "large"));
+  // Two-tone band headline (19px bold on Home, so held to the 4.5:1 text level), both themes.
+  pairs.push(pair("band headline second half on green", colors.onGreen2, colors.green, "text"));
+  pairs.push(pair("dark: band headline on mint band", darkBand.headline, darkBand.surface, "text"));
+  pairs.push(
+    pair(
+      "dark: band headline second half on mint band",
+      darkBand.headlineMuted,
+      darkBand.surface,
+      "text",
+    ),
+  );
+  pairs.push(pair("dark: band button text on page bg", "#F3F4F1", darkBand.headline, "text"));
   // Field borders are the only edge of an input, so they need 3:1 against the white fill
   // and against the page. `line` is far too light for that.
   pairs.push(pair("field border (muted-2) on white fill", colors.muted2, colors.bg, "ui"));

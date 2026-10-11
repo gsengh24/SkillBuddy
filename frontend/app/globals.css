@@ -26,6 +26,7 @@
   --green-soft: #f3f9f5;
   --mint: #7be0a8;
   --mint-text: #9fd1b6;
+  --on-green-2: #9fd1b6;
   --danger: #b3261e;
   --card: #ffffff;
   --pane: #0f100f;
@@ -61,6 +62,7 @@
   --green-tint: #142219;
   --green-line: #2a4536;
   --green-soft: #101a14;
+  --on-green-2: #256040;
   --danger: #ff8a80;
   --card: #111311;
 }
@@ -86,6 +88,7 @@
   --color-green-soft: var(--green-soft);
   --color-mint: var(--mint);
   --color-mint-text: var(--mint-text);
+  --color-on-green-2: var(--on-green-2);
   --color-danger: var(--danger);
   --color-card: var(--card);
   --color-pane: var(--pane);
@@ -259,6 +262,29 @@
     50% {
       opacity: 0.55;
     }
+  }
+}
+
+/*
+ * Hover tilt (ADR 0019). Tilt (components/ds/tilt.tsx) sets --rx, --ry, --s and --lift while
+ * a mouse is over the card; touch screens and reduced motion never set them. Transform only.
+ */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .tilt {
+    transform: perspective(700px) translateY(var(--lift, 0px)) rotateX(var(--rx, 0deg))
+      rotateY(var(--ry, 0deg)) scale(var(--s, 1));
+    transition: transform 380ms ease-out;
+  }
+  .tilt[data-tilting] {
+    transition: transform 200ms ease-out;
+    will-change: transform;
+  }
+  .tilt .tilt-shift {
+    transform: translate(calc(var(--nx, 0) * -4px), calc(var(--ny, 0) * -4px));
+    transition: transform 380ms ease-out;
+  }
+  .tilt[data-tilting] .tilt-shift {
+    transition: transform 200ms ease-out;
   }
 }
 

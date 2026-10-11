@@ -102,6 +102,7 @@ Use contractions. Active voice. Button labels: verb first, 1 to 3 words, no full
 - Page sections fade up once (opacity 0 to 1, translateY 8px to 0, 450ms ease) when they enter the viewport. One shared `useInView` hook (IntersectionObserver). Do not re-trigger.
 - Hero grid cells fade up one after another on load, 70ms apart, 8 cells maximum.
 - Buttons: translateY(-2px) on hover (desktop only), scale(.97) on press.
+- Home cards (summary cards and the pair-spaces band) tilt toward a mouse pointer, at most 6° and scale 1.04, transform only, fine pointer only (ADR 0019).
 - Panels and rows: border colour changes to `--green-line` on hover (desktop only).
 - Accordion opens smoothly.
 - Route change: the `loading.tsx` skeleton shows immediately.
