@@ -6,7 +6,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from app.api.v1.auth import get_auth
+from app.api.deps import get_auth
 from app.schemas.errors import ErrorResponse
 from app.schemas.skills import SkillSuggestion, SkillSuggestionsOut
 from app.services.skills import DEFAULT_LIMIT, MAX_LIMIT, QUERY_MAX_LENGTH, suggest_skills
