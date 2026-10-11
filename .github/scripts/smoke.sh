@@ -24,12 +24,17 @@ for name in ("database", "pgvector"):
     assert body["checks"][name]["status"] == "ok", (name, body["checks"][name])
 PY
 
-echo "== 2/5 Web page loads and shows the API as connected"
+echo "== 2/5 Web page loads and the web app reaches the API"
 # The dev server compiles the page on first request, so allow time for that.
 page=$(curl -fsS --max-time 180 "$WEB/") || fail "GET / on the web app did not return 2xx"
-grep -q 'data-state="connected"' <<<"$page" \
-  || fail "web page loaded but does not show the API as connected"
-echo "web page: API connected"
+grep -q 'cynergi' <<<"$page" || fail "web landing page loaded but does not look like the landing page"
+# The landing page is static; prove the web app's same-origin forwarder reaches the API.
+web_ready=$(curl -fsS --max-time 30 "$WEB/api/v1/health/ready")   || fail "GET /api/v1/health/ready through the web app did not return 2xx"
+python3 - "$web_ready" <<'PY' || fail "web app does not show the API as ready"
+import json, sys
+assert json.loads(sys.argv[1])["status"] == "ok"
+PY
+echo "web page: loads, API reachable through the web app"
 
 echo "== 3/5 Job worker runs a ping job from the PostgreSQL queue"
 docker compose exec -T api python - <<'PY' || fail "worker did not complete the ping job"

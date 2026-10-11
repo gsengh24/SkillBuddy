@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cynergi: say what you're building, meet who can help</title>
+<meta name="description" content="Describe your goal in a sentence. We find people with the right skills, interests and intent, and tell you why.">
+<link rel="canonical" href="/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cynergi: say what you're building, meet who can help">
+<meta property="og:description" content="Describe your goal in a sentence. We find people with the right skills, interests and intent, and tell you why.">
+<meta property="og:image" content="/landing/img/og_image.jpg">
+<meta property="og:site_name" content="Cynergi">
+<link rel="stylesheet" href="/landing/fonts/fonts.css">
+<style>
+/* Layout: an editorial scroll story. Full-bleed sections alternate ink, green and white;
+   three pinned stages (hero constellation, intents gallery, manifesto) carry the motion. */
+:root {
+  color-scheme: light;
+  /* Cynergi tokens (lib/design/tokens.ts) */
+  --bg: #ffffff;
+  --panel: #f6f7f5;
+  --line: #e4e6e2;
+  --ink: #0a0a0a;
+  --ink-2: #4a4f4a;
+  --muted: #696d68;
+  --muted-2: #8a8f89;
+  --green: #0f4a34;
+  --green-hover: #0b3828;
+  --green-tint: #e8f1ec;
+  --mint: #7be0a8;          /* graphics only */
+  --mint-text: #9fd1b6;     /* text on ink and green */
+  --on-dark: #f3f4f1;
+  --on-dark-2: #a9ada7;
+  --dark-line: #2a2c2a;
+  --f-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --f-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --gutter: clamp(16px, 3vw, 32px);
+  --ease: cubic-bezier(.2,.7,.1,1);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body { margin: 0; background: var(--ink); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+a { color: inherit; }
+img { display: block; max-width: 100%; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 4px; }
+.mono { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.4; }
+.display { font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; line-height: .9; text-transform: uppercase; text-wrap: balance; margin: 0; }
+.wrap { padding-inline: var(--gutter); }
+
+/* ---------- preloader ---------- */
+.pre { position: fixed; inset: 0; z-index: 100; background: var(--ink); display: grid; place-items: center; transition: transform .9s var(--ease); }
+.pre.out { transform: translateY(-100%); }
+.pre-in { display: flex; align-items: center; gap: clamp(10px, 2vw, 22px); }
+.pre-dots { width: clamp(44px, 7vw, 84px); height: clamp(44px, 7vw, 84px); position: relative; }
+.pre-dots i { position: absolute; width: 38%; height: 38%; border-radius: 50%; opacity: 0; animation: dotIn .9s var(--ease) forwards; }
+.pre-dots i:nth-child(1) { left: 6%; top: 6%; background: var(--mint); --fx: -180px; --fy: -120px; }
+.pre-dots i:nth-child(2) { right: 6%; top: 6%; background: var(--on-dark); --fx: 200px; --fy: -160px; animation-delay: .08s; }
+.pre-dots i:nth-child(3) { left: 6%; bottom: 6%; background: var(--on-dark); --fx: -220px; --fy: 160px; animation-delay: .16s; }
+.pre-dots i:nth-child(4) { right: 6%; bottom: 6%; background: var(--mint); --fx: 160px; --fy: 200px; animation-delay: .24s; }
+@keyframes dotIn { from { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(3); } to { opacity: 1; transform: none; } }
+.pre-word { font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; color: var(--on-dark); font-size: clamp(48px, 10vw, 140px); line-height: 1; display: flex; }
+.pre-word span { opacity: 0; filter: blur(14px); transform: translateY(18%); animation: letterIn .7s var(--ease) forwards; animation-delay: calc(.25s + var(--i) * .05s); }
+@keyframes letterIn { to { opacity: 1; filter: blur(0); transform: none; } }
+.pre-bar { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 28px; display: flex; justify-content: space-between; color: var(--on-dark-2); }
+
+/* ---------- nav ---------- */
+.nav { position: fixed; z-index: 50; top: env(safe-area-inset-top, 0px); left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px var(--gutter); color: var(--on-dark); transition: transform .5s var(--ease), color .3s, background-color .3s; }
+.nav.hide { transform: translateY(-110%); }
+.nav.light { color: var(--ink); }
+.logo { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; font-size: 19px; }
+.logo svg { width: 20px; height: 20px; }
+.logo .d1 { fill: var(--mint); } .logo .d2 { fill: currentColor; }
+.nav.light .logo .d1 { fill: var(--green); }
+.nav-links { display: flex; gap: 26px; }
+.nav-links a { text-decoration: none; font-size: 12px; font-family: var(--f-mono); letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.nav-links a:hover { opacity: 1; }
+.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; font: 600 13px/1 var(--f-body); text-decoration: none; border: 1px solid transparent; transition: transform .2s var(--ease), background-color .2s; cursor: pointer; }
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: scale(.97); }
+.btn-mint { background: var(--mint); color: var(--ink); }
+.btn-ink { background: var(--ink); color: var(--on-dark); }
+.btn-ghost { border-color: currentColor; color: inherit; background: transparent; }
+.nav.light .btn-mint { background: var(--ink); color: var(--on-dark); }
+.menu-fab { position: fixed; z-index: 49; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 140%); transition: transform .5s var(--ease); display: flex; gap: 4px; padding: 5px; border-radius: 999px; background: rgba(10,10,10,.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.menu-fab.show { transform: translate(-50%, 0); }
+.menu-fab a { color: var(--on-dark); text-decoration: none; padding: 10px 14px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.menu-fab a:hover, .menu-fab a.on { background: #fff2; }
+.menu-fab a.go { background: var(--mint); color: var(--ink); }
+
+/* ---------- hero ---------- */
+.hero-pin { position: relative; height: 260vh; background: var(--ink); }
+.hero-stage { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; color: var(--on-dark); }
+#field { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-shade { position: absolute; inset: 0; background: var(--ink); opacity: 0; pointer-events: none; }
+.hero-ui { position: absolute; inset: 0; padding: 84px var(--gutter) 24px; display: grid; grid-template-rows: auto 1fr auto; }
+.hero-top { display: flex; justify-content: space-between; gap: 16px; color: var(--on-dark-2); }
+.hero-mid { align-self: center; position: relative; }
+.word { display: flex; align-items: flex-start; gap: .04em; font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; line-height: .82; font-size: clamp(92px, 21.5vw, 330px); margin: 0; }
+.word .ln { display: block; overflow: hidden; padding-bottom: .2em; margin-bottom: -.14em; }
+.word .ln span { display: inline-block; transform: translateY(105%); }
+.ready .word .ln span { transform: none; transition: transform 1.1s var(--ease) .1s; }
+.word sup { font-family: var(--f-mono); font-weight: 500; font-size: max(11px, .055em); letter-spacing: .08em; text-transform: uppercase; line-height: 1.3; color: var(--mint-text); margin-top: .9em; max-width: 12ch; opacity: 0; }
+.ready .word sup { opacity: 1; transition: opacity .8s .7s; }
+.hero-lede { display: grid; grid-template-columns: minmax(0, 34ch) auto; gap: 24px; align-items: end; margin-top: clamp(14px, 2.5vw, 30px); opacity: 0; transform: translateY(14px); }
+.ready .hero-lede { opacity: 1; transform: none; transition: opacity .8s .55s, transform .8s var(--ease) .55s; }
+.hero-lede p { margin: 0; font-size: clamp(15px, 1.35vw, 19px); line-height: 1.4; color: var(--on-dark); font-weight: 500; }
+.hero-lede p em { font-style: normal; color: var(--mint-text); }
+.pair { display: inline-flex; align-items: center; gap: 10px; }
+.av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 600 12px/1 var(--f-body); color: #fff; border: 2px solid var(--ink); }
+.av.g { background: var(--green); } .av.k { background: #2b2d2b; margin-left: -14px; }
+.pair small { display: block; font-size: 12px; color: var(--on-dark-2); line-height: 1.35; }
+.pair b { font-weight: 600; font-size: 13px; color: var(--on-dark); }
+.sig { position: absolute; right: 1%; bottom: 34%; width: min(40vw, 520px); pointer-events: none; }
+.sig path { fill: none; stroke: var(--mint); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1400; stroke-dashoffset: 1400; }
+.ready .sig path { stroke-dashoffset: 0; transition: stroke-dashoffset 2.2s cubic-bezier(.6,.05,.25,1) .9s; }
+.sig circle { fill: var(--mint); opacity: 0; }
+.ready .sig circle { opacity: 1; transition: opacity .4s 1s; }
+.ready .sig circle.end { transition-delay: 2.9s; }
+.hero-bot { display: flex; justify-content: space-between; align-items: end; gap: 20px; flex-wrap: wrap; opacity: 0; }
+.ready .hero-bot { opacity: 1; transition: opacity .8s .9s; }
+.verbs { display: flex; gap: clamp(14px, 3vw, 40px); font-family: var(--f-display); font-weight: 700; font-size: clamp(14px, 1.5vw, 20px); text-transform: uppercase; letter-spacing: -0.01em; }
+.meters { display: flex; gap: clamp(16px, 3vw, 44px); color: var(--on-dark-2); flex-wrap: wrap; }
+.meters b { color: var(--on-dark); font-weight: 500; }
+.ticks { display: inline-flex; gap: 3px; vertical-align: middle; margin: 0 6px; }
+.ticks i { width: 3px; height: 11px; background: var(--mint); display: block; }
+.corner { position: absolute; width: 10px; height: 10px; border-color: #ffffff55; border-style: solid; pointer-events: none; }
+.corner.tl { left: 12px; top: 72px; border-width: 1px 0 0 1px; } .corner.tr { right: 12px; top: 72px; border-width: 1px 1px 0 0; }
+.corner.bl { left: 12px; bottom: 12px; border-width: 0 0 1px 1px; } .corner.br { right: 12px; bottom: 12px; border-width: 0 1px 1px 0; }
+.caps { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); width: min(92vw, 640px); text-align: center; pointer-events: none; }
+.caps p { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; font-family: var(--f-display); font-weight: 700; letter-spacing: -0.02em; font-size: clamp(22px, 3.2vw, 40px); line-height: 1.08; opacity: 0; text-wrap: balance; }
+.caps p span { color: var(--mint-text); }
+.scrollcue { position: absolute; right: var(--gutter); top: 50%; writing-mode: vertical-rl; color: var(--on-dark-2); }
+
+/* ---------- curtain: intent first ---------- */
+.curtain { position: relative; z-index: 2; margin-top: -100vh; margin-top: -100svh; background: var(--green); color: var(--on-dark); padding-block: 22px clamp(56px, 8vw, 120px); box-shadow: 0 -40px 80px #0006; }
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding-block: 10px; border-bottom: 1px solid #ffffff2b; color: var(--mint-text); }
+.strip span:last-child { text-align: right; }
+.curtain-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: clamp(20px, 4vw, 64px); margin-top: clamp(28px, 5vw, 70px); }
+.curtain h2 { font-size: clamp(54px, 9.6vw, 168px); text-align: right; grid-column: 2; }
+.curtain h2 span { color: var(--mint-text); }
+.curtain-copy { grid-column: 1; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 24px; justify-content: space-between; }
+.curtain-copy p { margin: 0; max-width: 38ch; color: #e3ebe6; font-size: 16px; }
+.plate { position: relative; overflow: hidden; border-radius: 4px; background: #0003; }
+.plate img { width: 100%; height: 115%; object-fit: cover; transform: translateY(var(--py, 0)); }
+.curtain .plate { aspect-ratio: 4 / 3; max-width: 520px; }
+.bigstat { display: flex; align-items: flex-end; justify-content: flex-end; gap: 14px; grid-column: 2; }
+.bigstat b { font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; font-size: clamp(72px, 9vw, 150px); line-height: .8; }
+.bigstat span { max-width: 22ch; color: #e3ebe6; font-size: 14px; }
+
+/* ---------- describe ---------- */
+.describe { position: relative; z-index: 2; background: var(--bg); color: var(--ink); padding-block: clamp(56px, 8vw, 120px); }
+.describe-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: start; }
+.describe h2 { font-size: clamp(50px, 8.6vw, 150px); text-align: right; }
+.describe h2 span { color: var(--muted-2); }
+.describe-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 64px); margin-top: clamp(32px, 5vw, 72px); align-items: start; }
+.demo { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: clamp(16px, 2vw, 26px); display: grid; gap: 16px; }
+.demo-label { display: flex; justify-content: space-between; color: var(--muted); }
+.demo-text { min-height: 7.5em; font-size: clamp(16px, 1.5vw, 20px); line-height: 1.45; font-weight: 500; color: var(--ink); }
+.caret { display: inline-block; width: 2px; height: 1.1em; background: var(--green); vertical-align: -0.18em; margin-left: 2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.chips { display: grid; gap: 10px; }
+.chiprow { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 10px; align-items: center; }
+.chiprow .mono { color: var(--muted); }
+.chiprow div { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(6px) scale(.96); transition: opacity .35s, transform .45s var(--ease); }
+.chip.on { opacity: 1; transform: none; }
+.chip.g { background: var(--green); color: #fff; border-color: var(--green); }
+.demo-note { font-size: 13px; color: var(--muted); margin: 0; }
+.describe .plate { aspect-ratio: 4 / 3; background: var(--panel); }
+.describe-side { display: grid; gap: 18px; }
+.describe-side p { margin: 0; color: var(--ink-2); max-width: 46ch; }
+
+/* ---------- marquee ---------- */
+.ticker { position: relative; z-index: 2; background: var(--ink); color: var(--on-dark); overflow: hidden; border-block: 1px solid var(--dark-line); padding-block: 18px; }
+.ticker-row { display: flex; width: max-content; gap: 34px; align-items: center; animation: tick 40s linear infinite; font-family: var(--f-display); font-weight: 700; text-transform: uppercase; font-size: clamp(18px, 2.2vw, 28px); letter-spacing: -0.01em; }
+.ticker-row svg { width: 16px; height: 16px; }
+@keyframes tick { to { transform: translateX(-50%); } }
+
+/* ---------- intents gallery (pinned) ---------- */
+.gal { position: relative; z-index: 2; height: 620vh; background: var(--ink); color: var(--on-dark); }
+.gal-stage { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; }
+.gal-bg { position: absolute; inset: -6%; }
+.gal-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(.8) brightness(.38); opacity: 0; transform: scale(1.1); }
+.gal-bg img.first { opacity: 1; }
+.gal-bg::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, #0000 0 3px, #0000001f 3px 4px); }
+.gal-marq { position: absolute; left: 0; top: 50%; transform: translateY(-50%); white-space: nowrap; font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; text-transform: uppercase; font-size: clamp(90px, 17vw, 280px); line-height: 1; color: var(--on-dark); will-change: transform; }
+.gal-marq span { padding-right: .3em; }
+.gal-card { position: absolute; left: 50%; top: 47%; transform: translate(-50%, -50%); width: min(58vw, 760px); aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; box-shadow: 0 30px 80px #0008; background: #111; }
+.gal-card .layer { position: absolute; inset: 0; overflow: hidden; transform: translateY(100%); }
+.gal-card .layer:first-child { transform: none; }
+.gal-card .layer img { width: 100%; height: 100%; object-fit: cover; }
+.gal-top { position: absolute; top: 80px; left: var(--gutter); right: var(--gutter); display: flex; justify-content: space-between; color: var(--on-dark-2); }
+.gal-top b { color: var(--on-dark); font-weight: 500; }
+.gal-meta { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 26px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.gal-meta > div { position: relative; min-height: 4.4em; }
+.gal-meta .mono { color: var(--on-dark-2); margin-bottom: 6px; }
+.gal-meta .val { position: absolute; left: 0; right: 0; opacity: 0; transform: translateY(8px); transition: opacity .35s, transform .45s var(--ease); font-size: 15px; line-height: 1.35; }
+.gal-meta .val.on { opacity: 1; transform: none; }
+.gal-meta .val.big { font-family: var(--f-display); font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+.gal-progress { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 12px; height: 2px; background: #ffffff1f; }
+.gal-progress i { display: block; height: 100%; width: 100%; background: var(--mint); transform-origin: left; transform: scaleX(0); }
+.gal-list { display: none; }
+
+/* ---------- consent counters ---------- */
+.consent { position: relative; z-index: 2; background: var(--panel); color: var(--ink); padding-block: clamp(56px, 8vw, 120px); }
+.consent-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 24px; align-items: end; }
+.consent h2 { font-size: clamp(50px, 8.6vw, 150px); grid-column: 2; }
+.consent-head p { margin: 0; max-width: 34ch; color: var(--ink-2); }
+.stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; margin-top: clamp(28px, 4vw, 56px); }
+.stat { padding: clamp(16px, 2vw, 28px); min-height: clamp(180px, 20vw, 280px); display: flex; flex-direction: column; justify-content: space-between; gap: 16px; background: var(--bg); }
+.stat.dark { background: var(--ink); color: var(--on-dark); }
+.stat.green { background: var(--green); color: var(--on-dark); }
+.stat:nth-child(1) { grid-column: span 3; } .stat:nth-child(2) { grid-column: span 3; }
+.stat:nth-child(3), .stat:nth-child(4), .stat:nth-child(5) { grid-column: span 2; }
+.stat b { font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; font-size: clamp(56px, 7vw, 120px); line-height: .85; font-variant-numeric: tabular-nums; }
+.stat b small { font-size: .5em; color: var(--muted-2); letter-spacing: -0.02em; margin-right: .04em; vertical-align: .55em; }
+.stat.dark b small, .stat.green b small { color: var(--mint-text); }
+.stat p { margin: 0; max-width: 32ch; font-size: 14px; }
+.stat .mono { color: var(--muted); }
+.stat.dark .mono, .stat.green .mono { color: var(--mint-text); }
+.cards3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.cards3 div { border-top: 1px solid var(--ink); padding-top: 12px; }
+.cards3 h3 { margin: 0 0 6px; font: 600 15px/1.3 var(--f-body); }
+.cards3 p { margin: 0; color: var(--ink-2); font-size: 14px; }
+
+/* ---------- how it works (accordion) ---------- */
+.how { position: relative; z-index: 2; background: var(--ink); color: var(--on-dark); padding-block: clamp(56px, 8vw, 120px); }
+.how-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(24px, 5vw, 80px); }
+.how-lead { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 3vw, 42px); letter-spacing: -0.02em; line-height: 1.08; margin: 14px 0 0; text-wrap: balance; }
+.how-lead span { color: var(--on-dark-2); }
+.how .plate { aspect-ratio: 4 / 3; margin-top: 28px; background: #111; }
+.how .plate img { position: absolute; inset: 0; height: 100%; opacity: 0; transition: opacity .6s; }
+.how .plate img.on { opacity: 1; }
+.acc { border-top: 1px solid var(--dark-line); }
+.acc-item { border-bottom: 1px solid var(--dark-line); }
+.acc-btn { width: 100%; display: grid; grid-template-columns: 3em minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 22px 0; background: none; border: 0; color: inherit; text-align: left; cursor: pointer; font: 700 clamp(20px, 2.2vw, 30px)/1.1 var(--f-display); letter-spacing: -0.02em; }
+.acc-btn .mono { color: var(--on-dark-2); }
+.acc-btn .pm { width: 18px; height: 18px; position: relative; }
+.acc-btn .pm::before, .acc-btn .pm::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px; background: currentColor; transition: transform .4s var(--ease); }
+.acc-btn .pm::after { transform: rotate(90deg); }
+.acc-btn[aria-expanded="true"] .pm::after { transform: rotate(0); }
+.acc-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s var(--ease); }
+.acc-panel > div { overflow: hidden; }
+.acc-item.open .acc-panel { grid-template-rows: 1fr; }
+.acc-panel p { margin: 0 0 22px 3em; max-width: 52ch; color: #c9ccc6; padding-left: 12px; }
+.acc-panel .tag { display: inline-block; margin: -8px 0 22px calc(3em + 12px); color: var(--mint-text); }
+
+/* ---------- manifesto (pinned) ---------- */
+.mani { position: relative; z-index: 2; height: 300vh; background: var(--green); color: var(--on-dark); }
+.mani-stage { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: clamp(20px, 4vw, 60px); padding: 80px var(--gutter) 30px; }
+.mani-stats { display: flex; flex-direction: column; justify-content: space-between; padding-block: 4vh; }
+.mani-stats div { display: grid; gap: 4px; }
+.mani-stats b { font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; font-size: clamp(44px, 5vw, 84px); line-height: .9; font-variant-numeric: tabular-nums; }
+.mani-stats b small { font-size: .5em; color: var(--mint-text); vertical-align: .5em; }
+.mani-stats span { color: #dfe8e2; max-width: 28ch; font-size: 14px; }
+.mani-text { position: relative; overflow: hidden; }
+.mani-move { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
+.mani-move h2 { font-size: clamp(56px, 8.4vw, 150px); line-height: .88; }
+.mani-move h2 span { color: var(--mint-text); }
+.reason { margin-top: 28px; background: var(--bg); color: var(--ink); border-radius: 14px; padding: 18px 20px; max-width: 560px; display: grid; gap: 10px; }
+.reason .mono { color: var(--green); }
+.reason p { margin: 0; font-size: 15px; }
+.reason .who { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.reason .av { border-color: var(--bg); }
+
+/* ---------- faq ---------- */
+.faq { position: relative; z-index: 2; background: var(--bg); color: var(--ink); padding-block: clamp(56px, 8vw, 120px); }
+.faq-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 80px); align-items: start; }
+.faq h2 { font-size: clamp(50px, 8vw, 140px); }
+.faq h2 span { color: var(--muted-2); }
+.faq .acc { border-color: var(--line); }
+.faq .acc-item { border-color: var(--line); }
+.faq .acc-btn { grid-template-columns: minmax(0, 1fr) auto; font: 600 17px/1.35 var(--f-body); letter-spacing: 0; padding: 20px 0; }
+.faq .acc-panel p { margin: 0 0 20px; padding: 0; color: var(--ink-2); }
+
+/* ---------- cta + footer ---------- */
+.foot { position: relative; z-index: 2; background: var(--ink); color: var(--on-dark); padding-block: clamp(56px, 8vw, 110px) 24px; overflow: hidden; }
+.cta { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; padding-bottom: clamp(40px, 6vw, 80px); border-bottom: 1px solid var(--dark-line); }
+.cta h2 { font-size: clamp(42px, 6.4vw, 112px); }
+.cta h2 span { color: var(--mint-text); }
+.foot-cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; padding-block: 32px; }
+.foot-cols h3 { margin: 0 0 10px; color: var(--on-dark-2); font-weight: 400; }
+.foot-cols ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.foot-cols a { text-decoration: none; }
+.foot-cols a:hover { color: var(--mint-text); }
+.foot-word { font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; font-size: clamp(90px, 25vw, 400px); line-height: .78; margin: 10px 0 0 -0.04em; color: var(--on-dark); white-space: nowrap; }
+.foot-word span { color: var(--green); }
+.foot-legal { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; color: var(--on-dark-2); padding-top: 18px; }
+
+/* ---------- cursor ---------- */
+.cur { position: fixed; z-index: 90; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; border: 1px solid #fff; border-radius: 50%; pointer-events: none; mix-blend-mode: difference; opacity: 0; transition: width .25s, height .25s, margin .25s, opacity .3s; }
+.cur.big { width: 64px; height: 64px; margin: -32px 0 0 -32px; }
+@media (hover: none), (pointer: coarse) { .cur { display: none; } }
+
+/* in-view reveal (spec: fade up once, 8px) */
+.rv { transition: opacity .6s, transform .7s var(--ease); }
+.rv.wait { opacity: 0; transform: translateY(8px); }
+
+/* ---------- phone menu ---------- */
+.burger { display: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; place-items: center; }
+.burger i { display: block; width: 16px; height: 1.5px; background: currentColor; position: relative; }
+.burger i::before, .burger i::after { content: ""; position: absolute; left: 0; width: 16px; height: 1.5px; background: currentColor; }
+.burger i::before { top: -5px; } .burger i::after { top: 5px; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.mmenu { position: fixed; inset: 0; z-index: 80; background: var(--ink); color: var(--on-dark); display: flex; flex-direction: column; padding: calc(16px + env(safe-area-inset-top, 0px)) var(--gutter) calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateY(-100%); transition: transform .6s var(--ease); visibility: hidden; }
+.mmenu.open { transform: none; visibility: visible; }
+.mmenu-top { display: flex; justify-content: space-between; align-items: center; }
+.mmenu-close { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--on-dark); background: none; color: inherit; font-size: 22px; line-height: 1; cursor: pointer; }
+.mmenu nav { display: grid; margin-top: auto; }
+.mmenu nav a { display: flex; justify-content: space-between; align-items: baseline; text-decoration: none; font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; text-transform: uppercase; font-size: clamp(44px, 13vw, 72px); line-height: 1; padding: 10px 0; border-bottom: 1px solid var(--dark-line); opacity: 0; transform: translateY(24px); transition: opacity .4s, transform .6s var(--ease); }
+.mmenu nav a .mono { color: var(--mint-text); letter-spacing: .08em; }
+.mmenu.open nav a { opacity: 1; transform: none; }
+.mmenu.open nav a:nth-child(2) { transition-delay: .05s; } .mmenu.open nav a:nth-child(3) { transition-delay: .1s; } .mmenu.open nav a:nth-child(4) { transition-delay: .15s; }
+.mmenu-foot { display: grid; gap: 18px; margin-top: 28px; }
+.mmenu-foot .btn { justify-content: center; min-height: 52px; font-size: 15px; }
+.mmenu-foot .mono { color: var(--on-dark-2); display: flex; justify-content: space-between; }
+.hero-cta { display: none; }
+
+/* ---------- phone ---------- */
+@media (max-width: 760px) {
+  .burger { display: grid; }
+  .nav .btn-mint { display: none; }
+  .menu-fab { left: var(--gutter); right: var(--gutter); transform: translateY(140%); justify-content: space-between; }
+  .menu-fab.show { transform: none; }
+  .menu-fab a:not(.go):not(.mbtn) { display: none; }
+  .menu-fab a { padding: 13px 18px; }
+  .menu-fab .go { flex: 1; text-align: center; }
+  .foot { padding-bottom: 96px; }
+  /* hero: wordmark across the full width, text and actions in the thumb zone */
+  .hero-ui { padding-top: 76px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); grid-template-rows: auto 1fr auto auto; }
+  .hero-mid { align-self: end; }
+  .hero-top { font-size: 10px; }
+  .word { font-size: 27vw; margin-left: -0.03em; }
+  .hero-lede { margin-top: 12px; gap: 14px; }
+  .hero-lede p { font-size: 16px; }
+  .hero-cta { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 18px; opacity: 0; transition: opacity .8s 1s; }
+  .ready .hero-cta { opacity: 1; }
+  .hero-cta .btn { justify-content: center; min-height: 50px; font-size: 15px; }
+  .hero-bot { margin-top: 16px; }
+  .meters { gap: 4px 16px; font-size: 10px; }
+  .corner.tl, .corner.tr { top: 64px; }
+  .caps { bottom: auto; top: 76%; }
+  .caps p { font-size: 26px; }
+  /* intents: tall card near the top, marquee behind, details underneath */
+  .gal-top { top: 72px; }
+  .gal-card { top: 112px; transform: translateX(-50%); width: calc(100vw - 2 * var(--gutter)); aspect-ratio: 4 / 4.3; max-height: calc(100svh - 330px); }
+  .gal-marq { top: 67%; font-size: 22vw; }
+  .gal-meta { bottom: 30px; gap: 12px; }
+  .gal-meta > div:nth-child(2) { display: block; }
+  .gal-meta > div:nth-child(3) { display: none; }
+  .gal-meta > div { min-height: 0; }
+  .gal-meta > div:nth-child(1) { min-height: 1.6em; }
+  .gal-meta > div:nth-child(2) { min-height: 2.8em; }
+  .gal-meta .val.big { font-size: 26px; }
+  .gal-meta .val { font-size: 16px; }
+  .gal-meta .mono { display: none; }
+  /* how: smaller plate */
+  .how .plate { aspect-ratio: 16 / 10; margin-top: 20px; }
+  .acc-btn { padding: 18px 0; min-height: 56px; }
+  .demo-text { min-height: 6.2em; }
+  .chips { gap: 8px; }
+  .curtain .plate { aspect-ratio: 16 / 11; }
+  .word { flex-wrap: wrap; }
+  .gal-meta { grid-template-columns: minmax(0, 1fr); }
+  .nav-links { display: none; }
+  .hero-top span:nth-child(2) { display: none; }
+  .hero-lede { grid-template-columns: minmax(0, 1fr); }
+  .word sup { flex-basis: 100%; margin-top: .6em; max-width: none; }
+  .sig { width: 64vw; bottom: auto; top: -30%; right: -4%; opacity: .9; }
+  .verbs { display: none; }
+  .meters span:nth-child(2) { display: none; }
+  .scrollcue { display: none; }
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .strip span:nth-child(n+3) { display: none; }
+  .curtain-grid, .describe-grid, .how-grid, .faq-grid, .consent-head { grid-template-columns: minmax(0, 1fr); }
+  .curtain h2, .bigstat, .curtain-copy { grid-column: 1; grid-row: auto; }
+  .curtain h2 { text-align: left; }
+  .bigstat { justify-content: flex-start; }
+  .describe-head { grid-template-columns: minmax(0, 1fr); }
+  .describe h2 { text-align: left; }
+  .consent h2 { grid-column: 1; }
+  .stats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .stat:nth-child(n) { grid-column: span 1; min-height: 170px; }
+  .stat:nth-child(1) { grid-column: span 2; }
+  .cards3 { grid-template-columns: minmax(0, 1fr); }
+  .mani-stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); padding-top: 72px; }
+  .mani-stats { flex-direction: row; gap: 14px; padding-block: 0; }
+  .mani-stats span { font-size: 12px; }
+  .mani-stats b { font-size: 36px; }
+  .cta { grid-template-columns: minmax(0, 1fr); }
+  .foot-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .acc-panel p { margin-left: 0; padding-left: 0; }
+  .acc-panel .tag { margin-left: 0; }
+}
+
+/* ---------- reduced motion: no pins, no preloader, everything at rest ---------- */
+.rm .pre { display: none; }
+.rm .hero-pin { height: auto; }
+.rm .hero-stage { position: relative; }
+.rm .caps { display: none; }
+.rm .curtain { margin-top: 0; }
+.rm .gal { height: auto; }
+.rm .gal-stage { display: none; }
+.rm .gal-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; padding: 72px var(--gutter); }
+.rm .gal-list figure { margin: 0; display: grid; gap: 10px; }
+.rm .gal-list figcaption { display: grid; gap: 4px; }
+.rm .gal-list figcaption span { color: var(--on-dark-2); font-size: 14px; }
+.rm .mani { height: auto; }
+.rm .mani-stage { position: relative; height: auto; min-height: 0; }
+.rm .mani-move { position: static; }
+.rm .ticker-row { animation: none; }
+.rm *, .rm *::before, .rm *::after { transition-duration: 0s !important; animation-duration: 0s !important; }
+.rm .word .ln span, .rm .hero-lede, .rm .hero-bot, .rm .word sup { transform: none; opacity: 1; }
+.rm .sig path { stroke-dashoffset: 0; } .rm .sig circle { opacity: 1; }
+.rm .chip { opacity: 1; transform: none; }
+.rm .rv.wait { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<div class="pre" id="pre" aria-hidden="true">
+  <div class="pre-in">
+    <div class="pre-dots"><i></i><i></i><i></i><i></i></div>
+    <div class="pre-word"><span style="--i:0">c</span><span style="--i:1">y</span><span style="--i:2">n</span><span style="--i:3">e</span><span style="--i:4">r</span><span style="--i:5">g</span><span style="--i:6">i</span></div>
+  </div>
+  <div class="pre-bar mono"><span>Few, explained matches</span><span id="preCount">000</span></div>
+</div>
+
+<div class="cur" id="cur" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <a class="logo" href="#top" aria-label="Cynergi home">
+    <svg viewBox="0 0 22 22" aria-hidden="true"><circle class="d1" cx="6" cy="6" r="3.5"/><circle class="d2" cx="16" cy="6" r="3.5"/><circle class="d2" cx="6" cy="16" r="3.5"/><circle class="d1" cx="16" cy="16" r="3.5"/></svg>
+    cynergi
+  </a>
+  <nav class="nav-links" aria-label="Sections">
+    <a href="#intents">Intents</a><a href="#how">How it works</a><a href="#safety">Safety</a><a href="#faq">FAQ</a>
+  </nav>
+  <div class="nav-right">
+    <a class="btn btn-mint" href="/login">Get started</a>
+    <button class="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mmenu" data-open-menu><i></i></button>
+  </div>
+</header>
+
+<nav class="menu-fab" id="fab" aria-label="Quick sections">
+  <a href="#intents">Intents</a><a href="#how">How</a><a href="#faq">FAQ</a><a class="mbtn" href="#mmenu" data-open-menu role="button" aria-controls="mmenu">Menu</a><a class="go" href="/login">Get started</a>
+</nav>
+
+<div class="mmenu" id="mmenu" role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="mmenu-top">
+    <span class="logo"><svg viewBox="0 0 22 22" aria-hidden="true"><circle class="d1" cx="6" cy="6" r="3.5"/><circle class="d2" cx="16" cy="6" r="3.5"/><circle class="d2" cx="6" cy="16" r="3.5"/><circle class="d1" cx="16" cy="16" r="3.5"/></svg>cynergi</span>
+    <button class="mmenu-close" type="button" aria-label="Close menu" id="mclose">×</button>
+  </div>
+  <nav aria-label="Sections">
+    <a href="#intents">Intents <span class="mono">06</span></a>
+    <a href="#how">How it works <span class="mono">04</span></a>
+    <a href="#safety">Safety <span class="mono">/02</span></a>
+    <a href="#faq">FAQ</a>
+  </nav>
+  <div class="mmenu-foot">
+    <a class="btn btn-mint" href="/login">Find your people →</a>
+    <div class="mono"><span>Thapar · @thapar.edu</span><span id="mclock">IST</span></div>
+  </div>
+</div>
+
+<main id="top">
+  <!-- HERO: 3D constellation, pinned -->
+  <section class="hero-pin" id="heroPin" data-nav="dark" aria-labelledby="h1">
+    <div class="hero-stage">
+      <canvas id="field" aria-hidden="true"></canvas>
+      <div class="hero-shade" id="heroShade"></div>
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="hero-ui" id="heroUi">
+        <div class="hero-top mono"><span>First community: Thapar · @thapar.edu</span><span>Not a feed · not a job board · not dating</span></div>
+        <div class="hero-mid">
+          <h1 class="word" id="h1"><span class="sr">Cynergi: say what you're building, meet who can help.</span><span class="ln" aria-hidden="true"><span>cynergi</span></span><sup aria-hidden="true">people, matched by intent</sup></h1>
+          <div class="hero-lede">
+            <p>Say what you're building. <em>Meet who can help.</em> Describe your goal in a sentence. We find the few people worth talking to, and tell you why.</p>
+            <div class="pair" aria-label="Example match">
+              <span class="av g">AK</span><span class="av k">RS</span>
+              <span><b>Example match</b><small>Build together · reason shown to both</small></span>
+            </div>
+          </div>
+          <div class="hero-cta"><a class="btn btn-mint" href="/login">Find your people</a><a class="btn btn-ghost" href="#how">How it works</a></div>
+          <svg class="sig" viewBox="0 0 560 200" aria-hidden="true">
+            <path d="M18 150 C 70 60, 120 40, 150 92 S 140 170, 110 150 S 150 60, 230 70 S 300 160, 340 120 S 360 40, 410 60 S 470 150, 540 50"/>
+            <circle cx="18" cy="150" r="7"/><circle class="end" cx="540" cy="50" r="7"/>
+          </svg>
+        </div>
+        <div class="hero-bot">
+          <div class="verbs"><span>Build</span><span>Learn</span><span>Explore</span></div>
+          <div class="meters mono">
+            <span>Intros per request <span class="ticks"><i></i><i></i><i></i><i></i><i></i></span> <b>a few, explained</b></span>
+            <span>Servers <b>Singapore</b></span>
+            <span>Local time <b id="clock">IST --:--:--</b></span>
+          </div>
+        </div>
+      </div>
+      <div class="caps" aria-hidden="true">
+        <p data-c="0">Everyone in your community, as points in <span>384 dimensions.</span></p>
+        <p data-c="1">Your request narrows it to a few hundred. <span>Then fifteen.</span></p>
+        <p data-c="2">Five introductions. <span>Each one with a reason.</span></p>
+      </div>
+      <span class="scrollcue mono" aria-hidden="true">Scroll</span>
+    </div>
+  </section>
+
+  <!-- CURTAIN: intent first -->
+  <section class="curtain wrap" data-nav="dark" aria-labelledby="intent-h">
+    <div class="strip mono"><span>Principle 01</span><span>Intent first, skills second</span><span>One engine</span><span>Six intents</span></div>
+    <div class="curtain-grid">
+      <h2 class="display rv" id="intent-h">Intent before <span>skills.</span></h2>
+      <div class="curtain-copy">
+        <p class="rv">Most apps ask what you can do. We start with what you're trying to do: build something, swap a skill, find a mentor, stay on track. Then we look at skills.</p>
+        <div class="plate" data-par="0.12"><img src="/landing/img/interest_buddy.jpg" alt="Two spheres, one ink and one green, resting together on a white plinth." loading="lazy"></div>
+      </div>
+      <div class="bigstat rv"><b>6</b><span>ways to ask, one matching engine, weighted differently for each.</span></div>
+    </div>
+  </section>
+
+  <!-- DESCRIBE -->
+  <section class="describe wrap" data-nav="light" aria-labelledby="describe-h">
+    <div class="describe-head">
+      <p class="mono" style="color:var(--muted);margin:0">Principle 02</p>
+      <h2 class="display rv" id="describe-h">Describe, <span>don't fill forms.</span></h2>
+    </div>
+    <div class="describe-grid">
+      <div class="demo rv" id="demo" aria-label="Example: a profile written in plain words, and what Cynergi understands from it">
+        <div class="demo-label mono"><span>Your words</span><span>Example</span></div>
+        <div class="demo-text" id="demoText" aria-hidden="true"></div>
+        <p class="sr">Third-year CSE. I can teach Python and I want to learn product design. Building a budgeting app on weekends and I need a designer.</p>
+        <div class="chips" id="chips">
+          <div class="chiprow"><span class="mono">Offers</span><div><span class="chip">Python</span><span class="chip">Teaching</span></div></div>
+          <div class="chiprow"><span class="mono">Seeks</span><div><span class="chip">Product design</span><span class="chip">A designer</span></div></div>
+          <div class="chiprow"><span class="mono">Intent</span><div><span class="chip g">Build together</span><span class="chip">Skill exchange</span></div></div>
+          <div class="chiprow"><span class="mono">When</span><div><span class="chip">Weekends</span></div></div>
+        </div>
+        <p class="demo-note">You check what we understood and fix anything we got wrong. Your own words are always kept.</p>
+      </div>
+      <div class="describe-side">
+        <div class="plate" data-par="0.1"><img src="/landing/img/card_grid.jpg" alt="A field of profile cards seen from above, a few of them green." loading="lazy"></div>
+        <p class="rv">Write a few sentences about who you are and what you want to do. No skill pickers, no endless dropdowns. A model reads it once and turns it into something the matcher can use.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true"><div class="ticker-row" id="tickerRow"></div></div>
+
+  <!-- INTENTS GALLERY: pinned -->
+  <section class="gal" id="intents" data-nav="dark" aria-labelledby="gal-h">
+    <h2 class="sr" id="gal-h">Six intents</h2>
+    <div class="gal-stage" id="galStage">
+      <div class="gal-bg" id="galBg"></div>
+      <div class="gal-marq" id="galMarq" aria-hidden="true"></div>
+      <div class="gal-card" id="galCard"></div>
+      <div class="gal-top mono"><span>Six intents · one engine</span><span><b id="galIdx">01</b> / 06</span></div>
+      <div class="gal-meta" id="galMeta">
+        <div><div class="mono">Intent</div></div>
+        <div><div class="mono">Someone might say</div></div>
+        <div><div class="mono">The matcher looks for</div></div>
+      </div>
+      <div class="gal-progress"><i id="galBar"></i></div>
+    </div>
+    <div class="gal-list" id="galList"></div>
+  </section>
+
+  <!-- CONSENT COUNTERS -->
+  <section class="consent wrap" id="safety" data-nav="light" aria-labelledby="consent-h">
+    <div class="consent-head">
+      <p class="rv">Nobody is contacted until both sides opt in. Your name and links stay hidden until you accept. Every number below is a rule in the product, not a marketing figure.</p>
+      <h2 class="display rv" id="consent-h">Built on consent.</h2>
+    </div>
+    <div class="stats" id="stats">
+      <div class="stat dark"><span class="mono">Two-sided intros</span><b data-n="2"><small>/</small>00</b><p>people have to say yes before a chat opens. If they decline, you aren't told.</p></div>
+      <div class="stat"><span class="mono">Private chats</span><b data-n="0"><small>/</small>00</b><p>chat messages read by AI. Only the two of you can read your chat.</p></div>
+      <div class="stat green"><span class="mono">Fair look</span><b data-n="15"><small>/</small>00</b><p>candidates at most that the AI reads for one request. It never sees names or emails.</p></div>
+      <div class="stat"><span class="mono">Teams</span><b data-n="6"><small>/</small>00</b><p>people per team, at most. Everyone who joins says yes first.</p></div>
+      <div class="stat dark"><span class="mono">Leaving</span><b data-n="30"><small>/</small>00</b><p>days to change your mind after you delete your account. Then it's gone.</p></div>
+    </div>
+    <div class="cards3">
+      <div class="rv"><h3>Safe by default</h3><p>Block or report from any chat. Your name and links stay hidden until you accept.</p></div>
+      <div class="rv"><h3>Human chats</h3><p>Only the two of you in a chat. No AI reads it.</p></div>
+      <div class="rv"><h3>Pair spaces</h3><p>Shared goals, skills and progress notes once you connect.</p></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how wrap" id="how" data-nav="dark" aria-labelledby="how-h">
+    <div class="how-grid">
+      <div>
+        <p class="mono" style="color:var(--mint-text);margin:0">How matching works</p>
+        <h2 class="how-lead" id="how-h">Every request starts with understanding what you're asking for. <span>Then four steps narrow everyone down to a few.</span></h2>
+        <div class="plate" id="howPlate">
+          <img class="on" src="/landing/img/understand.jpg" alt="Stacked discs on a dark floor, one layer in mint." loading="lazy">
+          <img src="/landing/img/retrieve.jpg" alt="A dark field of spheres with five white ones inside a mint ring." loading="lazy">
+          <img src="/landing/img/rank.jpg" alt="A descending row of columns, the tallest in mint." loading="lazy">
+          <img src="/landing/img/explain.jpg" alt="Two spheres on pedestals joined by a mint bridge." loading="lazy">
+        </div>
+      </div>
+      <div class="acc" id="howAcc">
+        <div class="acc-item open"><button class="acc-btn" aria-expanded="true" aria-controls="s1" id="b1"><span class="mono">01</span><span>Understand</span><span class="pm"></span></button>
+          <div class="acc-panel" id="s1" role="region" aria-labelledby="b1"><div><p>You write a few sentences. A model reads them and pulls out what you offer, what you're looking for and what you're into. You review the result and correct it. Your own words are always kept.</p><span class="tag mono">Model reads your text once</span></div></div></div>
+        <div class="acc-item"><button class="acc-btn" aria-expanded="false" aria-controls="s2" id="b2"><span class="mono">02</span><span>Retrieve</span><span class="pm"></span></button>
+          <div class="acc-panel" id="s2" role="region" aria-labelledby="b2"><div><p>Four parts of every profile become vectors: who you are, what you offer, what you seek and what you're into. A vector search and a keyword search narrow everyone to a few hundred people, after blocks and availability are applied.</p><span class="tag mono">4 facets · 384 dimensions</span></div></div></div>
+        <div class="acc-item"><button class="acc-btn" aria-expanded="false" aria-controls="s3" id="b3"><span class="mono">03</span><span>Rank</span><span class="pm"></span></button>
+          <div class="acc-panel" id="s3" role="region" aria-labelledby="b3"><div><p>Candidates are scored on fit and on whether the match works both ways. Small penalties stop the same people being shown to everyone, but they never lift a poor fit over a good one. Anyone below the quality floor is dropped.</p><span class="tag mono">Weights applied in code, not by the model</span></div></div></div>
+        <div class="acc-item"><button class="acc-btn" aria-expanded="false" aria-controls="s4" id="b4"><span class="mono">04</span><span>Explain</span><span class="pm"></span></button>
+          <div class="acc-panel" id="s4" role="region" aria-labelledby="b4"><div><p>A model reads up to fifteen candidates and scores how well each meets your need and how much you share. Anyone with a conflict is dropped. The rest come with a reason both of you see. If nobody fits, we say so.</p><span class="tag mono">No names or emails sent to the model</span></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MANIFESTO: pinned -->
+  <section class="mani" id="mani" data-nav="dark" aria-labelledby="mani-h">
+    <div class="mani-stage">
+      <div class="mani-stats" id="maniStats">
+        <div><b data-n="3"><small>/</small>0</b><span>points for how well someone meets your need</span></div>
+        <div><b data-n="3"><small>/</small>0</b><span>points for what you share</span></div>
+        <div><b data-n="0"><small>/</small>0</b><span>matches is an allowed answer: "Nobody fits yet."</span></div>
+      </div>
+      <div class="mani-text">
+        <div class="mani-move" id="maniMove">
+          <h2 class="display" id="mani-h">Every match here starts with <span>a reason you can read.</span></h2>
+          <div class="reason">
+            <span class="mono">Why you two · example</span>
+            <p>You need a designer for a budgeting app. They've built two Figma prototypes, want a real project to work on, and are free on weekends, same as you.</p>
+            <div class="who"><span class="pair"><span class="av g">AK</span><span class="av k">RS</span></span> Shown to both people, before either says yes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq wrap" id="faq" data-nav="light" aria-labelledby="faq-h">
+    <div class="faq-grid">
+      <h2 class="display rv" id="faq-h">Before you <span>start.</span></h2>
+      <div class="acc" id="faqAcc">
+        <div class="acc-item"><button class="acc-btn" aria-expanded="false" aria-controls="f1" id="fb1"><span>Who can see my name?</span><span class="pm"></span></button>
+          <div class="acc-panel" id="f1" role="region" aria-labelledby="fb1"><div><p>Your name and links are shown only to people you are connected with. When you're suggested to someone, or send them an intro, they see your summary, skills, interests and availability, and why you were matched, but not your name or links.</p></div></div></div>
+        <div class="acc-item"><button class="acc-btn" aria-expanded="false" aria-controls="f2" id="fb2"><span>Does AI read my chats?</span><span class="pm"></span></button>
+          <div class="acc-panel" id="f2" role="region" aria-labelledby="fb2"><div><p>No. We don't use AI to read your chat messages. Only you and the person you're talking to can read your chat.</p></div></div></div>
+        <div class="acc-item"><button class="acc-btn" aria-expanded="false" aria-controls="f3" id="fb3"><span>What happens when I block someone?</span><span class="pm"></span></button>
+          <div class="acc-panel" id="f3" role="region" aria-labelledby="fb3"><div><p>Neither of you can message the other, and you won't be suggested to each other. They aren't told.</p></div></div></div>
+        <div class="acc-item"><button class="acc-btn" aria-expanded="false" aria-controls="f4" id="fb4"><span>Who can join right now?</span><span class="pm"></span></button>
+          <div class="acc-panel" id="f4" role="region" aria-labelledby="fb4"><div><p>Cynergi starts with Thapar. Sign in with your @thapar.edu address. You need to be 18 or over.</p></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA + FOOTER -->
+  <footer class="foot wrap" id="start" data-nav="dark">
+    <div class="cta">
+      <h2 class="display rv">Your next collaborator <span>is one sentence away.</span></h2>
+      <a class="btn btn-mint" href="/login">Find your people <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="foot-cols">
+      <div><h3 class="mono">Product</h3><ul><li><a href="#intents">Intents</a></li><li><a href="#how">How it works</a></li><li><a href="#safety">Safety</a></li><li><a href="#faq">FAQ</a></li></ul></div>
+      <div><h3 class="mono">Legal</h3><ul><li><a href="/terms">Terms</a></li><li><a href="/privacy">Privacy</a></li></ul></div>
+      <div><h3 class="mono">Where</h3><ul><li>First community: Thapar</li><li>Servers in Singapore</li></ul></div>
+      <div><h3 class="mono">Places in the app</h3><ul><li>Home</li><li>Spaces</li><li>You</li></ul></div>
+    </div>
+    <div class="foot-word" aria-hidden="true">cynergi<span>.</span></div>
+    <div class="foot-legal mono"><span>Find people to build, learn and explore with.</span><span>Prototype · motion study</span></div>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const root = document.documentElement;
+  if (RM) root.classList.add("rm");
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+  let vh = innerHeight, vw = innerWidth;
+
+  /* ---------- data ---------- */
+  const INTENTS = [
+    { k: "build_together", label: "Build together", say: "“Building a budgeting app, need a designer.”", look: "Complementary skills, availability, seriousness", alt: "An arch of two blocks, one ink and one white, joined by a green beam with a mint sphere on top." },
+    { k: "skill_exchange", label: "Skill exchange", say: "“I can teach Python, want to learn guitar.”", look: "A fair swap: each of you has what the other wants", alt: "Two interlocked rings, one ink and one green." },
+    { k: "interest_buddy", label: "Interest buddy", say: "“Someone to discuss medieval history.”", look: "The same topic, at the same depth", alt: "Two spheres resting together on a white plinth." },
+    { k: "accountability", label: "Accountability", say: "“Keep me consistent on my startup.”", look: "Same stage, same schedule, same commitment", alt: "Two parallel rising staircases with a sphere at the same height on each." },
+    { k: "mentor", label: "Find a mentor", say: "“Guidance moving from sales into product.”", look: "An experience gap and a willingness to mentor", alt: "A small green sphere on a low block, a ramp up to a large ink sphere on a tall column." },
+    { k: "explore", label: "Explore", say: "“Show me interesting people.”", look: "Variety, with a little serendipity", alt: "A field of grey spheres with one green sphere ringed in mint." },
+  ];
+
+  /* ticker */
+  const dot = '<svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="6" cy="6" r="3.5" fill="#7be0a8"/><circle cx="16" cy="6" r="3.5" fill="#f3f4f1"/><circle cx="6" cy="16" r="3.5" fill="#f3f4f1"/><circle cx="16" cy="16" r="3.5" fill="#7be0a8"/></svg>';
+  const tk = INTENTS.map(i => `<span>${i.label}</span>${dot}`).join("");
+  $("#tickerRow").innerHTML = tk + tk + tk + tk;
+
+  /* gallery build */
+  const galBg = $("#galBg"), galCard = $("#galCard"), galMarq = $("#galMarq"), galMeta = $("#galMeta");
+  INTENTS.forEach((it, i) => {
+    galBg.insertAdjacentHTML("beforeend", `<img src="/landing/img/${it.k}.jpg" alt="" class="${i ? "" : "first"}" loading="${i ? "lazy" : "eager"}">`);
+    galCard.insertAdjacentHTML("beforeend", `<div class="layer"><img src="/landing/img/${it.k}.jpg" alt="${it.alt}" loading="${i ? "lazy" : "eager"}"></div>`);
+    galMarq.insertAdjacentHTML("beforeend", `<span>${it.label}</span>`);
+    $("#galList").insertAdjacentHTML("beforeend", `<figure><img src="/landing/img/${it.k}.jpg" alt="${it.alt}" loading="lazy"><figcaption><b>${it.label}</b><span>${it.say}</span><span>Looks for: ${it.look}</span></figcaption></figure>`);
+  });
+  const metaCols = $$(":scope > div", galMeta);
+  INTENTS.forEach((it, i) => {
+    metaCols[0].insertAdjacentHTML("beforeend", `<div class="val big${i ? "" : " on"}">${it.label}</div>`);
+    metaCols[1].insertAdjacentHTML("beforeend", `<div class="val${i ? "" : " on"}">${it.say}</div>`);
+    metaCols[2].insertAdjacentHTML("beforeend", `<div class="val${i ? "" : " on"}">${it.look}</div>`);
+  });
+  const bgImgs = $$("img", galBg), layers = $$(".layer", galCard), marqSpans = $$("span", galMarq);
+  const vals = metaCols.map(c => $$(".val", c));
+
+  /* ---------- clock ---------- */
+  const clock = $("#clock");
+  const tickClock = () => {
+    try { clock.textContent = "IST " + new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date()); } catch (e) {}
+  };
+  tickClock(); setInterval(tickClock, 1000);
+
+  /* ---------- preloader ---------- */
+  const pre = $("#pre");
+  const start = () => root.classList.add("ready");
+  if (RM) { start(); }
+  else {
+    let n = 0; const pc = $("#preCount");
+    const iv = setInterval(() => { n = Math.min(384, n + 17); pc.textContent = String(n).padStart(3, "0"); if (n >= 384) clearInterval(iv); }, 40);
+    setTimeout(() => { pre.classList.add("out"); start(); }, 1350);
+    setTimeout(() => pre.remove(), 2400);
+  }
+  document.body.classList.add("ready");
+  const readyEl = () => root.classList.contains("ready");
+
+  /* ---------- 3D constellation (canvas 2D, hand-rolled projection) ---------- */
+  const cv = $("#field"), cx = cv.getContext("2d");
+  const N = 384;
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const centers = [];
+  for (let c = 0; c < 6; c++) { const a = c / 6 * Math.PI * 2 + .4, el = (c % 2 ? .5 : -.4); centers.push([Math.cos(a) * 1.7 * Math.cos(el), Math.sin(el) * 1.3, Math.sin(a) * 1.7 * Math.cos(el)]); }
+  const P = [];
+  for (let i = 0; i < N; i++) {
+    if (rnd() < .78) { const c = centers[i % 6]; P.push([c[0] + gauss() * .5, c[1] + gauss() * .45, c[2] + gauss() * .5, i % 6]); }
+    else { const r = 1 + rnd() * 1.9, t = rnd() * Math.PI * 2, f = Math.acos(2 * rnd() - 1); P.push([r * Math.sin(f) * Math.cos(t), r * Math.cos(f) * .8, r * Math.sin(f) * Math.sin(t), -1]); }
+  }
+  // nearest neighbours (2 each) for faint edges
+  const E = [];
+  for (let i = 0; i < N; i++) {
+    let b1 = -1, b2 = -1, d1 = 1e9, d2 = 1e9;
+    for (let j = 0; j < N; j++) { if (i === j) continue; const dx = P[i][0] - P[j][0], dy = P[i][1] - P[j][1], dz = P[i][2] - P[j][2], d = dx * dx + dy * dy + dz * dz; if (d < d1) { d2 = d1; b2 = b1; d1 = d; b1 = j; } else if (d < d2) { d2 = d; b2 = j; } }
+    if (b1 > i) E.push([i, b1]); if (b2 > i && d2 < .5) E.push([i, b2]);
+  }
+  // the five matches: nearest point to radius 1.25 in five clusters
+  const M = [];
+  [0, 1, 2, 3, 5].forEach(c => { let best = -1, bd = 1e9; P.forEach((p, i) => { if (p[3] !== c) return; const r = Math.hypot(p[0], p[1], p[2]); const d = Math.abs(r - 1.25) + (Math.abs(p[1]) < .5 ? 5 : 0); if (d < bd) { bd = d; best = i; } }); M.push(best); });
+  const MSET = new Set(M);
+  const LABELS = ["need 3 · shared 2", "need 3 · shared 3", "need 2 · shared 3", "need 3 · shared 1", "need 2 · shared 2"];
+  let DPR = 1, W = 0, H = 0;
+  const size = () => { DPR = Math.min(innerWidth < 760 ? 1.5 : 2, devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * DPR; cv.height = H * DPR; };
+  let mx = 0, my = 0, tmx = 0, tmy = 0;
+  addEventListener("pointermove", e => { tmx = e.clientX / vw - .5; tmy = e.clientY / vh - .5; }, { passive: true });
+  const proj = new Float32Array(N * 4);
+  function drawField(time, prog) {
+    cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    cx.globalCompositeOperation = "source-over";
+    cx.fillStyle = "#0a0a0a"; cx.fillRect(0, 0, W, H);
+    // light streaks (the recording's drifting blurred light), drawn as soft diagonal bands
+    cx.globalCompositeOperation = "lighter";
+    for (let s = 0; s < 3; s++) {
+      const off = ((time * .00002 * (s + 1) + s * .33) % 1) * (W + H) - H * .5;
+      cx.save(); cx.translate(off, 0); cx.rotate(-.55);
+      const bw = (s === 1 ? .28 : .16) * Math.max(W, H);
+      const g = cx.createLinearGradient(-bw, 0, bw, 0);
+      g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(.5, s === 2 ? "rgba(123,224,168,0.05)" : "rgba(255,255,255,0.045)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      cx.fillStyle = g; cx.fillRect(-bw, -H * 2, bw * 2, H * 5); cx.restore();
+    }
+    const h = smooth(.3, .78, prog);              // match highlight
+    const dist = lerp(6.4, 3.6, ease(clamp(prog / .85)));
+    const ay = time * .00006 + mx * .6 - h * .25, ax = .22 + my * .25;
+    const ca = Math.cos(ay), sa = Math.sin(ay), cb = Math.cos(ax), sb = Math.sin(ax);
+    const f = Math.min(W, H) * .95 + (W > H ? W * .12 : 0);
+    const oy = H * (W < 760 ? .36 : .5), ox = W * (W < 760 ? .5 : .6);
+    for (let i = 0; i < N; i++) {
+      const p = P[i];
+      const x = p[0] * ca + p[2] * sa, z0 = -p[0] * sa + p[2] * ca;
+      const y = p[1] * cb - z0 * sb, z = p[1] * sb + z0 * cb + dist;
+      const k = f / z; proj[i * 4] = ox + x * k; proj[i * 4 + 1] = oy + y * k; proj[i * 4 + 2] = z; proj[i * 4 + 3] = k;
+    }
+    // edges
+    cx.lineWidth = 1;
+    for (const [a, b] of E) {
+      const za = proj[a * 4 + 2], al = clamp(1.25 - za / (dist + 2.5)) * .1 * (1 - h * .7);
+      if (al < .005) continue;
+      cx.strokeStyle = `rgba(243,244,241,${al})`;
+      cx.beginPath(); cx.moveTo(proj[a * 4], proj[a * 4 + 1]); cx.lineTo(proj[b * 4], proj[b * 4 + 1]); cx.stroke();
+    }
+    // points
+    for (let i = 0; i < N; i++) {
+      if (MSET.has(i)) continue;
+      const z = proj[i * 4 + 2], k = proj[i * 4 + 3];
+      const depth = clamp(1.35 - z / (dist + 2.2));
+      const r = Math.max(.6, k * .011);
+      const al = (.18 + depth * .7) * (1 - h * .55);
+      cx.fillStyle = P[i][3] === 1 || P[i][3] === 4 ? `rgba(123,224,168,${al * .8})` : `rgba(243,244,241,${al})`;
+      cx.beginPath(); cx.arc(proj[i * 4], proj[i * 4 + 1], r, 0, 6.283); cx.fill();
+    }
+    // "you" at the origin
+    const zx = ox, zy = oy, k0 = f / dist;
+    const youR = Math.max(5, k0 * .03);
+    cx.globalCompositeOperation = "source-over";
+    if (h > 0) {
+      M.forEach((i, n) => {
+        const t = clamp(h * 1.6 - n * .12);
+        if (t <= 0) return;
+        const tx = proj[i * 4], ty = proj[i * 4 + 1];
+        cx.strokeStyle = `rgba(123,224,168,${.85 * t})`; cx.lineWidth = 1.5;
+        cx.beginPath(); cx.moveTo(zx, zy); cx.lineTo(lerp(zx, tx, ease(t)), lerp(zy, ty, ease(t))); cx.stroke();
+      });
+    }
+    // matched points
+    M.forEach((i, n) => {
+      const z = proj[i * 4 + 2], k = proj[i * 4 + 3], x = proj[i * 4], y = proj[i * 4 + 1];
+      const t = clamp(h * 1.6 - n * .12);
+      const r = Math.max(1.2, k * .011) * (1 + t * 1.6);
+      cx.fillStyle = t > 0 ? `rgba(123,224,168,${.5 + t * .5})` : `rgba(243,244,241,${clamp(1.35 - z / (dist + 2.2)) * .8})`;
+      cx.beginPath(); cx.arc(x, y, r, 0, 6.283); cx.fill();
+      if (t > .6) {
+        cx.strokeStyle = `rgba(123,224,168,${(t - .6) * 1.2})`; cx.lineWidth = 1;
+        cx.beginPath(); cx.arc(x, y, r + 6, 0, 6.283); cx.stroke();
+        cx.fillStyle = `rgba(243,244,241,${(t - .6) * 2.2})`; cx.font = "500 11px 'JetBrains Mono', monospace";
+        const lab = W < 760 ? LABELS[n].replace(/need (\d) · shared (\d)/, "$1·$2") : LABELS[n].toUpperCase(); const lw = cx.measureText(lab).width; const right = x + r + 12 + lw < W - 12; cx.fillText(lab, right ? x + r + 12 : x - r - 12 - lw, y + 4);
+      }
+    });
+    cx.fillStyle = "#f3f4f1"; cx.beginPath(); cx.arc(zx, zy, youR * (.6 + h * .4), 0, 6.283); cx.globalAlpha = h; cx.fill(); cx.globalAlpha = 1;
+    if (h > .2) { cx.strokeStyle = `rgba(243,244,241,${h * .5})`; cx.beginPath(); cx.arc(zx, zy, youR * 2.2, 0, 6.283); cx.stroke();
+      cx.fillStyle = `rgba(243,244,241,${h})`; cx.font = "500 11px 'JetBrains Mono', monospace"; cx.fillText("YOU", zx - 12, zy + youR * 2.2 + 16); }
+  }
+
+  /* ---------- layout cache ---------- */
+  const heroPin = $("#heroPin"), heroUi = $("#heroUi"), heroShade = $("#heroShade"), caps = $$(".caps p");
+  const gal = $("#intents"), galBar = $("#galBar"), galIdx = $("#galIdx");
+  const mani = $("#mani"), maniMove = $("#maniMove"), maniStats = $$("#maniStats b");
+  const statEls = $$("#stats b"), statsWrap = $("#stats");
+  const plates = $$("[data-par]");
+  let L = {};
+  const top = el => el.getBoundingClientRect().top + scrollY;
+  const measure = () => {
+    vh = innerHeight; vw = innerWidth; size();
+    L = { hero: [top(heroPin), heroPin.offsetHeight], gal: [top(gal), gal.offsetHeight], mani: [top(mani), mani.offsetHeight], stats: top(statsWrap) };
+    const c = marqSpans.map(s => s.offsetLeft + s.offsetWidth / 2);
+    L.marq = c;
+    L.maniH = maniMove.offsetHeight; L.maniBox = maniMove.parentElement.offsetHeight;
+  };
+  const pin = ([t, h]) => clamp((scrollY - t) / (h - vh));
+
+  /* ---------- counters ---------- */
+  const setCount = (el, v, pad = 2) => { el.lastChild.nodeValue = String(v).padStart(pad, "0"); };
+
+  /* ---------- nav ---------- */
+  const nav = $("#nav"), fab = $("#fab");
+  const navSections = $$("[data-nav]");
+  let lastY = scrollY;
+
+  /* ---------- the loop ---------- */
+  let sy = scrollY;   // smoothed scroll for motion values
+  function frame(time) {
+    sy = RM ? scrollY : lerp(sy, scrollY, .14);
+    if (Math.abs(sy - scrollY) < .3) sy = scrollY;
+    mx = lerp(mx, tmx, .05); my = lerp(my, tmy, .05);
+    const realY = scrollY; const Y = sy;
+    const save = scrollY; // compute progress with smoothed Y
+    const prog = (t, h) => clamp((Y - t) / (h - vh));
+
+    // hero
+    const hp = prog(L.hero[0], L.hero[1] - vh);          // pinned span before curtain arrives
+    const heroVisible = realY < L.hero[0] + L.hero[1];
+    if (heroVisible) drawField(RM ? 0 : time, RM ? .9 : hp);
+    if (!RM) {
+      const out = smooth(.02, .3, hp);
+      heroUi.style.opacity = String(1 - out);
+      heroUi.style.transform = `translateY(${-out * 60}px) scale(${1 - out * .04})`;
+      caps.forEach((c, i) => { const a = [.18, .42, .66][i]; const o = smooth(a, a + .08, hp) * (1 - smooth(a + .2, a + .26, hp)); c.style.opacity = String(i === 2 ? smooth(a, a + .08, hp) : o); c.style.transform = `translateY(${(1 - smooth(a, a + .1, hp)) * 20}px)`; });
+      const cover = clamp((Y - (L.hero[0] + L.hero[1] - 2 * vh)) / vh);
+      heroShade.style.opacity = String(cover * .7);
+    }
+
+    // parallax plates
+    plates.forEach(pl => { const r = pl.getBoundingClientRect(); if (r.bottom < 0 || r.top > vh) return; const k = parseFloat(pl.dataset.par); const c = (r.top + r.height / 2 - vh / 2) / vh; pl.firstElementChild.style.setProperty("--py", `${(-6 + c * k * 100).toFixed(2)}%`); });
+
+    // gallery
+    if (!RM) {
+      const gp = prog(L.gal[0], L.gal[1]);
+      const idx = clamp(gp * 6, 0, 5.999);
+      const act = Math.floor(idx);
+      layers.forEach((ly, i) => {
+        if (!i) return;
+        const t = ease(clamp((idx - i + .22) / .3));
+        ly.style.transform = `translateY(${(1 - t) * 100}%)`;
+        ly.firstElementChild.style.transform = `translateY(${-(1 - t) * 40}%) scale(${1 + (1 - t) * .15})`;
+        bgImgs[i].style.opacity = String(t);
+      });
+      vals.forEach(col => col.forEach((v, i) => v.classList.toggle("on", i === act)));
+      galIdx.textContent = String(act + 1).padStart(2, "0");
+      galBar.style.transform = `scaleX(${gp})`;
+      if (L.marq) {
+        const f = clamp(idx - .5 + .5, 0, 5.999), a = Math.floor(f), b = Math.min(5, a + 1), t = f - a;
+        const c = lerp(L.marq[a], L.marq[b], t);
+        galMarq.style.transform = `translate(${vw / 2 - c}px, -50%)`;
+      }
+    }
+
+    // stats counters (scroll-linked, like the recording's /10% -> /89%)
+    { const r = statsWrap.getBoundingClientRect(); const t = RM ? 1 : ease(clamp((vh - r.top) / (vh * .75)));
+      statEls.forEach(el => setCount(el, Math.round(+el.dataset.n * t))); }
+
+    // manifesto
+    { const mp = RM ? 1 : prog(L.mani[0], L.mani[1]);
+      if (!RM) { const travel = Math.max(0, L.maniH - L.maniBox * .55); maniMove.style.transform = `translateY(${lerp(L.maniBox * .55, -travel, ease(mp))}px)`; }
+      maniStats.forEach((el, i) => setCount(el, Math.round(+el.dataset.n * clamp(mp * 1.6 - i * .15)), 1)); }
+
+    // nav: colour from the section under it; hide on scroll down after the hero
+    const probe = 30;
+    for (const s of navSections) { const r = s.getBoundingClientRect(); if (r.top <= probe && r.bottom > probe) { nav.classList.toggle("light", s.dataset.nav === "light"); break; } }
+    const pastHero = realY > L.hero[0] + L.hero[1] - vh * 1.2;
+    if (Math.abs(realY - lastY) > 4) { nav.classList.toggle("hide", pastHero && realY > lastY); lastY = realY; }
+    const inGal = realY > L.gal[0] - vh * .2 && realY < L.gal[0] + L.gal[1] - vh * .8;
+    fab.classList.toggle("show", pastHero && !RM && !inGal);
+
+    if (!RM) requestAnimationFrame(frame);
+  }
+
+  /* ---------- in-view reveals (spec: fade up once) ---------- */
+  if (!RM && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.remove("wait"); io.unobserve(e.target); } }), { threshold: .15 });
+    $$(".rv").forEach(el => { const r = el.getBoundingClientRect(); if (r.top > vh) { el.classList.add("wait"); io.observe(el); } });
+  }
+
+  /* ---------- typing demo ---------- */
+  const TEXT = "Third-year CSE. I can teach Python and I want to learn product design. Building a budgeting app on weekends and I need a designer.";
+  const demoText = $("#demoText"), chips = $$("#chips .chip");
+  const runDemo = () => {
+    if (RM) { demoText.textContent = TEXT; return; }
+    let i = 0;
+    const step = () => {
+      i += 1 + (Math.random() < .3);
+      demoText.innerHTML = TEXT.slice(0, i).replace(/&/g, "&amp;").replace(/</g, "&lt;") + '<span class="caret"></span>';
+      if (i < TEXT.length) setTimeout(step, 22 + Math.random() * 30);
+      else chips.forEach((c, n) => setTimeout(() => c.classList.add("on"), 250 + n * 110));
+    };
+    step();
+  };
+  if ("IntersectionObserver" in window && !RM) {
+    const io2 = new IntersectionObserver(es => { if (es[0].isIntersecting) { io2.disconnect(); runDemo(); } }, { threshold: .35 });
+    io2.observe($("#demo"));
+  } else runDemo();
+
+  /* ---------- accordions ---------- */
+  const howImgs = $$("#howPlate img");
+  function accordion(box, single, onOpen) {
+    const items = $$(".acc-item", box);
+    items.forEach((it, n) => {
+      const b = $(".acc-btn", it);
+      b.addEventListener("click", () => {
+        const open = !it.classList.contains("open");
+        if (single) items.forEach(o => { o.classList.remove("open"); $(".acc-btn", o).setAttribute("aria-expanded", "false"); });
+        it.classList.toggle("open", open); b.setAttribute("aria-expanded", String(open));
+        if (open && onOpen) onOpen(n);
+      });
+      if (onOpen) b.addEventListener("pointerenter", () => onOpen(n));
+    });
+  }
+  accordion($("#howAcc"), true, n => howImgs.forEach((im, i) => im.classList.toggle("on", i === n)));
+  accordion($("#faqAcc"), false);
+
+  /* ---------- cursor ring ---------- */
+  const cur = $("#cur");
+  if (!RM && matchMedia("(pointer: fine)").matches) {
+    let x = -100, y = -100, tx = -100, ty = -100;
+    addEventListener("pointermove", e => { tx = e.clientX; ty = e.clientY; cur.style.opacity = "1"; }, { passive: true });
+    document.addEventListener("pointerleave", () => cur.style.opacity = "0");
+    document.addEventListener("pointerover", e => cur.classList.toggle("big", !!e.target.closest("a, button")));
+    const cl = () => { x = lerp(x, tx, .2); y = lerp(y, ty, .2); cur.style.transform = `translate(${x}px, ${y}px)`; requestAnimationFrame(cl); };
+    cl();
+  }
+
+  /* ---------- phone menu ---------- */
+  const mm = $("#mmenu"), burger = $(".burger");
+  let lastFocus = null;
+  const openMenu = e => { if (e) e.preventDefault(); lastFocus = document.activeElement; mm.classList.add("open"); burger.setAttribute("aria-expanded", "true"); document.body.style.overflow = "hidden"; setTimeout(() => $("#mclose").focus(), 50); };
+  const closeMenu = () => { mm.classList.remove("open"); burger.setAttribute("aria-expanded", "false"); document.body.style.overflow = ""; if (lastFocus) lastFocus.focus(); };
+  $$("[data-open-menu]").forEach(b => b.addEventListener("click", openMenu));
+  $("#mclose").addEventListener("click", closeMenu);
+  $$("#mmenu nav a, .mmenu-foot a").forEach(a => a.addEventListener("click", closeMenu));
+  addEventListener("keydown", e => { if (e.key === "Escape" && mm.classList.contains("open")) closeMenu(); });
+  setInterval(() => { $("#mclock").textContent = clock.textContent; }, 1000);
+
+  /* ---------- go ---------- */
+  measure();
+  addEventListener("resize", () => { measure(); if (RM) frame(0); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  addEventListener("load", measure);
+  if (RM) { frame(0); addEventListener("scroll", () => frame(0), { passive: true }); }
+  else requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
