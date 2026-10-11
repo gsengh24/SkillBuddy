@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Avatar } from "@/components/ds/avatar";
+import { QuickRespond } from "@/components/home/quick-respond";
 import { cx } from "@/components/ui/cx";
 import { itemHref, type ActivityRow, type Filter } from "@/lib/home/activity";
 
@@ -96,14 +97,22 @@ function Tile({ row }: { row: ActivityRow }) {
   );
 }
 
-function InboxRow({ row, selected }: { row: ActivityRow; selected: boolean }) {
+function InboxRow({
+  row,
+  selected,
+  onAnswered,
+}: {
+  row: ActivityRow;
+  selected: boolean;
+  onAnswered: () => void;
+}) {
   return (
-    <li>
+    <li className="flex items-center">
       <Link
         href={itemHref(row.type, row.id)}
         aria-current={selected ? "true" : undefined}
         className={cx(
-          "hover:bg-on-dark/5 grid min-h-14 grid-cols-[38px_minmax(0,1fr)_auto] items-start gap-3 rounded-[10px] px-2.5 py-[11px]",
+          "hover:bg-on-dark/5 grid min-h-14 min-w-0 flex-1 grid-cols-[38px_minmax(0,1fr)_auto] items-start gap-3 rounded-[10px] px-2.5 py-[11px]",
           selected && "bg-mint/10 hover:bg-mint/10 shadow-[inset_2px_0_var(--mint)]",
         )}
       >
@@ -139,6 +148,9 @@ function InboxRow({ row, selected }: { row: ActivityRow; selected: boolean }) {
           ) : null}
         </span>
       </Link>
+      {row.type === "intro" && !row.sent ? (
+        <QuickRespond introId={row.id} onAnswered={onAnswered} />
+      ) : null}
     </li>
   );
 }
@@ -172,6 +184,7 @@ export function ActivityList({
 }) {
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [sub, setSub] = useState<Sub>("mine");
+  const [answered, setAnswered] = useState<string[]>([]);
   const requestRows = rows.filter((row) => row.group === "requests");
   const count = {
     all: rows.length,
@@ -180,12 +193,13 @@ export function ActivityList({
     mine: requestRows.filter((row) => row.sub === "mine").length,
     intros: requestRows.filter((row) => row.sub === "intros").length,
   };
-  const shown =
+  const shown = (
     filter === "all"
       ? rows
       : filter === "messages"
         ? rows.filter((row) => row.group === "messages")
-        : requestRows.filter((row) => row.sub === sub);
+        : requestRows.filter((row) => row.sub === sub)
+  ).filter((row) => !answered.includes(row.key));
   const empty = EMPTY[filter];
 
   // On desktop the right side is never left blank behind a list: choosing a tab opens its
@@ -282,7 +296,11 @@ export function ActivityList({
                     {label}
                   </li>
                 ) : null}
-                <InboxRow row={row} selected={row.key === selectedKey} />
+                <InboxRow
+                  row={row}
+                  selected={row.key === selectedKey}
+                  onAnswered={() => setAnswered((keys) => [...keys, row.key])}
+                />
               </Fragment>
             );
           })}

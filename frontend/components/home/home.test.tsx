@@ -212,3 +212,29 @@ describe("Greeting", () => {
     expect(screen.getByText(greetingFor(new Date().getHours()))).toBeInTheDocument();
   });
 });
+
+describe("QuickRespond in the All list", () => {
+  it("accepts an incoming intro from its row and removes the row", async () => {
+    screenIs(false);
+    const { browserApi } = await import("@/lib/api/browser");
+    vi.mocked(browserApi).mockResolvedValue(intro({ status: "accepted" }));
+    render(<ActivityList rows={ROWS} initialFilter="all" selectedKey={null} />);
+    await userEvent.click(screen.getByRole("button", { name: "Accept intro" }));
+    expect(browserApi).toHaveBeenCalledWith(
+      "/intros/intro-1/respond",
+      expect.anything(),
+      expect.objectContaining({ body: { accept: true } }),
+    );
+    expect(listItems()).not.toContain("/home?item=intro-intro-1");
+  });
+
+  it("shows no buttons on an intro you sent", () => {
+    screenIs(false);
+    const rows = buildActivity(
+      { requests: [], intros: [intro({ direction: "sent" })], connections: [] },
+      NOW,
+    );
+    render(<ActivityList rows={rows} initialFilter="all" selectedKey={null} />);
+    expect(screen.queryByRole("button", { name: "Decline intro" })).toBeNull();
+  });
+});
