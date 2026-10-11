@@ -34,7 +34,11 @@ function GoogleMark() {
 /** "Continue with Google": the design system's thin outline pill with Google's mark. */
 export function GoogleButton({ className, ...props }: ComponentProps<"button">) {
   return (
-    <button type="button" className={cx(buttonClasses(), "bg-paper", className)} {...props}>
+    <button
+      type="button"
+      className={cx(buttonClasses(), "border-line-strong bg-bg/60 rounded-lg", className)}
+      {...props}
+    >
       <GoogleMark />
       Continue with Google
     </button>

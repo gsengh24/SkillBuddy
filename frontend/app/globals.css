@@ -6,70 +6,12 @@
  * removed, so only these colours exist.
  */
 
-/* The palette, once, as CSS variables. */
-:root {
-  color-scheme: light;
-  --bg: #ffffff;
-  --panel: #f6f7f5;
-  --line: #e4e6e2;
-  --line-strong: #d9dbd6;
-  --ink: #0a0a0a;
-  --ink-hover: #222222;
-  --ink-2: #4a4f4a;
-  --muted: #696d68;
-  --muted-2: #8a8f89;
-  --faint: #b0b4ae;
-  --green: #0f4a34;
-  --green-hover: #0b3828;
-  --green-tint: #e8f1ec;
-  --green-line: #b9d3c5;
-  --green-soft: #f3f9f5;
-  --mint: #7be0a8;
-  --mint-text: #9fd1b6;
-  --on-green-2: #9fd1b6;
-  --danger: #b3261e;
-  --card: #ffffff;
-  --pane: #0f100f;
-  --pane-2: #1a1c1a;
-  --pane-line: #262826;
-  --on-dark: #f3f4f1;
-  --on-dark-2: #a9ada7;
-  --on-dark-3: #8a8e88;
-  --pane-green: #0f4a34;
-  --pane-ink: #2b2d2b;
-  --amber: #e8a06f;
-}
-
 /*
- * Dark theme (Home reference). The same variable names, so every component that uses the
- * palette follows. It applies when the device prefers dark, unless the page says
- * data-theme="light"; data-theme="dark" forces it. The ink inbox pane keeps its own colours.
+ * The palette, once, as CSS variables. Dark only (ADR 0017): the app is always dark, whatever
+ * the device prefers. The ink inbox pane keeps its own colours. (The landing page is a separate
+ * static document and is not touched.)
  */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #0b0c0b;
-    --panel: #141614;
-    --line: #262826;
-    --line-strong: #323532;
-    --ink: #f3f4f1;
-    --ink-hover: #ffffff;
-    --ink-2: #c9ccc6;
-    --muted: #a9ada7;
-    --muted-2: #8a8e88;
-    --faint: #4a4d49;
-    --green: #7be0a8;
-    --green-hover: #9fd1b6;
-    --green-tint: #142219;
-    --green-line: #2a4536;
-    --green-soft: #101a14;
-    --on-green-2: #256040;
-    --danger: #ff8a80;
-    --card: #111311;
-  }
-}
-
-:root[data-theme="dark"] {
+:root {
   color-scheme: dark;
   --bg: #0b0c0b;
   --panel: #141614;
@@ -86,9 +28,20 @@
   --green-tint: #142219;
   --green-line: #2a4536;
   --green-soft: #101a14;
+  --mint: #7be0a8;
+  --mint-text: #9fd1b6;
   --on-green-2: #256040;
   --danger: #ff8a80;
   --card: #111311;
+  --pane: #0f100f;
+  --pane-2: #1a1c1a;
+  --pane-line: #262826;
+  --on-dark: #f3f4f1;
+  --on-dark-2: #a9ada7;
+  --on-dark-3: #8a8e88;
+  --pane-green: #0f4a34;
+  --pane-ink: #2b2d2b;
+  --amber: #e8a06f;
 }
 
 @theme inline {
@@ -137,37 +90,37 @@
   --color-green-chip-edge: var(--green-line);
 
   --color-amber-base: #d08a1e;
-  --color-amber-ink: #6e4608;
-  --color-amber-tint: #fdf3dc;
-  --color-amber-edge: #ebd2a8;
-  --color-amber-track: #f3dfb2;
+  --color-amber-ink: #f0c377;
+  --color-amber-tint: #2b2110;
+  --color-amber-edge: #5a4420;
+  --color-amber-track: #3f2f14;
 
   --color-coral-base: #e2573e;
-  --color-coral-ink: #9a3b27;
-  --color-coral-tint: #fceae4;
-  --color-coral-edge: #f0bfb2;
-  --color-coral-track: #f6d4cb;
+  --color-coral-ink: #f4a08f;
+  --color-coral-tint: #2d1814;
+  --color-coral-edge: #5e2f26;
+  --color-coral-track: #432019;
 
   --color-blue-base: #3f78b5;
-  --color-blue-ink: #2a5683;
-  --color-blue-tint: #e4eff9;
-  --color-blue-edge: #b5cce0;
-  --color-blue-track: #ccdce8;
+  --color-blue-ink: #9cc3ea;
+  --color-blue-tint: #121f2c;
+  --color-blue-edge: #2b4a68;
+  --color-blue-track: #1f3448;
 
   --color-violet-base: #7b63c2;
-  --color-violet-ink: #54428f;
-  --color-violet-tint: #f0ebf9;
-  --color-violet-edge: #d2c7ea;
-  --color-violet-track: #dfd6f1;
+  --color-violet-ink: #c5b6ee;
+  --color-violet-tint: #1d1830;
+  --color-violet-edge: #44386e;
+  --color-violet-track: #2d2549;
 
   --color-teal-base: #1f8a8c;
-  --color-teal-ink: #1b6466;
-  --color-teal-tint: #dff2f1;
-  --color-teal-edge: #b5dcda;
-  --color-teal-track: #c8e5e3;
+  --color-teal-ink: #7fd0d2;
+  --color-teal-tint: #0f2625;
+  --color-teal-edge: #24605f;
+  --color-teal-track: #183b3a;
 
   /* The filled notification badge: darker than coral base so its text passes 4.5:1 */
-  --color-badge: #b83d28;
+  --color-badge: #ff8e7a;
   --color-badge-text: var(--bg);
 
   /* Fonts come from next/font (self-hosted at build time; see app/layout.tsx). */

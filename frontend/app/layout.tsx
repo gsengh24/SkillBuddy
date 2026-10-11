@@ -3,7 +3,6 @@ import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 
 import { SiteBanner } from "@/components/site-banner";
 import { brand } from "@/lib/brand";
-import { colors } from "@/lib/design/tokens";
 
 import "./globals.css";
 
@@ -35,7 +34,7 @@ export const metadata: Metadata = {
   description: brand.description,
 };
 
-export const viewport: Viewport = { themeColor: colors.bg };
+export const viewport: Viewport = { themeColor: "#0b0c0b" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

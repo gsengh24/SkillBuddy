@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
-import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/text-field";
+import { cx } from "@/components/ui/cx";
 import { textLinkClasses } from "@/components/ui/text-link";
 import { browserApi } from "@/lib/api/browser";
 import { ApiError } from "@/lib/api/errors";
@@ -21,6 +20,11 @@ import { GoogleButton } from "./google-button";
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const EMAIL_MAX_LENGTH = 254;
 const CONSENT_MESSAGE = "To continue, confirm that you are 18 or older and accept the terms.";
+
+const INPUT =
+  "h-11 w-full rounded-lg border border-line-strong bg-bg/60 px-3 text-body text-ink placeholder:text-muted focus:border-green focus:outline-none aria-invalid:border-coral-ink";
+const PRIMARY =
+  "bg-mint text-bg hover:bg-green-hover inline-flex h-11 w-full items-center justify-center rounded-lg text-[15px] font-semibold disabled:cursor-not-allowed disabled:opacity-60";
 
 type Step = "email" | "code";
 
@@ -39,6 +43,7 @@ type LoginFormProps = {
  * code from the email. With Google enabled, "Continue with Google" comes first and the email
  * code stays below it as the fallback. Uses native form controls, labelled fields, and
  * announces errors (role="alert") and progress (role="status") to assistive technology.
+ * The code step draws six boxes over one real input, so paste and autofill still work.
  */
 export function LoginForm({
   nextPath,
@@ -53,6 +58,7 @@ export function LoginForm({
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [code, setCode] = useState("");
+  const [codeFocused, setCodeFocused] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(initialError);
   const [appealToken, setAppealToken] = useState<string | null>(null);
@@ -199,206 +205,182 @@ export function LoginForm({
   ) : null;
   const appealForm = appealToken ? <AppealForm token={appealToken} /> : null;
   const inviteField = inviteOnly ? (
-    <TextField
-      id={`${ids}-invite`}
-      label="Invite code (optional)"
-      hint="Not needed if your application was approved."
-      name="invite_code"
-      autoComplete="off"
-      autoCapitalize="characters"
-      spellCheck={false}
-      maxLength={32}
-      value={inviteCode}
-      onChange={(event) => setInviteCode(event.target.value)}
-      className="font-mono uppercase"
-    />
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={`${ids}-invite`} className="text-small text-ink font-medium">
+        Invite code (optional)
+      </label>
+      <input
+        id={`${ids}-invite`}
+        name="invite_code"
+        autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        maxLength={32}
+        value={inviteCode}
+        onChange={(event) => setInviteCode(event.target.value)}
+        className={cx(INPUT, "font-mono uppercase")}
+      />
+      <p className="text-small text-muted">Not needed if your application was approved.</p>
+    </div>
   ) : null;
 
+  const consent = (
+    <fieldset className="flex flex-col gap-1">
+      <legend className="sr-only">Confirmations</legend>
+      <label className="flex min-h-9 items-center gap-3 text-[14px]">
+        <input
+          type="checkbox"
+          checked={ageConfirmed}
+          onChange={(event) => setAgeConfirmed(event.target.checked)}
+          className="accent-green size-4 shrink-0"
+        />
+        <span>I am 18 or older.</span>
+      </label>
+      <label className="flex min-h-9 items-center gap-3 text-[14px]">
+        <input
+          type="checkbox"
+          checked={acceptTerms}
+          onChange={(event) => setAcceptTerms(event.target.checked)}
+          className="accent-green size-4 shrink-0"
+        />
+        <span>
+          I accept the{" "}
+          <Link href="/terms" className={textLinkClasses()}>
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className={textLinkClasses()}>
+            Privacy Policy
+          </Link>
+          .
+        </span>
+      </label>
+    </fieldset>
+  );
+
+  const emailPlaceholder = `name@${google?.domains[0] ?? "example.com"}`;
+
   return (
-    <section className="flex w-full max-w-md flex-col gap-6" aria-labelledby={`${ids}-heading`}>
+    <section className="flex w-full flex-col gap-6" aria-labelledby={`${ids}-heading`}>
       <p role="status" aria-live="polite" className="sr-only">
         {status}
       </p>
 
       {step === "email" ? (
         <form noValidate onSubmit={onEmailSubmit} className="flex flex-col gap-5">
-          <h1 id={`${ids}-heading`} className="text-h1">
-            Sign in to {brand.name}
-          </h1>
+          <div className="flex flex-col gap-2">
+            <h1 id={`${ids}-heading`} className="text-h1">
+              Sign in to {brand.name}
+            </h1>
+            <p className="text-muted">
+              {google
+                ? "Use your college Google account, or get a 6-digit code by email. New here? This creates your account."
+                : "We'll email you a 6-digit code. No password needed. New here? This creates your account."}
+            </p>
+          </div>
+
           {google ? (
             <>
-              <p className="text-muted">
-                Use your college Google account, or get a 6-digit code by email. New here? This
-                creates your account.
-              </p>
-
-              <fieldset className="flex flex-col gap-1">
-                <legend className="sr-only">Confirmations</legend>
-                <label className="flex min-h-11 items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={ageConfirmed}
-                    onChange={(event) => setAgeConfirmed(event.target.checked)}
-                    className="accent-green-base size-4 shrink-0"
-                  />
-                  <span>I am 18 or older.</span>
-                </label>
-                <label className="flex min-h-11 items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(event) => setAcceptTerms(event.target.checked)}
-                    className="accent-green-base size-4 shrink-0"
-                  />
-                  <span>
-                    I accept the{" "}
-                    <Link href="/terms" className={textLinkClasses()}>
-                      Terms
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className={textLinkClasses()}>
-                      Privacy Policy
-                    </Link>
-                    .
-                  </span>
-                </label>
-              </fieldset>
-
-              <div className="flex flex-col gap-2">
-                <GoogleButton onClick={onGoogle} disabled={submitting} className="self-start" />
-                <p className="text-small text-muted">
+              <div className="flex flex-col gap-3">
+                <GoogleButton onClick={onGoogle} disabled={submitting} className="w-full" />
+                <p className="text-small text-muted text-center">
                   Only {google.domains.map((domain) => `@${domain}`).join(" or ")} Google accounts.
                 </p>
               </div>
-
-              {errorMessage}
-
               <div className="flex items-center gap-3">
                 <span aria-hidden="true" className="bg-line h-px flex-1" />
-                <span className="text-small text-muted">or use an email code</span>
+                <span className="text-small text-muted">or</span>
                 <span aria-hidden="true" className="bg-line h-px flex-1" />
               </div>
-
-              <TextField
-                ref={emailInput}
-                id={`${ids}-email`}
-                label="Email address"
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                maxLength={EMAIL_MAX_LENGTH}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? errorId : undefined}
-              />
-
-              {inviteField}
-
-              <Button type="submit" disabled={submitting} className="self-start">
-                {submitting ? "Sending code…" : "Email me a code"}
-              </Button>
             </>
-          ) : (
-            <>
-              <p className="text-muted">
-                We&apos;ll email you a 6-digit code. No password needed. New here? This creates your
-                account.
-              </p>
+          ) : null}
 
-              <TextField
-                ref={emailInput}
-                id={`${ids}-email`}
-                label="Email address"
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                maxLength={EMAIL_MAX_LENGTH}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? errorId : undefined}
-              />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${ids}-email`} className="text-small text-ink font-medium">
+              Email address
+            </label>
+            <input
+              ref={emailInput}
+              id={`${ids}-email`}
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder={emailPlaceholder}
+              maxLength={EMAIL_MAX_LENGTH}
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
+              className={INPUT}
+            />
+          </div>
 
-              {inviteField}
+          {inviteField}
+          {consent}
+          {errorMessage}
 
-              <fieldset className="flex flex-col gap-1">
-                <legend className="sr-only">Confirmations</legend>
-                <label className="flex min-h-11 items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={ageConfirmed}
-                    onChange={(event) => setAgeConfirmed(event.target.checked)}
-                    className="accent-green-base size-4 shrink-0"
-                  />
-                  <span>I am 18 or older.</span>
-                </label>
-                <label className="flex min-h-11 items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(event) => setAcceptTerms(event.target.checked)}
-                    className="accent-green-base size-4 shrink-0"
-                  />
-                  <span>
-                    I accept the{" "}
-                    <Link href="/terms" className={textLinkClasses()}>
-                      Terms
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className={textLinkClasses()}>
-                      Privacy Policy
-                    </Link>
-                    .
-                  </span>
-                </label>
-              </fieldset>
-
-              {errorMessage}
-
-              <Button type="submit" disabled={submitting} className="self-start">
-                {submitting ? "Sending code…" : "Email me a code"}
-              </Button>
-            </>
-          )}
+          <button type="submit" disabled={submitting} className={PRIMARY}>
+            {submitting ? "Sending code…" : "Email me a code"}
+          </button>
         </form>
       ) : (
         <form noValidate onSubmit={onCodeSubmit} className="flex flex-col gap-5">
-          <h1 id={`${ids}-heading`} className="text-h1">
-            Check your email
-          </h1>
-          <p className="text-muted">
-            Enter the 6-digit code we sent to{" "}
-            <strong className="text-ink break-all">{email.trim()}</strong>. It expires in 10
-            minutes.
-          </p>
+          <div className="flex flex-col gap-2">
+            <h1 id={`${ids}-heading`} className="text-h1">
+              Check your email
+            </h1>
+            <p className="text-muted">
+              Enter the 6-digit code we sent to{" "}
+              <strong className="text-ink break-all">{email.trim()}</strong>. It expires in 10
+              minutes.
+            </p>
+          </div>
 
-          <TextField
-            ref={codeInput}
-            id={`${ids}-code`}
-            label="Sign-in code"
-            name="code"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            maxLength={6}
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? errorId : undefined}
-            className="font-mono text-[20px] tracking-[0.4em]"
-          />
+          <div className="relative">
+            <div aria-hidden="true" className="grid grid-cols-6 gap-2">
+              {Array.from({ length: 6 }, (_, index) => (
+                <div
+                  key={index}
+                  className={cx(
+                    "bg-bg/60 flex h-14 items-center justify-center rounded-lg border font-mono text-[22px]",
+                    codeFocused && index === Math.min(code.length, 5)
+                      ? "border-green"
+                      : "border-line-strong",
+                  )}
+                >
+                  {code[index] ?? ""}
+                </div>
+              ))}
+            </div>
+            <label htmlFor={`${ids}-code`} className="sr-only">
+              Sign-in code
+            </label>
+            <input
+              ref={codeInput}
+              id={`${ids}-code`}
+              name="code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              value={code}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+              onFocus={() => setCodeFocused(true)}
+              onBlur={() => setCodeFocused(false)}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
+              className="absolute inset-0 size-full cursor-text opacity-0"
+            />
+          </div>
 
           {inviteField}
-
           {errorMessage}
 
-          <Button type="submit" disabled={submitting} className="self-start">
+          <button type="submit" disabled={submitting} className={PRIMARY}>
             {submitting ? "Checking…" : "Sign in"}
-          </Button>
+          </button>
 
           <div className="text-small flex flex-wrap items-center justify-between gap-3">
             <button

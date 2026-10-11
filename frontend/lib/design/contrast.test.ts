@@ -41,22 +41,15 @@ describe("contrast", () => {
     }
   });
 
-  it("keeps base colours out of text: the coral base fails under badge text", () => {
-    // Why the badge has its own darker fill.
-    expect(contrastRatio(badge.text, hues.coral.base)).toBeLessThan(4.5);
+  it("keeps the badge text readable on its own fill", () => {
     expect(contrastRatio(badge.text, badge.fill)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("keeps the restricted colours where they are allowed", () => {
-    // muted-2 is large text only; faint and mint are never text; line is never the only
-    // edge of a control. Each of these would fail if used for body text or a field border.
-    expect(contrastRatio(colors.muted2, colors.bg)).toBeLessThan(MIN_RATIO.text);
-    expect(contrastRatio(colors.muted2, colors.greenTint)).toBeLessThan(MIN_RATIO.large);
+    // faint is decorative only; line is never the only edge of a control. Each of these would
+    // fail if used for body text or a field border.
     expect(contrastRatio(colors.faint, colors.bg)).toBeLessThan(MIN_RATIO.large);
-    expect(contrastRatio(colors.mint, colors.bg)).toBeLessThan(MIN_RATIO.large);
     expect(contrastRatio(colors.line, colors.bg)).toBeLessThan(MIN_RATIO.ui);
-    // Why muted is darker than the spec's #6B6F6A: that value fails on green tint.
-    expect(contrastRatio("#6B6F6A", colors.greenTint)).toBeLessThan(MIN_RATIO.text);
   });
 });
 
