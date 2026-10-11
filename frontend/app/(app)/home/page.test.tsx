@@ -2,8 +2,10 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { browserApi } from "@/lib/api/browser";
 import { apiRequest } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
+import type { Match, MatchRequest } from "@/lib/api/schemas";
 import { connection, intro, request } from "@/lib/home/fixtures";
 
 import MessagesPage from "../messages/page";
@@ -43,16 +45,38 @@ const LIST_CALLS = [
   "/api/v1/connections",
 ];
 
+const MATCH = {
+  id: "match-1",
+  rank: 1,
+  reason: "They offer UI design, which you are looking for.",
+  status: "shown",
+  candidate: {
+    user_id: "33333333-0000-4000-8000-000000000001",
+    summary: "Final-year design student.",
+    offers: ["UI design"],
+    seeks: [],
+    interests: [],
+    availability: "weekends",
+    languages: ["en"],
+  },
+} as Match;
+
 let failing: string[] = [];
+let requestStatus: MatchRequest["status"] = "ready";
 
 beforeEach(() => {
   failing = [];
+  requestStatus = "ready";
+  vi.mocked(browserApi).mockClear();
   vi.mocked(apiRequest).mockReset();
   vi.mocked(apiRequest).mockImplementation(async (path: string) => {
     if (failing.includes(path)) throw new Error("503");
     if (path === "/api/v1/auth/me") return USER;
     if (path === "/api/v1/me/profile") return PROFILE;
-    if (path.startsWith("/api/v1/requests")) return { items: [request()], next_cursor: null };
+    if (path === "/api/v1/requests/req-1/matches") return { items: [MATCH] };
+    if (path.startsWith("/api/v1/requests")) {
+      return { items: [request({ status: requestStatus })], next_cursor: null };
+    }
     if (path.startsWith("/api/v1/intros?box=sent")) return { items: [], next_cursor: null };
     if (path.startsWith("/api/v1/intros")) return { items: [intro()], next_cursor: null };
     if (path === "/api/v1/connections") return { items: [connection()] };
@@ -119,6 +143,34 @@ describe("Home", () => {
       "/home#new-request",
     );
     expect(within(pane).getByRole("link", { name: /Inbox/ })).toHaveAttribute("href", "/home");
+  });
+
+  it("loads an opened request's matches with the lists, so the browser asks for nothing", async () => {
+    await renderHome({ item: "request-req-1" });
+    const pane = screen.getByRole("region", { name: "Opened item" });
+    expect(within(pane).getByText("Final-year design student.")).toBeInTheDocument();
+    expect(new Set(calledPaths())).toEqual(
+      new Set([...LIST_CALLS, "/api/v1/requests/req-1/matches"]),
+    );
+    expect(browserApi).not.toHaveBeenCalled();
+  });
+
+  it("still opens a request when its matches fail to load: the card asks for them itself", async () => {
+    failing = ["/api/v1/requests/req-1/matches"];
+    await renderHome({ item: "request-req-1" });
+    const pane = screen.getByRole("region", { name: "Opened item" });
+    expect(within(pane).getByText("“Budgeting app design”")).toBeInTheDocument();
+    expect(browserApi).toHaveBeenCalledWith("/requests/req-1/matches", expect.anything());
+  });
+
+  it("keeps a request that is still being matched waiting, whatever the matches call returned", async () => {
+    requestStatus = "pending";
+    await renderHome({ item: "request-req-1" });
+    const pane = screen.getByRole("region", { name: "Opened item" });
+    expect(within(pane).getByText("Finding matches")).toBeInTheDocument();
+    expect(within(pane).queryByText("Final-year design student.")).not.toBeInTheDocument();
+    expect(within(pane).queryByText(/Nobody fits yet/)).not.toBeInTheDocument();
+    expect(browserApi).not.toHaveBeenCalled(); // it polls on a timer, not on mount
   });
 
   it("opens an intro from ?item, with accept, decline, block and report", async () => {

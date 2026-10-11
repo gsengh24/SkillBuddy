@@ -36,6 +36,8 @@ export function BottomNav({ items, className }: { items: BottomNavItem[]; classN
           <Link
             key={href}
             href={href}
+            // Each place is a server-rendered page, so a prefetch costs a full render.
+            prefetch={false}
             aria-current={current ? "page" : undefined}
             className={cx(
               "rounded-control flex min-h-11 flex-col items-center justify-center gap-0.5 text-[10px]",

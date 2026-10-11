@@ -24,11 +24,22 @@ const MAX_POLLS = 40;
  * One request and its matches, under the matcher's heading for it (the person's own
  * words are a small line below). While the request is pending it polls until the matches
  * are ready (usually seconds; the first request after an idle period can take a minute).
+ *
+ * `initialMatches` are the matches the page already loaded. They are used only for a request
+ * that is not pending: a pending one has none yet, so it fetches them when it becomes ready.
  */
-export function RequestCard({ initial }: { initial: MatchRequest }) {
+export function RequestCard({
+  initial,
+  initialMatches,
+}: {
+  initial: MatchRequest;
+  initialMatches?: Match[];
+}) {
   const ids = useId();
   const [request, setRequest] = useState(initial);
-  const [matches, setMatches] = useState<Match[] | null>(null);
+  const [matches, setMatches] = useState<Match[] | null>(
+    initial.status === "pending" ? null : (initialMatches ?? null),
+  );
   const [polls, setPolls] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);

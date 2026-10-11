@@ -50,7 +50,7 @@ export function HomeView({
 
   return (
     <>
-      <LiveRefresh />
+      <LiveRefresh fast={lists.requests.some((request) => request.status === "pending")} />
       <div className="border-line bg-card flex flex-col lg:-mx-4 lg:-mt-8 lg:grid lg:min-h-[min(820px,calc(100dvh-8rem))] lg:grid-cols-[360px_minmax(0,1fr)] lg:overflow-hidden lg:rounded-[18px] lg:border">
         <h1 className="sr-only">Home</h1>
 

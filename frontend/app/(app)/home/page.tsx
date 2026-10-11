@@ -7,11 +7,11 @@ import { HomeView } from "@/components/home/home-view";
 import { NotAvailable } from "@/components/home/parts";
 import { IntroCard } from "@/components/social/intro-card";
 import { ApiError } from "@/lib/api/errors";
-import type { Connection, Intro, MatchRequest, User } from "@/lib/api/schemas";
+import type { Connection, Intro, Match, MatchRequest, User } from "@/lib/api/schemas";
 import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getConversation } from "@/lib/chat/server";
 import { buildActivity, parseFilter, parseItem, type ItemType } from "@/lib/home/activity";
-import { getMyRequests } from "@/lib/matching/server";
+import { getMyRequests, getRequestMatches } from "@/lib/matching/server";
 import { getMyProfile } from "@/lib/profile/server";
 import { getConnections, getReceivedIntros, getSentIntros } from "@/lib/social/server";
 
@@ -41,6 +41,9 @@ export default async function HomePage({ searchParams }: Props) {
   const filter = parseFilter(params.filter);
 
   const conversation = item?.type === "chat" ? startEarly(getConversation(item.id)) : null;
+  // A request's matches load with the lists, so opening it needs no second round trip from
+  // the browser once the page is up.
+  const matches = item?.type === "request" ? startEarly(getRequestMatches(item.id)) : null;
   const {
     user,
     data: [profile, requestsOrNull, introPage, sentPage, connectionList],
@@ -63,7 +66,7 @@ export default async function HomePage({ searchParams }: Props) {
 
   const lists = { requests: requests ?? [], intros: intros ?? [], connections: connections ?? [] };
   const rows = buildActivity(lists, new Date());
-  const detail = item ? await renderDetail(item, { user, ...lists, conversation }) : null;
+  const detail = item ? await renderDetail(item, { user, ...lists, conversation, matches }) : null;
 
   return (
     <HomeView
@@ -87,18 +90,23 @@ async function renderDetail(
     intros,
     connections,
     conversation,
+    matches,
   }: {
     user: User;
     requests: MatchRequest[];
     intros: Intro[];
     connections: Connection[];
     conversation: ReturnType<typeof getConversation> | null;
+    matches: Promise<Match[]> | null;
   },
 ): Promise<ReactNode> {
   switch (item.type) {
     case "request": {
       const request = requests.find((r) => r.id === item.id);
-      return request ? <RequestCard key={request.id} initial={request} /> : <NotAvailable />;
+      if (!request) return <NotAvailable />;
+      // If that call failed the card asks for the matches itself, as it always did.
+      const initialMatches = await matches?.catch(() => undefined);
+      return <RequestCard key={request.id} initial={request} initialMatches={initialMatches} />;
     }
     case "intro": {
       const intro = intros.find((i) => i.id === item.id);
