@@ -96,7 +96,8 @@ class TeamSummaryOut(BaseModel):
     purpose: Purpose
     description: str
     owner_id: uuid.UUID | None = Field(
-        description="Empty only for a moment after the owner's account was deleted."
+        description="Empty for people who are not members yet (listed teams and link "
+        "previews), and for a moment after the owner's account was deleted."
     )
     member_count: int
     max_members: int
@@ -112,14 +113,14 @@ class TeamSummaryOut(BaseModel):
     )
 
     @classmethod
-    def build(cls, summary: TeamSummary) -> TeamSummaryOut:
+    def build(cls, summary: TeamSummary, *, show_owner: bool = True) -> TeamSummaryOut:
         team = summary.team
         return cls(
             id=team.id,
             name=team.name,
             purpose=team.purpose,  # type: ignore[arg-type]  # CHECK-constrained column
             description=team.description,
-            owner_id=team.owner_id,
+            owner_id=team.owner_id if show_owner else None,
             member_count=summary.member_count,
             max_members=MAX_TEAM_MEMBERS,
             created_at=team.created_at,

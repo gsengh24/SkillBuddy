@@ -757,3 +757,44 @@ async def test_the_job_runs_the_matcher(
     await JobRunner(session_factory, JobRegistry([MATCH_REQUEST]), settings).run_until_idle()
     state = run_sql(url, "SELECT status, intent FROM match_requests WHERE id = :r", r=request)
     assert state == [{"status": "ready", "intent": "interest_buddy"}]
+
+
+async def test_a_match_who_later_hides_or_pauses_disappears_from_the_list(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    delivery: CapturingDelivery,
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    axis = 300 + uuid.uuid4().int % 60
+    candidate = person(
+        url,
+        model=model,
+        offer=unit((axis, 1.0)),
+        display_name="Ishaan",
+        structured={"title": "React developer", "summary": "Builds web apps.", "offers": ["React"]},
+    )
+    async with auth_client(settings, delivery) as client:
+        token = await signed_in(client, settings, delivery)
+        await client.put("/api/v1/me/profile", json=profile_body(), headers=bearer(token))
+        request_id = (
+            await client.post(
+                REQUESTS,
+                json={"text": "Looking for a React developer.", "intent": "build_together"},
+                headers=bearer(token),
+            )
+        ).json()["id"]
+        await match(settings, session_factory, uuid.UUID(request_id), unit((axis, 1.0)), model)
+        path = f"{REQUESTS}/{request_id}/matches"
+        before = await client.get(path, headers=bearer(token))
+        run_sql(url, "UPDATE profiles SET visibility = 'paused' WHERE user_id = :u", u=candidate)
+        paused = await client.get(path, headers=bearer(token))
+        run_sql(url, "UPDATE profiles SET visibility = 'matchable' WHERE user_id = :u", u=candidate)
+        run_sql(url, "UPDATE users SET status = 'suspended' WHERE id = :u", u=candidate)
+        suspended = await client.get(path, headers=bearer(token))
+
+    shown = str(candidate)
+    assert shown in [item["candidate"]["user_id"] for item in before.json()["items"]]
+    assert shown not in [item["candidate"]["user_id"] for item in paused.json()["items"]]
+    assert shown not in [item["candidate"]["user_id"] for item in suspended.json()["items"]]

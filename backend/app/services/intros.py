@@ -357,6 +357,7 @@ class IntroService:
         )
         connections = list(rows)
         others = {c.user_b if c.user_a == user.id else c.user_a for c in connections}
+        blocked = await blocks.blocked_with(self._db, user.id)
         hidden = (
             set(
                 await self._db.scalars(
@@ -371,7 +372,7 @@ class IntroService:
         result: list[tuple[Connection, uuid.UUID, Profile | None]] = []
         for connection in connections:
             other = connection.user_b if connection.user_a == user.id else connection.user_a
-            if other in hidden:
-                continue  # suspended or banned: out of the list until reinstated
+            if other in hidden or other in blocked:
+                continue  # suspended, banned or blocked: out of the list
             result.append((connection, other, await self._db.get(Profile, other)))
         return result

@@ -15,7 +15,7 @@ from tests.conftest import SettingsFactory
 from tests.integration.conftest import CapturingDelivery, auth_client, run_sql
 from tests.integration.test_auth_codes import error_code
 from tests.integration.test_intros import Person, join, matched
-from tests.integration.test_teams import TEAMS, members, pair_in_team, team_of
+from tests.integration.test_teams import TEAMS, members, out, pair_in_team, team_of
 
 pytestmark = pytest.mark.usefixtures("teams_on")
 
@@ -171,3 +171,26 @@ async def test_room_blocks_and_the_daily_limit(
     assert error_code(full) == "team_full"
     assert third_try.status_code == 200
     assert over.status_code == 429
+
+
+async def test_removing_a_member_turns_the_link_off_and_previews_hide_the_owner(
+    settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    url = migrated_database_url
+    async with auth_client(settings, delivery) as client:
+        asha, _ravi, team = await pair_in_team(client, settings, delivery, url)
+        mina = await join(client, settings, delivery, "Mina")
+        code = (await make_link(client, asha, team)).json()["code"]
+        seen = await preview(client, mina, code)
+        await use(client, mina, code)
+        member_view = (await team_of(client, mina, team)).json()
+        removed = await out(client, asha, team, mina)
+        back = await use(client, mina, code)
+        fresh = (await make_link(client, asha, team)).json()["code"]
+        rejoined = await use(client, mina, fresh)
+
+    assert seen.json()["owner_id"] is None  # not a member yet
+    assert member_view["owner_id"] == asha.id
+    assert removed.status_code == 204
+    assert error_code(back) == "team_link_invalid"
+    assert rejoined.status_code == 200  # only if the owner chooses to share a new link
