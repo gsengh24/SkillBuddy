@@ -37,7 +37,7 @@ export function CtaBand({
       )}
     >
       <Heading className="font-display text-bg tracking-display max-w-[420px] text-[28px] leading-[1.05] font-extrabold lg:max-w-[560px] lg:text-[44px]">
-        {lead} <span className="text-mint-text">{rest}</span>
+        {lead} <span className="text-on-green-2">{rest}</span>
       </Heading>
       <ButtonLink href={action.href} variant="white" className="self-start lg:self-center">
         {action.label}

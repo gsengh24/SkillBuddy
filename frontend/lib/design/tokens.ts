@@ -48,6 +48,11 @@ export const colors = {
   mint: "#7BE0A8",
   /** Second line of a headline on the green CTA band. */
   mintText: "#9FD1B6",
+  /**
+   * Second half of a two-tone headline on a green band. Light: mint on the dark green. Dark
+   * theme overrides it (see `darkBand`) because the band turns mint there.
+   */
+  onGreen2: "#9FD1B6",
   /** Errors, report and block confirmations. */
   danger: "#B3261E",
   /** The surface of cards and text boxes: white in light, a step above the page in dark. */
@@ -65,6 +70,16 @@ export const colors = {
   paneInk: "#2B2D2B",
   /** "Needs a reply" on the pane. Text on `pane` only. */
   amber: "#E8A06F",
+} as const;
+
+/**
+ * The green band in the dark theme: `--green` is mint, the headline is the page background
+ * and its second half is `--on-green-2`. globals.css repeats these; the contrast test covers them.
+ */
+export const darkBand = {
+  surface: "#7BE0A8",
+  headline: "#0B0C0B",
+  headlineMuted: "#256040",
 } as const;
 
 export type ColorName = keyof typeof colors;

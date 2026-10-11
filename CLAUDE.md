@@ -306,7 +306,8 @@ mobile app were calling it tomorrow.
     stable hash of the id). The only photo is the Google account picture the API sends
     as `photo_url` (ADR 0017), passed to `Avatar` as `photoUrl`; no uploads, no other host.
   - Motion only as in spec section 5: `transform` and `opacity`, once, and off with
-    `prefers-reduced-motion`. No animation library.
+    `prefers-reduced-motion`. No animation library. The one exception is the Home card
+    hover tilt (ADR 0019).
   - Contrast: text 4.5:1, large text and control edges 3:1. `muted-2` is for large text
     and field borders only; `faint` and `mint` are never text.
 - ESLint (`--max-warnings=0`) and Prettier must pass.
