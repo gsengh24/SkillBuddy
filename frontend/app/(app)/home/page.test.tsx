@@ -301,6 +301,11 @@ describe("Home, opening an item", () => {
     expect(calledPaths()).toEqual([]);
   });
 
+  it("marks itself for the softer page background", async () => {
+    const { container } = render(await HomeLayout({ children: null }));
+    expect(container.querySelector('[data-page-bg="soft"]')).not.toBeNull();
+  });
+
   it("the layout alone makes the list calls, and none for an item", async () => {
     navigation.search = "";
     render(await HomeLayout({ children: null }));

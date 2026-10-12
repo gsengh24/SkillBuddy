@@ -89,6 +89,11 @@ function calls() {
 }
 
 describe("YouPage", () => {
+  it("marks itself for the softer page background", () => {
+    const { container } = renderPage();
+    expect(container.querySelector('[data-page-bg="soft"]')).not.toBeNull();
+  });
+
   it("loads the profile into ten sections, in the reference's order", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1, name: /Your profile\./ })).toBeInTheDocument();

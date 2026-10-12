@@ -14,6 +14,8 @@
 export const colors = {
   /** Page background. */
   bg: "#0B0C0B",
+  /** Page background on Home, Pair spaces and You only (cards sit darker than it). */
+  pageSoft: "#171917",
   /** Cards, composer, inactive segments. */
   panel: "#141614",
   /** Hairline borders and dividers (decorative: never the only edge of a control). */

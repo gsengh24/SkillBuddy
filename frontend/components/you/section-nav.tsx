@@ -39,7 +39,7 @@ export function SectionNav() {
     <nav
       aria-label="Sections"
       className={cx(
-        "border-line bg-bg sticky top-0 z-20 -mx-4 [scrollbar-width:none] overflow-x-auto border-b px-4 py-2 whitespace-nowrap",
+        "border-line bg-page sticky top-0 z-20 -mx-4 [scrollbar-width:none] overflow-x-auto border-b px-4 py-2 whitespace-nowrap",
         "lg:top-6 lg:mx-0 lg:flex lg:flex-col lg:gap-0.5 lg:self-start lg:overflow-visible lg:border-0 lg:p-0 lg:whitespace-normal",
       )}
     >

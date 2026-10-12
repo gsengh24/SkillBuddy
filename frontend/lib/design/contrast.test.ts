@@ -101,7 +101,9 @@ describe("tokens and CSS stay in sync", () => {
   });
 
   it("declares no colour that is not a token", () => {
-    expect([...themeColours.keys()].sort()).toEqual(Object.keys(expected).sort());
+    // `page` is not a colour of its own: it follows --page-bg (--bg, or page-soft on three pages).
+    const declared = [...themeColours.keys()].filter((name) => name !== "page");
+    expect(declared.sort()).toEqual(Object.keys(expected).sort());
   });
 });
 

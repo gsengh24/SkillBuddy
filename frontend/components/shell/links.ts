@@ -22,7 +22,7 @@ export function currentPlace(pathname: string) {
 
 /** Round 44px icon link (the bell). */
 export const ICON_LINK =
-  "border-line bg-bg text-ink hover:bg-panel relative inline-flex size-11 shrink-0 items-center justify-center rounded-full border";
+  "border-line bg-page text-ink hover:bg-panel relative inline-flex size-11 shrink-0 items-center justify-center rounded-full border";
 
 /** The green "something new" dot on an icon link. */
 export const DOT = "bg-green absolute top-2 right-2.5 size-2 rounded-full";

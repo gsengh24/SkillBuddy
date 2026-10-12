@@ -56,7 +56,7 @@ export function AppShell({ user, children, rightRail, hasNotifications = false }
     <div className="flex min-h-dvh flex-col">
       <a
         href="#main"
-        className="focus:border-ink focus:bg-bg rounded-control sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:border focus:px-4 focus:py-2"
+        className="focus:border-ink focus:bg-page rounded-control sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:border focus:px-4 focus:py-2"
       >
         Skip to content
       </a>

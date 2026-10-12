@@ -26,7 +26,7 @@ export function BottomNav({ items, className }: { items: BottomNavItem[]; classN
     <nav
       aria-label="Main"
       className={cx(
-        "border-line bg-bg sticky bottom-0 grid auto-cols-fr grid-flow-col border-t px-1.5 pt-2 pb-[calc(10px+env(safe-area-inset-bottom))] lg:hidden",
+        "border-line bg-page sticky bottom-0 grid auto-cols-fr grid-flow-col border-t px-1.5 pt-2 pb-[calc(10px+env(safe-area-inset-bottom))] lg:hidden",
         className,
       )}
     >

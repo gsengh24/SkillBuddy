@@ -43,7 +43,7 @@ export default async function You({ searchParams }: Props) {
 
   if (welcome || review) {
     return (
-      <div className="flex max-w-2xl flex-col gap-6">
+      <div data-page-bg="soft" className="flex max-w-2xl flex-col gap-6">
         <header className="flex flex-col gap-2">
           {welcome ? <Overline tone="green">Step 2 of 2</Overline> : null}
           <h1 className="text-headline lg:text-headline-lg">What we understood</h1>
