@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 
 import { HomeView } from "@/components/home/home-view";
+import { ProfileNudge } from "@/components/home/profile-nudge";
 import { withUser } from "@/lib/auth/with-user";
 import { buildActivity } from "@/lib/home/activity";
 import { getMyRequests } from "@/lib/matching/server";
 import { getMyProfile } from "@/lib/profile/server";
+import { draftFrom, strength } from "@/lib/profile/you";
 import { getConnections, getReceivedIntros, getSentIntros } from "@/lib/social/server";
 
 export const dynamic = "force-dynamic";
@@ -52,14 +54,20 @@ export default async function HomeLayout({ children }: { children: ReactNode }) 
   const rows = buildActivity(lists, new Date());
 
   return (
-    <HomeView
-      email={user.email}
-      hasProfile={Boolean(profile)}
-      failed={failed}
-      rows={rows}
-      lists={lists}
-    >
-      {children}
-    </HomeView>
+    <>
+      <ProfileNudge
+        user={{ created_at: user.created_at, session_started_at: user.session_started_at }}
+        strength={profile ? strength(draftFrom(profile)) : null}
+      />
+      <HomeView
+        email={user.email}
+        hasProfile={Boolean(profile)}
+        failed={failed}
+        rows={rows}
+        lists={lists}
+      >
+        {children}
+      </HomeView>
+    </>
   );
 }

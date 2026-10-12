@@ -227,7 +227,12 @@ export function savePlan(base: Draft, draft: Draft) {
 export type Missing = { label: string; href: `#${SectionId}` };
 
 /** The profile-strength checklist from the reference: share done, and what's left. */
-export function strength(draft: Draft): { percent: number; missing: Missing[] } {
+export function strength(draft: Draft): {
+  percent: number;
+  done: number;
+  total: number;
+  missing: Missing[];
+} {
   const items: [string, boolean, `#${SectionId}`][] = [
     ["Add a headline", draft.headline.trim().length >= 10, "#s-basics"],
     ["Write a longer bio", draft.about.trim().length >= 120, "#s-basics"],
@@ -241,6 +246,8 @@ export function strength(draft: Draft): { percent: number; missing: Missing[] } 
   const done = items.filter(([, ok]) => ok).length;
   return {
     percent: Math.round((done / items.length) * 100),
+    done,
+    total: items.length,
     missing: items.filter(([, ok]) => !ok).map(([label, , href]) => ({ label, href })),
   };
 }

@@ -7465,6 +7465,12 @@
             ],
             "title": "Last Login At"
           },
+          "session_started_at": {
+            "description": "When the session making this request began (its sign-in). A client compares it with `created_at` to tell the sign-in that made the account from a later one.",
+            "format": "date-time",
+            "title": "Session Started At",
+            "type": "string"
+          },
           "status": {
             "default": "active",
             "description": "`paused`: hidden from matching and new intros; chats and sign-in carry on.",
@@ -7506,7 +7512,8 @@
           "email_verified_at",
           "last_login_at",
           "terms_version",
-          "terms_accepted_at"
+          "terms_accepted_at",
+          "session_started_at"
         ],
         "title": "UserOut",
         "type": "object"

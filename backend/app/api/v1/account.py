@@ -63,7 +63,7 @@ async def pause(
     """Hidden from matching and can't receive new intros. Sign-in and existing chats carry
     on; ``/me/resume`` undoes it."""
     user = await service.pause(auth.user, client)
-    return UserOut.from_user(user, is_moderator=is_moderator(settings, user))
+    return UserOut.from_user(user, auth.session, is_moderator=is_moderator(settings, user))
 
 
 @router.post(
@@ -81,7 +81,7 @@ async def resume(
     auth: AuthDep, service: AuthServiceDep, client: ClientDep, settings: SettingsDep
 ) -> UserOut:
     user = await service.resume(auth.user, client)
-    return UserOut.from_user(user, is_moderator=is_moderator(settings, user))
+    return UserOut.from_user(user, auth.session, is_moderator=is_moderator(settings, user))
 
 
 @router.post(

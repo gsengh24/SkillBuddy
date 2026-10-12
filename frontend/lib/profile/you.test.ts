@@ -96,7 +96,7 @@ describe("strength", () => {
       links: ["https://a.dev", "", ""],
       goal: "Ship a habit tracker by December.",
     });
-    expect(full).toEqual({ percent: 100, missing: [] });
+    expect(full).toEqual({ percent: 100, done: 8, total: 8, missing: [] });
   });
 });
 
