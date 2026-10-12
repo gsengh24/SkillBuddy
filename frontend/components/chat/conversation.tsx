@@ -26,6 +26,12 @@ const MESSAGE_MAX_LENGTH = 2000;
 const FIRST_CHAT_MESSAGES = 10;
 
 /** "Today", "Yesterday", or a short date: the label over the first message of a day. */
+/** True on a mouse-and-keyboard device; where matchMedia is missing, assume desktop. */
+function hasPhysicalKeyboard(): boolean {
+  if (typeof window.matchMedia !== "function") return true;
+  return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+}
+
 function dayLabel(iso: string | undefined): string {
   if (!iso) return "";
   const then = new Date(iso);
@@ -299,6 +305,14 @@ export function Conversation({
               onChange={(event) => {
                 setBody(event.target.value);
                 wake();
+              }}
+              onKeyDown={(event) => {
+                // Desktop: Enter sends, Shift+Enter adds a line. Phones keep Enter as a new line.
+                if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing)
+                  return;
+                if (!hasPhysicalKeyboard()) return;
+                event.preventDefault();
+                if (!sending && body.trim()) event.currentTarget.form?.requestSubmit();
               }}
               placeholder="Write a message"
               error={error}

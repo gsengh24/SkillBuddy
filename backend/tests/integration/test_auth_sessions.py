@@ -90,6 +90,26 @@ async def test_me_requires_a_session(auth_settings: Settings, delivery: Capturin
     assert error_code(response) == "authentication_required"
 
 
+async def test_me_reports_when_the_current_session_started(
+    auth_settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
+) -> None:
+    email = new_email()
+    async with auth_client(auth_settings, delivery) as client:
+        signed_in = await sign_in(client, delivery, email)
+        me = await client.get(ME)
+        # A second sign-in is a second session, with its own start time.
+        async with auth_client(auth_settings, delivery) as other:
+            await sign_in(other, delivery, email)
+            other_me = await other.get(ME)
+
+    created = {row["created_at"] for row in session_rows(migrated_database_url, email)}
+    assert me.status_code == 200
+    assert signed_in.json()["session_started_at"] == me.json()["session_started_at"]
+    started = {me.json()["session_started_at"], other_me.json()["session_started_at"]}
+    assert len(started) == 2
+    assert {datetime.fromisoformat(value) for value in started} == created
+
+
 async def test_expired_session_is_rejected_and_removed(
     auth_settings: Settings, delivery: CapturingDelivery, migrated_database_url: str
 ) -> None:

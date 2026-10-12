@@ -88,9 +88,15 @@ class UserOut(BaseModel):
     is_moderator: bool = Field(
         default=False, description="May use the moderation page and /api/v1/moderation."
     )
+    session_started_at: datetime = Field(
+        description=(
+            "When the session making this request began (its sign-in). A client compares it "
+            "with `created_at` to tell the sign-in that made the account from a later one."
+        )
+    )
 
     @classmethod
-    def from_user(cls, user: User, *, is_moderator: bool = False) -> UserOut:
+    def from_user(cls, user: User, session: UserSession, *, is_moderator: bool = False) -> UserOut:
         return cls(
             id=user.id,
             email=user.email,
@@ -102,6 +108,7 @@ class UserOut(BaseModel):
             # Only signed-in people read this, so the status is active or paused.
             status="paused" if user.status == UserStatus.PAUSED else "active",
             is_moderator=is_moderator,
+            session_started_at=session.created_at,
         )
 
 
