@@ -14,6 +14,8 @@
 :root {
   color-scheme: dark;
   --bg: #0b0c0b;
+  --page-soft: #171917;
+  --page-bg: var(--bg);
   --panel: #141614;
   --line: #262826;
   --line-strong: #323532;
@@ -44,11 +46,19 @@
   --amber: #e8a06f;
 }
 
+/* Home, Pair spaces and You mark themselves; --page-bg is --bg everywhere else. */
+:root:has([data-page-bg="soft"]) {
+  --page-bg: var(--page-soft);
+}
+
 @theme inline {
   --color-*: initial;
 
   /* Palette (bg-panel, text-ink-2, border-green-line, ...) */
   --color-bg: var(--bg);
+  --color-page-soft: var(--page-soft);
+  /* Follows the page: --bg, or --page-soft on Home, Pair spaces and You. */
+  --color-page: var(--page-bg);
   --color-panel: var(--panel);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
@@ -267,7 +277,7 @@
 
 @layer base {
   body {
-    background-color: var(--bg);
+    background-color: var(--page-bg);
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: var(--text-body);

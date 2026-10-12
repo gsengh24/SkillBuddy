@@ -42,7 +42,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       lang="en"
       className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="bg-bg text-body text-ink font-sans antialiased">
+      <body className="bg-page text-body text-ink font-sans antialiased">
         <SiteBanner />
         {children}
       </body>

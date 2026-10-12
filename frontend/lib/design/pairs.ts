@@ -76,6 +76,11 @@ function cynergiPairs(): ColourPair[] {
     ),
   );
   pairs.push(pair("dark: band button text on page bg", "#F3F4F1", darkBand.headline, "text"));
+  // Home, Pair spaces and You use the softer page background (pageSoft). `line` and `line-strong` are decorative hairlines, never a control's only edge.
+  pairs.push(pair("ink on page-soft", colors.ink, colors.pageSoft, "text"));
+  pairs.push(pair("ink-2 on page-soft", colors.ink2, colors.pageSoft, "text"));
+  pairs.push(pair("muted on page-soft", colors.muted, colors.pageSoft, "text"));
+  pairs.push(pair("muted-2 on page-soft (large)", colors.muted2, colors.pageSoft, "large"));
   // Field borders are the only edge of an input, so they need 3:1 against the white fill
   // and against the page. `line` is far too light for that.
   pairs.push(pair("field border (muted-2) on white fill", colors.muted2, colors.bg, "ui"));

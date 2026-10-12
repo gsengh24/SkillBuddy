@@ -128,7 +128,12 @@ export default async function TeamsPage() {
   const teamsCall = startEarly(getTeams());
   const requestsCall = startEarly(getMyTeamRequests());
   const { user } = await withUser("/login?next=/teams", featuresCall);
-  if (!(await featuresCall).features.teams) return <TeamsPaused />;
+  if (!(await featuresCall).features.teams)
+    return (
+      <div data-page-bg="soft">
+        <TeamsPaused />
+      </div>
+    );
   const [teams, invites, requests] = await Promise.all([teamsCall, invitesCall, requestsCall]);
   const details = await Promise.all(teams.items.map(spaceDetail));
 
@@ -138,7 +143,7 @@ export default async function TeamsPage() {
   const canMake = owned < teams.max_owned && teams.items.length < teams.max_teams;
 
   return (
-    <div className="flex flex-col pb-8">
+    <div data-page-bg="soft" className="flex flex-col pb-8">
       <header className="border-line grid items-end gap-6 border-b pb-7 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div>
           <p className={cx(MONO, "text-mint-text mb-2.5")}>Spaces</p>

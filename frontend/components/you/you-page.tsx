@@ -284,7 +284,7 @@ function AccountSections({
  */
 export function YouWithoutProfile(account: AccountProps) {
   return (
-    <div className="flex max-w-[760px] flex-col gap-4">
+    <div data-page-bg="soft" className="flex max-w-[760px] flex-col gap-4">
       <p className="text-mono-lg text-green font-mono uppercase">You</p>
       <TwoToneHeadline as="h1" lead="Your profile." rest="Be easy to find." />
       <section
@@ -430,7 +430,7 @@ export function YouPage({ profile, account }: Props) {
   const name = draft.name.trim() || "Your name";
 
   return (
-    <div className="flex flex-col pb-40 lg:pb-28">
+    <div data-page-bg="soft" className="flex flex-col pb-40 lg:pb-28">
       <p className="text-mono-lg text-green mb-2.5 font-mono uppercase">You</p>
       <TwoToneHeadline as="h1" lead="Your profile." rest="Be easy to find." />
 
