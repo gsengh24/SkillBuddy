@@ -143,6 +143,23 @@ img { display: block; max-width: 100%; }
 .curtain h2 span { color: var(--mint-text); }
 .curtain-copy { grid-column: 1; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 24px; justify-content: space-between; }
 .curtain-copy p { margin: 0; max-width: 38ch; color: #e3ebe6; font-size: 16px; }
+/* curtain: two boxes of example asks that type themselves */
+.asks { grid-column: 1; grid-row: 1 / span 2; display: grid; gap: 14px; align-content: start; max-width: 560px; }
+.ask { border: 1px solid #ffffff2b; border-radius: 16px; padding: 18px 20px 14px; background: #ffffff08; display: grid; gap: 16px; transition: border-color .25s, background-color .25s; }
+.ask:hover, .ask:focus-within { border-color: #ffffff5c; background: #ffffff0f; }
+.ask-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--mint-text); }
+.ask-top .n { color: #ffffffa6; font-variant-numeric: tabular-nums; }
+.ask-q { margin: 0; min-height: 2.5em; font-family: var(--f-display); font-weight: 700; font-size: clamp(19px, 1.8vw, 25px); line-height: 1.25; letter-spacing: -0.015em; color: var(--on-dark); text-wrap: balance; }
+.ask-q .caret { display: inline-block; width: 2px; height: 1em; background: var(--mint); vertical-align: -0.12em; margin-left: 3px; animation: blink 1s steps(1) infinite; }
+.ask-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.ask-dots { display: flex; gap: 2px; margin-left: -6px; }
+.ask-dots button { width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.ask-dots button::before { content: ""; width: 16px; height: 3px; border-radius: 3px; background: #ffffff40; transition: background-color .25s, width .3s var(--ease); }
+.ask-dots button:hover::before { background: #ffffff8c; }
+.ask-dots button[aria-current="true"]::before { width: 24px; background: var(--mint); }
+.ask-go { color: var(--on-dark); font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; gap: 6px; align-items: center; min-height: 44px; }
+.ask-go span { transition: transform .25s var(--ease); }
+.ask-go:hover span { transform: translateX(4px); }
 .plate { position: relative; overflow: hidden; border-radius: 4px; background: #0003; }
 .plate img { width: 100%; height: 115%; object-fit: cover; transform: translateY(var(--py, 0)); }
 .curtain .plate { aspect-ratio: 4 / 3; max-width: 520px; }
@@ -338,7 +355,7 @@ img { display: block; max-width: 100%; }
   .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .strip span:nth-child(n+3) { display: none; }
   .curtain-grid, .describe-grid, .how-grid, .faq-grid, .consent-head { grid-template-columns: minmax(0, 1fr); }
-  .curtain h2, .bigstat, .curtain-copy { grid-column: 1; grid-row: auto; }
+  .curtain h2, .bigstat, .curtain-copy, .asks { grid-column: 1; grid-row: auto; }
   .curtain h2 { text-align: left; }
   .bigstat { justify-content: flex-start; }
   .describe-head { grid-template-columns: minmax(0, 1fr); }
@@ -468,9 +485,17 @@ img { display: block; max-width: 100%; }
     <div class="strip mono"><span>Principle 01</span><span>Intent first, skills second</span><span>One engine</span><span>Six intents</span></div>
     <div class="curtain-grid">
       <h2 class="display rv" id="intent-h">Intent before <span>skills.</span></h2>
-      <div class="curtain-copy">
-        <p class="rv">Most apps ask what you can do. We start with what you're trying to do: build something, swap a skill, find a mentor, stay on track. Then we look at skills.</p>
-        <div class="plate" data-par="0.12"><img src="/landing/img/interest_buddy.jpg" alt="Two spheres, one ink and one green, resting together on a white plinth." loading="lazy"></div>
+      <div class="asks rv" aria-label="Things people ask Cynergi">
+        <div class="ask" data-set="hack">
+          <div class="ask-top mono"><span>Hackathons</span><span class="n" aria-hidden="true">01 / 05</span></div>
+          <p class="ask-q" aria-hidden="true"></p><p class="sr ask-sr"></p>
+          <div class="ask-foot"><div class="ask-dots" role="group" aria-label="Hackathon examples"></div><a class="ask-go" href="/login">Ask this <span aria-hidden="true">→</span></a></div>
+        </div>
+        <div class="ask" data-set="build">
+          <div class="ask-top mono"><span>Skills &amp; projects</span><span class="n" aria-hidden="true">01 / 05</span></div>
+          <p class="ask-q" aria-hidden="true"></p><p class="sr ask-sr"></p>
+          <div class="ask-foot"><div class="ask-dots" role="group" aria-label="Skill and project examples"></div><a class="ask-go" href="/login">Ask this <span aria-hidden="true">→</span></a></div>
+        </div>
       </div>
       <div class="bigstat rv"><b>6</b><span>ways to ask, one matching engine, weighted differently for each.</span></div>
     </div>
@@ -889,6 +914,62 @@ img { display: block; max-width: 100%; }
   $$("#mmenu nav a, .mmenu-foot a").forEach(a => a.addEventListener("click", closeMenu));
   addEventListener("keydown", e => { if (e.key === "Escape" && mm.classList.contains("open")) closeMenu(); });
   setInterval(() => { $("#mclock").textContent = clock.textContent; }, 1000);
+
+  /* ---------- curtain: example asks that type themselves ---------- */
+  const ASKS = {
+    hack: [
+      "Need a backend dev for a 36-hour hackathon this weekend.",
+      "Our team has two coders. Who wants to design and pitch?",
+      "Anyone into ML? Let's build a health-tech prototype in 48 hours.",
+      "First hackathon. Looking for a team that's fine with a beginner.",
+      "Need a hardware person for an IoT build at the campus hackathon.",
+    ],
+    build: [
+      "I can teach Python, want to learn guitar.",
+      "Building a budgeting app, need a designer.",
+      "Want someone to practise DSA with, three evenings a week.",
+      "Looking for a Flutter dev to ship a campus marketplace app.",
+      "I know Figma and want to learn React. Swap?",
+    ],
+  };
+  const escAsk = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  $$(".ask").forEach((box, bi) => {
+    const list = ASKS[box.dataset.set], q = $(".ask-q", box), sr = $(".ask-sr", box), n = $(".n", box), dotsWrap = $(".ask-dots", box);
+    list.forEach((t, k) => dotsWrap.insertAdjacentHTML("beforeend", `<button type="button" aria-label="Example ${k + 1} of ${list.length}" aria-current="${k ? "false" : "true"}"></button>`));
+    const dots = $$("button", dotsWrap);
+    let i = 0, j = 0, phase = "type", timer = 0, paused = false, onScreen = true;
+    const pad = x => String(x).padStart(2, "0");
+    const paint = () => {
+      q.innerHTML = escAsk(list[i].slice(0, j)) + (RM ? "" : '<span class="caret" aria-hidden="true"></span>');
+      sr.textContent = list[i];
+      n.textContent = `${pad(i + 1)} / ${pad(list.length)}`;
+      dots.forEach((d, k) => d.setAttribute("aria-current", String(k === i)));
+    };
+    const step = () => {
+      clearTimeout(timer);
+      if (RM || paused || !onScreen) return;
+      if (phase === "type") {
+        j++; paint();
+        if (j >= list[i].length) { phase = "erase"; timer = setTimeout(step, 2400); }
+        else timer = setTimeout(step, 26 + Math.random() * 38);
+      } else {
+        j = Math.max(0, j - 3); paint();
+        if (j === 0) { i = (i + 1) % list.length; phase = "type"; paint(); timer = setTimeout(step, 380); }
+        else timer = setTimeout(step, 14);
+      }
+    };
+    const jump = k => { i = k; j = RM ? list[k].length : 0; phase = "type"; paint(); if (!RM) { clearTimeout(timer); timer = setTimeout(step, 120); } };
+    dots.forEach((d, k) => d.addEventListener("click", () => jump(k)));
+    // hover or keyboard focus pauses the box; leaving resumes it
+    const pause = () => { paused = true; clearTimeout(timer); };
+    const resume = () => { if (box.matches(":hover") || box.contains(document.activeElement)) return; paused = false; timer = setTimeout(step, 300); };
+    box.addEventListener("pointerenter", pause); box.addEventListener("pointerleave", resume);
+    box.addEventListener("focusin", pause); box.addEventListener("focusout", () => setTimeout(resume, 0));
+    // only type while the box is on screen
+    if ("IntersectionObserver" in window) new IntersectionObserver(es => { onScreen = es[0].isIntersecting; if (onScreen && !paused) { clearTimeout(timer); timer = setTimeout(step, 200); } }).observe(box);
+    if (RM) { j = list[0].length; paint(); }
+    else { paint(); timer = setTimeout(step, 600 + bi * 1300); }
+  });
 
   /* ---------- go ---------- */
   measure();
