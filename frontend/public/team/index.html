@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Team · Cynergi</title>
+<meta name="description" content="The people who built Cynergi: the developer, the mentor and the contributors.">
+<link rel="canonical" href="/team">
+<link rel="stylesheet" href="/landing/fonts/fonts.css">
+<style>
+/* Layout: a single 920px editorial column in the Cynergi app style: the builder up top,
+   a match card scored like any other request, the trade-offs, contributors, and why it exists. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0c0b; --card: #111311; --raise: #161816; --line: #262826; --line-2: #323532;
+  --ink: #f3f4f1; --ink-2: #c9ccc6; --muted: #a9ada7; --muted-2: #8a8e88;
+  --mint: #7be0a8; --mint-text: #9fd1b6; --green: #0f4a34; --amber: #e8a06f; --danger: #ff8a80;
+  --m1: var(--mint); --m2: var(--ink);
+  --f-d: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --f-b: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --f-m: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --f-h: "Caveat", "Segoe Print", cursive;
+  --ease: cubic-bezier(.2,.7,.1,1);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-b); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 4px; }
+.mono { font: 500 11.5px/1.5 var(--f-m); letter-spacing: .1em; text-transform: uppercase; }
+.mk { display: block; }
+
+/* top bar */
+.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1160px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 12px; }
+.logo { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font: 800 20px/1 var(--f-d); letter-spacing: -0.04em; }
+.logo .mk { width: 24px; height: 24px; }
+.logo small { font: 500 11px/1 var(--f-m); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+.links { display: flex; gap: 4px; }
+.links a { text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--muted); }
+.links a:hover { color: var(--ink); }
+.links a[aria-current="page"] { background: var(--ink); color: #0a0a0a; }
+.go { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 10px; background: var(--mint); color: #06100b; font-weight: 600; font-size: 14px; text-decoration: none; }
+
+/* page */
+.page { max-width: 920px; margin: 0 auto; padding: 56px 20px 72px; }
+.eyebrow { display: flex; align-items: center; gap: 12px; color: var(--mint-text); margin: 0 0 30px; }
+.eyebrow::before { content: ""; width: 40px; height: 1px; background: var(--mint); }
+.hero { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; align-items: start; position: relative; }
+.fig { margin: 0; }
+.frame { position: relative; aspect-ratio: 4 / 5; border: 1.5px solid var(--ink); background: radial-gradient(120% 90% at 30% 20%, #1c3a2c, #0f1a14 60%, #0b0f0c); display: grid; place-items: center; box-shadow: 10px 10px 0 var(--raise); transition: transform .35s var(--ease); }
+.frame:hover { transform: rotate(-1.5deg) translateY(-3px); }
+.frame .ini { font: 800 92px/1 var(--f-d); letter-spacing: -0.05em; color: var(--ink); }
+.frame img, .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.pic { position: relative; overflow: hidden; }
+.frame .mk { position: absolute; right: 12px; bottom: 12px; width: 28px; height: 28px; opacity: .85; }
+.fig figcaption { margin-top: 16px; color: var(--muted-2); }
+h1 { margin: 0; font: 800 clamp(40px, 6vw, 60px)/1 var(--f-d); letter-spacing: -0.04em; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 22px; }
+.chip { border: 1px solid var(--line-2); padding: 6px 10px; color: var(--ink-2); }
+.pull { margin: 0 0 18px; padding-left: 18px; border-left: 3px solid var(--mint); font: 700 clamp(19px, 2vw, 23px)/1.35 var(--f-d); letter-spacing: -0.015em; }
+.body { margin: 0 0 10px; color: var(--ink-2); font-size: 16px; max-width: 58ch; }
+.body.soft { color: var(--muted); }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 18px; text-decoration: none; font: 500 12.5px/1 var(--f-m); letter-spacing: .1em; text-transform: uppercase; border: 1px solid var(--ink); transition: transform .2s var(--ease), background-color .2s, color .2s; }
+.btn:hover { transform: translateY(-2px); }
+.btn.solid { background: var(--mint); border-color: var(--mint); color: #06100b; }
+.btn.line:hover { background: var(--ink); color: #0a0a0a; }
+.note { position: absolute; right: -230px; top: 10px; width: 250px; padding: 18px 18px 18px 22px; background: var(--raise); border: 1.5px solid var(--ink); box-shadow: 6px 6px 0 var(--line-2); transform: rotate(-2deg); font: 600 21px/1.25 var(--f-h); color: var(--ink); transition: transform .35s var(--ease); }
+.note::before { content: ""; position: absolute; left: 10px; top: 16px; bottom: 16px; width: 3px; background: var(--mint); }
+.note:hover { transform: rotate(0deg) scale(1.02); }
+
+section { margin-top: 64px; }
+.label { color: var(--muted); margin: 0 0 6px; }
+.lede { margin: 0 0 18px; color: var(--muted); font-size: 15.5px; }
+
+/* match card, scored the way the matcher scores anyone */
+.match { border: 1px solid var(--line); border-left: 4px solid var(--mint); background: var(--card); padding: 22px 26px; display: grid; gap: 16px; }
+.match-top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.match-top .mono { color: var(--muted); }
+.verdict { display: inline-flex; align-items: center; gap: 10px; background: var(--mint); color: #06100b; padding: 9px 14px; font: 600 14px/1 var(--f-m); letter-spacing: .1em; text-transform: uppercase; }
+.verdict::before { content: ""; width: 12px; height: 8px; background: currentColor; transform: skewX(-15deg); }
+.meter { display: inline-flex; align-items: center; gap: 4px; }
+.meter i { width: 18px; height: 12px; background: var(--line-2); transform-origin: left; }
+.meter i.on { background: var(--mint); animation: fill .5s var(--ease) both; animation-delay: calc(var(--k) * 90ms + .3s); }
+@keyframes fill { from { transform: scaleX(0); } }
+.meter + .mono { color: var(--ink-2); }
+.why { margin: 0; padding-left: 18px; border-left: 3px solid var(--ink); font-size: 17px; color: var(--ink); max-width: 66ch; }
+
+/* trade-offs */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.cols ul { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 18px; }
+.cols li { position: relative; padding-left: 38px; color: var(--ink-2); font-size: 15.5px; }
+.cols li::before { content: ""; position: absolute; left: 14px; top: .55em; width: 9px; height: 9px; }
+.cols li::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; }
+.pro li::before { background: var(--mint); } .pro li::after { background: var(--green); }
+.con li::before { width: 0; height: 0; background: none; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid var(--amber); top: .45em; left: 12px; }
+.con li::after { background: repeating-linear-gradient(var(--amber) 0 4px, transparent 4px 8px); opacity: .7; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 64px 0 0; }
+
+/* people */
+.person { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: 24px; align-items: start; border: 1px solid var(--line); background: var(--card); padding: 24px; transition: border-color .25s; }
+.person + .person { border-top: 0; }
+.person:hover { border-color: var(--line-2); }
+.person.hl { border-left: 4px solid var(--amber); }
+.pic { aspect-ratio: 1; border: 1.5px solid var(--ink); box-shadow: 6px 6px 0 var(--raise); display: grid; place-items: center; font: 800 40px/1 var(--f-d); letter-spacing: -0.04em; transition: transform .35s var(--ease); }
+.person:hover .pic { transform: rotate(-2deg); }
+.pic.g { background: #0f4a34; } .pic.k { background: #232523; }
+.person h3 { margin: 0; font: 800 24px/1.1 var(--f-d); letter-spacing: -0.03em; }
+.person .role { margin: 6px 0 12px; color: var(--mint-text); }
+.person .q { margin: 0 0 8px; padding-left: 14px; border-left: 3px solid var(--mint); font-size: 17px; color: var(--ink); }
+.person .d { margin: 0; color: var(--muted); }
+.icons { display: flex; gap: 8px; align-self: end; }
+.icons a { width: 38px; height: 38px; border: 1px solid var(--line-2); display: grid; place-items: center; color: var(--ink-2); transition: color .2s, border-color .2s, transform .2s var(--ease); }
+.icons a:hover { color: var(--ink); border-color: var(--muted); transform: translateY(-2px); }
+.icons svg { width: 17px; height: 17px; }
+.peek { position: relative; }
+.peek .tip { position: absolute; right: 0; bottom: calc(100% + 10px); white-space: nowrap; background: var(--mint); color: #06100b; padding: 6px 10px; font: 600 12px/1 var(--f-m); letter-spacing: .06em; opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .25s var(--ease); pointer-events: none; }
+.person:hover .peek .tip, .person:focus-within .peek .tip { opacity: 1; transform: none; }
+
+.why-exists p:not(.label) { font-size: 17.5px; line-height: 1.75; color: var(--ink-2); max-width: 66ch; margin: 10px 0 0; }
+.why-exists p strong { color: var(--ink); font-weight: 600; }
+
+footer { border-top: 1px solid var(--line); margin-top: 80px; }
+.foot-in { max-width: 1160px; margin: 0 auto; padding: 28px 20px calc(28px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; color: var(--muted); }
+.foot-in a { color: var(--ink-2); }
+
+/* entrance: fade up once as each block enters */
+.rv { opacity: 1; transform: none; transition: opacity .6s, transform .7s var(--ease); }
+.rv.wait { opacity: 0; transform: translateY(10px); }
+
+@media (max-width: 1240px) { .note { position: static; transform: rotate(-1deg); margin: 28px 0 0; width: auto; max-width: 420px; } }
+@media (max-width: 760px) {
+  .links { display: none; }
+  .logo small { display: none; }
+  .page { padding-top: 36px; }
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .fig { max-width: 220px; }
+  .cols { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .person { grid-template-columns: 80px minmax(0, 1fr); gap: 16px; padding: 18px; }
+  .pic { font-size: 28px; }
+  .icons { grid-column: 1 / -1; justify-self: start; }
+  .match { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .rv.wait { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="/" aria-label="Cynergi"><svg class="mk" viewBox="-44.1 -44.1 88.2 88.2" aria-hidden="true" focusable="false"><circle cx="-22.63" cy="-22.63" r="7.5" fill="var(--m1)"/><path d="M-5.69 -24.11A17 17 0 0 1 -39.37 -19.68" fill="none" stroke="var(--m1)" stroke-width="6.5" stroke-linecap="round"/><circle cx="22.63" cy="-22.63" r="7.5" fill="var(--m2)"/><path d="M24.11 -5.69A17 17 0 0 1 19.68 -39.37" fill="none" stroke="var(--m2)" stroke-width="6.5" stroke-linecap="round"/><circle cx="22.63" cy="22.63" r="7.5" fill="var(--m1)"/><path d="M5.69 24.11A17 17 0 0 1 39.37 19.68" fill="none" stroke="var(--m1)" stroke-width="6.5" stroke-linecap="round"/><circle cx="-22.63" cy="22.63" r="7.5" fill="var(--m2)"/><path d="M-24.11 5.69A17 17 0 0 1 -19.68 39.37" fill="none" stroke="var(--m2)" stroke-width="6.5" stroke-linecap="round"/></svg>cynergi <small>Team</small></a>
+    <nav class="links" aria-label="Main"><a href="/home">Home</a><a href="/spaces">Spaces</a><a href="/you">You</a><a href="/team" aria-current="page">Team</a></nav>
+    <a class="go" href="/login">Find your people</a>
+  </div>
+</header>
+
+<main class="page">
+  <p class="eyebrow mono">Cynergi · built from Thapar · 1–12 October 2026</p>
+
+  <div class="hero">
+    <figure class="fig rv">
+      <div class="frame"><img src="/team/img/gaganjot.jpg" alt="Gaganjot Singh, smiling, in a cream T-shirt outdoors at sunset." width="480" height="600"></div>
+      <figcaption class="mono">Fig 1. The developer, mid-merge</figcaption>
+    </figure>
+    <div class="rv">
+      <h1>Gaganjot Singh</h1>
+      <div class="chips mono"><span class="chip">Built Cynergi</span><span class="chip">410 commits · 12 days</span><span class="chip">140+ pull requests</span></div>
+      <p class="pull">Usually somewhere between “this needs an ADR” and “ship it, CI is green.”</p>
+      <p class="body">I built Cynergi end to end: the matcher, the inbox, the design system, and the free-tier plumbing that keeps it running for nothing.</p>
+      <p class="body soft">If you're building something interesting, describe it in a sentence. The matcher will find you someone.</p>
+      <div class="btns">
+        <a class="btn solid" href="https://github.com/gsengh24" rel="noopener" target="_blank">GitHub ↗</a>
+        <a class="btn line" href="https://github.com/gsengh24/SkillBuddy" rel="noopener" target="_blank">The code ↗</a>
+      </div>
+    </div>
+    <aside class="note rv" aria-label="A note">Scroll down and meet the people who made this work. It all runs on free tiers.</aside>
+  </div>
+
+  <section aria-labelledby="m-h">
+    <p class="label mono" id="m-h">Matched by the same engine as everyone else here</p>
+    <div class="match rv">
+      <div class="match-top">
+        <span class="mono">Intent · Build together</span>
+        <span class="verdict">Strong match</span>
+        <span class="meter" aria-hidden="true"><i class="on" style="--k:0"></i><i class="on" style="--k:1"></i><i class="on" style="--k:2"></i></span><span class="mono">Need 3 / 3</span>
+        <span class="meter" aria-hidden="true"><i class="on" style="--k:3"></i><i class="on" style="--k:4"></i><i class="on" style="--k:5"></i></span><span class="mono">Shared 3 / 3</span>
+      </div>
+      <p class="why">You need someone who ships. Every one of 410 commits went through five required checks before it reached main, so the deadline arithmetic here is learned, not theoretical.</p>
+    </div>
+  </section>
+
+  <section class="cols" aria-label="Trade-offs">
+    <div class="pro rv">
+      <p class="label mono">Why you'd match</p>
+      <ul>
+        <li>Writes the decision record before the change, not after it.</li>
+        <li>Zero cost by design: free tiers, open source, no card on any account.</li>
+      </ul>
+    </div>
+    <div class="con rv">
+      <p class="label mono">Things to know</p>
+      <ul>
+        <li>Will tell you your request is too vague. Usually correct, occasionally at 2am.</li>
+        <li>Keeps polishing after it already works. This page exists, and nobody asked for it.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr>
+
+  <section aria-labelledby="mt-h">
+    <p class="label mono" id="mt-h">Mentor</p>
+    <p class="lede">The person who asks the question the demo was hoping to avoid.</p>
+    <article class="person rv">
+      <div class="pic"><img src="/team/img/rana.jpg" alt="Dr Prashant Singh Rana, smiling, arms folded, wearing pixel sunglasses." width="360" height="360"></div>
+      <div>
+        <h3>Dr Prashant Singh Rana</h3>
+        <p class="role mono">Mentor · Associate Professor, Thapar Institute of Engineering &amp; Technology</p>
+        <p class="q">Asks the question you were hoping nobody would ask.</p>
+        <p class="d">Usually about the data you have not collected yet. Answering it early is how a project survives its own demo.</p>
+      </div>
+    </article>
+  </section>
+
+  <hr>
+
+  <section aria-labelledby="c-h">
+    <p class="label mono" id="c-h">Contributors</p>
+    <p class="lede">People who pushed this further than one person would have.</p>
+    <article class="person rv">
+      <div class="pic"><img src="/team/img/gurvar.jpg" alt="Gurvar Singh Gulati, smiling, in a dark suit and maroon turban." width="360" height="360"></div>
+      <div>
+        <h3>Gurvar Singh Gulati</h3>
+        <p class="role mono">Contributor · Frontend &amp; design</p>
+        <p class="q">Will move a button 2px and call it a redesign. He's usually right.</p>
+        <p class="d">Frontend and design. Has opinions about spacing that outrank yours, and a Figma file ready for the argument.</p>
+      </div>
+    </article>
+    <article class="person hl rv">
+      <div class="pic"><img src="/team/img/namanmeet.jpg" alt="Namanmeet Singh in a pink shirt and navy turban." width="360" height="360"></div>
+      <div>
+        <h3>Namanmeet Singh</h3>
+        <p class="role mono">Contributor</p>
+        <p class="q">Saw the inbox load twice and took it personally.</p>
+        <p class="d">Cut a round trip and the background load from opening a request. Home now opens before you finish blinking, and he will mention it.</p>
+      </div>
+      <div class="icons"><span class="peek"><span class="tip">Say hi ;)</span><a href="#" aria-label="Namanmeet Singh on GitHub"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg></a></span></div>
+    </article>
+  </section>
+
+  <hr>
+
+  <section class="why-exists rv" aria-labelledby="w-h">
+    <p class="label mono" id="w-h">Why Cynergi exists</p>
+    <p>At college you meet collaborators by accident: whoever sits next to you, whoever's in the group chat. Cynergi asks <strong>what you're trying to do first</strong>, finds a few people with a reason for each, and contacts nobody until <strong>both of you say yes</strong>. Matching runs on free models that don't train on your words, and no AI ever reads your chats.</p>
+    <div class="btns">
+      <a class="btn line" href="/">Back to Cynergi</a>
+      <a class="btn line" href="https://github.com/gsengh24/SkillBuddy" rel="noopener" target="_blank">Read the code ↗</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-in mono">
+    <span>Cynergi — built by Gaganjot Singh, with Gurvar Singh Gulati and Namanmeet Singh · mentored by Dr Prashant Singh Rana</span>
+    <span>First community: Thapar · servers in Singapore · zero cost, open source</span>
+    <span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.remove("wait"); io.unobserve(e.target); } }), { threshold: .15 });
+  document.querySelectorAll(".rv").forEach(el => { if (el.getBoundingClientRect().top > innerHeight * .9) { el.classList.add("wait"); io.observe(el); } });
+})();
+</script>
+</body>
+</html>

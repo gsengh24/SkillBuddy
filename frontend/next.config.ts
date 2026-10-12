@@ -7,10 +7,14 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
-  // The landing page is a self-contained static document (public/landing).
+  // The landing page and the team page are self-contained static documents
+  // (public/landing, public/team).
   async rewrites() {
     return {
-      beforeFiles: [{ source: "/", destination: "/landing/index.html" }],
+      beforeFiles: [
+        { source: "/", destination: "/landing/index.html" },
+        { source: "/team", destination: "/team/index.html" },
+      ],
       afterFiles: [],
       fallback: [],
     };
