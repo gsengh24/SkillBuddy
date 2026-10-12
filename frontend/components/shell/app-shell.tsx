@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Avatar } from "@/components/ds/avatar";
 import { BottomNav } from "@/components/ds/bottom-nav";
-import { BellIcon, HomeIcon, PeopleIcon, YouIcon } from "@/components/ds/icons";
+import { BellIcon, HomeIcon, PeopleIcon, UserPlusIcon, YouIcon } from "@/components/ds/icons";
 import { cx } from "@/components/ui/cx";
 
 import { APP_LINKS, DOT, ICON_LINK } from "./links";
@@ -28,6 +28,7 @@ const ICONS: Record<(typeof APP_LINKS)[number]["href"], ReactNode> = {
   "/home": <HomeIcon />,
   "/teams": <PeopleIcon />,
   "/you": <YouIcon />,
+  "/team": <UserPlusIcon />,
 };
 
 const BOTTOM_NAV_ITEMS = APP_LINKS.map((link) => ({ ...link, icon: ICONS[link.href] }));
@@ -48,8 +49,8 @@ function BellLink({ hasNotifications }: { hasNotifications: boolean }) {
 
 /**
  * The signed-in app frame (ADR 0014, Home reference). One header: logo, the Home / Spaces /
- * You pill switcher from 1024px up, the bell and the account. Phones get the bottom nav
- * with the same three places. Chats count as Home.
+ * You / Team pill switcher from 1024px up, the bell and the account. Phones get the bottom nav
+ * with the same places. Chats count as Home.
  */
 export function AppShell({ user, children, rightRail, hasNotifications = false }: AppShellProps) {
   return (

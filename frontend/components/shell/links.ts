@@ -1,5 +1,5 @@
 /**
- * The three places in the app, the same on desktop (top bar) and phones (bottom nav).
+ * The places in the app, the same on desktop (top bar) and phones (bottom nav).
  * Chats (/messages/...) belong to Home, which lists requests and messages together.
  * Pair spaces live under /teams/... (the old /spaces address redirects there).
  */
@@ -7,7 +7,11 @@ export const APP_LINKS = [
   { href: "/home", label: "Home", match: ["/messages"] },
   { href: "/teams", label: "Spaces", match: ["/spaces"] },
   { href: "/you", label: "You", match: ["/settings"] },
+  { href: "/team", label: "Team", match: [] },
 ] as const;
+
+/** Static documents served by a rewrite (next.config.ts); they need a full page load, not a client navigation. */
+export const STATIC_PAGES: readonly string[] = ["/team"];
 
 export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
