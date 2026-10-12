@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="/landing/fonts/fonts.css">
 <style>
 /* Layout: an editorial scroll story. Full-bleed sections alternate ink, green and white;
-   three pinned stages (hero constellation, intents gallery, manifesto) carry the motion. */
+   two pinned stages (hero constellation, manifesto) carry the motion. */
 :root {
   color-scheme: light;
   /* Cynergi tokens (lib/design/tokens.ts) */
@@ -179,30 +179,6 @@ img { display: block; max-width: 100%; }
 .ticker-row svg { width: 16px; height: 16px; }
 @keyframes tick { to { transform: translateX(-50%); } }
 
-/* ---------- intents gallery (pinned) ---------- */
-.gal { position: relative; z-index: 2; height: 360vh; background: var(--ink); color: var(--on-dark); }
-.gal-stage { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; }
-.gal-bg { position: absolute; inset: -6%; }
-.gal-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(.8) brightness(.38); opacity: 0; transform: scale(1.1); }
-.gal-bg img.first { opacity: 1; }
-.gal-bg::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, #0000 0 3px, #0000001f 3px 4px); }
-.gal-marq { position: absolute; left: 0; top: 50%; transform: translateY(-50%); white-space: nowrap; font-family: var(--f-display); font-weight: 800; letter-spacing: -0.04em; text-transform: uppercase; font-size: clamp(90px, 17vw, 280px); line-height: 1; color: var(--on-dark); will-change: transform; }
-.gal-marq span { padding-right: .3em; }
-.gal-card { position: absolute; left: 50%; top: 47%; transform: translate(-50%, -50%); width: min(58vw, 760px); aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; box-shadow: 0 30px 80px #0008; background: #111; }
-.gal-card .layer { position: absolute; inset: 0; overflow: hidden; transform: translateY(100%); }
-.gal-card .layer:first-child { transform: none; }
-.gal-card .layer img { width: 100%; height: 100%; object-fit: cover; }
-.gal-top { position: absolute; top: 80px; left: var(--gutter); right: var(--gutter); display: flex; justify-content: space-between; color: var(--on-dark-2); }
-.gal-top b { color: var(--on-dark); font-weight: 500; }
-.gal-meta { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 26px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.gal-meta > div { position: relative; min-height: 4.4em; }
-.gal-meta .mono { color: var(--on-dark-2); margin-bottom: 6px; }
-.gal-meta .val { position: absolute; left: 0; right: 0; opacity: 0; transform: translateY(8px); transition: opacity .35s, transform .45s var(--ease); font-size: 15px; line-height: 1.35; }
-.gal-meta .val.on { opacity: 1; transform: none; }
-.gal-meta .val.big { font-family: var(--f-display); font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
-.gal-progress { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 12px; height: 2px; background: #ffffff1f; }
-.gal-progress i { display: block; height: 100%; width: 100%; background: var(--mint); transform-origin: left; transform: scaleX(0); }
-.gal-list { display: none; }
 
 /* ---------- consent counters ---------- */
 .consent { position: relative; z-index: 2; background: var(--panel); color: var(--ink); padding-block: clamp(56px, 8vw, 120px); }
@@ -344,19 +320,6 @@ img { display: block; max-width: 100%; }
   .corner.tl, .corner.tr { top: 64px; }
   .caps { bottom: auto; top: 76%; }
   .caps p { font-size: 26px; }
-  /* intents: tall card near the top, marquee behind, details underneath */
-  .gal-top { top: 72px; }
-  .gal-card { top: 112px; transform: translateX(-50%); width: calc(100vw - 2 * var(--gutter)); aspect-ratio: 4 / 4.3; max-height: calc(100svh - 330px); }
-  .gal-marq { top: 67%; font-size: 22vw; }
-  .gal-meta { bottom: 30px; gap: 12px; }
-  .gal-meta > div:nth-child(2) { display: block; }
-  .gal-meta > div:nth-child(3) { display: none; }
-  .gal-meta > div { min-height: 0; }
-  .gal-meta > div:nth-child(1) { min-height: 1.6em; }
-  .gal-meta > div:nth-child(2) { min-height: 2.8em; }
-  .gal-meta .val.big { font-size: 26px; }
-  .gal-meta .val { font-size: 16px; }
-  .gal-meta .mono { display: none; }
   /* how: smaller plate */
   .how .plate { aspect-ratio: 16 / 10; margin-top: 20px; }
   .acc-btn { padding: 18px 0; min-height: 56px; }
@@ -364,7 +327,6 @@ img { display: block; max-width: 100%; }
   .chips { gap: 8px; }
   .curtain .plate { aspect-ratio: 16 / 11; }
   .word { flex-wrap: wrap; }
-  .gal-meta { grid-template-columns: minmax(0, 1fr); }
   .nav-links { display: none; }
   .hero-top span:nth-child(2) { display: none; }
   .hero-lede { grid-template-columns: minmax(0, 1fr); }
@@ -402,12 +364,6 @@ img { display: block; max-width: 100%; }
 .rm .hero-stage { position: relative; }
 .rm .caps { display: none; }
 .rm .curtain { margin-top: 0; }
-.rm .gal { height: auto; }
-.rm .gal-stage { display: none; }
-.rm .gal-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; padding: 72px var(--gutter); }
-.rm .gal-list figure { margin: 0; display: grid; gap: 10px; }
-.rm .gal-list figcaption { display: grid; gap: 4px; }
-.rm .gal-list figcaption span { color: var(--on-dark-2); font-size: 14px; }
 .rm .mani { height: auto; }
 .rm .mani-stage { position: relative; height: auto; min-height: 0; }
 .rm .mani-move { position: static; }
@@ -437,7 +393,7 @@ img { display: block; max-width: 100%; }
     cynergi
   </a>
   <nav class="nav-links" aria-label="Sections">
-    <a href="#intents">Intents</a><a href="#how">How it works</a><a href="#safety">Safety</a><a href="#faq">FAQ</a>
+    <a href="#how">How it works</a><a href="#safety">Safety</a><a href="#faq">FAQ</a>
   </nav>
   <div class="nav-right">
     <a class="btn btn-mint" href="/login">Get started</a>
@@ -446,7 +402,7 @@ img { display: block; max-width: 100%; }
 </header>
 
 <nav class="menu-fab" id="fab" aria-label="Quick sections">
-  <a href="#intents">Intents</a><a href="#how">How</a><a href="#faq">FAQ</a><a class="mbtn" href="#mmenu" data-open-menu role="button" aria-controls="mmenu">Menu</a><a class="go" href="/login">Get started</a>
+  <a href="#how">How</a><a href="#faq">FAQ</a><a class="mbtn" href="#mmenu" data-open-menu role="button" aria-controls="mmenu">Menu</a><a class="go" href="/login">Get started</a>
 </nav>
 
 <div class="mmenu" id="mmenu" role="dialog" aria-modal="true" aria-label="Menu">
@@ -455,7 +411,6 @@ img { display: block; max-width: 100%; }
     <button class="mmenu-close" type="button" aria-label="Close menu" id="mclose">×</button>
   </div>
   <nav aria-label="Sections">
-    <a href="#intents">Intents <span class="mono">06</span></a>
     <a href="#how">How it works <span class="mono">04</span></a>
     <a href="#safety">Safety <span class="mono">/02</span></a>
     <a href="#faq">FAQ</a>
@@ -549,24 +504,6 @@ img { display: block; max-width: 100%; }
 
   <div class="ticker" aria-hidden="true"><div class="ticker-row" id="tickerRow"></div></div>
 
-  <!-- INTENTS GALLERY: pinned -->
-  <section class="gal" id="intents" data-nav="dark" aria-labelledby="gal-h">
-    <h2 class="sr" id="gal-h">Six intents</h2>
-    <div class="gal-stage" id="galStage">
-      <div class="gal-bg" id="galBg"></div>
-      <div class="gal-marq" id="galMarq" aria-hidden="true"></div>
-      <div class="gal-card" id="galCard"></div>
-      <div class="gal-top mono"><span>Six intents · one engine</span><span><b id="galIdx">01</b> / <span id="galTot">03</span></span></div>
-      <div class="gal-meta" id="galMeta">
-        <div><div class="mono">Intent</div></div>
-        <div><div class="mono">Someone might say</div></div>
-        <div><div class="mono">The matcher looks for</div></div>
-      </div>
-      <div class="gal-progress"><i id="galBar"></i></div>
-    </div>
-    <div class="gal-list" id="galList"></div>
-  </section>
-
   <!-- CONSENT COUNTERS -->
   <section class="consent wrap" id="safety" data-nav="light" aria-labelledby="consent-h">
     <div class="consent-head">
@@ -658,7 +595,7 @@ img { display: block; max-width: 100%; }
       <a class="btn btn-mint" href="/login">Find your people <span aria-hidden="true">→</span></a>
     </div>
     <div class="foot-cols">
-      <div><h3 class="mono">Product</h3><ul><li><a href="#intents">Intents</a></li><li><a href="#how">How it works</a></li><li><a href="#safety">Safety</a></li><li><a href="#faq">FAQ</a></li></ul></div>
+      <div><h3 class="mono">Product</h3><ul><li><a href="#how">How it works</a></li><li><a href="#safety">Safety</a></li><li><a href="#faq">FAQ</a></li></ul></div>
       <div><h3 class="mono">Legal</h3><ul><li><a href="/terms">Terms</a></li><li><a href="/privacy">Privacy</a></li></ul></div>
       <div><h3 class="mono">Where</h3><ul><li>First community: Thapar</li><li>Servers in Singapore</li></ul></div>
       <div><h3 class="mono">Places in the app</h3><ul><li>Home</li><li>Spaces</li><li>You</li></ul></div>
@@ -690,30 +627,11 @@ img { display: block; max-width: 100%; }
     { k: "mentor", label: "Find a mentor", say: "“Guidance moving from sales into product.”", look: "An experience gap and a willingness to mentor", alt: "A small green sphere on a low block, a ramp up to a large ink sphere on a tall column." },
     { k: "explore", label: "Explore", say: "“Show me interesting people.”", look: "Variety, with a little serendipity", alt: "A field of grey spheres with one green sphere ringed in mint." },
   ];
-  const GALLERY = INTENTS.filter(it => ["build_together", "skill_exchange", "mentor"].includes(it.k));
-  $("#galTot").textContent = String(GALLERY.length).padStart(2, "0");
 
   /* ticker */
   const dot = '<svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="6" cy="6" r="3.5" fill="#7be0a8"/><circle cx="16" cy="6" r="3.5" fill="#f3f4f1"/><circle cx="6" cy="16" r="3.5" fill="#f3f4f1"/><circle cx="16" cy="16" r="3.5" fill="#7be0a8"/></svg>';
   const tk = INTENTS.map(i => `<span>${i.label}</span>${dot}`).join("");
   $("#tickerRow").innerHTML = tk + tk + tk + tk;
-
-  /* gallery build */
-  const galBg = $("#galBg"), galCard = $("#galCard"), galMarq = $("#galMarq"), galMeta = $("#galMeta");
-  GALLERY.forEach((it, i) => {
-    galBg.insertAdjacentHTML("beforeend", `<img src="/landing/img/${it.k}.jpg" alt="" class="${i ? "" : "first"}" loading="${i ? "lazy" : "eager"}">`);
-    galCard.insertAdjacentHTML("beforeend", `<div class="layer"><img src="/landing/img/${it.k}.jpg" alt="${it.alt}" loading="${i ? "lazy" : "eager"}"></div>`);
-    galMarq.insertAdjacentHTML("beforeend", `<span>${it.label}</span>`);
-    $("#galList").insertAdjacentHTML("beforeend", `<figure><img src="/landing/img/${it.k}.jpg" alt="${it.alt}" loading="lazy"><figcaption><b>${it.label}</b><span>${it.say}</span><span>Looks for: ${it.look}</span></figcaption></figure>`);
-  });
-  const metaCols = $$(":scope > div", galMeta);
-  GALLERY.forEach((it, i) => {
-    metaCols[0].insertAdjacentHTML("beforeend", `<div class="val big${i ? "" : " on"}">${it.label}</div>`);
-    metaCols[1].insertAdjacentHTML("beforeend", `<div class="val${i ? "" : " on"}">${it.say}</div>`);
-    metaCols[2].insertAdjacentHTML("beforeend", `<div class="val${i ? "" : " on"}">${it.look}</div>`);
-  });
-  const bgImgs = $$("img", galBg), layers = $$(".layer", galCard), marqSpans = $$("span", galMarq);
-  const vals = metaCols.map(c => $$(".val", c));
 
   /* ---------- clock ---------- */
   const clock = $("#clock");
@@ -842,7 +760,6 @@ img { display: block; max-width: 100%; }
 
   /* ---------- layout cache ---------- */
   const heroPin = $("#heroPin"), heroUi = $("#heroUi"), heroShade = $("#heroShade"), caps = $$(".caps p");
-  const gal = $("#intents"), galBar = $("#galBar"), galIdx = $("#galIdx");
   const mani = $("#mani"), maniMove = $("#maniMove"), maniStats = $$("#maniStats b");
   const statEls = $$("#stats b"), statsWrap = $("#stats");
   const plates = $$("[data-par]");
@@ -850,9 +767,7 @@ img { display: block; max-width: 100%; }
   const top = el => el.getBoundingClientRect().top + scrollY;
   const measure = () => {
     vh = innerHeight; vw = innerWidth; size();
-    L = { hero: [top(heroPin), heroPin.offsetHeight], gal: [top(gal), gal.offsetHeight], mani: [top(mani), mani.offsetHeight], stats: top(statsWrap) };
-    const c = marqSpans.map(s => s.offsetLeft + s.offsetWidth / 2);
-    L.marq = c;
+    L = { hero: [top(heroPin), heroPin.offsetHeight], mani: [top(mani), mani.offsetHeight], stats: top(statsWrap) };
     L.maniH = maniMove.offsetHeight; L.maniBox = maniMove.parentElement.offsetHeight;
   };
   const pin = ([t, h]) => clamp((scrollY - t) / (h - vh));
@@ -891,29 +806,6 @@ img { display: block; max-width: 100%; }
     // parallax plates
     plates.forEach(pl => { const r = pl.getBoundingClientRect(); if (r.bottom < 0 || r.top > vh) return; const k = parseFloat(pl.dataset.par); const c = (r.top + r.height / 2 - vh / 2) / vh; pl.firstElementChild.style.setProperty("--py", `${(-6 + c * k * 100).toFixed(2)}%`); });
 
-    // gallery
-    if (!RM) {
-      const gp = prog(L.gal[0], L.gal[1]);
-      const N = GALLERY.length;
-      const idx = clamp(gp * N, 0, N - 0.001);
-      const act = Math.floor(idx);
-      layers.forEach((ly, i) => {
-        if (!i) return;
-        const t = ease(clamp((idx - i + .22) / .3));
-        ly.style.transform = `translateY(${(1 - t) * 100}%)`;
-        ly.firstElementChild.style.transform = `translateY(${-(1 - t) * 40}%) scale(${1 + (1 - t) * .15})`;
-        bgImgs[i].style.opacity = String(t);
-      });
-      vals.forEach(col => col.forEach((v, i) => v.classList.toggle("on", i === act)));
-      galIdx.textContent = String(act + 1).padStart(2, "0");
-      galBar.style.transform = `scaleX(${gp})`;
-      if (L.marq) {
-        const f = clamp(idx, 0, N - 0.001), a = Math.floor(f), b = Math.min(N - 1, a + 1), t = f - a;
-        const c = lerp(L.marq[a], L.marq[b], t);
-        galMarq.style.transform = `translate(${vw / 2 - c}px, -50%)`;
-      }
-    }
-
     // stats counters (scroll-linked, like the recording's /10% -> /89%)
     { const r = statsWrap.getBoundingClientRect(); const t = RM ? 1 : ease(clamp((vh - r.top) / (vh * .75)));
       statEls.forEach(el => setCount(el, Math.round(+el.dataset.n * t))); }
@@ -928,8 +820,7 @@ img { display: block; max-width: 100%; }
     for (const s of navSections) { const r = s.getBoundingClientRect(); if (r.top <= probe && r.bottom > probe) { nav.classList.toggle("light", s.dataset.nav === "light"); break; } }
     const pastHero = realY > L.hero[0] + L.hero[1] - vh * 1.2;
     if (Math.abs(realY - lastY) > 4) { nav.classList.toggle("hide", pastHero && realY > lastY); lastY = realY; }
-    const inGal = realY > L.gal[0] - vh * .2 && realY < L.gal[0] + L.gal[1] - vh * .8;
-    fab.classList.toggle("show", pastHero && !RM && !inGal);
+    fab.classList.toggle("show", pastHero && !RM);
 
     if (!RM) requestAnimationFrame(frame);
   }
