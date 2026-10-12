@@ -9,7 +9,7 @@ const navigation = vi.hoisted(() => ({ pathname: "/home" }));
 vi.mock("next/navigation", () => ({ usePathname: () => navigation.pathname }));
 
 const USER = { id: "8d3f4b2a-0000-4000-8000-000000000001", email: "ananya@example.com" };
-const PLACES = ["Home", "Spaces", "You"];
+const PLACES = ["Home", "Spaces", "You", "Team"];
 
 beforeEach(() => {
   navigation.pathname = "/home";
