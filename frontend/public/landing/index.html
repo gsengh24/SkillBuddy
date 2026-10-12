@@ -180,7 +180,7 @@ img { display: block; max-width: 100%; }
 @keyframes tick { to { transform: translateX(-50%); } }
 
 /* ---------- intents gallery (pinned) ---------- */
-.gal { position: relative; z-index: 2; height: 620vh; background: var(--ink); color: var(--on-dark); }
+.gal { position: relative; z-index: 2; height: 360vh; background: var(--ink); color: var(--on-dark); }
 .gal-stage { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; }
 .gal-bg { position: absolute; inset: -6%; }
 .gal-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(28px) saturate(.8) brightness(.38); opacity: 0; transform: scale(1.1); }
@@ -556,7 +556,7 @@ img { display: block; max-width: 100%; }
       <div class="gal-bg" id="galBg"></div>
       <div class="gal-marq" id="galMarq" aria-hidden="true"></div>
       <div class="gal-card" id="galCard"></div>
-      <div class="gal-top mono"><span>Six intents · one engine</span><span><b id="galIdx">01</b> / 06</span></div>
+      <div class="gal-top mono"><span>Six intents · one engine</span><span><b id="galIdx">01</b> / <span id="galTot">03</span></span></div>
       <div class="gal-meta" id="galMeta">
         <div><div class="mono">Intent</div></div>
         <div><div class="mono">Someone might say</div></div>
@@ -690,6 +690,8 @@ img { display: block; max-width: 100%; }
     { k: "mentor", label: "Find a mentor", say: "“Guidance moving from sales into product.”", look: "An experience gap and a willingness to mentor", alt: "A small green sphere on a low block, a ramp up to a large ink sphere on a tall column." },
     { k: "explore", label: "Explore", say: "“Show me interesting people.”", look: "Variety, with a little serendipity", alt: "A field of grey spheres with one green sphere ringed in mint." },
   ];
+  const GALLERY = INTENTS.filter(it => ["build_together", "skill_exchange", "mentor"].includes(it.k));
+  $("#galTot").textContent = String(GALLERY.length).padStart(2, "0");
 
   /* ticker */
   const dot = '<svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="6" cy="6" r="3.5" fill="#7be0a8"/><circle cx="16" cy="6" r="3.5" fill="#f3f4f1"/><circle cx="6" cy="16" r="3.5" fill="#f3f4f1"/><circle cx="16" cy="16" r="3.5" fill="#7be0a8"/></svg>';
@@ -698,14 +700,14 @@ img { display: block; max-width: 100%; }
 
   /* gallery build */
   const galBg = $("#galBg"), galCard = $("#galCard"), galMarq = $("#galMarq"), galMeta = $("#galMeta");
-  INTENTS.forEach((it, i) => {
+  GALLERY.forEach((it, i) => {
     galBg.insertAdjacentHTML("beforeend", `<img src="/landing/img/${it.k}.jpg" alt="" class="${i ? "" : "first"}" loading="${i ? "lazy" : "eager"}">`);
     galCard.insertAdjacentHTML("beforeend", `<div class="layer"><img src="/landing/img/${it.k}.jpg" alt="${it.alt}" loading="${i ? "lazy" : "eager"}"></div>`);
     galMarq.insertAdjacentHTML("beforeend", `<span>${it.label}</span>`);
     $("#galList").insertAdjacentHTML("beforeend", `<figure><img src="/landing/img/${it.k}.jpg" alt="${it.alt}" loading="lazy"><figcaption><b>${it.label}</b><span>${it.say}</span><span>Looks for: ${it.look}</span></figcaption></figure>`);
   });
   const metaCols = $$(":scope > div", galMeta);
-  INTENTS.forEach((it, i) => {
+  GALLERY.forEach((it, i) => {
     metaCols[0].insertAdjacentHTML("beforeend", `<div class="val big${i ? "" : " on"}">${it.label}</div>`);
     metaCols[1].insertAdjacentHTML("beforeend", `<div class="val${i ? "" : " on"}">${it.say}</div>`);
     metaCols[2].insertAdjacentHTML("beforeend", `<div class="val${i ? "" : " on"}">${it.look}</div>`);
@@ -892,7 +894,8 @@ img { display: block; max-width: 100%; }
     // gallery
     if (!RM) {
       const gp = prog(L.gal[0], L.gal[1]);
-      const idx = clamp(gp * 6, 0, 5.999);
+      const N = GALLERY.length;
+      const idx = clamp(gp * N, 0, N - 0.001);
       const act = Math.floor(idx);
       layers.forEach((ly, i) => {
         if (!i) return;
@@ -905,7 +908,7 @@ img { display: block; max-width: 100%; }
       galIdx.textContent = String(act + 1).padStart(2, "0");
       galBar.style.transform = `scaleX(${gp})`;
       if (L.marq) {
-        const f = clamp(idx - .5 + .5, 0, 5.999), a = Math.floor(f), b = Math.min(5, a + 1), t = f - a;
+        const f = clamp(idx, 0, N - 0.001), a = Math.floor(f), b = Math.min(N - 1, a + 1), t = f - a;
         const c = lerp(L.marq[a], L.marq[b], t);
         galMarq.style.transform = `translate(${vw / 2 - c}px, -50%)`;
       }
