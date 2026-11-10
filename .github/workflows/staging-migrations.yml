@@ -70,7 +70,7 @@ jobs:
           # On workflow_run and schedule this is main; never a pull request's code.
           ref: main
 
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v10.3.0
         with:
           python-version: "3.12"
           enable-cache: true
