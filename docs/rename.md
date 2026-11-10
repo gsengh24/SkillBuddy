@@ -58,7 +58,7 @@ The backend PR (owner review) did:
 - updated the backend tests that check the default name (`tests/unit/test_config.py` and `tests/unit/test_gmail_sender.py`);
 - regenerated `docs/api/openapi.json`, whose title is now "Cynergi API".
 
-The `TERMS_VERSION` default (`2026-10-05-draft`) was not changed: Render's setting is what counts, and the owner set it.
+The `TERMS_VERSION` default was not changed in that PR. It was aligned to `2026-10-08-draft` on 2026-11-10; Render's setting is still what counts.
 
 ## Steps only the owner can do
 

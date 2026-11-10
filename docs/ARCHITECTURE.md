@@ -280,7 +280,18 @@ The build runs in seven phases, and no phase starts until the previous gate is p
 | 5b Teams | after 5 | Groups of up to six, four ways to join, chat ([ADR 0016](adr/0016-teams.md)); these became the pair spaces and the one-to-one spaces were removed ([ADR 0018](adr/0018-pair-spaces-are-teams.md)) |
 | 6 Ranker, mobile, scale | 31 onward | Learned ranker trained on feedback, mobile app, dedicated vector store if needed, autoscaling, multilingual interface |
 
-Timelines assume one to two developers working full time with AI-assisted coding; part-time work roughly doubles them. Phase 0 is next: it produces a running, deployable skeleton, and everything after builds on it.
+Timelines assume one to two developers working full time with AI-assisted coding; part-time work roughly doubles them. Phase 0 produced the running, deployable skeleton that everything after builds on.
+
+**Status (2026-11-10).** `main` holds Phases 0 to 3 except two items, plus pair spaces v1
+(Phase 5) and teams (5b), which replaced the one-to-one spaces:
+
+- **Done:** foundations; profiles and requests with the AI gateway; matching (hybrid
+  retrieval, ranker v1, LLM judge with a template fallback), intros and email
+  notifications; chat, block and report, the moderation queue, rate limits and privacy
+  pages; the admin portal; pair spaces as teams (behind the `teams` switch, off by default).
+- **Not done:** the evaluation run in CI (Phase 2; the labels are still drafts), automated
+  screening (Phase 3), and the closed beta itself. Phase 4 and later have not started.
+- Launch blockers: [pre-launch-checklist.md](pre-launch-checklist.md).
 
 ## 12. Risks, metrics and open decisions
 

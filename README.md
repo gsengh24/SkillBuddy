@@ -4,9 +4,14 @@ An AI matchmaking platform that introduces people to collaborators, skill partne
 interest buddies. Cynergi was called Skill Buddy until October 2026; see
 [Renaming](#renaming-the-product) and [docs/rename.md](docs/rename.md).
 
-> **Status: Phase 0 (foundations).** This repository contains a production-grade skeleton:
-> API, background worker, database schema, web app, Docker, CI. It has no product features
-> yet. The plan lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> **Status: end of Phase 3, before the closed beta.** `main` holds the Phase 1–3 product
+> (profiles, AI matching with a template fallback, intros, chat, blocking, reporting,
+> moderation), the admin portal, and pair spaces (Phase 5 v1, rebuilt as teams in 5b; behind
+> the `teams` switch, off by default). Staging is live; there are no real users yet. Not
+> built: the evaluation run in CI (Phase 2) and automated screening (Phase 3). Launch
+> blockers are in [docs/pre-launch-checklist.md](docs/pre-launch-checklist.md); the plan is
+> in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and the summary in
+> [docs/MASTER.md](docs/MASTER.md).
 
 ## Stack
 

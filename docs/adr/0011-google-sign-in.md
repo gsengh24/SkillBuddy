@@ -1,6 +1,6 @@
 # 11. Sign in with Google for @thapar.edu, with email codes as the fallback
 
-- **Status:** Proposed (awaiting the owner's merge; it touches sign-in)
+- **Status:** Accepted (merged in #35 on 2026-10-02 and built; status corrected on 2026-11-10)
 - **Date:** 2026-10-02
 - **Amends:** [ADR 0006](0006-authentication-and-sessions.md) (authentication and sessions)
 

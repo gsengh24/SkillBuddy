@@ -5,6 +5,10 @@
 - **Amends:** [ARCHITECTURE.md](../ARCHITECTURE.md) §5 (data model), §6 (modules) and §11
   (roadmap). Extends [ADR 0012](0012-chat-delivery-by-polling.md) (chat) and
   [ADR 0013](0013-pair-spaces-v1.md) (pair spaces) to groups; neither is replaced.
+- **Partly superseded by:** [ADR 0018](0018-pair-spaces-are-teams.md) (2026-10-11). Teams
+  became the pair spaces and the one-to-one spaces were removed, so everything below about
+  "Pair spaces" and "Teams" as two features, including the separate "Pair spaces" nav item
+  in "Web", no longer applies. The app shell has one "Spaces" item that opens `/teams`.
 
 ## Context
 
@@ -169,7 +173,7 @@ backend PR and the OpenAPI spec.
 
 ### Web
 
-A "Teams" item in the app shell beside "Pair spaces": my teams, create a team, a team page
+(Superseded by ADR 0018: there is one "Spaces" item, no separate "Pair spaces" item.) A "Teams" item in the app shell beside "Pair spaces": my teams, create a team, a team page
 (chat, goals and notes, members), browse listed teams, and the join-by-link page. Built
 from `components/ds`.
 
