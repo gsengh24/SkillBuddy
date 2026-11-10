@@ -10,6 +10,11 @@ weights are applied in code, never by the model). A candidate the model did not 
 an id it was not given, is dropped. So the AI path can end with fewer picks than asked for,
 or none.
 
+Candidates go to the model in a shuffled order (``shuffle_seed``), so the model can't lean
+on the ranking's order; code still mixes in the ranking's score afterwards. A candidate the
+model rates less than "mostly what was asked for" (``min_need``) is dropped however much
+else the two share, except in "explore", which asks for no one thing.
+
 When the AI is off or fails, ``explain_template()`` keeps the top candidates by the score
 from retrieval and ranking (stages 2 and 3) and writes a reason from what the two profiles
 have in common, so matching still works.
@@ -17,6 +22,7 @@ have in common, so matching still works.
 
 from __future__ import annotations
 
+import random
 import re
 import uuid
 from collections.abc import Sequence
@@ -31,7 +37,7 @@ from app.ai.privacy import find_leaks
 from app.ai.prompts import load_prompt
 from app.ai.stages.understand import Understanding
 
-PROMPT_ID: Final = "explain_v3"
+PROMPT_ID: Final = "explain_v4"
 DEFAULT_MAX_PICKS: Final = 5
 # The judged score: how much each rubric value counts (they add up to 1).
 NEED_WEIGHT: Final = 0.65
@@ -40,6 +46,9 @@ RUBRIC_MAX: Final = 3
 # Under this judged score (0 to 1) a candidate is not suggested. "Mostly what they asked
 # for" alone passes (0.43); "loosely related, a little in common" does not (0.33).
 DEFAULT_MIN_JUDGED: Final = 0.4
+# Below this "need" a candidate is not suggested, whatever "shared" says: being like the
+# requester is no substitute for being what they asked for. 2 is "mostly".
+DEFAULT_MIN_NEED: Final = 2
 # The final order: the judged score, with the score from stages 2 and 3 for the rest.
 JUDGED_WEIGHT: Final = 0.7
 # A shorter reason than this is treated as missing (the template writes one instead).
@@ -210,16 +219,26 @@ async def explain(
     requester: CandidateSummary | None = None,
     max_picks: int = DEFAULT_MAX_PICKS,
     min_judged: float = DEFAULT_MIN_JUDGED,
+    min_need: int = DEFAULT_MIN_NEED,
+    shuffle_seed: int | None = None,
 ) -> Explanation:
     """Judge at most 15 candidates; keep and explain up to ``max_picks`` good enough ones.
 
     ``requester`` is the asking person's own profile, so the model can judge what the two
     have in common. It is sent like a candidate: redacted, with no id.
+
+    ``shuffle_seed`` sends the candidates in an order shuffled by that seed (the same seed,
+    the same order, so a retried job asks the same question); ``None`` keeps the ranking's
+    order. ``min_need`` applies only while the floor is on (``min_judged`` above 0).
     """
     if not candidates:
         return Explanation(picks=[], source=Source.TEMPLATE, prompt_version=None)
     ranked = sorted(candidates, key=lambda c: c.score, reverse=True)[:MAX_CANDIDATES]
-    summaries, aliases = anonymise([c.summary for c in ranked])
+    sent = list(ranked)
+    if shuffle_seed is not None:
+        # Not for security: only to hide the ranking's order from the model.
+        random.Random(shuffle_seed).shuffle(sent)  # noqa: S311
+    summaries, aliases = anonymise([c.summary for c in sent])
     data: dict[str, Any] = {
         "request": request_text,
         "request_summary": request.model_dump(mode="json"),
@@ -254,7 +273,7 @@ async def explain(
                 if found is None or found.conflict:
                     continue
                 judged = judged_score(found)
-                if judged < min_judged:
+                if judged < min_judged or (min_judged > 0 and found.need < min_need):
                     continue
                 final = JUDGED_WEIGHT * judged + (1 - JUDGED_WEIGHT) * candidate.score
                 kept.append((final, candidate, found))
