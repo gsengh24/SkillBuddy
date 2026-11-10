@@ -8,7 +8,9 @@ ranking never use an LLM.
   facet of every matchable profile, chosen by intent (``SEARCH``). A second, keyword search
   finds people whose words for that facet share word stems with the request, so an exact
   skill is not lost when its vector is not among the nearest. Hard filters: not yourself,
-  only active accounts, only profiles that are "matchable", only current-model vectors.
+  only active accounts, only profiles that are "matchable", only current-model vectors, and
+  nobody already connected to you or with an open intro either way (an intro to them
+  would be refused, so suggesting them wastes a slot).
 - **Rank:** in code, never by the model (ARCHITECTURE.md §7, guardrails):
   ``relevance = rescaled two-sided fit + KEYWORD_WEIGHT * keyword`` and
   ``score = relevance * (1 - penalties)``, where the penalties (inactive, seen before,
@@ -20,7 +22,9 @@ ranking never use an LLM.
 - **Explain:** the best 15 go, anonymised, to ``explain()``, with the requester's own
   profile beside them. With the AI on, the model judges each one on a rubric and code
   keeps up to ``MATCHES_PER_REQUEST`` of those at or above ``MATCH_MIN_JUDGE_SCORE``;
-  with it off, the template keeps the top of the ranking.
+  with it off, the template keeps the top of the ranking. The judge sees the candidates in
+  a shuffled order, and must rate a candidate at least "mostly what was asked for" (except
+  in "explore").
 """
 
 from __future__ import annotations
@@ -41,9 +45,11 @@ from app.ai.candidates import MAX_CANDIDATES, CandidateSummary
 from app.ai.embeddings import Embedder
 from app.ai.gateway import AIGateway
 from app.ai.stages import Candidate, Intent, Understanding, explain, understand
+from app.ai.stages.explain import DEFAULT_MIN_NEED
 from app.core.config import Settings
 from app.models import (
     EmbeddingFacet,
+    IntroStatus,
     Match,
     MatchRequest,
     MatchStatus,
@@ -57,6 +63,11 @@ from app.services.notifications import add_notification
 logger = logging.getLogger(__name__)
 
 RETRIEVE_LIMIT: Final = 60
+# Intros in these states, unexpired, are still open: a new one between the two is refused
+# (app/services/intros.py), and a declined one looks pending to its sender.
+_OPEN_INTRO_STATES: Final = ", ".join(
+    f"'{s.value}'" for s in (IntroStatus.PENDING, IntroStatus.DECLINED)
+)
 OVEREXPOSURE_DAYS: Final = 7
 # Suggested this many times in a week counts as fully overexposed.
 OVEREXPOSURE_SATURATION: Final = 15
@@ -262,6 +273,15 @@ async def _search(
         "AND NOT EXISTS (SELECT 1 FROM blocks b WHERE "
         "(b.blocker_id = :me AND b.blocked_id = pe.user_id) OR "
         "(b.blocker_id = pe.user_id AND b.blocked_id = :me)) "
+        # Already connected (an ended connection does not count: after an unblock, a new
+        # intro is allowed), or an open intro either way.
+        "AND NOT EXISTS (SELECT 1 FROM connections c WHERE c.ended_at IS NULL AND ("
+        "(c.user_a = :me AND c.user_b = pe.user_id) OR "
+        "(c.user_a = pe.user_id AND c.user_b = :me))) "
+        "AND NOT EXISTS (SELECT 1 FROM intros i WHERE "
+        f"i.status IN ({_OPEN_INTRO_STATES}) AND i.expires_at > now() AND ("
+        "(i.sender_id = :me AND i.recipient_id = pe.user_id) OR "
+        "(i.sender_id = pe.user_id AND i.recipient_id = :me))) "
     )
     statement = (
         f"SELECT * FROM ({candidates}) AS found WHERE stems_shared > 0 "  # noqa: S608  # fixed fragments, values are bound
@@ -525,6 +545,10 @@ async def run_match_request(
         requester=requester,
         max_picks=settings.matches_per_request,
         min_judged=settings.match_min_judge_score,
+        # "Explore" asks for no one thing, so "need" says little there.
+        min_need=0 if intent is Intent.EXPLORE else DEFAULT_MIN_NEED,
+        # The same request always shuffles the same way, so a retried job asks the same.
+        shuffle_seed=request_id.int,
     )
     scores = {item.candidate.user_id: item.score for item in shortlist}
 

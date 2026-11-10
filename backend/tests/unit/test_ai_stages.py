@@ -140,6 +140,10 @@ def test_prompts_load_by_id_only() -> None:
     assert "C1" in load_prompt("explain_v1")
     assert "verdicts" in load_prompt("explain_v2")
     assert '"student"' in load_prompt("explain_v3")
+    # v4 sends candidates shuffled, so it must not tell the model they are ranked.
+    v4 = load_prompt("explain_v4")
+    assert "no particular order" in v4
+    assert "best first" not in v4
     assert "intent" in load_prompt("understand_v1")
     assert '"title"' in load_prompt("understand_v2")
     with pytest.raises(FileNotFoundError):

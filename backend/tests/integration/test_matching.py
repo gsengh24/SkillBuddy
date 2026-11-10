@@ -231,6 +231,74 @@ async def test_blocks_are_a_hard_filter_both_ways(
     assert blocked_me not in found
 
 
+def intro(url: str, sender: uuid.UUID, recipient: uuid.UUID, status: str, *, expires: str) -> None:
+    """An intro from ``sender`` to ``recipient``, made from a match on an older request."""
+    older = new_request(url, sender, "An earlier request.", "build_together")
+    found = run_sql(
+        url,
+        "INSERT INTO matches (request_id, candidate_id, rank, score, reason) "
+        "VALUES (:r, :c, 1, 0.5, 'An earlier match.') RETURNING id",
+        r=older,
+        c=recipient,
+    )[0]["id"]
+    run_sql(
+        url,
+        "INSERT INTO intros (match_id, sender_id, recipient_id, status, expires_at) "
+        "VALUES (:m, :s, :r, :st, now() + CAST(:expires AS interval))",
+        expires=expires,
+        m=found,
+        s=sender,
+        r=recipient,
+        st=status,
+    )
+
+
+def connect(url: str, a: uuid.UUID, b: uuid.UUID, *, ended: bool = False) -> None:
+    low, high = sorted((a, b), key=str)
+    run_sql(
+        url,
+        "INSERT INTO connections (user_a, user_b, ended_at) "
+        "VALUES (:a, :b, CASE WHEN :ended THEN now() END)",
+        ended=ended,
+        a=low,
+        b=high,
+    )
+
+
+async def test_connections_and_open_intros_are_not_suggested(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    axis = 300 + uuid.uuid4().int % 60
+    me = person(url, model=model, offer=unit((axis + 1, 1.0)))
+    fit = unit((axis, 1.0))
+    connected = person(url, model=model, offer=fit)
+    ended = person(url, model=model, offer=fit)
+    i_asked = person(url, model=model, offer=fit)
+    they_asked = person(url, model=model, offer=fit)
+    declined_mine = person(url, model=model, offer=fit)
+    old_intro = person(url, model=model, offer=fit)
+    connect(url, me, connected)
+    connect(url, me, ended, ended=True)
+    intro(url, me, i_asked, "pending", expires="7 days")
+    intro(url, they_asked, me, "pending", expires="7 days")
+    # Declined looks pending to its sender until it expires, so it still counts as open.
+    intro(url, me, declined_mine, "declined", expires="7 days")
+    intro(url, me, old_intro, "expired", expires="-1 days")
+    request = new_request(url, me, "Looking for a React developer.", "build_together")
+
+    assert await match(settings, session_factory, request, fit, model)
+
+    found = {row["candidate_id"] for row in matches(url, request)}
+    for excluded in (connected, i_asked, they_asked, declined_mine):
+        assert excluded not in found
+    # An ended connection (after an unblock) and an expired intro allow a fresh intro.
+    assert {ended, old_intro} <= found
+
+
 async def test_at_most_matches_per_request_and_names_never_in_reasons(
     make_settings: SettingsFactory,
     migrated_database_url: str,

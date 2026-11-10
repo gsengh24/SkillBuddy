@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import AsyncIterator, Sequence
+from typing import Any
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -15,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.ai.candidates import CandidateSummary
 from app.ai.gateway import AIGateway, FallbackReason, Source
 from app.ai.prompts import load_prompt
-from app.ai.providers import ChatProvider, FakeProvider
+from app.ai.providers import ChatProvider, ChatRequest, FakeProvider
 from app.ai.stages import Candidate, Intent, Understanding, explain, understand
 from app.core.config import Settings
 from app.db.engine import create_engine
@@ -196,7 +197,7 @@ async def test_explain_maps_aliases_and_drops_unknown_or_repeated_ids(
     )
 
     assert result.source is Source.LLM
-    assert result.prompt_version == "explain_v3"
+    assert result.prompt_version == "explain_v4"
     assert [(p.user_id, p.reason) for p in result.picks] == [
         (candidates[2].summary.user_id, "Designs in Figma, which you need."),
         (candidates[0].summary.user_id, "Works on similar projects."),
@@ -289,6 +290,83 @@ async def test_explain_keeps_only_candidates_the_judge_rates_well_enough(
     ]
 
 
+async def test_explain_drops_a_loose_fit_however_much_they_share(
+    make_settings: SettingsFactory,
+    migrated_database_url: str,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    settings = make_settings(database_url=migrated_database_url)
+    candidates = _candidates(3)
+    verdicts = [
+        # Loosely related but a lot in common: over the score floor (0.57), under "need".
+        {"id": "C1", "need": 1, "shared": 3, "reason": "Much in common with you."},
+        {"id": "C2", "need": 2, "shared": 0, "reason": "They design in Figma, as asked."},
+        {"id": "C3", "need": 3, "shared": 3, "reason": "They design apps in Figma."},
+    ]
+    reply = json.dumps({"verdicts": verdicts})
+
+    async def picks(**options: Any) -> list[uuid.UUID]:
+        result = await explain(
+            _gateway(settings, session_factory, [_fake(reply)]),
+            TEXT,
+            Understanding(seeks=["Figma"]),
+            candidates,
+            user_id=str(uuid.uuid4()),
+            **options,
+        )
+        assert result.source is Source.LLM
+        return [p.user_id for p in result.picks]
+
+    ids = [c.summary.user_id for c in candidates]
+    assert await picks() == [ids[2], ids[1]]
+    # "Explore" turns the need check off: the loose fit is kept on its judged score.
+    assert await picks(min_need=0) == [ids[2], ids[0], ids[1]]
+    # With the floor off, nothing but a conflict is dropped.
+    assert await picks(min_judged=0) == [ids[2], ids[0], ids[1]]
+
+
+async def test_explain_shuffles_the_order_the_judge_sees_and_maps_it_back(
+    make_settings: SettingsFactory,
+    migrated_database_url: str,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    settings = make_settings(database_url=migrated_database_url)
+    candidates = _candidates(15)
+
+    def judge(sent: ChatRequest) -> str:
+        # Rate only the one who knows Figma (candidates[2]), wherever it was placed.
+        verdicts = [
+            {"id": c["id"], "need": 3, "shared": 1, "reason": "They design in Figma."}
+            if "Figma" in c["skills"]
+            else {"id": c["id"], "need": 0, "shared": 0}
+            for c in json.loads(sent.user)["candidates"]
+        ]
+        return json.dumps({"verdicts": verdicts})
+
+    async def run(seed: int | None) -> tuple[list[str], list[uuid.UUID]]:
+        groq = FakeProvider(name=f"groq-{uuid.uuid4().hex[:6]}", replies=[judge])
+        result = await explain(
+            _gateway(settings, session_factory, [groq]),
+            TEXT,
+            Understanding(seeks=["Figma"]),
+            candidates,
+            user_id=str(uuid.uuid4()),
+            shuffle_seed=seed,
+        )
+        order = [c["skills"][0] for c in json.loads(groq.requests[0].user)["candidates"]]
+        return order, [p.user_id for p in result.picks]
+
+    ranked = [f"skill {i}" for i in range(15)]
+    kept, kept_picks = await run(None)
+    shuffled, shuffled_picks = await run(42)
+    again, _ = await run(42)
+    assert kept == ranked
+    assert shuffled != ranked
+    assert sorted(shuffled) == sorted(ranked)
+    assert again == shuffled  # the same seed, the same order (a retried job asks the same)
+    assert kept_picks == shuffled_picks == [candidates[2].summary.user_id]
+
+
 async def test_explain_when_the_judge_finds_nobody_good_enough(
     make_settings: SettingsFactory,
     migrated_database_url: str,
@@ -305,7 +383,7 @@ async def test_explain_when_the_judge_finds_nobody_good_enough(
         user_id=str(uuid.uuid4()),
     )
     # The judge answered and nobody passed: no picks, and no fall back to the template.
-    assert (result.picks, result.source, result.prompt_version) == ([], Source.LLM, "explain_v3")
+    assert (result.picks, result.source, result.prompt_version) == ([], Source.LLM, "explain_v4")
 
 
 async def test_explain_with_ai_off_and_no_candidates(
