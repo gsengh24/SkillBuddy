@@ -9,7 +9,7 @@ import { introSchema } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 
 const BUTTON =
-  "inline-flex size-11 items-center justify-center rounded-full border disabled:opacity-50";
+  "relative inline-flex size-7 items-center justify-center rounded-full border after:absolute after:-inset-2 after:content-[''] disabled:opacity-50 [&_svg]:size-4";
 
 /** A tick and a cross to answer an incoming intro from the list. Same call as the detail view. */
 export function QuickRespond({ introId, onAnswered }: { introId: string; onAnswered: () => void }) {
@@ -59,7 +59,7 @@ export function QuickRespond({ introId, onAnswered }: { introId: string; onAnswe
           stroke="currentColor"
           strokeWidth="1.7"
           strokeLinecap="round"
-          className="size-5"
+          className="size-4"
         >
           <path d="M6 6l12 12M18 6L6 18" />
         </svg>
