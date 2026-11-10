@@ -1,4 +1,8 @@
-# ADR 0017: Dark-only theme
+# 21. Dark-only theme
+
+> First merged as ADR 0017, a number already taken by
+> [ADR 0017](0017-google-profile-photo.md) (Google profile photo). Renumbered to 0021 on
+> 2026-11-10; the decision is unchanged.
 
 Status: accepted (owner request, 2026-10-12). Amends [ADR 0014](0014-design-system-cynergi.md).
 

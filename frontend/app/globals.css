@@ -7,7 +7,7 @@
  */
 
 /*
- * The palette, once, as CSS variables. Dark only (ADR 0017): the app is always dark, whatever
+ * The palette, once, as CSS variables. Dark only (ADR 0021): the app is always dark, whatever
  * the device prefers. The ink inbox pane keeps its own colours. (The landing page is a separate
  * static document and is not touched.)
  */

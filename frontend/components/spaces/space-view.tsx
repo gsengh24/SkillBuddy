@@ -42,7 +42,7 @@ function when(iso: string) {
 }
 
 /**
- * A pair space (ADR 0013, 0017): the goals everyone in the team shares and can change, the
+ * A pair space (ADR 0013, 0018): the goals everyone in the team shares and can change, the
  * skills each person wants to grow (only the owner removes them) and progress notes (only the
  * author deletes). `team` has the API path and the members' names.
  */

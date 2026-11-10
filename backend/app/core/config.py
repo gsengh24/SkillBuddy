@@ -87,8 +87,9 @@ class Settings(BaseSettings):
     data_export_cooldown_hours: int = Field(default=24, ge=1, le=168)
     data_export_retention_days: int = Field(default=90, ge=1, le=365)
     # Recorded on each account when the user accepts the terms. Keep equal to the version
-    # shown on the terms and privacy pages (frontend/lib/legal.ts).
-    terms_version: str = Field(default="2026-10-05-draft", min_length=1, max_length=32)
+    # shown on the terms and privacy pages (frontend/lib/legal.ts). This is only the default:
+    # on staging and production the TERMS_VERSION value set on Render is what counts.
+    terms_version: str = Field(default="2026-10-08-draft", min_length=1, max_length=32)
     # Version of the AI-processing consent line shown next to the "About you" box
     # (ADR 0007, section 5). Bump it when the wording changes; profiles then ask again.
     ai_consent_version: str = Field(default="2026-10-01", min_length=1, max_length=32)

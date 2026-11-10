@@ -18,7 +18,10 @@ proposing structural changes; a change that contradicts one needs a new ADR.
 mobile app, not a script. A native mobile app may come much later, so the API must stay
 clean and frontend-agnostic (see "API design" below).
 
-Current phase: **Phase 0 (foundations)**. Do not build Phase 1+ features unless asked.
+Current phase: **end of Phase 3, before the closed beta** (status in README.md and
+ARCHITECTURE.md §11). Phases 1–3, pair spaces v1 (Phase 5) and teams (5b) are in `main`;
+the Phase 2 evaluation run in CI and Phase 3 automated screening are not. Do not build
+Phase 4 or later features unless asked.
 
 ## How we work
 
