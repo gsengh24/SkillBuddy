@@ -95,6 +95,9 @@ class MatchRequest(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     explanation_source: Mapped[str | None] = mapped_column(String(16))
     prompt_version: Mapped[str | None] = mapped_column(String(32))
     matched_at: Mapped[datetime | None]
+    # When the matcher last ran for it; a request that found nobody is retried daily, and
+    # the retry asks the judge only about people who joined or changed after this.
+    searched_at: Mapped[datetime | None]
     expires_at: Mapped[datetime] = mapped_column(index=True)
 
 

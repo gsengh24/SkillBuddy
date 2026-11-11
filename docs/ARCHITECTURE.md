@@ -77,7 +77,7 @@ The weights start hand-set per intent. Once there are a few thousand rated match
 
 **Feedback loop.** Every action is an event: match shown, opened, intro sent, accepted, declined, conversation length, and a post-chat rating. These feed the ranker and also flag profiles whose text does not match their behaviour.
 
-**Cold start.** With few users, there is nothing to match against. Mitigations: launch in one narrow community first (for example one college, or one interest domain), seed with invited cohorts, and show "waiting for a match" with notifications when a fitting person joins instead of showing poor matches.
+**Cold start.** With few users, there is nothing to match against. Mitigations: launch in one narrow community first (for example one college, or one interest domain), seed with invited cohorts, and show "waiting for a match" with notifications when a fitting person joins instead of showing poor matches. Built: a daily job (`retry_empty_requests`) searches again for open requests that found nobody, reusing what was understood the first time, and asks the AI judge only when someone on the shortlist joined or changed their profile since the last search (`match_requests.searched_at`).
 
 **Open-ended mode.** When a user states no particular reason, the intent is "explore": retrieval uses the identity embedding and the ranker adds a diversity step (maximal marginal relevance) so the five results are different from each other, not five near-duplicates.
 

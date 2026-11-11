@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import AsyncIterator, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -24,10 +24,13 @@ from app.core.config import Settings
 from app.db.engine import create_engine
 from app.db.session import create_session_factory
 from app.jobs import JobRegistry, JobRunner
-from app.jobs.tasks import MATCH_REQUEST
+from app.jobs.tasks import MATCH_REQUEST, RETRY_EMPTY_REQUESTS
 from app.models import EMBEDDING_DIMENSIONS
 from app.services.matching.engine import SEARCH, retrieve, run_match_request
-from app.services.matching.housekeeping import expire_and_purge_requests
+from app.services.matching.housekeeping import (
+    empty_requests_to_retry,
+    expire_and_purge_requests,
+)
 from tests.conftest import SettingsFactory
 from tests.integration.conftest import CapturingDelivery, auth_client, run_sql
 from tests.integration.test_auth_codes import error_code
@@ -153,10 +156,12 @@ async def match(
     request: uuid.UUID,
     query: list[float],
     model: str,
+    *,
+    retry: bool = False,
 ) -> bool:
     gateway = AIGateway(settings, session_factory, [], cooling_until={})
     return await run_match_request(
-        session_factory, gateway, FixedEmbedder(query, model), settings, request
+        session_factory, gateway, FixedEmbedder(query, model), settings, request, retry=retry
     )
 
 
@@ -539,6 +544,212 @@ async def test_a_closed_request_is_not_matched(
     run_sql(url, "UPDATE match_requests SET status = 'closed' WHERE id = :r", r=request)
     assert not await match(settings, session_factory, request, unit((7, 1.0)), model)
     assert matches(url, request) == []
+
+
+# --- retrying requests that found nobody ---------------------------------------------------
+
+
+async def test_an_empty_request_is_retried_when_someone_new_fits(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    axis = 300 + uuid.uuid4().int % 60
+    me = person(url, model=model, offer=unit((axis + 1, 1.0)))
+    person(
+        url,
+        model=model,
+        offer=unit((axis, 0.5), (axis + 2, 0.866)),
+        structured={"summary": "Makes pots.", "offers": ["Pottery"]},
+    )
+    request = new_request(url, me, "Looking for a React developer.", "build_together")
+    query = unit((axis, 1.0))
+    assert await match(settings, session_factory, request, query, model)
+    assert matches(url, request) == []
+    first = run_sql(
+        url, "SELECT matched_at, searched_at FROM match_requests WHERE id = :r", r=request
+    )[0]
+    assert first["searched_at"] == first["matched_at"]
+
+    # Nobody new: nothing to do, and nothing changes.
+    assert not await match(settings, session_factory, request, query, model, retry=True)
+    assert matches(url, request) == []
+
+    # Someone who fits joins: the retry finds them and tells the person who asked.
+    newcomer = person(url, model=model, offer=query)
+    assert await match(settings, session_factory, request, query, model, retry=True)
+
+    assert [row["candidate_id"] for row in matches(url, request)] == [newcomer]
+    after = run_sql(
+        url,
+        "SELECT status, matched_at, searched_at FROM match_requests WHERE id = :r",
+        r=request,
+    )[0]
+    assert after["status"] == "ready"
+    assert after["matched_at"] == after["searched_at"] > first["searched_at"]
+    notified = run_sql(url, "SELECT count(*) AS n FROM notifications WHERE user_id = :u", u=me)
+    assert notified == [{"n": 1}]
+
+    # It has matches now, so it is not retried again.
+    assert not await match(settings, session_factory, request, query, model, retry=True)
+
+
+async def test_a_retry_asks_only_the_judge_and_keeps_the_feed_time(
+    make_settings: SettingsFactory,
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    settings = make_settings(database_url=url)
+    run_sql(url, "DELETE FROM rate_limit_counters WHERE key LIKE 'ai:%'")
+    axis = 300 + uuid.uuid4().int % 60
+    query = unit((axis, 1.0))
+    me = person(url, model=model, offer=unit((axis + 1, 1.0)))
+    request = new_request(url, me, "Looking for a React developer.", "build_together")
+    run_sql(
+        url,
+        "UPDATE match_requests SET status = 'ready', intent = 'build_together', "
+        "structured = CAST(:s AS jsonb), matched_at = now() - interval '2 days', "
+        "searched_at = now() - interval '2 days' WHERE id = :r",
+        s=json.dumps({"summary": "", "offers": [], "seeks": ["React"], "interests": []}),
+        r=request,
+    )
+    before = run_sql(url, "SELECT matched_at FROM match_requests WHERE id = :r", r=request)[0]
+    person(url, model=model, offer=query)
+
+    def judge(sent: ChatRequest) -> str:
+        # Not what was asked for: nobody is kept.
+        verdicts = [
+            {"id": c["id"], "need": 0, "shared": 0, "reason": "Not a fit."}
+            for c in json.loads(sent.user)["candidates"]
+        ]
+        return json.dumps({"verdicts": verdicts})
+
+    groq = FakeProvider(name=f"groq-{uuid.uuid4().hex[:6]}", replies=[judge])
+    gateway = AIGateway(settings, session_factory, [groq], cooling_until={})
+    assert await run_match_request(
+        session_factory, gateway, FixedEmbedder(query, model), settings, request, retry=True
+    )
+
+    # What the first run understood is reused: the judge is the only AI call.
+    assert len(groq.requests) == 1
+    assert "candidates" in json.loads(groq.requests[0].user)
+    assert matches(url, request) == []
+    after = run_sql(
+        url, "SELECT matched_at, searched_at FROM match_requests WHERE id = :r", r=request
+    )[0]
+    # The search is recorded; the Home feed time (matched_at) stays where it was.
+    assert after["matched_at"] == before["matched_at"]
+    assert after["searched_at"] > before["matched_at"] + timedelta(days=1)
+
+
+async def test_a_retry_skips_requests_that_are_not_open_and_empty(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    me = person(url, model=model)
+    other = person(url, model=model)
+    pending = new_request(url, me, "Still waiting for the first run.")
+    closed = new_request(url, me, "Closed by the person who asked.")
+    expired = new_request(url, me, "Ready but past its date.")
+    matched = new_request(url, me, "Ready with a match already.")
+    run_sql(url, "UPDATE match_requests SET status = 'closed' WHERE id = :r", r=closed)
+    run_sql(
+        url,
+        "UPDATE match_requests SET status = 'ready', expires_at = now() - interval '1 hour' "
+        "WHERE id = :r",
+        r=expired,
+    )
+    run_sql(url, "UPDATE match_requests SET status = 'ready' WHERE id = :r", r=matched)
+    run_sql(
+        url,
+        "INSERT INTO matches (request_id, candidate_id, rank, score, reason) "
+        "VALUES (:r, :c, 1, 0.5, 'A reason.')",
+        r=matched,
+        c=other,
+    )
+    for request in (pending, closed, expired, matched):
+        assert not await match(
+            settings, session_factory, request, unit((7, 1.0)), model, retry=True
+        )
+    status = run_sql(url, "SELECT status FROM match_requests WHERE id = :r", r=pending)
+    assert status == [{"status": "pending"}]
+
+
+async def test_which_empty_requests_are_due_for_a_retry(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    migrated_database_url: str,
+    model: str,
+) -> None:
+    url = migrated_database_url
+    me = person(url, model=model)
+    paused = person(url, model=model, status="paused")
+    other = person(url, model=model)
+
+    def ready(user: uuid.UUID, searched: str, text: str = "Looking for someone.") -> uuid.UUID:
+        request = new_request(url, user, text)
+        run_sql(
+            url,
+            "UPDATE match_requests SET status = 'ready', matched_at = now() - "
+            "CAST(:s AS interval), searched_at = now() - CAST(:s AS interval) WHERE id = :r",
+            s=searched,
+            r=request,
+        )
+        return request
+
+    due = ready(me, "1 day")
+    older = ready(me, "3 days")
+    recent = ready(me, "1 hour")
+    of_paused = ready(paused, "1 day")
+    with_match = ready(me, "1 day")
+    run_sql(
+        url,
+        "INSERT INTO matches (request_id, candidate_id, rank, score, reason) "
+        "VALUES (:r, :c, 1, 0.5, 'A reason.')",
+        r=with_match,
+        c=other,
+    )
+    expired = ready(me, "1 day")
+    run_sql(
+        url,
+        "UPDATE match_requests SET expires_at = now() - interval '1 hour' WHERE id = :r",
+        r=expired,
+    )
+    pending = new_request(url, me, "Not matched yet.")
+
+    async with session_factory() as db:
+        found = await empty_requests_to_retry(db, datetime.now(UTC), limit=10_000)
+
+    mine = [r for r in found if r in {due, older, recent, of_paused, with_match, expired, pending}]
+    # The longest-waiting first.
+    assert mine == [older, due]
+
+    # The job queues one retry per due request, once a day: running it twice queues each
+    # request once.
+    roomy = settings.model_copy(update={"match_retry_batch_size": 500})
+    runner = JobRunner(session_factory, JobRegistry([RETRY_EMPTY_REQUESTS]), roomy)
+    for _ in range(2):
+        run_sql(url, "INSERT INTO jobs (kind, payload) VALUES ('retry_empty_requests', '{}')")
+        await runner.run_until_idle()
+    select_queued = (
+        "SELECT payload FROM jobs "
+        "WHERE kind = 'match_request' AND payload->>'request_id' IN (:a, :b)"
+    )
+    delete_queued = (
+        "DELETE FROM jobs WHERE kind = 'match_request' AND payload->>'request_id' IN (:a, :b)"
+    )
+    queued = run_sql(url, select_queued, a=str(due), b=str(older))
+    assert sorted(row["payload"]["request_id"] for row in queued) == sorted([str(due), str(older)])
+    assert all(row["payload"]["retry"] is True for row in queued)
+    # Not left for another test's runner to pick up.
+    run_sql(url, delete_queued, a=str(due), b=str(older))
 
 
 # --- housekeeping ------------------------------------------------------------------------

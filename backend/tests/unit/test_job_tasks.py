@@ -21,6 +21,7 @@ from app.jobs.tasks import (
     PURGE_REPORTS,
     PURGE_SPACES,
     REPORT_ALERTS,
+    RETRY_EMPTY_REQUESTS,
     SEND_LOGIN_CODE,
     build_registry,
 )
@@ -57,6 +58,7 @@ def test_schedule_runs_retention_daily_and_job_table_purge_hourly() -> None:
         HARD_DELETE_ACCOUNTS.kind: Period.DAY,
         PURGE_AUTH_DATA.kind: Period.DAY,
         MATCH_HOUSEKEEPING.kind: Period.DAY,
+        RETRY_EMPTY_REQUESTS.kind: Period.DAY,
         PURGE_MESSAGES.kind: Period.DAY,
         PURGE_REPORTS.kind: Period.DAY,
         PURGE_MODERATION_LOG.kind: Period.DAY,

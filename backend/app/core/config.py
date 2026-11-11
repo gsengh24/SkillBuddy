@@ -132,6 +132,9 @@ class Settings(BaseSettings):
     # matches, after the retention period (storage rules).
     match_request_ttl_days: int = Field(default=30, ge=1, le=365)
     match_request_retention_days: int = Field(default=90, ge=7, le=730)
+    # Requests that found nobody, searched again each day (the oldest first). A retry
+    # asks the AI judge only when someone new could fit, and counts against the AI caps.
+    match_retry_batch_size: int = Field(default=50, ge=0, le=500)
 
     # --- Intros and notifications (ARCHITECTURE.md §6) ---------------------------------
     # Intros a person may send per UTC day, and have waiting for an answer at once.
