@@ -7,11 +7,7 @@ export const APP_LINKS = [
   { href: "/home", label: "Home", match: ["/messages"] },
   { href: "/teams", label: "Spaces", match: ["/spaces"] },
   { href: "/you", label: "You", match: ["/settings"] },
-  { href: "/team", label: "Team", match: [] },
 ] as const;
-
-/** Static documents served by a rewrite (next.config.ts); they need a full page load, not a client navigation. */
-export const STATIC_PAGES: readonly string[] = ["/team"];
 
 export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);

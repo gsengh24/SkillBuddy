@@ -32,7 +32,7 @@ old `skill-buddy` names.
 **First audience:** one college, Thapar Institute of Engineering & Technology
 (`@thapar.edu`). Adults only (18+, self-declared).
 
-**People** (from the static `/team` page): Gaganjot Singh (builder/owner); Dr Prashant
+**People:** Gaganjot Singh (builder/owner); Dr Prashant
 Singh Rana (mentor, Associate Professor, Thapar); Gurvar Singh Gulati (contributor,
 frontend and design); Namanmeet Singh (contributor). Most code is written by Claude Code
 through PRs that the owner reviews or allows to auto-merge.
@@ -255,8 +255,8 @@ Suggest, don't force; tags stay plain strings.
   max pending intros, message max length.
 
 ### Web pages
-- Public: `/` (static landing, `public/landing/index.html`), `/team` (static team page),
-  `/login`, `/privacy`, `/terms`, `/appeal`.
+- Public: `/` (static landing, `public/landing/index.html`), `/login`,
+  `/privacy`, `/terms`, `/appeal`.
 - Signed in (app shell, `app/(app)/`): `/home` (composer, requests, inline intro
   responses, summary cards with hover tilt), `/messages`, `/messages/[id]`,
   `/notifications`, `/onboarding`, `/profile`, `/you`, `/you/download`, `/saved`,
@@ -344,7 +344,7 @@ backend/evals/                 synthetic eval set
 backend/tests/unit, integration, fake_oidc.py
 frontend/app/                  pages (see §5), api/v1/[...path] forwarder, proxy.ts
 frontend/components/, lib/, e2e/
-frontend/public/landing, public/team   static pages
+frontend/public/landing         static page
 infra/                         production.env.example, cloudflare-tick/
 docs/                          ARCHITECTURE.md, adr/, design/, api/, ops docs
 .github/workflows/             ci.yml, security.yml, migrate-staging.yml,
