@@ -443,8 +443,9 @@ async def test_parse_job_uses_the_template_with_ai_off_then_embeds(
     assert parsed["parse_status"] == "parsed"
     assert parsed["parse_source"] == "template"
     understanding = parsed["understanding"]
-    assert understanding["offers"] == ["build React apps", "write Python"]
-    assert understanding["seeks"] == ["designer", "backend dev"]
+    # Without AI the skill columns keep only known skill names, not loose phrases.
+    assert understanding["offers"] == ["React", "Python"]
+    assert understanding["seeks"] == []
     assert understanding["availability"] == "4-6 hours a week"
     facets = run_sql(
         migrated_database_url,

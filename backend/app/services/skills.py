@@ -3,6 +3,9 @@
 A small, bundled list (O*NET technology names plus a hand-written list of general skills and
 interests) searched in memory. No database, no network, no AI call: it is safe to call on
 every keystroke. Suggestions are only a convenience; people can still type any tag.
+
+The same list also vets the skill tags of a profile read without AI (``known_skills_in``),
+so the rule-based reading shows only real skill names, never stray words from a sentence.
 """
 
 from __future__ import annotations
@@ -21,6 +24,15 @@ MAX_LIMIT = 20
 SUBSTRING_MIN_LENGTH = 3
 
 _WORD = re.compile(r"[a-z0-9+#.]+")
+# Tokens for spotting names inside free text: a dot counts only inside a word ("Node.js").
+_TEXT_TOKEN = re.compile(r"[A-Za-z0-9+#]+(?:\.[A-Za-z0-9+#]+)*")
+# Single-word names that are also everyday words or letters. They count only when written
+# exactly as named ("I code in Go", not "a go-to person" or "zoom ahead").
+AMBIGUOUS_NAMES = frozenset(
+    {"ada", "awk", "c", "chef", "eko", "go", "hms", "j", "puppet", "r", "slack", "swift", "zoom"}
+)
+# Longest name, in tokens, worth looking for.
+_MAX_NAME_TOKENS = 6
 
 
 def _key(value: str) -> str:
@@ -71,3 +83,40 @@ def suggest_skills(query: str, limit: int = DEFAULT_LIMIT) -> list[str]:
         if len(prefix) >= limit:
             break
     return (prefix + word + inside)[:limit]
+
+
+@lru_cache(maxsize=1)
+def _names_by_tokens() -> dict[tuple[str, ...], str]:
+    """Each name's lower-case tokens mapped to its usual spelling."""
+    index: dict[tuple[str, ...], str] = {}
+    for name in load_skills():
+        tokens = tuple(t.casefold() for t in _TEXT_TOKEN.findall(name))
+        if tokens and len(tokens) <= _MAX_NAME_TOKENS:
+            index.setdefault(tokens, name)
+    return index
+
+
+def known_skills_in(phrases: list[str], limit: int) -> list[str]:
+    """The known skill names mentioned in ``phrases``, in order, each once, in the list's
+    spelling: "lot of reading in my free time" gives "Reading", "a cook" gives nothing.
+    The longest name wins where names overlap ("Machine learning", not "Learning")."""
+    index = _names_by_tokens()
+    found: list[str] = []
+    for phrase in phrases:
+        tokens = _TEXT_TOKEN.findall(phrase)
+        lowered = [t.casefold() for t in tokens]
+        i = 0
+        while i < len(tokens) and len(found) < limit:
+            for size in range(min(_MAX_NAME_TOKENS, len(tokens) - i), 0, -1):
+                name = index.get(tuple(lowered[i : i + size]))
+                if name is None:
+                    continue
+                if size == 1 and name.casefold() in AMBIGUOUS_NAMES and tokens[i] != name:
+                    continue
+                if name not in found:
+                    found.append(name)
+                i += size
+                break
+            else:
+                i += 1
+    return found
