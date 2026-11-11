@@ -3,18 +3,30 @@
 from __future__ import annotations
 
 import logging
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.models import Intro, IntroStatus, Match, MatchRequest, MatchStatus, RequestStatus
+from app.models import (
+    Intro,
+    IntroStatus,
+    Match,
+    MatchRequest,
+    MatchStatus,
+    RequestStatus,
+    User,
+    UserStatus,
+)
 
 logger = logging.getLogger(__name__)
 
 OPEN_STATUSES = (RequestStatus.PENDING, RequestStatus.READY)
+# A request searched more recently than this is not retried yet.
+RETRY_AFTER = timedelta(hours=12)
 
 
 @dataclass(frozen=True)
@@ -66,3 +78,23 @@ async def expire_intros(db: AsyncSession, now: datetime) -> int:
     )
     await db.commit()
     return int(getattr(result, "rowcount", 0) or 0)
+
+
+async def empty_requests_to_retry(db: AsyncSession, now: datetime, limit: int) -> list[uuid.UUID]:
+    """Open, unexpired ``ready`` requests of active people that found nobody, searched at
+    least ``RETRY_AFTER`` ago; the longest-waiting first, at most ``limit``."""
+    last_search = func.coalesce(MatchRequest.searched_at, MatchRequest.matched_at)
+    rows = await db.scalars(
+        select(MatchRequest.id)
+        .join(User, User.id == MatchRequest.user_id)
+        .where(
+            MatchRequest.status == RequestStatus.READY,
+            MatchRequest.expires_at > now,
+            last_search < now - RETRY_AFTER,
+            User.status == UserStatus.ACTIVE,
+            ~exists().where(Match.request_id == MatchRequest.id),
+        )
+        .order_by(last_search)
+        .limit(limit)
+    )
+    return list(rows)

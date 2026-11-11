@@ -31,7 +31,11 @@ from app.services.email.templates import invite_email, login_code_email, safety_
 from app.services.embeddings import embed_profile, ensure_dimensions_match, reembed_batch
 from app.services.housekeeping import purge_job_tables
 from app.services.matching.engine import run_match_request
-from app.services.matching.housekeeping import expire_and_purge_requests, expire_intros
+from app.services.matching.housekeeping import (
+    empty_requests_to_retry,
+    expire_and_purge_requests,
+    expire_intros,
+)
 from app.services.moderation import purge_old_actions
 from app.services.notification_email import send_notification_email
 from app.services.notifications import purge_old_notifications
@@ -170,7 +174,25 @@ async def _match_request(ctx: JobContext) -> None:
             embedder,
             ctx.settings,
             uuid.UUID(ctx.payload["request_id"]),
+            retry=bool(ctx.payload.get("retry", False)),
         )
+
+
+async def _retry_empty_requests(ctx: JobContext) -> None:
+    """Daily: search again for open requests that found nobody (ARCHITECTURE.md §3, cold
+    start). Each one is its own ``match_request`` job, once per request per day."""
+    now = datetime.now(UTC)
+    async with ctx.session_factory() as db:
+        due = await empty_requests_to_retry(db, now, ctx.settings.match_retry_batch_size)
+        for request_id in due:
+            await enqueue(
+                db,
+                MATCH_REQUEST,
+                {"request_id": str(request_id), "retry": True},
+                dedupe_key=f"match_retry:{request_id}:{now:%Y-%m-%d}",
+            )
+        await db.commit()
+    logger.info("empty_requests_queued", extra={"count": len(due)})
 
 
 async def _match_housekeeping(ctx: JobContext) -> None:
@@ -420,6 +442,9 @@ MATCH_REQUEST = JobSpec(
 MATCH_HOUSEKEEPING = JobSpec(
     kind="match_housekeeping", handler=_match_housekeeping, priority=200, timeout_seconds=240
 )
+RETRY_EMPTY_REQUESTS = JobSpec(
+    kind="retry_empty_requests", handler=_retry_empty_requests, priority=210, timeout_seconds=60
+)
 
 PURGE_MESSAGES = JobSpec(
     kind="purge_messages", handler=_purge_messages, priority=200, timeout_seconds=240
@@ -508,6 +533,7 @@ ALL_JOBS = (
     PARSE_PENDING_PROFILES,
     MATCH_REQUEST,
     MATCH_HOUSEKEEPING,
+    RETRY_EMPTY_REQUESTS,
     PURGE_MESSAGES,
     REPORT_ALERTS,
     PURGE_REPORTS,

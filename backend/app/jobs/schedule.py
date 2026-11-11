@@ -27,6 +27,7 @@ from app.jobs.tasks import (
     PURGE_REPORTS,
     PURGE_SPACES,
     REPORT_ALERTS,
+    RETRY_EMPTY_REQUESTS,
 )
 
 
@@ -50,6 +51,7 @@ SCHEDULE: tuple[ScheduledJob, ...] = (
     ScheduledJob(HARD_DELETE_ACCOUNTS, Period.DAY),
     ScheduledJob(PURGE_AUTH_DATA, Period.DAY),
     ScheduledJob(MATCH_HOUSEKEEPING, Period.DAY),
+    ScheduledJob(RETRY_EMPTY_REQUESTS, Period.DAY),
     ScheduledJob(PURGE_MESSAGES, Period.DAY),
     ScheduledJob(PURGE_REPORTS, Period.DAY),
     ScheduledJob(PURGE_MODERATION_LOG, Period.DAY),

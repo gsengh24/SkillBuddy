@@ -25,6 +25,10 @@ ranking never use an LLM.
   with it off, the template keeps the top of the ranking. The judge sees the candidates in
   a shuffled order, and must rate a candidate at least "mostly what was asked for" (except
   in "explore").
+- **Retry:** a request that found nobody is searched again by the daily
+  ``retry_empty_requests`` job until it expires (``retry=True``). The retry reuses what the
+  first run understood (no AI call) and asks the judge again only when someone on the
+  shortlist joined or changed their profile after the last search.
 """
 
 from __future__ import annotations
@@ -148,6 +152,8 @@ class Retrieved:
     weekly_hours: str = ""
     # The share of the request's word stems found in their text for this facet (0 to 1).
     keyword: float = 0.0
+    # When their profile or this facet's vector last changed.
+    changed_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -259,7 +265,8 @@ async def _search(
     candidates = (
         f"SELECT pe.user_id, 1 - (pe.embedding <=> CAST(:q AS vector)) AS fit, "  # noqa: S608  # fixed fragments, values are bound
         f"{reciprocity} AS reciprocity, u.last_login_at, p.structured, p.display_name, "
-        "p.goal, p.available_days, p.weekly_hours"
+        "p.goal, p.available_days, p.weekly_hours, "
+        "GREATEST(pe.updated_at, p.updated_at) AS changed_at"
         f"{vector_column}, "
         f"(SELECT count(*) FROM unnest(tsvector_to_array({_keyword_document(search)})) AS stem "
         f" WHERE stem = ANY({request_stems})) AS stems_shared, "
@@ -314,6 +321,7 @@ async def _search(
                 weekly_hours=row["weekly_hours"] or "",
                 vector=json.loads(row["vector"]) if with_vectors else None,
                 keyword=int(row["stems_shared"]) / stems_asked if stems_asked else 0.0,
+                changed_at=row["changed_at"],
             )
         )
     return found
@@ -462,16 +470,28 @@ async def run_match_request(
     embedder: Embedder,
     settings: Settings,
     request_id: uuid.UUID,
+    *,
+    retry: bool = False,
 ) -> bool:
     """Find, rank, explain and store matches for one pending request. Idempotent.
 
-    Returns False when there was nothing to do (already done, closed or deleted).
+    With ``retry``, search again for a ``ready`` request that has no matches (the daily
+    retry): only when someone on the shortlist is new or changed since the last search.
+
+    Returns False when there was nothing to do (already done, closed or deleted, or for a
+    retry, nobody new to ask about).
     """
     async with session_factory() as db:
         request = await db.get(MatchRequest, request_id)
-        if request is None or request.status != RequestStatus.PENDING:
+        if request is None or not await _can_run(db, request, retry=retry):
             return False
         profile = await db.get(Profile, request.user_id)
+        last_search = request.searched_at or request.matched_at
+        stored = (
+            _stored_understanding(request.intent, request.structured)
+            if retry and request.intent
+            else None
+        )
         raw_text = request.raw_text
         requester_id = request.user_id
         requested_intent = request.requested_intent
@@ -479,9 +499,14 @@ async def run_match_request(
         names = [profile.display_name] if profile and profile.display_name.strip() else []
         requester = _requester_summary(profile, names)
 
-    # --- 1. understand (AI, or the template) -----------------------------------------------
-    understood = await understand(gateway, raw_text, user_id=str(requester_id), name_hints=names)
-    understanding = understood.value
+    # --- 1. understand (AI, or the template; a retry reuses the first run's) ------------------
+    if stored is not None:
+        understanding = stored
+    else:
+        understood = await understand(
+            gateway, raw_text, user_id=str(requester_id), name_hints=names
+        )
+        understanding = understood.value
     intent = (
         Intent(requested_intent) if requested_intent else understanding.intent or Intent.EXPLORE
     )
@@ -533,6 +558,9 @@ async def run_match_request(
     if intent is Intent.EXPLORE:
         ranked = diversify(ranked, MAX_CANDIDATES)
     shortlist = ranked[:MAX_CANDIDATES]
+    if retry and not _anyone_new(shortlist, last_search):
+        # The same people the last search turned down: no need to ask the judge again.
+        return False
 
     # --- 4. explain (AI, or the template) ----------------------------------------------------
     explanation = await explain(
@@ -554,8 +582,17 @@ async def run_match_request(
 
     async with session_factory() as db:
         request = await db.get(MatchRequest, request_id, with_for_update=True)
-        if request is None or request.status != RequestStatus.PENDING:
-            return False  # closed or deleted while we worked
+        if request is None or not await _can_run(db, request, retry=retry):
+            return False  # closed, deleted or matched while we worked
+        searched_at = datetime.now(UTC)
+        request.searched_at = searched_at
+        if retry and not explanation.picks:
+            await db.commit()
+            logger.info(
+                "empty_request_retried",
+                extra={"intent": intent.value, "retrieved": len(found), "matches": 0},
+            )
+            return True
         # A retried job replaces anything a failed attempt left behind.
         await db.execute(delete(Match).where(Match.request_id == request_id))
         for rank, pick in enumerate(explanation.picks, start=1):
@@ -577,7 +614,7 @@ async def run_match_request(
         }
         request.explanation_source = explanation.source.value
         request.prompt_version = explanation.prompt_version
-        request.matched_at = datetime.now(UTC)
+        request.matched_at = searched_at
         request.status = RequestStatus.READY
         if explanation.picks:
             add_notification(
@@ -592,6 +629,35 @@ async def run_match_request(
             "good_enough": len(ranked),
             "matches": len(explanation.picks),
             "explanation_source": explanation.source.value,
+            "retry": retry,
         },
     )
     return True
+
+
+async def _can_run(db: AsyncSession, request: MatchRequest, *, retry: bool) -> bool:
+    """A first run needs a pending request; a retry, an open ``ready`` one with no matches."""
+    if not retry:
+        return request.status == RequestStatus.PENDING
+    if request.status != RequestStatus.READY or request.expires_at <= datetime.now(UTC):
+        return False
+    has_matches = await db.scalar(select(Match.id).where(Match.request_id == request.id).limit(1))
+    return has_matches is None
+
+
+def _stored_understanding(intent: str, structured: dict[str, Any]) -> Understanding | None:
+    """What the first run understood, as stored on the request; None if it does not parse."""
+    try:
+        return Understanding.model_validate({**structured, "intent": intent})
+    except ValueError:
+        return None
+
+
+def _anyone_new(shortlist: Sequence[Ranked], since: datetime | None) -> bool:
+    """Whether anyone on the shortlist joined or changed their profile after ``since``."""
+    if since is None:
+        return bool(shortlist)
+    return any(
+        item.candidate.changed_at is not None and item.candidate.changed_at > since
+        for item in shortlist
+    )
