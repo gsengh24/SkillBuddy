@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { STATIC_PAGES, isActive } from "../shell/links";
+import { isActive } from "../shell/links";
 import { cx } from "../ui/cx";
 
 export type BottomNavItem = {
@@ -32,22 +32,18 @@ export function BottomNav({ items, className }: { items: BottomNavItem[]; classN
     >
       {items.map(({ href, label, icon, match = [] }) => {
         const current = [href, ...match].some((path) => isActive(pathname, path));
-        const props = {
-          href,
-          "aria-current": current ? ("page" as const) : undefined,
-          className: cx(
-            "rounded-control flex min-h-11 flex-col items-center justify-center gap-0.5 text-[10px]",
-            current ? "text-green font-medium" : "text-muted hover:text-ink",
-          ),
-        };
-        return STATIC_PAGES.includes(href) ? (
-          <a key={href} {...props}>
-            {icon}
-            {label}
-          </a>
-        ) : (
+        return (
           // Each place is a server-rendered page, so a prefetch costs a full render.
-          <Link key={href} prefetch={false} {...props}>
+          <Link
+            key={href}
+            href={href}
+            prefetch={false}
+            aria-current={current ? "page" : undefined}
+            className={cx(
+              "rounded-control flex min-h-11 flex-col items-center justify-center gap-0.5 text-[10px]",
+              current ? "text-green font-medium" : "text-muted hover:text-ink",
+            )}
+          >
             {icon}
             {label}
           </Link>

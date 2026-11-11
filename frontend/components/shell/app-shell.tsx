@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Avatar } from "@/components/ds/avatar";
 import { BottomNav } from "@/components/ds/bottom-nav";
-import { BellIcon, HomeIcon, PeopleIcon, UserPlusIcon, YouIcon } from "@/components/ds/icons";
+import { BellIcon, HomeIcon, PeopleIcon, YouIcon } from "@/components/ds/icons";
 import { cx } from "@/components/ui/cx";
 
 import { APP_LINKS, DOT, ICON_LINK } from "./links";
@@ -28,7 +28,6 @@ const ICONS: Record<(typeof APP_LINKS)[number]["href"], ReactNode> = {
   "/home": <HomeIcon />,
   "/teams": <PeopleIcon />,
   "/you": <YouIcon />,
-  "/team": <UserPlusIcon />,
 };
 
 const BOTTOM_NAV_ITEMS = APP_LINKS.map((link) => ({ ...link, icon: ICONS[link.href] }));

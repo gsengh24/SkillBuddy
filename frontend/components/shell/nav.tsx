@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import { Logo } from "@/components/ds/logo";
 import { cx } from "@/components/ui/cx";
 
-import { APP_LINKS, STATIC_PAGES, currentPlace } from "./links";
+import { APP_LINKS, currentPlace } from "./links";
 
 /**
  * The app header: logo on the left, the places as a pill switcher in the middle (from
@@ -27,20 +27,17 @@ export function AppHeader({ actions }: { actions: ReactNode }) {
       >
         {APP_LINKS.map(({ href, label }) => {
           const isCurrent = href === current?.href;
-          const props = {
-            href,
-            "aria-current": isCurrent ? ("page" as const) : undefined,
-            className: cx(
-              "rounded-full px-[18px] py-2 text-[14px] font-medium",
-              isCurrent ? "bg-ink text-bg" : "text-muted hover:text-ink",
-            ),
-          };
-          return STATIC_PAGES.includes(href) ? (
-            <a key={href} {...props}>
-              {label}
-            </a>
-          ) : (
-            <Link key={href} prefetch={false} {...props}>
+          return (
+            <Link
+              key={href}
+              href={href}
+              prefetch={false}
+              aria-current={isCurrent ? "page" : undefined}
+              className={cx(
+                "rounded-full px-[18px] py-2 text-[14px] font-medium",
+                isCurrent ? "bg-ink text-bg" : "text-muted hover:text-ink",
+              )}
+            >
               {label}
             </Link>
           );
