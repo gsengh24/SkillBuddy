@@ -49,7 +49,10 @@ export async function linkFromMailpit(
   return link as string;
 }
 
-/** Creates an account through the real sign-in flow and lands on ``next``. */
+/**
+ * Creates an account through the real sign-in flow and goes to ``next``. A new account has
+ * onboarding to do, so a plain ``/home`` sends it on to step 1 (ADR 0022, P7).
+ */
 export async function signUp(page: Page, request: APIRequestContext, next = "/home") {
   const email = `e2e-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`;
   await page.goto(`/login?next=${encodeURIComponent(next)}`);

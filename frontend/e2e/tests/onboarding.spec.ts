@@ -78,24 +78,12 @@ test("onboarding steps: pick, skip, resume, finish, check the card", async ({ pa
   await page.getByRole("button", { name: "Skip for now" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /Almost done/ })).toBeVisible();
 
-  // Leave and come back: onboarding resumes at step 4.
+  // Leave and come back: with step 4 still to do, Home sends the person back to the steps
+  // (P7), and onboarding resumes at step 4.
   await page.goto("/home");
-  await page.goto("/onboarding");
+  await expect(page).toHaveURL(/\/onboarding$/);
   await expect(page.getByRole("heading", { level: 1, name: /Almost done/ })).toBeVisible();
   await expect(page.getByText("Step 4 of 4")).toBeVisible();
-  // Home doesn't treat an unfinished profile as finished (screen 8): the inbox becomes
-  // "Finish your profile", the composer still shows, and Find matches steps down to outline.
-  await page.goto("/home");
-  const finish = page.getByRole("region", { name: /Finish your profile/ });
-  await expect(finish.getByRole("link", { name: "Finish in 60 seconds" })).toHaveAttribute(
-    "href",
-    "/onboarding",
-  );
-  // Wants was skipped and about is still to do.
-  await expect(finish.getByText("2 quick steps left")).toBeVisible();
-  await expect(page.getByRole("form", { name: "New request" })).toBeVisible();
-  await expectNoViolations(page);
-  await page.goto("/onboarding");
 
   // Step 4: a radiogroup for the year; the consent line (unchanged) is required to finish.
   await page.getByRole("radio", { name: "2nd" }).click();
@@ -178,9 +166,18 @@ test("onboarding steps: pick, skip, resume, finish, check the card", async ({ pa
       await page.goto(`file://${MOCKUPS}/05-check-what-we-understood.html`);
       await shoot(page, `onboarding-review-mockup-${name}`);
     }
-    // Screen 8: Home while the profile isn't finished.
+    // Screen 8: Home once every step is saved or skipped but the card isn't confirmed: the
+    // inbox becomes "Finish your profile", the composer still shows, Find matches is outline.
     await page.goto("/home");
-    await expect(page.getByRole("region", { name: /Finish your profile/ })).toBeVisible();
+    const finish = page.getByRole("region", { name: /Finish your profile/ });
+    await expect(finish.getByRole("link", { name: "Finish in 60 seconds" })).toHaveAttribute(
+      "href",
+      "/onboarding",
+    );
+    // Wants was skipped, so it still counts as a step left.
+    await expect(finish.getByText("1 quick step left")).toBeVisible();
+    await expect(page.getByRole("form", { name: "New request" })).toBeVisible();
+    if (name === "390") await expectNoViolations(page);
     await shoot(page, `onboarding-home-unfinished-${name}`);
     if (existsSync(`${MOCKUPS}/08-home-unfinished-profile.html`)) {
       await page.goto(`file://${MOCKUPS}/08-home-unfinished-profile.html`);

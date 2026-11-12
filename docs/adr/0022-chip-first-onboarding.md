@@ -91,6 +91,17 @@ where the unchanged consent line sits in the new flow (owner review).
 - The You page's skill editors now write the chip columns (`PATCH /me/profile`), and the
   matcher's view follows them.
 
+**Landing after sign-in (onboarding P7).** New accounts now go straight into the steps after
+signing in (email code or Google), instead of the soft landing on Home they had before. With
+no deep link, sign-in lands on `/start`, which reads `GET /me/onboarding`: a step still to do
+opens the steps (resuming where the person left off; a new account starts at step 1), all
+steps saved or skipped opens step 5, and a finished profile goes Home. If that call fails it
+goes Home, never an error or a sign-in loop. A sign-in with a same-site `next` link (a team
+join link, say) still goes there. Plain `/home` with a step still to do also sends the person
+to the steps; Home with an opened item or a filter (Messages), and every other signed-in page,
+stays reachable. The rule lives in the web app's auth helpers and reads only what the API
+returns; `proxy.ts` remains a cookie check.
+
 ## Consequences
 
 - Profiles can now exist without about text. Code that treats "has a profile" as "is

@@ -1,8 +1,13 @@
+import { mkdirSync } from "node:fs";
+
 import { expect, test } from "@playwright/test";
 
 import { codeFromMailpit } from "./helpers";
 
-test("sign up with an emailed code, reach home, sign out", async ({ page, request }) => {
+test("sign up with an emailed code, land on onboarding step 1, sign out", async ({
+  page,
+  request,
+}) => {
   const email = `e2e-${Date.now()}@example.com`;
 
   // Protected pages send signed-out visitors to the login page.
@@ -22,10 +27,23 @@ test("sign up with an emailed code, reach home, sign out", async ({ page, reques
   await page.getByLabel("Sign-in code").fill(code);
   await page.getByRole("button", { name: "Sign in" }).click();
 
-  await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByText(`You're signed in as ${email}`)).toBeVisible();
+  // A new account goes straight into onboarding (ADR 0022, P7): Home sends it to step 1.
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole("heading", { level: 1, name: /What brings you here/ })).toBeVisible();
+  await expect(page.getByText("Step 1 of 4")).toBeVisible();
+  // What a new account sees right after entering the code, for the pull request.
+  mkdirSync("screenshots", { recursive: true });
+  for (const { name, width, height } of [
+    { name: "390", width: 390, height: 844 },
+    { name: "1280", width: 1280, height: 900 },
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.screenshot({ path: `screenshots/sign-in-landing-${name}.png`, fullPage: true });
+  }
 
-  // On a phone the app shell shows a bottom tab bar with 44px+ touch targets.
+  // Other signed-in pages stay reachable. On a phone the app shell shows a bottom tab bar
+  // with 44px+ touch targets.
+  await page.goto("/you");
   await page.setViewportSize({ width: 390, height: 844 });
   const tabs = page.getByRole("navigation", { name: "Main" }).getByRole("link");
   await expect(tabs).toHaveText(["Home", "Spaces", "You"]);
@@ -44,7 +62,7 @@ test("sign up with an emailed code, reach home, sign out", async ({ page, reques
   expect(cookies.find((cookie) => cookie.name === "csrf_token")?.httpOnly).toBe(false);
 
   // Sign out from account settings (a CSRF-protected POST).
-  await page.getByRole("link", { name: "Account settings" }).click();
+  await page.goto("/settings/account");
   await expect(page.getByRole("heading", { name: "Account and security" })).toBeVisible();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL(/\/login/);

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { RequestCard } from "@/components/discover/request-card";
@@ -7,16 +8,22 @@ import { NotAvailable } from "@/components/home/parts";
 import { IntroCard } from "@/components/social/intro-card";
 import { ApiError } from "@/lib/api/errors";
 import type { Connection, Intro, Match, MatchRequest, User } from "@/lib/api/schemas";
+import { isOnboarded } from "@/lib/api/schemas";
 import { startEarly, withUser } from "@/lib/auth/with-user";
 import { getConversation } from "@/lib/chat/server";
 import { parseItem, type ItemType } from "@/lib/home/activity";
 import { getRequest, getRequestMatches } from "@/lib/matching/server";
+import { homeRedirectFor } from "@/lib/onboarding/landing";
+import { getOnboarding } from "@/lib/onboarding/server";
+import { getMyProfile } from "@/lib/profile/server";
 import { getConnections, getIntro } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Home" };
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ item?: string | string[] }> };
+type Props = {
+  searchParams: Promise<{ item?: string | string[]; filter?: string | string[] }>;
+};
 
 type Item = { type: ItemType; id: string };
 
@@ -50,12 +57,27 @@ async function orNotFound<T>(call: Promise<T>): Promise<T | null> {
  * person's, says so.
  */
 export default async function HomePage({ searchParams }: Props) {
-  const { item: raw } = await searchParams;
+  const { item: raw, filter } = await searchParams;
   const item = parseItem(Array.isArray(raw) ? raw[0] : raw);
-  if (!item) return null;
+  if (!item) {
+    // Plain Home with a step still to do: the steps instead (ADR 0022, P7). An opened item or
+    // a filter (Messages) stays reachable, so nobody is trapped.
+    if (!filter) await toOnboardingIfStepsLeft();
+    return null;
+  }
 
   const { user, data } = await withUser("/login?next=/home", loadDetail(item));
   return renderDetail(user, data);
+}
+
+/** Redirects to the steps when the API says one is still to do. Any failure shows Home. */
+async function toOnboardingIfStepsLeft(): Promise<void> {
+  // The layout fetches the profile too; the call is cached per request.
+  const profile = await getMyProfile().catch(() => null);
+  if (isOnboarded(profile)) return;
+  const progress = await getOnboarding().catch(() => null);
+  const to = homeRedirectFor(progress);
+  if (to) redirect(to);
 }
 
 async function loadDetail(item: Item): Promise<Detail> {

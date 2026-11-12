@@ -300,10 +300,12 @@ describe("Home, opening an item", () => {
     expect(screen.getByRole("heading", { name: "Aarav R." })).toBeInTheDocument();
   });
 
-  it("with nothing open the page renders nothing and calls nothing: the layout has the composer", async () => {
+  it("with nothing open the page renders nothing: the layout has the composer", async () => {
     expect(await HomePage({ searchParams: Promise.resolve({}) })).toBeNull();
     expect(await HomePage({ searchParams: Promise.resolve({ item: "junk" }) })).toBeNull();
-    expect(calledPaths()).toEqual([]);
+    // Only the profile, to see whether onboarding is finished (P7); the layout fetches it too
+    // and the app caches it per request. A finished profile needs no onboarding call.
+    expect(calledPaths()).toEqual(["/api/v1/me/profile", "/api/v1/me/profile"]);
   });
 
   it("marks itself for the softer page background", async () => {
@@ -344,5 +346,68 @@ describe("/messages", () => {
   it("redirects to Home with the Messages filter", () => {
     expect(() => MessagesPage()).toThrow(REDIRECT);
     expect(navigation.redirect).toHaveBeenCalledWith("/home?filter=messages");
+  });
+});
+
+describe("Home while onboarding isn't finished (P7)", () => {
+  const STEPS = ["intents", "offers", "wants", "about"] as const;
+
+  function unfinished(states: string[]) {
+    const base = vi.mocked(apiRequest).getMockImplementation();
+    vi.mocked(apiRequest).mockImplementation(async (path: string, ...rest: unknown[]) => {
+      if (path === "/api/v1/me/profile") return { ...PROFILE, onboarding_completed_at: null };
+      if (path === "/api/v1/me/onboarding") {
+        if (failing.includes(path)) throw new Error("503");
+        return {
+          completed_at: null,
+          next_step: "intents",
+          steps: STEPS.map((step, i) => ({ step, state: states[i] })),
+          intents: [],
+          offer_skills: [],
+          want_skills: [],
+          interest_tags: [],
+          want_note: "",
+          study_year: null,
+          branch: null,
+          available_days: [],
+          weekly_hours: null,
+          display_name: "",
+          strength: null,
+        };
+      }
+      return (base as (...args: unknown[]) => Promise<unknown>)(path, ...rest);
+    });
+  }
+
+  beforeEach(() => {
+    navigation.redirect.mockReset();
+  });
+
+  it("sends plain Home to the steps while a step is still to do", async () => {
+    unfinished(["saved", "todo", "todo", "todo"]);
+    await expect(HomePage({ searchParams: Promise.resolve({}) })).rejects.toBe(REDIRECT);
+    expect(navigation.redirect).toHaveBeenCalledWith("/onboarding");
+  });
+
+  it("keeps Messages (a filter) and an opened item reachable", async () => {
+    unfinished(["todo", "todo", "todo", "todo"]);
+    await expect(
+      HomePage({ searchParams: Promise.resolve({ filter: "messages" }) }),
+    ).resolves.toBeNull();
+    await HomePage({ searchParams: Promise.resolve({ item: "intro-intro-1" }) });
+    expect(navigation.redirect).not.toHaveBeenCalled();
+  });
+
+  it("shows Home once every step is saved or skipped", async () => {
+    unfinished(["saved", "skipped", "skipped", "saved"]);
+    await expect(HomePage({ searchParams: Promise.resolve({}) })).resolves.toBeNull();
+    expect(navigation.redirect).not.toHaveBeenCalled();
+  });
+
+  it("shows Home when the onboarding call fails", async () => {
+    unfinished(["todo", "todo", "todo", "todo"]);
+    failing = ["/api/v1/me/onboarding"];
+    await expect(HomePage({ searchParams: Promise.resolve({}) })).resolves.toBeNull();
+    expect(navigation.redirect).not.toHaveBeenCalled();
   });
 });
