@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { HomeView } from "@/components/home/home-view";
 import { ProfileNudge } from "@/components/home/profile-nudge";
+import { isOnboarded } from "@/lib/api/schemas";
 import { withUser } from "@/lib/auth/with-user";
 import { buildActivity } from "@/lib/home/activity";
 import { getMyRequests } from "@/lib/matching/server";
@@ -44,8 +45,9 @@ export default async function HomeLayout({ children }: { children: ReactNode }) 
     ]),
   );
 
-  // Without a profile there are no requests to list, whatever that call said.
-  const requests = profile ? requestsOrNull : [];
+  // Without a finished profile there are no requests to list, whatever that call said.
+  const onboarded = isOnboarded(profile);
+  const requests = onboarded ? requestsOrNull : [];
   const intros = introPage && sentPage ? [...introPage.items, ...sentPage.items] : null;
   const connections = connectionList?.items ?? null;
   const failed = requests === null || intros === null || connections === null;
@@ -57,15 +59,9 @@ export default async function HomeLayout({ children }: { children: ReactNode }) 
     <>
       <ProfileNudge
         user={{ created_at: user.created_at, session_started_at: user.session_started_at }}
-        strength={profile ? strength(draftFrom(profile)) : null}
+        strength={isOnboarded(profile) ? strength(draftFrom(profile)) : null}
       />
-      <HomeView
-        email={user.email}
-        hasProfile={Boolean(profile)}
-        failed={failed}
-        rows={rows}
-        lists={lists}
-      >
+      <HomeView email={user.email} hasProfile={onboarded} failed={failed} rows={rows} lists={lists}>
         {children}
       </HomeView>
     </>

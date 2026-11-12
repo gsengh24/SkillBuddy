@@ -105,3 +105,100 @@ export function ArrowLeftIcon({ className }: IconProps) {
     </Icon>
   );
 }
+
+export function ArrowRightIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M5 12h14m-5-5 5 5-5 5" />
+    </Icon>
+  );
+}
+
+export function PlusIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M12 5v14M5 12h14" />
+    </Icon>
+  );
+}
+
+export function SparkIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" />
+    </Icon>
+  );
+}
+
+export function FileIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M7 3h7l5 5v13H7z" />
+      <path d="M14 3v5h5M10 13h6M10 17h4" />
+    </Icon>
+  );
+}
+
+export function PasteIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <rect x="5.5" y="5" width="13" height="16" rx="2" />
+      <path d="M9 5V3.5h6V5M9 11h6M9 15h4" />
+    </Icon>
+  );
+}
+
+/** The six intents' icons (onboarding step 1). */
+export function BuildIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M3.5 14.5h7.5v5.5H3.5zM13 14.5h7.5v5.5H13zM8.25 8.5h7.5v6h-7.5z" />
+      <path d="M12 8.5V4" />
+    </Icon>
+  );
+}
+
+export function ExchangeIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5" />
+    </Icon>
+  );
+}
+
+export function BuddyIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <circle cx="9" cy="8.5" r="3.2" />
+      <circle cx="16.5" cy="10" r="2.6" />
+      <path d="M3.5 19.5c.8-3.2 2.9-4.8 5.5-4.8s4.7 1.6 5.5 4.8M14.5 15.2c2.7-.5 5.1.9 6 4.3" />
+    </Icon>
+  );
+}
+
+export function AccountabilityIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M4 10h16M9 3v4M15 3v4M9.2 15l2 2 3.8-3.8" />
+    </Icon>
+  );
+}
+
+export function MentorIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M4 19.5h5v-5h5v-5h5v-5" />
+      <path d="M14.5 4.5H19V9" />
+    </Icon>
+  );
+}
+
+export function ExploreIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m15.5 8.5-2 5-5 2 2-5z" />
+    </Icon>
+  );
+}

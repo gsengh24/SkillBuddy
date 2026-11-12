@@ -109,6 +109,17 @@ export const understandingSchema = z.object({
 });
 export type Understanding = z.infer<typeof understandingSchema>;
 
+export const branchSchema = z.enum([
+  "computer",
+  "electronics",
+  "electrical",
+  "mechanical",
+  "chemical",
+  "civil",
+  "biotechnology",
+  "other",
+]);
+
 export const profileSchema = z.object({
   user_id: z.string(),
   display_name: z.string(),
@@ -139,6 +150,19 @@ export const profileSchema = z.object({
   photo_url: z.string().nullable().default(null),
   /** A Google account picture is on file, so it can be switched on. */
   photo_available: z.boolean().default(false),
+  // Onboarding picks (ADR 0022, API migration 0036). Defaults for older APIs.
+  offer_skills: z.array(z.string()).default([]),
+  want_skills: z.array(z.string()).default([]),
+  interest_tags: z.array(z.string()).default([]),
+  want_note: z.string().default(""),
+  study_year: z.enum(["1", "2", "3", "4", "postgrad"]).nullable().default(null),
+  branch: branchSchema.nullable().default(null),
+  /**
+   * When onboarding was finished; null while it isn't. Older APIs omit it (undefined): every
+   * profile made before migration 0036 went through onboarding, so that counts as finished.
+   * Use `isOnboarded()`, not "a profile exists".
+   */
+  onboarding_completed_at: z.string().nullish(),
   parse_status: z.enum(["empty", "pending", "parsed"]),
   parse_source: z.enum(["llm", "template", "user"]).nullable(),
   understanding: understandingSchema.nullable(),
@@ -149,6 +173,33 @@ export const profileSchema = z.object({
   updated_at: z.string(),
 });
 export type Profile = z.infer<typeof profileSchema>;
+
+/** Finished onboarding (ADR 0022). A profile row alone doesn't mean that any more. */
+export function isOnboarded(profile: Profile | null): profile is Profile {
+  return profile !== null && profile.onboarding_completed_at !== null;
+}
+
+const onboardingStepSchema = z.enum(["intents", "offers", "wants", "about"]);
+
+/** GET /me/onboarding and every step save. */
+export const onboardingSchema = z.object({
+  completed_at: z.string().nullable(),
+  next_step: z.enum(["intents", "offers", "wants", "about", "review"]).nullable(),
+  steps: z.array(
+    z.object({ step: onboardingStepSchema, state: z.enum(["saved", "skipped", "todo"]) }),
+  ),
+  intents: z.array(intentSchema),
+  offer_skills: z.array(z.string()),
+  want_skills: z.array(z.string()),
+  interest_tags: z.array(z.string()),
+  want_note: z.string(),
+  study_year: z.enum(["1", "2", "3", "4", "postgrad"]).nullable(),
+  branch: branchSchema.nullable(),
+  available_days: z.array(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])),
+  weekly_hours: z.enum(["1_3", "4_6", "7_10", "10_plus"]).nullable(),
+  display_name: z.string(),
+});
+export type Onboarding = z.infer<typeof onboardingSchema>;
 
 export const skillSuggestionsSchema = z.object({
   items: z.array(z.object({ name: z.string() })),

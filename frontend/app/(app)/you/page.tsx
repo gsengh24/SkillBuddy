@@ -7,6 +7,7 @@ import { UnderstandingReview } from "@/components/profile/understanding-review";
 import { VisibilityToggle } from "@/components/profile/visibility-toggle";
 import { Overline } from "@/components/ui/overline";
 import { YouPage, YouWithoutProfile } from "@/components/you/you-page";
+import { isOnboarded } from "@/lib/api/schemas";
 import { withUser } from "@/lib/auth/with-user";
 import { getDataExports, getSessions } from "@/lib/account/server";
 import { getMyProfile } from "@/lib/profile/server";
@@ -35,7 +36,7 @@ export default async function You({ searchParams }: Props) {
     sessions: sessions.items,
     exports: exports.items,
   };
-  if (!profile) {
+  if (!isOnboarded(profile)) {
     // Onboarding's step 2 and the review need a profile; the account sections don't.
     if (welcome || review) redirect("/onboarding");
     return <YouWithoutProfile {...account} />;

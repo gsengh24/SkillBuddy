@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/shell/app-shell";
 import { ApiError } from "@/lib/api/errors";
+import { isOnboarded } from "@/lib/api/schemas";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getMyProfile } from "@/lib/profile/server";
 import { draftFrom, strength } from "@/lib/profile/you";
@@ -18,7 +19,7 @@ export default async function SignedInLayout({ children }: { children: React.Rea
     <AppShell
       user={{ id: user.id, email: user.email }}
       // The same checklist as the You page, so the two numbers always agree.
-      profileComplete={profile ? strength(draftFrom(profile)).percent : null}
+      profileComplete={isOnboarded(profile) ? strength(draftFrom(profile)).percent : null}
       hasNotifications={unread > 0}
     >
       {children}
