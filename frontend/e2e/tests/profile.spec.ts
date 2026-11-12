@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { readFile } from "node:fs/promises";
 
-import { linkFromMailpit, settleAnimations, signUp } from "./helpers";
+import { linkFromMailpit, onboard, settleAnimations, signUp } from "./helpers";
 
 async function expectNoViolations(page: Page) {
   await settleAnimations(page);
@@ -18,7 +18,7 @@ async function expectNoViolations(page: Page) {
 }
 
 /**
- * Onboarding end to end: the stack runs with no AI keys, so the description is read by the
+ * Onboarding end to end: the stack runs with no AI keys, so the card is written by the
  * template fallback in the worker. Checked at phone size, where most students will use it.
  */
 test("create a profile, see what was understood, correct it, pause matching, edit it on You, use the account controls", async ({
@@ -27,30 +27,21 @@ test("create a profile, see what was understood, correct it, pause matching, edi
 }) => {
   test.setTimeout(240_000);
   await page.setViewportSize({ width: 390, height: 844 });
-  const email = await signUp(page, request, "/onboarding/describe");
-  await expect(page.getByRole("heading", { name: "Tell us about you" })).toBeVisible();
+  const email = await signUp(page, request, "/onboarding");
+  await expect(page.getByRole("heading", { level: 1, name: /What brings you here/ })).toBeVisible();
   await expectNoViolations(page);
+  // The old free-text-first page is retired: its address leads to the steps.
+  await page.goto("/onboarding/describe");
+  await expect(page).toHaveURL(/\/onboarding$/);
 
-  await page.getByLabel("Your name", { exact: true }).fill("Asha");
-  await page
-    .getByLabel("About you", { exact: true })
-    .fill(
-      "I can build React apps and write Python. Looking for a designer, a backend dev. " +
-        "I love hiking and chess. Free 4-6 hours a week, mostly weekends.",
-    );
-  await page.getByRole("checkbox", { name: "Hindi" }).check();
+  await onboard(page, { name: "Asha", offers: ["React", "Python"], wants: ["Figma"] });
 
-  // The consent line is required on the first save.
-  await page.getByRole("button", { name: "Save and continue" }).click();
-  await expect(page.getByRole("alert").filter({ hasText: /agree to how AI/ })).toBeVisible();
-  await page.getByRole("checkbox", { name: /read by AI to find and explain/ }).check();
-  await page.getByRole("button", { name: "Save and continue" }).click();
-
-  await expect(page).toHaveURL(/\/you\?welcome=1$/);
+  // What the matcher reads: the picks, from the chips.
+  await page.goto("/you?review=1");
   await expect(page.getByRole("heading", { name: /how we'll describe you/ })).toBeVisible({
     timeout: 60_000,
   });
-  await expect(page.getByText("designer", { exact: true })).toBeVisible();
+  await expect(page.getByText("Figma", { exact: true })).toBeVisible();
   await expectNoViolations(page);
 
   await page.getByRole("button", { name: "Correct this" }).click();

@@ -202,3 +202,21 @@ export function ExploreIcon({ className }: IconProps) {
     </Icon>
   );
 }
+
+export function PersonIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <circle cx="12" cy="9" r="3.5" />
+      <path d="M5 20c.9-3.7 3.6-5.5 7-5.5s6.1 1.8 7 5.5" />
+    </Icon>
+  );
+}
+
+export function ClockIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </Icon>
+  );
+}

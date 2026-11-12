@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from datetime import UTC, datetime
 from typing import Any, Final
 
@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 # Profiles the backfill queues per run; it queues itself again while more are pending.
 BACKFILL_BATCH_SIZE: Final = 200
+# The matcher's lists hold the onboarding chips first; the API caps chips at 20 per list.
+MAX_STRUCTURED_ITEMS: Final = 20
 
 AfterParse = Callable[[AsyncSession, uuid.UUID], Awaitable[None]]
 
@@ -41,6 +43,29 @@ def structured_from(understanding: Understanding) -> dict[str, Any]:
         **understanding.facets(),
         "availability": understanding.availability,
         "title": understanding.title,
+    }
+
+
+def merged_tags(first: Sequence[str], then: Sequence[str]) -> list[str]:
+    """``first`` then ``then``, repeats (ignoring case) and empties dropped, capped."""
+    seen: set[str] = set()
+    kept: list[str] = []
+    for item in [*first, *then]:
+        key = item.casefold()
+        if item and key not in seen:
+            seen.add(key)
+            kept.append(item)
+    return kept[:MAX_STRUCTURED_ITEMS]
+
+
+def with_chips(profile: Profile, structured: dict[str, Any]) -> dict[str, Any]:
+    """A parse result with the person's onboarding chips first (ADR 0022), so reading an
+    edited about text never drops a chip they picked."""
+    return {
+        **structured,
+        "offers": merged_tags(profile.offer_skills, structured.get("offers", [])),
+        "seeks": merged_tags(profile.want_skills, structured.get("seeks", [])),
+        "interests": merged_tags(profile.interest_tags, structured.get("interests", [])),
     }
 
 
@@ -78,7 +103,7 @@ async def parse_profile(
         if profile.parse_source == ParseSource.USER and profile.parsed_text_hash == digest:
             return False
         llm = result.source is Source.LLM
-        profile.structured = structured_from(result.value)
+        profile.structured = with_chips(profile, structured_from(result.value))
         profile.parse_source = ParseSource.LLM if llm else ParseSource.TEMPLATE
         profile.parse_prompt_version = PROMPT_ID if llm else None
         profile.parsed_text_hash = digest

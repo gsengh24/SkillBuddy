@@ -208,13 +208,29 @@ describe("step 3: what you're looking for", () => {
   });
 });
 
+const PROFILE_OUT = {
+  user_id: "u1",
+  display_name: "",
+  about_text: "Offers: React.",
+  links: [],
+  timezone: null,
+  languages: [],
+  visibility: "matchable",
+  parse_status: "pending",
+  parse_source: "template",
+  understanding: null,
+  ai_consent_version: "v1",
+  ai_consent_at: "2026-11-12T10:00:00Z",
+  ai_consent_current: true,
+  created_at: "2026-11-12T10:00:00Z",
+  updated_at: "2026-11-12T10:00:00Z",
+};
+
 describe("step 4: a bit about you", () => {
-  it("picks year, branch, days and hours, then finishes onto the describe page", async () => {
-    render(
-      <OnboardingFlow
-        initial={progress({ display_name: "Aarav S." }, ["intents", "offers", "wants"])}
-      />,
-    );
+  const ready = progress({ display_name: "Aarav S." }, ["intents", "offers", "wants"]);
+
+  it("needs the AI consent line before finishing, then saves, finishes and goes to step 5", async () => {
+    render(<OnboardingFlow initial={ready} />);
     expect(screen.getByText("Step 4 of 4")).toBeVisible();
     await userEvent.click(screen.getByRole("radio", { name: "3rd" }));
     expect(screen.getByRole("radio", { name: "3rd" })).toHaveAttribute("aria-checked", "true");
@@ -223,29 +239,60 @@ describe("step 4: a bit about you", () => {
     await userEvent.click(screen.getByRole("radio", { name: "4–6" }));
     expect(screen.getByLabelText("Display name")).toHaveValue("Aarav S.");
 
-    fetchMock.mockResolvedValueOnce(
-      json(200, progress({}, ["intents", "offers", "wants", "about"])),
-    );
+    // The consent line is unchanged and required: nothing is sent without it.
     await userEvent.click(screen.getByRole("button", { name: /Finish/ }));
-    expect(lastCall()).toMatchObject({
-      url: "/api/v1/me/onboarding/about",
-      body: {
-        study_year: "3",
-        branch: "electronics",
-        available_days: ["sat"],
-        weekly_hours: "4_6",
-        display_name: "Aarav S.",
-      },
+    expect(await screen.findByRole("alert")).toHaveTextContent(/agree to how AI/);
+    expect(fetchMock).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("checkbox", { name: /read by AI to find and explain/ }));
+
+    fetchMock
+      .mockResolvedValueOnce(json(200, progress({}, ["intents", "offers", "wants", "about"])))
+      .mockResolvedValueOnce(json(200, PROFILE_OUT));
+    await userEvent.click(screen.getByRole("button", { name: /Finish/ }));
+    const [aboutUrl, aboutInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(aboutUrl).toBe("/api/v1/me/onboarding/about");
+    expect(JSON.parse(String(aboutInit.body))).toEqual({
+      study_year: "3",
+      branch: "electronics",
+      available_days: ["sat"],
+      weekly_hours: "4_6",
+      display_name: "Aarav S.",
     });
-    expect(router.push).toHaveBeenCalledWith("/onboarding/describe");
+    expect(lastCall()).toMatchObject({
+      url: "/api/v1/me/onboarding/finish",
+      method: "POST",
+      body: { ai_consent: true },
+    });
+    expect(router.push).toHaveBeenCalledWith("/onboarding/review");
+  });
+
+  it("skips step 4 and still finishes, without asking again when consent is current", async () => {
+    render(<OnboardingFlow initial={ready} needsConsent={false} />);
+    expect(screen.queryByRole("checkbox", { name: /read by AI/ })).toBeNull();
+    fetchMock
+      .mockResolvedValueOnce(json(200, progress({}, ["intents", "offers", "wants"])))
+      .mockResolvedValueOnce(json(200, PROFILE_OUT));
+    await userEvent.click(screen.getByRole("button", { name: "Skip for now" }));
+    expect((fetchMock.mock.calls[0] as [string])[0]).toBe("/api/v1/me/onboarding/about/skip");
+    expect(lastCall()).toMatchObject({
+      url: "/api/v1/me/onboarding/finish",
+      body: { ai_consent: false },
+    });
+    expect(router.push).toHaveBeenCalledWith("/onboarding/review");
   });
 
   it("leaves the name out when it is empty", async () => {
-    render(<OnboardingFlow initial={progress({}, ["intents", "offers", "wants"])} />);
-    fetchMock.mockResolvedValueOnce(
-      json(200, progress({}, ["intents", "offers", "wants", "about"])),
+    render(
+      <OnboardingFlow
+        initial={progress({}, ["intents", "offers", "wants"])}
+        needsConsent={false}
+      />,
     );
+    fetchMock
+      .mockResolvedValueOnce(json(200, progress({}, ["intents", "offers", "wants", "about"])))
+      .mockResolvedValueOnce(json(200, PROFILE_OUT));
     await userEvent.click(screen.getByRole("button", { name: /Finish/ }));
-    expect(lastCall().body).not.toHaveProperty("display_name");
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).not.toHaveProperty("display_name");
   });
 });

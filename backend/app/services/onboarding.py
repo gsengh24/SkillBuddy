@@ -1,22 +1,34 @@
 """Onboarding (ADR 0022): save each step on its own, skip steps, and report progress.
 
 A step save creates the profile row if there is none yet. That row has no about text
-(``parse_status`` stays ``empty``), so no AI reads anything and matching ignores it until
-the person finishes. Finishing is a separate step (today: the first full profile save).
+(``parse_status`` stays ``empty``), so no AI reads anything and matching ignores it.
+
+Leaving step 4 (``finish``) stores an about text made from the chips by a template, then a
+``compose_profile`` job asks the AI for a better one (step 5 shows it loading). Step 5's
+"Looks good" (``complete``) finishes onboarding; only then is the profile embedded and
+matchable.
 """
 
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
+from http import HTTPStatus
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.stages.compose import compose_template
 from app.core.config import Settings
-from app.models import FlaggedItem, OnboardingStep, Profile, User
+from app.core.errors import AppError, ConflictError
+from app.jobs.queue import enqueue
+from app.jobs.tasks import COMPOSE_PROFILE, EMBED_PROFILE, PARSE_PROFILE
+from app.models import FlaggedItem, OnboardingStep, ParseSource, ParseStatus, Profile, User
 from app.schemas.onboarding import (
     AboutStepIn,
+    CompleteIn,
+    FinishIn,
     IntentsStepIn,
     NextStep,
     OffersStepIn,
@@ -28,6 +40,9 @@ from app.schemas.onboarding import (
 )
 from app.services import content_rules
 from app.services.auth.rate_limit import RateLimiter
+from app.services.profile_compose import chips_of, structured_from_chips
+from app.services.profile_parsing import text_hash
+from app.services.profiles import AiConsentRequiredError
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +102,22 @@ def progress(profile: Profile | None) -> OnboardingOut:
             "display_name": profile.display_name,
         }
     )
+
+
+class IntentsRequiredError(ConflictError):
+    code = "onboarding_intents_required"
+    default_message = "Pick what you're here for before finishing."
+
+
+class AlreadyOnboardedError(ConflictError):
+    code = "onboarding_completed"
+    default_message = "Your profile is already set up. Change it on the You page."
+
+
+class NotFinishedError(AppError):
+    status_code = HTTPStatus.CONFLICT
+    code = "onboarding_not_finished"
+    default_message = "Finish the earlier steps first."
 
 
 def _mark(profile: Profile, step: OnboardingStep, *, skipped: bool) -> None:
@@ -175,3 +206,67 @@ class OnboardingService:
         onboarding_step = OnboardingStep(step.value)
         _mark(profile, onboarding_step, skipped=True)
         return await self._commit(user, profile, onboarding_step)
+
+    async def finish(self, user: User, data: FinishIn) -> Profile:
+        """Leave step 4: store the template about text now, and queue the AI's version."""
+        profile = await self._profile_for_write(user)
+        if profile.onboarding_completed_at is not None:
+            raise AlreadyOnboardedError
+        if OnboardingStep.INTENTS not in profile.onboarding_saved:
+            raise IntentsRequiredError
+        consent_current = profile.ai_consent_version == self._settings.ai_consent_version
+        if not data.ai_consent and not consent_current:
+            raise AiConsentRequiredError
+        now = datetime.now(UTC)
+        if data.ai_consent:
+            profile.ai_consent_at = now
+            profile.ai_consent_version = self._settings.ai_consent_version
+        names = [profile.display_name] if profile.display_name.strip() else []
+        template = compose_template(chips_of(profile), names=names)
+        profile.raw_about_text = template.about
+        profile.structured = structured_from_chips(profile, template)
+        profile.parse_source = ParseSource.TEMPLATE
+        profile.parse_prompt_version = None
+        # Marks the text the job may replace; an edit on step 5 changes it.
+        profile.parsed_text_hash = text_hash(template.about)
+        profile.parsed_at = now
+        profile.parse_status = ParseStatus.PENDING
+        await self._db.flush()
+        await enqueue(self._db, COMPOSE_PROFILE, {"user_id": str(user.id)})
+        await self._db.commit()
+        await self._db.refresh(profile)
+        logger.info("onboarding_finished_steps")
+        return profile
+
+    async def complete(self, user: User, data: CompleteIn) -> Profile:
+        """Step 5's "Looks good": keep the about text (edited or not), finish onboarding."""
+        profile = await self._profile_for_write(user)
+        if profile.onboarding_completed_at is not None:
+            return profile
+        if not profile.raw_about_text.strip():
+            raise NotFinishedError
+        if profile.ai_consent_version != self._settings.ai_consent_version:
+            raise AiConsentRequiredError
+        edited = text_hash(data.about_text) != text_hash(profile.raw_about_text)
+        profile.onboarding_completed_at = datetime.now(UTC)
+        if edited:
+            profile.raw_about_text = data.about_text
+            await content_rules.flag(
+                self._db,
+                user_id=user.id,
+                item=FlaggedItem.PROFILE,
+                item_id=user.id,
+                text=data.about_text,
+            )
+            # Their own words now: read them like any about text (the chips stay first).
+            profile.parsed_text_hash = None
+            profile.parse_status = ParseStatus.PENDING
+            await self._db.flush()
+            await enqueue(self._db, PARSE_PROFILE, {"user_id": str(user.id)})
+        elif profile.parse_status == ParseStatus.PARSED:
+            await enqueue(self._db, EMBED_PROFILE, {"user_id": str(user.id)})
+        # Otherwise the compose job is still running; it embeds once it is done.
+        await self._db.commit()
+        await self._db.refresh(profile)
+        logger.info("onboarding_completed", extra={"edited": edited})
+        return profile

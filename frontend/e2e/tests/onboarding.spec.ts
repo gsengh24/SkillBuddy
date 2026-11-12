@@ -6,8 +6,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { settleAnimations, signUp } from "./helpers";
 
 /**
- * Onboarding steps 1–4 (ADR 0022) end to end: pick, skip, leave and resume, finish onto the
- * describe page. One sign-up (sign-up codes are rate limited per IP), then screenshots of
+ * Onboarding steps 1–5 (ADR 0022) end to end: pick, skip, leave and resume, finish, check
+ * the card and confirm it. One sign-up (sign-up codes are rate limited per IP), then screenshots of
  * every step at 390 and 1280px beside its mockup, for the pull request.
  */
 const OUT = "screenshots";
@@ -40,7 +40,7 @@ async function shoot(page: Page, name: string) {
   await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true, caret: "initial" });
 }
 
-test("onboarding steps: pick, skip, resume, finish", async ({ page, request }) => {
+test("onboarding steps: pick, skip, resume, finish, check the card", async ({ page, request }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await signUp(page, request, "/onboarding");
@@ -88,26 +88,57 @@ test("onboarding steps: pick, skip, resume, finish", async ({ page, request }) =
   await expect(page.getByRole("link", { name: "Create your profile" })).toBeVisible();
   await page.goto("/onboarding");
 
-  // Step 4: a radiogroup for the year; Finish hands over to the describe page.
+  // Step 4: a radiogroup for the year; the consent line (unchanged) is required to finish.
   await page.getByRole("radio", { name: "2nd" }).click();
   await expect(page.getByRole("radio", { name: "2nd" })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: "Saturday" }).click();
+  await page.getByRole("button", { name: /Finish/ }).click();
+  await expect(page.getByRole("alert").filter({ hasText: /agree to how AI/ })).toBeVisible();
+  await page.getByRole("checkbox", { name: /read by AI to find and explain/ }).check();
   await expectNoViolations(page);
   await page.getByRole("button", { name: /Finish/ }).click();
-  await expect(page).toHaveURL(/\/onboarding\/describe$/);
-  await expect(page.getByRole("heading", { name: "Tell us about you" })).toBeVisible();
-  // The existing consent line is unchanged and still required.
-  await expect(
-    page.getByRole("checkbox", { name: /read by AI to find and explain/ }),
-  ).toBeVisible();
+
+  // Step 5: the card others will see. No AI keys in CI, so the template version shows.
+  await expect(page).toHaveURL(/\/onboarding\/review$/);
+  const card = page.getByRole("article", { name: "Preview of your match card" });
+  await expect(card).toBeVisible({ timeout: 30_000 });
+  await expect(card.getByText("We'll polish this shortly.")).toBeVisible();
+  await expect(card.getByText("React", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("About you")).toHaveValue(/React/);
+  await expectNoViolations(page);
 
   // Earlier picks are kept when going back to a step.
-  await page.goto("/onboarding?step=offers");
+  await page.getByRole("button", { name: "Edit" }).click();
   await expect(
     page.getByRole("group", { name: "Coding" }).getByRole("button", { name: "React" }),
   ).toHaveAttribute("aria-pressed", "true");
 
-  // Screenshots of every step beside its mockup.
+  // Screenshots of every step beside its mockup, and of step 5's three states. The loading
+  // and ready states are shown by answering the page's polls with a pending or AI-written
+  // version of this profile (CI has no AI keys).
+  const real = (await (await page.request.get("/api/v1/me/profile")).json()) as Record<
+    string,
+    unknown
+  >;
+  const STATES = {
+    loading: { ...real, parse_status: "pending", understanding: null },
+    ready: {
+      ...real,
+      parse_status: "parsed",
+      parse_source: "llm",
+      about_text:
+        "I build React front ends and design in Figma. Looking to swap skills on weekends.",
+      understanding: {
+        title: "Frontend builder looking to swap skills",
+        summary: "Builds React front ends and designs in Figma; free on weekends to swap skills.",
+        offers: ["React", "Figma"],
+        seeks: [],
+        interests: [],
+        availability: "Sat",
+      },
+    },
+    fallback: null,
+  } as const;
   await page.emulateMedia({ reducedMotion: "reduce" });
   for (const { name, width, height } of WIDTHS) {
     await page.setViewportSize({ width, height });
@@ -120,5 +151,34 @@ test("onboarding steps: pick, skip, resume, finish", async ({ page, request }) =
         await shoot(page, `onboarding-${step}-mockup-${name}`);
       }
     }
+    for (const [state, body] of Object.entries(STATES)) {
+      await page.unrouteAll();
+      if (body) {
+        await page.route("**/api/v1/me/profile", (route) => route.fulfill({ json: body }));
+      }
+      await page.goto("/onboarding/review");
+      await expect(
+        page.getByRole("article", {
+          name: state === "loading" ? "Your match card is loading" : "Preview of your match card",
+        }),
+      ).toBeVisible({ timeout: 30_000 });
+      await shoot(page, `onboarding-review-${state}-${name}`);
+    }
+    await page.unrouteAll();
+    if (existsSync(`${MOCKUPS}/05-check-what-we-understood.html`)) {
+      await page.goto(`file://${MOCKUPS}/05-check-what-we-understood.html`);
+      await shoot(page, `onboarding-review-mockup-${name}`);
+    }
   }
+
+  // "Looks good" finishes onboarding and goes Home; onboarding is then closed.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/onboarding/review");
+  await expect(page.getByRole("article", { name: "Preview of your match card" })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.getByRole("button", { name: /Looks good/ }).click();
+  await expect(page).toHaveURL(/\/home/);
+  await page.goto("/onboarding");
+  await expect(page).toHaveURL(/\/you$/);
 });

@@ -9,9 +9,10 @@ import { InlineError } from "@/components/ds/fields";
 import { ArrowRightIcon, CheckIcon } from "@/components/ds/icons";
 import { Logo } from "@/components/ds/logo";
 import { TwoToneHeadline } from "@/components/ds/page-parts";
+import { AiConsentText } from "@/components/profile/ai-consent";
 import { cx } from "@/components/ui/cx";
 import { browserApi } from "@/lib/api/browser";
-import { onboardingSchema, type Onboarding } from "@/lib/api/schemas";
+import { onboardingSchema, profileSchema, type Onboarding } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { brand } from "@/lib/brand";
 import { STEPS, stepAfter, stepNumber, stepToShow, type Step } from "@/lib/onboarding/steps";
@@ -26,8 +27,9 @@ import {
   type Drafts,
 } from "./steps";
 
-/** Where the last step hands over until "check what we understood" exists (ADR 0022). */
-export const DESCRIBE_PATH = "/onboarding/describe";
+/** Step 5, "check what we understood" (ADR 0022). */
+export const REVIEW_PATH = "/onboarding/review";
+const CONSENT_NEEDED = "To save, agree to how AI is used to find your matches.";
 
 const HEADINGS: Record<Step, { lead: string; rest: string; eyebrow?: string }> = {
   intents: {
@@ -69,17 +71,20 @@ function countFor(step: Step, drafts: Drafts): number | null {
 }
 
 /**
- * Onboarding steps 1–4 (mockups 01–04). Each step saves when the person continues or skips,
+ * Onboarding steps 1–4 (mockups 01–04); finishing step 4 hands over to step 5. Each step saves when the person continues or skips,
  * so leaving and coming back resumes at the right step. The step shown follows `?step=`
  * (so the browser's back button works) when the person has reached it, else their progress.
  */
 export function OnboardingFlow({
   initial,
   requested = null,
+  needsConsent = true,
 }: {
   initial: Onboarding;
   /** The `?step=` the page was opened with. */
   requested?: string | null;
+  /** The AI consent line is shown on step 4 until the current version is agreed to. */
+  needsConsent?: boolean;
 }) {
   const router = useRouter();
   const [asked, setAsked] = useState(requested);
@@ -87,6 +92,7 @@ export function OnboardingFlow({
   const [drafts, setDrafts] = useState(() => draftsFrom(initial));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
 
   const shown = stepToShow(asked, progress);
 
@@ -105,7 +111,7 @@ export function OnboardingFlow({
   function go(next: Step | "review") {
     setError(null);
     if (next === "review") {
-      router.push(DESCRIBE_PATH);
+      router.push(REVIEW_PATH);
       return;
     }
     window.history.pushState(null, "", `?step=${next}`);
@@ -114,6 +120,11 @@ export function OnboardingFlow({
   }
 
   async function save(kind: "save" | "skip") {
+    // Leaving step 4 hands the picks to the AI, so the consent line comes first.
+    if (step === "about" && needsConsent && !consent) {
+      setError(CONSENT_NEEDED);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -127,6 +138,13 @@ export function OnboardingFlow({
               method: "POST",
             });
       setProgress(saved);
+      if (step === "about") {
+        // Stores the about text written from the picks and queues the AI's version.
+        await browserApi("/me/onboarding/finish", profileSchema, {
+          method: "POST",
+          body: { ai_consent: needsConsent ? consent : false },
+        });
+      }
       go(stepAfter(step));
     } catch (caught) {
       setError(describeError(caught));
@@ -210,6 +228,19 @@ export function OnboardingFlow({
           wide ? "lg:max-w-[960px]" : "lg:max-w-[640px]",
         )}
       >
+        {step === "about" && needsConsent ? (
+          <label className="bg-green-tint border-green-line rounded-card flex items-start gap-3 border p-4">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(event) => setConsent(event.target.checked)}
+              className="accent-green mt-1 size-4 shrink-0"
+            />
+            <span className="text-meta-lg text-ink">
+              <AiConsentText />
+            </span>
+          </label>
+        ) : null}
         {error ? <InlineError announce>{error}</InlineError> : null}
         <div className="flex items-center gap-2">
           {step === "intents" ? null : (

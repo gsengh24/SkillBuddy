@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
-import { signUp } from "./helpers";
+import { onboard, signUp } from "./helpers";
 
 async function expectNoViolations(page: Page) {
   const results = await new AxeBuilder({ page })
@@ -22,15 +22,8 @@ async function expectNoViolations(page: Page) {
 test("ask for matches from Discover and see the request finish", async ({ page, request }) => {
   test.setTimeout(150_000);
   await page.setViewportSize({ width: 390, height: 844 });
-  await signUp(page, request, "/onboarding/describe");
-
-  await page.getByLabel("Your name", { exact: true }).fill("Dev");
-  await page
-    .getByLabel("About you", { exact: true })
-    .fill("I can build React apps and write Python. Looking for a designer. I love chess.");
-  await page.getByRole("checkbox", { name: /read by AI to find and explain/ }).check();
-  await page.getByRole("button", { name: "Save and continue" }).click();
-  await expect(page).toHaveURL(/\/you/);
+  await signUp(page, request, "/onboarding");
+  await onboard(page, { name: "Dev" });
 
   // Navigate directly: in the dev-mode CI stack, Next.js's dev indicator sits over the
   // bottom-left of the screen, on top of the phone tab bar.

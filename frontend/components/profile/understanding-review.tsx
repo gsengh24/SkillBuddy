@@ -53,7 +53,7 @@ export function UnderstandingReview({ initial }: { initial: Profile }) {
   const [profile, setProfile] = useState(initial);
   const [polls, setPolls] = useState(0);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<Record<keyof Understanding, string>>({
+  const [draft, setDraft] = useState<Record<Exclude<keyof Understanding, "title">, string>>({
     summary: "",
     offers: "",
     seeks: "",

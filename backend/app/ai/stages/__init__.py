@@ -3,6 +3,7 @@
 Both work with the AI off: each has a template fallback that needs no model.
 """
 
+from app.ai.stages.compose import Chips, Composed, compose, compose_template
 from app.ai.stages.explain import (
     Candidate,
     Explained,
@@ -15,11 +16,15 @@ from app.ai.stages.understand import Intent, Understanding, understand, understa
 
 __all__ = [
     "Candidate",
+    "Chips",
+    "Composed",
     "Explained",
     "Explanation",
     "Intent",
     "Judgement",
     "Understanding",
+    "compose",
+    "compose_template",
     "explain",
     "explain_template",
     "understand",

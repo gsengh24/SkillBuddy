@@ -101,6 +101,8 @@ export const intentSchema = z.enum([
 ]);
 
 export const understandingSchema = z.object({
+  /** A short card heading (onboarding, ADR 0022); older APIs and parsed text leave it out. */
+  title: z.string().optional(),
   summary: z.string(),
   offers: z.array(z.string()),
   seeks: z.array(z.string()),

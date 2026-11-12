@@ -1335,6 +1335,24 @@
         "title": "CommsOut",
         "type": "object"
       },
+      "CompleteIn": {
+        "additionalProperties": false,
+        "description": "Step 5's \"Looks good\": keep the about text as shown, or as edited.",
+        "properties": {
+          "about_text": {
+            "description": "What the about box holds when the person confirms it.",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "About Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "about_text"
+        ],
+        "title": "CompleteIn",
+        "type": "object"
+      },
       "ConnectionList": {
         "properties": {
           "items": {
@@ -2185,6 +2203,20 @@
           "message_max_length"
         ],
         "title": "FeaturesOut",
+        "type": "object"
+      },
+      "FinishIn": {
+        "additionalProperties": false,
+        "description": "Leave step 4: write the about text from the chips (step 5 shows it).",
+        "properties": {
+          "ai_consent": {
+            "default": false,
+            "description": "The user agrees to the AI-processing consent line shown before finishing (ADR 0007, section 5). Required unless the current version was already agreed.",
+            "title": "Ai Consent",
+            "type": "boolean"
+          }
+        },
+        "title": "FinishIn",
         "type": "object"
       },
       "FlagDecisionIn": {
@@ -7566,9 +7598,15 @@
           "summary": {
             "title": "Summary",
             "type": "string"
+          },
+          "title": {
+            "description": "A short card heading; empty when none was written.",
+            "title": "Title",
+            "type": "string"
           }
         },
         "required": [
+          "title",
           "summary",
           "offers",
           "seeks",
@@ -15062,6 +15100,210 @@
           }
         },
         "summary": "Save step 4: a bit about me",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/me/onboarding/complete": {
+      "post": {
+        "description": "Sets ``onboarding_completed_at``. An edited text is read again in the background (the\npicks stay first); either way the profile is then embedded and can be matched. Calling it\nagain after finishing changes nothing.",
+        "operationId": "complete_api_v1_me_onboarding_complete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "AI consent missing (`ai_consent_required`)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Step 4 hasn't been finished yet (`onboarding_not_finished`)."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Step 5: keep my about text and finish onboarding",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/me/onboarding/finish": {
+      "post": {
+        "description": "Returns at once with an about text made from the picks by a template\n(``parse_source`` ``template``) and ``parse_status`` ``pending`` while a background job\nasks the AI for a better one. Poll ``GET /me/profile``: ``parsed`` with ``llm`` is the AI\ntext, ``parsed`` with ``template`` means the template stays. Never an error state.",
+        "operationId": "finish_api_v1_me_onboarding_finish_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinishIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "AI consent missing (`ai_consent_required`)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Step 1 not saved (`onboarding_intents_required`), or onboarding is already finished (`onboarding_completed`)."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Leave step 4: write my about text from my picks",
         "tags": [
           "onboarding"
         ]
