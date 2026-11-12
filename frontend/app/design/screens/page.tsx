@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { Conversation } from "@/components/chat/conversation";
 import { MatchCard } from "@/components/discover/match-card";
+import { NudgeCard } from "@/components/home/nudge-card";
 import { AIStatusView } from "@/components/moderation/ai-status";
 import { ReportReview } from "@/components/moderation/report-review";
 import { IntroCard } from "@/components/social/intro-card";
@@ -213,6 +214,24 @@ export default function ScreensPage() {
             </li>
           ))}
         </ul>
+      </Section>
+      <Section id="screens-nudges" title="Home nudges">
+        {/* As at the top of the inbox (ADR 0022, screen 11). */}
+        <div className="bg-pane flex max-w-[360px] flex-col gap-3 rounded-[18px] p-4">
+          <NudgeCard
+            nudge={{
+              kind: "team_skill",
+              skill: "Machine learning",
+              team_id: "sample-team",
+              team_name: "ML study circle",
+            }}
+            offerSkills={["React", "Figma"]}
+          />
+          <NudgeCard
+            nudge={{ kind: "availability", skill: null, team_id: null, team_name: null }}
+            offerSkills={[]}
+          />
+        </div>
       </Section>
       <Section id="screens-intro" title="An intro you received">
         <div className="max-w-2xl">

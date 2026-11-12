@@ -3,7 +3,6 @@ import { ApiError } from "@/lib/api/errors";
 import { isOnboarded } from "@/lib/api/schemas";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getMyProfile } from "@/lib/profile/server";
-import { draftFrom, strength } from "@/lib/profile/you";
 import { getUnreadCount } from "@/lib/social/server";
 
 /**
@@ -18,8 +17,8 @@ export default async function SignedInLayout({ children }: { children: React.Rea
   return (
     <AppShell
       user={{ id: user.id, email: user.email }}
-      // The same checklist as the You page, so the two numbers always agree.
-      profileComplete={isOnboarded(profile) ? strength(draftFrom(profile)).percent : null}
+      // The API's strength (ADR 0022), the same number the You page shows.
+      profileComplete={isOnboarded(profile) ? (profile.strength?.percent ?? null) : null}
       hasNotifications={unread > 0}
     >
       {children}

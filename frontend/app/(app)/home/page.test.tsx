@@ -48,6 +48,8 @@ const PROFILE = {
   links: [],
   languages: [],
   timezone: null,
+  offer_skills: [],
+  strength: null,
 };
 
 /** What the Home list may call (design spec 6.2); the shell adds the unread count. */
@@ -58,6 +60,8 @@ const LIST_CALLS = [
   "/api/v1/intros?box=received&limit=30",
   "/api/v1/intros?box=sent&limit=30",
   "/api/v1/connections",
+  // Today's in-context nudge (ADR 0022, screen 11).
+  "/api/v1/me/nudge",
 ];
 
 const MATCH = {
@@ -88,6 +92,7 @@ beforeEach(() => {
     if (failing.includes(path)) throw new Error("503");
     if (path === "/api/v1/auth/me") return USER;
     if (path === "/api/v1/me/profile") return PROFILE;
+    if (path === "/api/v1/me/nudge") return { nudge: null };
     if (path === "/api/v1/requests/req-1/matches") return { items: [MATCH] };
     // One item, by its own endpoint (a request that is not in the list yet is still there).
     if (path === "/api/v1/requests/req-1") return request({ status: requestStatus });

@@ -42,6 +42,14 @@ def load_skills() -> tuple[str, ...]:
     return tuple(names)
 
 
+@lru_cache(maxsize=1)
+def curated_skills() -> tuple[str, ...]:
+    """The hand-written list only (no O*NET names): short and common enough to spot in text."""
+    lines = (DATA_DIR / DATA_FILES[0]).read_text(encoding="utf-8").splitlines()
+    names = (" ".join(line.split()) for line in lines)
+    return tuple(name for name in names if name and not name.startswith("#"))
+
+
 def suggest_skills(query: str, limit: int = DEFAULT_LIMIT) -> list[str]:
     """Names matching ``query``: whole-name prefix first, then a word prefix, then (for three
     or more characters) any substring. Within a tier, list order decides."""

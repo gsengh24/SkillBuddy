@@ -6,8 +6,9 @@ import { isOnboarded } from "@/lib/api/schemas";
 import { withUser } from "@/lib/auth/with-user";
 import { buildActivity } from "@/lib/home/activity";
 import { getMyRequests } from "@/lib/matching/server";
+import { getDemand, getNudge, getOnboarding } from "@/lib/onboarding/server";
 import { getMyProfile } from "@/lib/profile/server";
-import { draftFrom, strength } from "@/lib/profile/you";
+import { nudgeStrength } from "@/lib/profile/strength";
 import { getConnections, getReceivedIntros, getSentIntros } from "@/lib/social/server";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,15 @@ export default async function HomeLayout({ children }: { children: ReactNode }) 
 
   // Without a finished profile there are no requests to list, whatever that call said.
   const onboarded = isOnboarded(profile);
+  // Screen 8 (unfinished): progress and the aggregate demand line. Screen 11: a nudge.
+  const firstSkill = profile?.offer_skills[0];
+  const [progress, demandCount, nudge] = await Promise.all([
+    onboarded ? null : getOnboarding().catch(() => null),
+    !onboarded && firstSkill ? getDemand(firstSkill) : null,
+    onboarded ? getNudge() : null,
+  ]);
+  const demand =
+    firstSkill && demandCount !== null ? { skill: firstSkill, count: demandCount } : null;
   const requests = onboarded ? requestsOrNull : [];
   const intros = introPage && sentPage ? [...introPage.items, ...sentPage.items] : null;
   const connections = connectionList?.items ?? null;
@@ -59,9 +69,20 @@ export default async function HomeLayout({ children }: { children: ReactNode }) 
     <>
       <ProfileNudge
         user={{ created_at: user.created_at, session_started_at: user.session_started_at }}
-        strength={isOnboarded(profile) ? strength(draftFrom(profile)) : null}
+        // One suggestion at a time: the popup waits while an in-context nudge is showing.
+        strength={isOnboarded(profile) && !nudge ? nudgeStrength(profile.strength) : null}
       />
-      <HomeView email={user.email} hasProfile={onboarded} failed={failed} rows={rows} lists={lists}>
+      <HomeView
+        email={user.email}
+        hasProfile={onboarded}
+        failed={failed}
+        rows={rows}
+        lists={lists}
+        progress={progress}
+        demand={demand}
+        nudge={nudge}
+        offerSkills={profile?.offer_skills ?? []}
+      >
         {children}
       </HomeView>
     </>

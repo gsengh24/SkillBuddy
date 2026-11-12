@@ -83,9 +83,18 @@ test("onboarding steps: pick, skip, resume, finish, check the card", async ({ pa
   await page.goto("/onboarding");
   await expect(page.getByRole("heading", { level: 1, name: /Almost done/ })).toBeVisible();
   await expect(page.getByText("Step 4 of 4")).toBeVisible();
-  // Home doesn't treat an unfinished profile as finished.
+  // Home doesn't treat an unfinished profile as finished (screen 8): the inbox becomes
+  // "Finish your profile", the composer still shows, and Find matches steps down to outline.
   await page.goto("/home");
-  await expect(page.getByRole("link", { name: "Create your profile" })).toBeVisible();
+  const finish = page.getByRole("region", { name: /Finish your profile/ });
+  await expect(finish.getByRole("link", { name: "Finish in 60 seconds" })).toHaveAttribute(
+    "href",
+    "/onboarding",
+  );
+  // Wants was skipped and about is still to do.
+  await expect(finish.getByText("2 quick steps left")).toBeVisible();
+  await expect(page.getByRole("form", { name: "New request" })).toBeVisible();
+  await expectNoViolations(page);
   await page.goto("/onboarding");
 
   // Step 4: a radiogroup for the year; the consent line (unchanged) is required to finish.
@@ -169,6 +178,14 @@ test("onboarding steps: pick, skip, resume, finish, check the card", async ({ pa
       await page.goto(`file://${MOCKUPS}/05-check-what-we-understood.html`);
       await shoot(page, `onboarding-review-mockup-${name}`);
     }
+    // Screen 8: Home while the profile isn't finished.
+    await page.goto("/home");
+    await expect(page.getByRole("region", { name: /Finish your profile/ })).toBeVisible();
+    await shoot(page, `onboarding-home-unfinished-${name}`);
+    if (existsSync(`${MOCKUPS}/08-home-unfinished-profile.html`)) {
+      await page.goto(`file://${MOCKUPS}/08-home-unfinished-profile.html`);
+      await shoot(page, `onboarding-home-unfinished-mockup-${name}`);
+    }
   }
 
   // "Looks good" finishes onboarding and goes Home; onboarding is then closed.
@@ -179,6 +196,26 @@ test("onboarding steps: pick, skip, resume, finish, check the card", async ({ pa
   });
   await page.getByRole("button", { name: /Looks good/ }).click();
   await expect(page).toHaveURL(/\/home/);
+  await expect(page.getByRole("region", { name: /Finish your profile/ })).toHaveCount(0);
   await page.goto("/onboarding");
   await expect(page).toHaveURL(/\/you$/);
+
+  // Screen 10: the API's strength on You, with what's missing as links.
+  const meter = page.getByRole("meter", { name: "Profile strength" });
+  await expect(meter).toBeVisible();
+  await expect(
+    page.getByRole("list", { name: "To make it stronger" }).getByRole("link", {
+      name: /Add 3 skills you offer/,
+    }),
+  ).toHaveAttribute("href", "#s-skills");
+  for (const { name, width, height } of WIDTHS) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/you");
+    await expect(meter).toBeVisible();
+    await shoot(page, `onboarding-you-strength-${name}`);
+    if (existsSync(`${MOCKUPS}/10-you-profile-strength.html`)) {
+      await page.goto(`file://${MOCKUPS}/10-you-profile-strength.html`);
+      await shoot(page, `onboarding-you-strength-mockup-${name}`);
+    }
+  }
 });

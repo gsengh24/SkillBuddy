@@ -619,3 +619,62 @@ def test_onboarding_migration_backfills_existing_profiles_and_downgrades(
     assert not {"offer_skills", "want_note", "study_year", "onboarding_completed_at"} & columns
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
+
+
+def test_chip_backfill_and_nudge_migration(empty_database_url: str, engine: Engine) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "0036")
+    structured = (
+        '{"offers": ["React", " react ", "Python", "", "' + "x" * 70 + '"], '
+        '"seeks": ["designer"], "interests": "not a list"}'
+    )
+    with engine.begin() as connection:
+        old, picked = (
+            connection.scalar(
+                text("INSERT INTO users (email) VALUES (:e) RETURNING id"), {"e": email}
+            )
+            for email in ("old@example.com", "new@example.com")
+        )
+        connection.execute(
+            text(
+                "INSERT INTO profiles (user_id, raw_about_text, structured) "
+                "VALUES (:u, 'old', CAST(:s AS jsonb))"
+            ),
+            {"u": old, "s": structured},
+        )
+        connection.execute(
+            text(
+                "INSERT INTO profiles (user_id, raw_about_text, structured, offer_skills) "
+                "VALUES (:u, 'new', CAST(:s AS jsonb), ARRAY['Figma'])"
+            ),
+            {"u": picked, "s": structured},
+        )
+
+    command.upgrade(config, "0037")
+    with engine.connect() as connection:
+        rows = {
+            row.user_id: row
+            for row in connection.execute(
+                text(
+                    "SELECT user_id, offer_skills, want_skills, interest_tags, nudges_shown, "
+                    "nudges_dismissed, nudge_shown_at FROM profiles"
+                )
+            )
+        }
+    # In order, trimmed, cut to 60, repeats (any case) and empties dropped.
+    assert rows[old].offer_skills == ["React", "Python", "x" * 60]
+    assert rows[old].want_skills == ["designer"]
+    assert rows[old].interest_tags == []
+    # Chips someone already picked are left alone.
+    assert rows[picked].offer_skills == ["Figma"]
+    assert (rows[old].nudges_shown, rows[old].nudges_dismissed, rows[old].nudge_shown_at) == (
+        [],
+        [],
+        None,
+    )
+
+    command.downgrade(config, "0036")
+    columns = {column["name"] for column in inspect(engine).get_columns("profiles")}
+    assert not {"nudges_shown", "nudges_dismissed", "nudge_shown_at"} & columns
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES

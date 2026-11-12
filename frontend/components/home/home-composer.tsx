@@ -129,7 +129,7 @@ function useTypedPlaceholder(active: boolean): { text: string; typing: boolean }
  * a tap on a chip is never lost. Behaviour, options and limits are as before. After
  * sending, the new request opens in the detail pane.
  */
-export function HomeComposer() {
+export function HomeComposer({ quiet = false }: { quiet?: boolean }) {
   const router = useRouter();
   const ids = useId();
   const textRef = useRef<HTMLTextAreaElement>(null);
@@ -265,7 +265,13 @@ export function HomeComposer() {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-ink text-bg hover:bg-ink-hover disabled:bg-panel disabled:text-muted inline-flex min-h-12 flex-1 items-center justify-center rounded-xl px-[22px] text-[15px] font-semibold transition-transform active:scale-[.97] disabled:cursor-not-allowed lg:flex-none lg:hover:-translate-y-0.5"
+            className={cx(
+              "disabled:bg-panel disabled:text-muted inline-flex min-h-12 flex-1 items-center justify-center rounded-xl px-[22px] text-[15px] font-semibold transition-transform active:scale-[.97] disabled:cursor-not-allowed lg:flex-none lg:hover:-translate-y-0.5",
+              // With an unfinished profile, "Finish in 60 seconds" is the one primary button.
+              quiet
+                ? "border-green text-green hover:bg-green-tint border bg-transparent"
+                : "bg-ink text-bg hover:bg-ink-hover",
+            )}
           >
             {submitting ? "Sending…" : "Find matches"}
           </button>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ds/button";
+import { useSkillGate } from "@/components/onboarding/skill-gate";
 import { InlineError } from "@/components/ds/fields";
 import { browserApi } from "@/lib/api/browser";
 import { teamInviteSchema, type TeamInvite } from "@/lib/api/schemas";
@@ -16,15 +17,23 @@ export function MyTeamInvites({ initial }: { initial: TeamInvite[] }) {
   const [invites, setInvites] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { guard, dialog } = useSkillGate();
 
   async function answer(invite: TeamInvite, accept: boolean) {
     setBusy(true);
     setError(null);
     try {
-      await browserApi(`/teams/invites/${invite.id}/respond`, teamInviteSchema, {
-        method: "POST",
-        body: { accept },
-      });
+      // Joining needs a few offered skills (the soft gate); saying no never does.
+      const answered = await guard(() =>
+        browserApi(`/teams/invites/${invite.id}/respond`, teamInviteSchema, {
+          method: "POST",
+          body: { accept },
+        }),
+      );
+      if (!answered) {
+        setBusy(false);
+        return;
+      }
       if (accept) {
         router.push(`/teams/${invite.team.id}`);
         return;
@@ -40,6 +49,7 @@ export function MyTeamInvites({ initial }: { initial: TeamInvite[] }) {
 
   return (
     <section aria-labelledby="team-invites-h" className="flex flex-col gap-3">
+      {dialog}
       <h2 id="team-invites-h" className="text-title">
         Invites
       </h2>

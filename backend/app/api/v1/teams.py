@@ -158,7 +158,8 @@ async def list_my_invites(auth: AuthDep, service: ServiceDep) -> TeamInviteList:
         404: _404_INVITE,
         409: {
             "model": ErrorResponse,
-            "description": "`team_invite_not_pending`, `team_full`, `too_many_teams` or "
+            "description": "`team_invite_not_pending`, `skills_required` (accepting an invite "
+            "needs at least 3 offered skills), `team_full`, `too_many_teams` or "
             "`team_not_available`.",
         },
         422: _422,
@@ -208,7 +209,11 @@ async def preview_invite_link(code: LinkCode, auth: AuthDep, service: ServiceDep
     responses={
         401: _401,
         404: _404_LINK,
-        409: {"model": ErrorResponse, "description": "`team_full` or `too_many_teams`."},
+        409: {
+            "model": ErrorResponse,
+            "description": "`skills_required` (offer at least 3 skills first), `team_full` or "
+            "`too_many_teams`.",
+        },
         429: _429,
     },
 )
@@ -338,8 +343,9 @@ async def revoke_invite_link(team_id: uuid.UUID, auth: AuthDep, service: Service
         },
         409: {
             "model": ErrorResponse,
-            "description": "`already_member`, `team_invite_exists`, `team_full`, "
-            "`too_many_pending_invites` or `too_many_teams`.",
+            "description": "`already_member`, `skills_required` (offer at least 3 skills "
+            "first), `team_invite_exists`, `team_full`, `too_many_pending_invites` or "
+            "`too_many_teams`.",
         },
         422: _422,
         429: _429,

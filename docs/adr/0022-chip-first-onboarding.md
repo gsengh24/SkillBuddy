@@ -71,13 +71,33 @@ where the unchanged consent line sits in the new flow (owner review).
 - Aggregate counts ("23 people are looking for Python skills this week"): counts only,
   hidden below a minimum (5 for demand, 10 for "joined this month").
 
+**Home, strength and nudges (onboarding P4).**
+- *Strength* is computed by the API only (`services/profile_strength.py`) and returned with
+  the profile and the onboarding progress as `{percent, done, total, missing}`. `missing`
+  holds stable item codes (`intents`, `offers`, `wants`, `about_text`, `availability`,
+  `headline`, `links`); clients choose the words and the links.
+- *Soft gate*: sending an intro, asking to join a team, joining by link and accepting a team
+  invite need at least 3 offered skills (`409 skills_required`). Clients ask for them inline
+  and retry. Migration 0037 fills empty chip columns from `structured` for older profiles,
+  so nobody who already listed skills is stopped.
+- *Nudges* (screen 11): `GET /me/nudge` hands out at most one a day; each kind is shown on
+  one day at most and never again once dismissed (owner-approved default). Kinds:
+  `team_skill` (a team just joined names a listed skill the person doesn't offer) and
+  `availability` (after a first match, with no days set). Stored as `nudges_shown`,
+  `nudges_dismissed` and `nudge_shown_at` on `profiles`.
+- *Demand* (screen 8): `GET /stats/demand?skill=` returns a count of other active, unblocked
+  people who wanted the skill in the last 7 days (a want chip saved, or a request asking for
+  it), or `null` below 5. Never names or pictures.
+- The You page's skill editors now write the chip columns (`PATCH /me/profile`), and the
+  matcher's view follows them.
+
 ## Consequences
 
 - Profiles can now exist without about text. Code that treats "has a profile" as "is
   onboarded" must use `onboarding_completed_at` instead (the web app moves over with the new
   screens).
-- The You page's skill editors still write `structured` until the profile-strength work moves
-  them to the new columns; until then the two can differ for people who used both.
+- The You page's skill editors write the chip columns (onboarding P4); `structured` follows
+  them, so the two no longer differ.
 - Year and branch are new personal data: optional, never shown to others in this change,
   never sent to an AI provider, deleted with the account, and listed in the privacy policy.
 - Matching does not read the new columns until step 5 builds `structured` from them.

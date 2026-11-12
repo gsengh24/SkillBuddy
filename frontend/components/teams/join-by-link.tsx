@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ds/button";
+import { useSkillGate } from "@/components/onboarding/skill-gate";
 import { InlineError } from "@/components/ds/fields";
 import { browserApi } from "@/lib/api/browser";
 import { teamSchema } from "@/lib/api/schemas";
@@ -14,14 +15,19 @@ export function JoinByLink({ code, teamName }: { code: string; teamName: string 
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { guard, dialog } = useSkillGate();
 
   async function join() {
     setBusy(true);
     setError(null);
     try {
-      const team = await browserApi(`/teams/join/${encodeURIComponent(code)}`, teamSchema, {
-        method: "POST",
-      });
+      const team = await guard(() =>
+        browserApi(`/teams/join/${encodeURIComponent(code)}`, teamSchema, { method: "POST" }),
+      );
+      if (!team) {
+        setBusy(false);
+        return;
+      }
       router.push(`/teams/${team.id}`);
     } catch (caught) {
       setError(describeError(caught));
@@ -31,6 +37,7 @@ export function JoinByLink({ code, teamName }: { code: string; teamName: string 
 
   return (
     <div className="flex flex-col items-start gap-3">
+      {dialog}
       <Button variant="primary" disabled={busy} onClick={join}>
         {busy ? "Joining…" : `Join ${teamName}`}
       </Button>

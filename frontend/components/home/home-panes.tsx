@@ -29,7 +29,19 @@ function useHomeUrl() {
 }
 
 /** The ink inbox pane: its heading and counts, "New request", and the list (or its error state). */
-export function InboxPane({ rows, failed }: { rows: ActivityRow[]; failed: boolean }) {
+export function InboxPane({
+  rows,
+  failed,
+  top = null,
+  instead = null,
+}: {
+  rows: ActivityRow[];
+  failed: boolean;
+  /** Shown above the list (an in-context nudge). */
+  top?: ReactNode;
+  /** Shown in place of the list (an unfinished profile's "Finish your profile"). */
+  instead?: ReactNode;
+}) {
   const { item, filter, composerHref } = useHomeUrl();
   const needReply = rows.filter((row) => row.needsReply).length;
   const withMatches = rows.filter((row) => row.ready).length;
@@ -62,7 +74,10 @@ export function InboxPane({ rows, failed }: { rows: ActivityRow[]; failed: boole
           <span aria-hidden>+</span> New request
         </Link>
       </div>
-      {failed ? (
+      {top}
+      {instead ? (
+        instead
+      ) : failed ? (
         <TryAgain message="We couldn't load your activity just now." />
       ) : (
         <ActivityList

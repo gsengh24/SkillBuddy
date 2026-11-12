@@ -69,6 +69,34 @@ def with_chips(profile: Profile, structured: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def set_chips(
+    profile: Profile,
+    *,
+    offers: Sequence[str] | None = None,
+    wants: Sequence[str] | None = None,
+    interests: Sequence[str] | None = None,
+) -> bool:
+    """Replace some chip lists, keeping the matcher's view in step with them.
+
+    An edit is the person's word: ``structured`` takes the new lists as they are (dropping
+    anything read from the text that they removed). Returns True when a parsed profile's
+    view changed, so the caller re-embeds it.
+    """
+    changed = False
+    for column, key, values in (
+        ("offer_skills", "offers", offers),
+        ("want_skills", "seeks", wants),
+        ("interest_tags", "interests", interests),
+    ):
+        if values is None or list(values) == list(getattr(profile, column)):
+            continue
+        setattr(profile, column, list(values))
+        changed = True
+        if profile.parse_status == ParseStatus.PARSED and profile.structured:
+            profile.structured = {**profile.structured, key: merged_tags(values, [])}
+    return changed and profile.parse_status == ParseStatus.PARSED
+
+
 async def parse_profile(
     session_factory: async_sessionmaker[AsyncSession],
     gateway: AIGateway,

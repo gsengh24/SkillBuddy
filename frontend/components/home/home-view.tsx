@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
-import { Panel, TopicChip } from "@/components/ds/surfaces";
-import { ButtonLink } from "@/components/ds/button";
 import { TwoToneHeadline } from "@/components/ds/page-parts";
 import { TextLink } from "@/components/ui/text-link";
 import { cx } from "@/components/ui/cx";
 import { summaryCounts, type ActivityRow } from "@/lib/home/activity";
-import type { Connection, MatchRequest } from "@/lib/api/schemas";
+import type { Connection, MatchRequest, Nudge, Onboarding } from "@/lib/api/schemas";
 
+import { FinishProfile } from "./finish-profile";
 import { DetailPane, InboxPane } from "./home-panes";
+import { NudgeCard } from "./nudge-card";
 import { Greeting } from "./greeting";
 import { LiveRefresh } from "./live-refresh";
 import { HomeComposer } from "./home-composer";
@@ -25,6 +25,10 @@ export function HomeView({
   failed,
   rows,
   lists,
+  progress = null,
+  demand = null,
+  nudge = null,
+  offerSkills = [],
   children,
 }: {
   email: string;
@@ -32,6 +36,12 @@ export function HomeView({
   failed: boolean;
   rows: ActivityRow[];
   lists: { requests: MatchRequest[]; connections: Connection[] };
+  /** Onboarding progress, for an unfinished profile (screen 8). */
+  progress?: Onboarding | null;
+  demand?: { skill: string; count: number } | null;
+  /** Today's in-context nudge, for a finished profile (screen 11). */
+  nudge?: Nudge | null;
+  offerSkills?: string[];
   children: ReactNode;
 }) {
   const hasConnections = lists.connections.length > 0;
@@ -48,23 +58,8 @@ export function HomeView({
         size="greeting"
         className="mt-2.5 mb-4 lg:mb-6"
       />
-      {profile ? (
-        <HomeComposer />
-      ) : (
-        <Panel tone="green" className="flex flex-col gap-2">
-          <TopicChip tone="soft" className="self-start">
-            Start here
-          </TopicChip>
-          <p className="text-title-lg">Tell us about you</p>
-          <p className="text-ink-2 max-w-md">
-            A few lines about what you do and what you&apos;re looking for. We use it to find people
-            worth meeting.
-          </p>
-          <ButtonLink href="/onboarding" variant="primary" className="self-start">
-            Create your profile
-          </ButtonLink>
-        </Panel>
-      )}
+      {/* The composer works either way; unfinished, its button steps down to outline. */}
+      <HomeComposer quiet={!profile} />
       <div
         className={cx("mt-[22px] grid gap-3", hasConnections ? "lg:grid-cols-2" : "hidden lg:grid")}
       >
@@ -82,7 +77,17 @@ export function HomeView({
         className="border-line bg-card flex flex-col lg:-mx-4 lg:-mt-8 lg:grid lg:min-h-[min(820px,calc(100dvh-8rem))] lg:grid-cols-[360px_minmax(0,1fr)] lg:overflow-hidden lg:rounded-[18px] lg:border"
       >
         <h1 className="sr-only">Home</h1>
-        <InboxPane rows={rows} failed={failed} />
+        <InboxPane
+          rows={rows}
+          failed={failed}
+          top={profile && nudge ? <NudgeCard nudge={nudge} offerSkills={offerSkills} /> : null}
+          instead={
+            // Screen 8: it replaces the empty inbox only; any activity still shows.
+            !profile && progress && !failed && rows.length === 0 ? (
+              <FinishProfile progress={progress} demand={demand} />
+            ) : null
+          }
+        />
         <DetailPane composer={composer}>{children}</DetailPane>
       </div>
       <p className="text-muted mt-4 text-[13px]">

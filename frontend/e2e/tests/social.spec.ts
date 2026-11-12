@@ -22,7 +22,10 @@ test("notifications and messages pages are accessible on a phone", async ({ page
 
   await page.goto("/messages");
   await expect(page.getByRole("heading", { name: "Home", level: 1 })).toBeVisible();
-  await expect(page.getByText(/No chats yet/)).toBeVisible();
+  // A new account hasn't finished its profile, so "Finish your profile" takes the empty
+  // inbox's place (onboarding screen 8).
+  await expect(page.getByRole("region", { name: /Finish your profile/ })).toBeVisible();
+  await expect(page.getByText(/No chats yet/)).toHaveCount(0);
   results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

@@ -50,6 +50,9 @@ async def session_factory(settings: Settings) -> AsyncIterator[async_sessionmake
         await engine.dispose()
 
 
+OFFERS = ["React", "Python", "Figma"]
+
+
 async def join(
     client: AsyncClient, settings: Settings, delivery: CapturingDelivery, name: str
 ) -> Person:
@@ -59,6 +62,8 @@ async def join(
         json=profile_body(display_name=name, links=[f"https://github.com/{name.lower()}"]),
         headers=bearer(token),
     )
+    # Sending intros and joining teams need three offered skills (the soft gate).
+    await client.put("/api/v1/me/onboarding/offers", json={"skills": OFFERS}, headers=bearer(token))
     me = (await client.get("/api/v1/auth/me", headers=bearer(token))).json()
     return Person(token=token, id=me["id"])
 
