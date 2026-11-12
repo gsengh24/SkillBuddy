@@ -67,10 +67,23 @@ async function mockup(page: Page, file: string, name: string) {
 async function openGate(page: Page) {
   await page.goto("/design/screens");
   await expect(page.getByRole("heading", { name: "Screens", level: 1 })).toBeVisible();
-  // The first match card: open the note, then send it.
-  await page.getByRole("button", { name: "Send intro" }).first().click();
-  await page.getByRole("button", { name: "Send intro" }).first().click();
-  return page.getByRole("dialog", { name: "Add 3 skills first" });
+  const dialog = page.getByRole("dialog", { name: "Add 3 skills first" });
+  // The first match card: open the note, then send it. A click that lands before the page
+  // has hydrated does nothing, so each step is retried until its result shows.
+  const note = page.getByRole("textbox", { name: "A short hello (optional)" }).first();
+  await expect(async () => {
+    if (!(await note.isVisible())) {
+      await page.getByRole("button", { name: "Send intro" }).first().click();
+    }
+    await expect(note).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  await expect(async () => {
+    if (!(await dialog.isVisible())) {
+      await page.getByRole("button", { name: "Send intro" }).first().click();
+    }
+    await expect(dialog).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  return dialog;
 }
 
 test("the soft gate before an intro (screen 9)", async ({ page }) => {

@@ -96,8 +96,9 @@ describe("step 2: what you're good at", () => {
   it("picks chips, adds a typed skill, and saves them in order", async () => {
     render(<OnboardingFlow initial={progress({ intents: ["explore"] }, ["intents"])} />);
     expect(screen.getByText("Step 2 of 4")).toBeVisible();
-    // The shortcuts arrive later; they are shown but can't be used yet.
-    expect(screen.getByRole("button", { name: /Import resume/ })).toBeDisabled();
+    // "Skip the typing": both shortcuts are offered (screens 6 and 7).
+    expect(screen.getByRole("button", { name: /Import resume/ })).toBeEnabled();
+    expect(screen.getByText("Your file is read in your browser and isn't uploaded.")).toBeVisible();
 
     const coding = screen.getByRole("group", { name: "Coding" });
     await userEvent.click(within(coding).getByRole("button", { name: "React" }));
@@ -125,6 +126,70 @@ describe("step 2: what you're good at", () => {
     expect(
       await screen.findByRole("heading", { level: 1, name: /What are you looking for/ }),
     ).toBeVisible();
+  });
+
+  it("pastes text, keeps the chips confirmed, and saves them only on Continue", async () => {
+    render(
+      <OnboardingFlow
+        initial={progress({ intents: ["explore"], offer_skills: ["Python"] }, ["intents"])}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Paste text" }));
+    expect(
+      screen.getByRole("heading", { level: 1, name: /Paste anything about you/ }),
+    ).toBeVisible();
+    await userEvent.type(
+      screen.getByLabelText("Text about you"),
+      "I build apps in React and Flutter. Weekend chess player.",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Find my skills" }));
+    expect(await screen.findByRole("heading", { level: 1, name: /We found these/ })).toBeVisible();
+    // Drop Flutter: a dropped chip isn't used.
+    await userEvent.click(screen.getByRole("button", { name: "Flutter" }));
+    await userEvent.click(screen.getByRole("button", { name: /Use these/ }));
+
+    // Back on step 2 with React added to Python; nothing has been saved yet.
+    const coding = screen.getByRole("group", { name: "Coding" });
+    expect(within(coding).getByRole("button", { name: "React" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(within(coding).getByRole("button", { name: "Flutter" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    const sent = fetchMock.mock.calls.map((call) => call as [string, RequestInit]);
+    expect(sent.filter(([, init]) => init.method && init.method !== "GET")).toEqual([]);
+    // The text itself never went anywhere.
+    expect(sent.some(([url, init]) => `${url}${String(init.body)}`.includes("chess"))).toBe(false);
+
+    fetchMock.mockResolvedValueOnce(
+      json(200, progress({ offer_skills: ["Python", "React"] }, ["intents", "offers"])),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Continue/ }));
+    expect(lastCall()).toMatchObject({
+      url: "/api/v1/me/onboarding/offers",
+      method: "PUT",
+      body: { skills: ["Python", "React"] },
+    });
+    // The interest waits for step 3.
+    expect(
+      within(await screen.findByRole("group", { name: "Interests" })).getByRole("button", {
+        name: "Chess",
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("goes back to step 2 from the shortcut without changing anything", async () => {
+    render(<OnboardingFlow initial={progress({ intents: ["explore"] }, ["intents"])} />);
+    await userEvent.click(screen.getByRole("button", { name: /Import resume/ }));
+    expect(screen.getByRole("heading", { level: 1, name: /Import your resume/ })).toBeVisible();
+    expect(
+      screen.getByText("Up to 2 MB. Read in your browser, never uploaded or stored."),
+    ).toBeVisible();
+    await userEvent.click(screen.getByRole("button", { name: "Back to skills" }));
+    expect(screen.getByRole("heading", { level: 1, name: /What are you good at/ })).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent("0 selected");
   });
 
   it("skips for now and keeps the step's state on the server", async () => {

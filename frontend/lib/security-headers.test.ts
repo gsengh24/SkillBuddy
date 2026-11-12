@@ -20,6 +20,9 @@ describe("security headers", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("connect-src 'self'");
+    // PDF.js's worker: this site only, never blob: or data: (ADR 0023).
+    expect(csp).toContain("worker-src 'self';");
+    expect(csp).not.toContain("blob:");
     expect(csp).not.toContain("unsafe-eval");
     expect(csp).not.toContain("ws:");
   });

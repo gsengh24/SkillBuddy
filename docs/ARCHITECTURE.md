@@ -33,7 +33,7 @@ Every request on the platform is one of six intents, and the intent decides how 
 
 **Main user journeys**
 
-1. **Onboard.** Sign up, tap what you are here for, what you offer and what you want, and a few details; each step saves on its own and can be skipped ([ADR 0022](adr/0022-chip-first-onboarding.md)). The system builds a profile and shows it back for correction.
+1. **Onboard.** Sign up, tap what you are here for, what you offer and what you want, and a few details; each step saves on its own and can be skipped ([ADR 0022](adr/0022-chip-first-onboarding.md)). Step 2 can also suggest skills from a resume PDF or pasted text, read and cleaned in the browser and never uploaded ([ADR 0023](adr/0023-in-browser-pdf-reading.md)). The system builds a profile and shows it back for correction.
 2. **Create a request.** Pick an intent or just type what you want. The system clarifies with one or two follow-up questions if the request is vague.
 3. **Receive matches.** A ranked list of 3 to 10 people, each with a reason such as "you both are building in fintech, she covers the design gap you mentioned".
 4. **Connect.** Send an intro note; the other side sees your request and reason and accepts or declines.

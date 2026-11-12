@@ -16,3 +16,17 @@ export async function searchSkills(query: string): Promise<string[]> {
   });
   return result.items.map((item) => item.name);
 }
+
+/**
+ * The bundled list of common skill and interest names (GET /skills/common), for spotting
+ * skills in text on the device. A failure gives an empty list: the onboarding chips still
+ * cover the common names.
+ */
+export async function commonSkills(): Promise<string[]> {
+  try {
+    const result = await browserApi("/skills/common", skillSuggestionsSchema, { timeoutMs: 5_000 });
+    return result.items.map((item) => item.name);
+  } catch {
+    return [];
+  }
+}

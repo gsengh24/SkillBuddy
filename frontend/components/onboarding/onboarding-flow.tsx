@@ -15,8 +15,11 @@ import { browserApi } from "@/lib/api/browser";
 import { onboardingSchema, profileSchema, type Onboarding } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
 import { brand } from "@/lib/brand";
+import { MAX_TAGS, includesTag } from "@/lib/onboarding/catalog";
+import type { Found } from "@/lib/onboarding/spot";
 import { STEPS, stepAfter, stepNumber, stepToShow, type Step } from "@/lib/onboarding/steps";
 
+import { ImportShortcut, type ShortcutMode } from "./import-shortcut";
 import {
   AboutStep,
   draftsFrom,
@@ -29,6 +32,15 @@ import {
 
 /** Step 5, "check what we understood" (ADR 0022). */
 export const REVIEW_PATH = "/onboarding/review";
+/** Adds names not already there (ignoring case), up to MAX_TAGS. */
+function merge(list: string[], more: string[]): string[] {
+  const out = [...list];
+  for (const name of more) {
+    if (out.length < MAX_TAGS && !includesTag(out, name)) out.push(name);
+  }
+  return out;
+}
+
 const CONSENT_NEEDED = "To save, agree to how AI is used to find your matches.";
 
 const HEADINGS: Record<Step, { lead: string; rest: string; eyebrow?: string }> = {
@@ -93,6 +105,8 @@ export function OnboardingFlow({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
+  // "Skip the typing" on step 2: screen 6 (resume) or 7 (paste), shown in place of the step.
+  const [shortcut, setShortcut] = useState<ShortcutMode | null>(null);
 
   const shown = stepToShow(asked, progress);
 
@@ -110,6 +124,7 @@ export function OnboardingFlow({
 
   function go(next: Step | "review") {
     setError(null);
+    setShortcut(null);
     if (next === "review") {
       router.push(REVIEW_PATH);
       return;
@@ -160,6 +175,25 @@ export function OnboardingFlow({
 
   const wide = step === "wants";
 
+  function openShortcut(mode: ShortcutMode) {
+    setShortcut(mode);
+    window.scrollTo({ top: 0 });
+  }
+
+  // The kept chips join step 2's picks (and interests step 3's); nothing is saved until the
+  // person continues from step 2.
+  function useFound(found: Found) {
+    setDrafts((current) => ({
+      ...current,
+      offers: merge(current.offers, found.skills),
+      wants: { ...current.wants, interests: merge(current.wants.interests, found.interests) },
+    }));
+    setShortcut(null);
+    window.scrollTo({ top: 0 });
+  }
+
+  const shortcutShown = step === "offers" && shortcut !== null;
+
   return (
     <div className="bg-bg flex min-h-dvh flex-col">
       <header className="flex items-center justify-between gap-4 px-4 py-3.5 lg:px-8 lg:py-6">
@@ -177,97 +211,113 @@ export function OnboardingFlow({
         <StepProgress step={number} total={STEPS.length} label="Profile setup" />
       </div>
 
-      <main
-        key={step}
-        className={cx(
-          "mx-auto grid w-full content-start gap-6 px-4 pt-6 pb-6 lg:gap-8 lg:px-0 lg:pt-12 lg:pb-8",
-          wide
-            ? "max-w-[640px] lg:max-w-[960px] lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-x-12"
-            : "max-w-[640px]",
-        )}
-      >
-        <div className={cx("grid gap-6 lg:gap-8", wide && "lg:col-start-1")}>
-          <div>
-            {heading.eyebrow ? (
-              <p className="text-mono-lg text-green font-mono uppercase">{heading.eyebrow}</p>
-            ) : null}
-            <TwoToneHeadline as="h1" size="greeting" lead={heading.lead} rest={heading.rest} />
-          </div>
-          {wide ? (
-            <TradeSummary
-              className="lg:hidden"
-              offers={drafts.offers}
-              wants={drafts.wants.skills}
-              onEditOffers={() => go("offers")}
-            />
-          ) : null}
-          {step === "intents" ? (
-            <IntentsStep value={drafts.intents} onChange={set("intents")} />
-          ) : step === "offers" ? (
-            <OffersStep value={drafts.offers} onChange={set("offers")} />
-          ) : step === "wants" ? (
-            <WantsStep offers={drafts.offers} value={drafts.wants} onChange={set("wants")} />
-          ) : (
-            <AboutStep value={drafts.about} onChange={set("about")} />
-          )}
-        </div>
-        {wide ? (
-          <TradeSummary
-            className="hidden lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1 lg:block"
-            offers={drafts.offers}
-            wants={drafts.wants.skills}
-            onEditOffers={() => go("offers")}
-          />
-        ) : null}
-      </main>
-
-      <footer
-        className={cx(
-          "border-line bg-bg sticky bottom-0 mt-auto flex flex-col gap-2 border-t px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))]",
-          "lg:static lg:mx-auto lg:mb-12 lg:w-full lg:border-0 lg:bg-transparent lg:px-0 lg:pt-5",
-          wide ? "lg:max-w-[960px]" : "lg:max-w-[640px]",
-        )}
-      >
-        {step === "about" && needsConsent ? (
-          <label className="bg-green-tint border-green-line rounded-card flex items-start gap-3 border p-4">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(event) => setConsent(event.target.checked)}
-              className="accent-green mt-1 size-4 shrink-0"
-            />
-            <span className="text-meta-lg text-ink">
-              <AiConsentText />
-            </span>
-          </label>
-        ) : null}
-        {error ? <InlineError announce>{error}</InlineError> : null}
-        <div className="flex items-center gap-2">
-          {step === "intents" ? null : (
-            <Button variant="ghost" disabled={busy} onClick={() => save("skip")}>
-              Skip for now
-            </Button>
-          )}
-          <span className="flex-1" />
-          {count === null ? null : (
-            <span
-              role="status"
-              aria-live="polite"
-              className="text-mono-lg text-muted font-mono uppercase"
-            >
-              {count} selected
-            </span>
-          )}
-          <Button variant="primary" disabled={busy || blocked} onClick={() => save("save")}>
-            {step === "about" ? "Finish" : "Continue"}
-            {step === "about" ? (
-              <CheckIcon className="size-4" />
-            ) : (
-              <ArrowRightIcon className="size-4" />
+      {shortcutShown ? (
+        <ImportShortcut
+          key={shortcut}
+          mode={shortcut}
+          onUse={useFound}
+          onCancel={() => setShortcut(null)}
+        />
+      ) : (
+        <>
+          <main
+            key={step}
+            className={cx(
+              "mx-auto grid w-full content-start gap-6 px-4 pt-6 pb-6 lg:gap-8 lg:px-0 lg:pt-12 lg:pb-8",
+              wide
+                ? "max-w-[640px] lg:max-w-[960px] lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-x-12"
+                : "max-w-[640px]",
             )}
-          </Button>
-        </div>
-      </footer>
+          >
+            <div className={cx("grid gap-6 lg:gap-8", wide && "lg:col-start-1")}>
+              <div>
+                {heading.eyebrow ? (
+                  <p className="text-mono-lg text-green font-mono uppercase">{heading.eyebrow}</p>
+                ) : null}
+                <TwoToneHeadline as="h1" size="greeting" lead={heading.lead} rest={heading.rest} />
+              </div>
+              {wide ? (
+                <TradeSummary
+                  className="lg:hidden"
+                  offers={drafts.offers}
+                  wants={drafts.wants.skills}
+                  onEditOffers={() => go("offers")}
+                />
+              ) : null}
+              {step === "intents" ? (
+                <IntentsStep value={drafts.intents} onChange={set("intents")} />
+              ) : step === "offers" ? (
+                <OffersStep
+                  value={drafts.offers}
+                  onChange={set("offers")}
+                  onImport={() => openShortcut("resume")}
+                  onPaste={() => openShortcut("paste")}
+                />
+              ) : step === "wants" ? (
+                <WantsStep offers={drafts.offers} value={drafts.wants} onChange={set("wants")} />
+              ) : (
+                <AboutStep value={drafts.about} onChange={set("about")} />
+              )}
+            </div>
+            {wide ? (
+              <TradeSummary
+                className="hidden lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1 lg:block"
+                offers={drafts.offers}
+                wants={drafts.wants.skills}
+                onEditOffers={() => go("offers")}
+              />
+            ) : null}
+          </main>
+
+          <footer
+            className={cx(
+              "border-line bg-bg sticky bottom-0 mt-auto flex flex-col gap-2 border-t px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))]",
+              "lg:static lg:mx-auto lg:mb-12 lg:w-full lg:border-0 lg:bg-transparent lg:px-0 lg:pt-5",
+              wide ? "lg:max-w-[960px]" : "lg:max-w-[640px]",
+            )}
+          >
+            {step === "about" && needsConsent ? (
+              <label className="bg-green-tint border-green-line rounded-card flex items-start gap-3 border p-4">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(event) => setConsent(event.target.checked)}
+                  className="accent-green mt-1 size-4 shrink-0"
+                />
+                <span className="text-meta-lg text-ink">
+                  <AiConsentText />
+                </span>
+              </label>
+            ) : null}
+            {error ? <InlineError announce>{error}</InlineError> : null}
+            <div className="flex items-center gap-2">
+              {step === "intents" ? null : (
+                <Button variant="ghost" disabled={busy} onClick={() => save("skip")}>
+                  Skip for now
+                </Button>
+              )}
+              <span className="flex-1" />
+              {count === null ? null : (
+                <span
+                  role="status"
+                  aria-live="polite"
+                  className="text-mono-lg text-muted font-mono uppercase"
+                >
+                  {count} selected
+                </span>
+              )}
+              <Button variant="primary" disabled={busy || blocked} onClick={() => save("save")}>
+                {step === "about" ? "Finish" : "Continue"}
+                {step === "about" ? (
+                  <CheckIcon className="size-4" />
+                ) : (
+                  <ArrowRightIcon className="size-4" />
+                )}
+              </Button>
+            </div>
+          </footer>
+        </>
+      )}
     </div>
   );
 }

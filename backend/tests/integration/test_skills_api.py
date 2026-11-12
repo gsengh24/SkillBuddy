@@ -56,3 +56,30 @@ async def test_bad_queries_are_validation_errors(
         response = await client.get(SUGGEST, params=params, headers=bearer(token))
 
     assert response.status_code == 422
+
+
+COMMON = "/api/v1/skills/common"
+
+
+async def test_the_common_list_needs_sign_in(
+    settings: Settings, delivery: CapturingDelivery
+) -> None:
+    async with auth_client(settings, delivery) as client:
+        anonymous = await client.get(COMMON)
+
+    assert anonymous.status_code == 401
+    assert error_code(anonymous) == "authentication_required"
+
+
+async def test_the_common_list_is_the_curated_names(
+    settings: Settings, delivery: CapturingDelivery
+) -> None:
+    async with auth_client(settings, delivery) as client:
+        token = await signed_in(client, settings, delivery)
+        listed = await client.get(COMMON, headers=bearer(token))
+
+    assert listed.status_code == 200
+    names = [item["name"] for item in listed.json()["items"]]
+    assert names[:3] == ["Python", "JavaScript", "TypeScript"]
+    assert "Chess" in names
+    assert len(names) == len(set(names)) < 200

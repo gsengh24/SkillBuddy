@@ -145,9 +145,14 @@ function toggle(list: string[], tag: string): string[] {
 export function OffersStep({
   value,
   onChange,
+  onImport,
+  onPaste,
 }: {
   value: string[];
   onChange: (value: string[]) => void;
+  /** Open screen 6 (resume PDF) or screen 7 (paste text). */
+  onImport?: () => void;
+  onPaste?: () => void;
 }) {
   const extra = extraTags(value, ALL_LISTED_SKILLS);
   return (
@@ -157,17 +162,18 @@ export function OffersStep({
           Skip the typing
         </p>
         <div className="grid grid-cols-2 gap-2 lg:row-span-2 lg:flex">
-          {/* Resume import and paste arrive with the next onboarding change. */}
-          <Button variant="outline" disabled className="px-2.5">
+          <Button variant="outline" disabled={!onImport} onClick={onImport} className="px-2.5">
             <FileIcon className="size-4" />
             Import resume (PDF)
           </Button>
-          <Button variant="outline" disabled className="px-2.5">
+          <Button variant="outline" disabled={!onPaste} onClick={onPaste} className="px-2.5">
             <PasteIcon className="size-4" />
             Paste text
           </Button>
         </div>
-        <p className="text-meta text-muted lg:text-meta-lg">Coming soon.</p>
+        <p className="text-meta text-muted lg:text-meta-lg">
+          Your file is read in your browser and isn&apos;t uploaded.
+        </p>
       </Panel>
       <SkillSearch
         label="Search skills"
