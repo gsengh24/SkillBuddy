@@ -1,0 +1,75 @@
+<!--meta
+short: 10 · You page, profile strength
+kicker: Screen 10 · You
+title: Profile strength on You.
+title2: Header card and section list.
+desc: The You header card with initials avatar, headline, city and a 65% strength meter whose missing items are links. Numbered section list on the left (desktop) or a sticky chip row (phone).
+-->
+<template data-variant="Profile at 65%" data-note="Missing items jump straight to the right section. The phone chip row scrolls sideways inside itself; the page never does. Focus ring on See how others see you.">
+<div class="app soft">
+  <!--#include topbar cur=you-->
+  <div class="wrap">
+    <div class="you">
+      <nav class="secnav" aria-label="Profile sections">
+        <a href="#" aria-current="true"><span class="mono">01</span>Basics</a>
+        <a href="#"><span class="mono">02</span>Skills</a>
+        <a href="#"><span class="mono">03</span>Looking for</a>
+        <a href="#"><span class="mono">04</span>Availability</a>
+        <a href="#"><span class="mono">05</span>Links</a>
+        <a href="#"><span class="mono">06</span>Privacy and visibility</a>
+        <a href="#"><span class="mono">07</span>Alerts</a>
+        <a href="#"><span class="mono">08</span>Account and security</a>
+        <a href="#"><span class="mono">09</span>Your data</a>
+        <a href="#" class="danger"><span class="mono">10</span>Danger zone</a>
+      </nav>
+      <div style="display:grid;gap:32px;min-width:0">
+        <section class="panel ycard fu" aria-label="Your profile">
+          <div class="yhead">
+            <span class="av lg" aria-hidden="true">AS</span>
+            <div style="min-width:0">
+              <h1 class="h-card">Aarav S.</h1>
+              <p class="body2">Frontend builder · React and Figma</p>
+              <span class="mono loc"><!--#icon pin-->Patiala · 2nd year · Computer Engineering</span>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter-top"><span class="mono muted">Profile strength</span><span class="meter-num">65<small>%</small></span></div>
+            <div class="bar" role="progressbar" aria-label="Profile strength" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"><i style="width:65%"></i></div>
+          </div>
+          <div class="yfoot">
+            <div class="missing">
+              <span class="mono">Missing</span>
+              <ul>
+                <li><a class="link" href="#"><!--#icon plus-->Add availability</a></li>
+                <li><a class="link" href="#"><!--#icon plus-->Add a link</a></li>
+                <li><a class="link" href="#"><!--#icon plus-->Add what you're looking for</a></li>
+              </ul>
+            </div>
+            <button class="btn btn-outline is-focus" type="button"><!--#icon eye-->See how others see you</button>
+          </div>
+        </section>
+        <section class="ysec fu2" aria-label="Basics">
+          <div class="ysec-h"><span class="mono">01</span><h2>Basics</h2></div>
+          <div class="two">
+            <label class="field"><span class="flabel">Display name <span class="mono counter">8 / 60</span></span><input class="input" type="text" value="Aarav S." maxlength="60"></label>
+            <label class="field"><span class="flabel">City</span><input class="input" type="text" value="Patiala"></label>
+          </div>
+          <label class="field"><span class="flabel">Headline <span class="mono counter">34 / 80</span></span><input class="input" type="text" value="Frontend builder · React and Figma" maxlength="80"></label>
+        </section>
+        <section class="ysec fu3" aria-label="Skills">
+          <div class="ysec-h"><span class="mono">02</span><h2>Skills</h2></div>
+          <div class="chips">
+            <button class="chip" type="button" aria-pressed="true">React</button>
+            <button class="chip" type="button" aria-pressed="true">Flutter</button>
+            <button class="chip" type="button" aria-pressed="true">Figma</button>
+            <button class="chip" type="button" aria-pressed="true">UI design</button>
+            <button class="chip" type="button" aria-pressed="true">Writing</button>
+            <button class="chip add" type="button"><!--#icon plus-->Add skill</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <!--#include bnav cur=you-->
+</div>
+</template>

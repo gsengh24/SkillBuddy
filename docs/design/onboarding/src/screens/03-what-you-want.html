@@ -1,0 +1,49 @@
+<!--meta
+short: 3 · What you're looking for
+kicker: Screen 3 · Step 3 of 4
+title: What are you looking for?
+title2: Skills you want, plus interests.
+desc: The "get" half of the exchange. Want chips use ink instead of step 2's green, suggestions that pair with what you offer come first, and an exchange summary sits beside the picks. Tap chips to update it.
+-->
+<template data-variant="Three skills and two interests picked" data-note="Ink chips mean wants; green chips mean offers (step 2). The rest of the skill list is folded under Browse all skills. The summary updates as you tap. Focus ring shown on the optional line, which is capped at 140 characters.">
+<div class="app wide" data-scope>
+  <!--#include ob-head step=3-->
+  <div class="ob split">
+    <div class="ob-head fu">
+      <h1 class="h-page">What are you looking for? <span class="t2">Skills you want to learn or find.</span></h1>
+    </div>
+    <aside class="panel trade fu2" aria-label="Your exchange so far">
+      <div class="trade-side">
+        <div class="trade-h"><span class="mono">You offer</span><a class="link" href="02-what-you-offer.html">Edit</a></div>
+        <div class="tags">
+          <span class="tag">React</span><span class="tag">Flutter</span><span class="tag">Figma</span><span class="tag">UI design</span><span class="tag">Writing</span>
+        </div>
+      </div>
+      <div class="trade-x"><!--#icon exchange--></div>
+      <div class="trade-side">
+        <div class="trade-h"><span class="mono">You want</span><span class="mono" data-of="[data-want]" data-count="{n} picked">3 picked</span></div>
+        <div class="tags" data-mirror="[data-want]" data-empty="Pick at least one below"></div>
+      </div>
+      <p class="hint trade-note">We look for people whose offers and wants line up both ways.</p>
+    </aside>
+    <div class="fu3">
+      <!--#include skills-want-->
+    </div>
+    <div class="grp">
+      <span class="iwrap"><!--#icon search--><input class="input" type="search" placeholder="Not listed? Search, e.g. Django" aria-label="Search skills you want"></span>
+    </div>
+    <label class="field">
+      <span class="flabel">Anything specific? <span class="opt">(optional)</span></span>
+      <span class="iwrap" style="display:block"><input class="input is-focus" type="text" maxlength="140" placeholder="e.g. a designer for my app, a gym partner for mornings" style="padding-left:14px"></span>
+      <span class="hint" style="display:flex;justify-content:space-between;gap:12px"><span>One line is plenty. We'll use it to find people.</span><span class="mono counter">0 / 140</span></span>
+    </label>
+    <!--#include interests-->
+  </div>
+  <footer class="ob-foot">
+    <button class="btn btn-ghost" type="button">Skip for now</button>
+    <span class="grow"></span>
+    <span class="mono" data-count="{n} selected">5 selected</span>
+    <button class="btn btn-primary" type="button">Continue <!--#icon arrow--></button>
+  </footer>
+</div>
+</template>

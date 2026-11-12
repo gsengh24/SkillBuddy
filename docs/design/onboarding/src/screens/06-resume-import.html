@@ -1,0 +1,57 @@
+<!--meta
+short: 6 · Resume import
+kicker: Screen 6 · Shortcut from step 2
+title: Import your resume.
+title2: Pick, reading, suggestions.
+desc: The PDF is read in the browser. Personal details are removed before anything else, and only the chips the person keeps are saved.
+-->
+<template data-variant="1 · Pick a file" data-note="Dashed drop area on card, with a help accordion for LinkedIn (open here). Focus ring on Choose a file. Privacy note is draft copy.">
+<div class="app">
+  <!--#include ob-head step=2-->
+  <div class="ob">
+    <a class="back" href="#"><!--#icon back-->Back to skills</a>
+    <div class="ob-head fu">
+      <h1 class="h-page">Import your resume. <span class="t2">We'll suggest skills from it.</span></h1>
+    </div>
+    <div class="drop fu2">
+      <!--#icon upload-->
+      <b>Drop your resume PDF here or choose a file</b>
+      <button class="btn btn-outline is-focus" type="button">Choose a file</button>
+      <p class="note">Up to 2 MB. Read in your browser, never uploaded or stored.<span class="draft">Draft copy</span></p>
+    </div>
+    <details class="acc fu3" open>
+      <summary>Using LinkedIn? <!--#icon chevron--></summary>
+      <div class="acc-b">Open your LinkedIn profile, choose More → Save to PDF, then drop that file here.</div>
+    </details>
+  </div>
+  <footer class="ob-foot">
+    <a class="btn btn-ghost" href="07-paste-anything.html"><!--#icon paste-->Paste text instead</a>
+  </footer>
+</div>
+</template>
+<template data-variant="2 · Reading" data-note="Runs in the browser in a second or two. The bar is a static snapshot (no looping animation). Cancel throws the text away.">
+<div class="app">
+  <!--#include ob-head step=2-->
+  <div class="ob">
+    <div class="ob-head fu">
+      <h1 class="h-page">Reading your resume… <span class="t2">This takes a moment.</span></h1>
+    </div>
+    <section class="panel fu2" style="display:grid;gap:16px" aria-live="polite">
+      <div class="fileline"><span class="ic"><!--#icon file--></span><div><strong>aarav-resume.pdf</strong><span class="mono">1 page · 184 KB</span></div><span class="mono">60%</span></div>
+      <div class="bar" role="progressbar" aria-label="Reading your resume" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"><i style="width:60%"></i></div>
+      <ul class="plist">
+        <li class="done"><span class="ck"><!--#icon check--></span>Text read in your browser</li>
+        <li class="now"><span class="ck"></span>Removing phone numbers, emails and addresses</li>
+        <li><span class="ck"></span>Finding skills, interests and projects</li>
+      </ul>
+    </section>
+    <p class="body2 fu3">We remove phone numbers, emails and addresses before anything else happens.<span class="draft">Draft copy</span></p>
+  </div>
+  <footer class="ob-foot">
+    <button class="btn btn-ghost is-focus" type="button">Cancel</button>
+  </footer>
+</div>
+</template>
+<template data-variant="3 · Suggestions" data-note="Suggested chips arrive pre-selected with an ✕. Tapping one turns it dashed with a + (not saved). Try it: the kept count updates.">
+<!--#include suggestions source=resume-->
+</template>

@@ -1,0 +1,23 @@
+<div class="app" data-scope>
+  <!--#include ob-head step=1-->
+  <div class="ob">
+    <div class="ob-head fu">
+      <p class="mono eyebrow">Welcome to cynergi</p>
+      <h1 class="h-page">What brings you here? <span class="t2">Pick all that fit.</span></h1>
+    </div>
+    <div class="intents fu2" role="group" aria-label="What you're here for">
+      <button class="icard" type="button" data-pick aria-pressed="true"><span class="tick"><!--#icon check--></span><!--#icon build--><b>Build together</b><span>Find people to make a project with.</span></button>
+      <button class="icard" type="button" data-pick aria-pressed="true"><span class="tick"><!--#icon check--></span><!--#icon exchange--><b>Skill exchange</b><span>Teach what you know, learn what you don't.</span></button>
+      <button class="icard {{focus}}" type="button" data-pick aria-pressed="false"><span class="tick"><!--#icon check--></span><!--#icon buddy--><b>Interest buddy</b><span>Someone to share a hobby with.</span></button>
+      <button class="icard" type="button" data-pick aria-pressed="false"><span class="tick"><!--#icon check--></span><!--#icon accountability--><b>Accountability</b><span>A partner to keep each other on track.</span></button>
+      <button class="icard" type="button" data-pick aria-pressed="false"><span class="tick"><!--#icon check--></span><!--#icon mentor--><b>Mentor</b><span>Learn from, or guide, someone further along.</span></button>
+      <button class="icard" type="button" data-pick aria-pressed="false"><span class="tick"><!--#icon check--></span><!--#icon explore--><b>Explore</b><span>Just see who's out there.</span></button>
+    </div>
+    <p class="mono proof fu3">128 students joined this month</p>
+  </div>
+  <footer class="ob-foot">
+    <span class="mono" data-count="{n} selected">2 selected</span>
+    <span class="grow"></span>
+    <button class="btn btn-primary" type="button" data-needs="1">Continue <!--#icon arrow--></button>
+  </footer>
+</div>

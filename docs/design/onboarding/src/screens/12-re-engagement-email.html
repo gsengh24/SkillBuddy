@@ -1,0 +1,14 @@
+<!--meta
+short: 12 · Re-engagement email
+kicker: Screen 12 · Email
+title: Bring dormant users back.
+title2: Day 3 and the last one, day 10.
+desc: A plain 600px HTML email with inline styles and the wordmark as text. Dark surfaces with light text, so it reads the same when a mail app forces dark mode. One button. Shown inside a generic mail view.
+css: .mailbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 16px; border-bottom: 1px solid var(--line); } .mailhead { padding: 20px 16px 16px; display: grid; gap: 14px; } .mailsubj { margin: 0; font: 800 24px/1.1 var(--f-d); letter-spacing: -0.03em; } .mailfrom { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .mailfrom strong { display: block; font-size: 14px; } .mailfrom .draft { margin-left: auto; } .mailbody { padding: 8px 12px 32px; background: var(--page-soft); flex: 1; } @container app (width >= 1024px) { .mailbar { padding: 8px 32px; } .mailhead { padding: 28px 32px 20px; max-width: 664px; margin: 0 auto; width: 100%; } .mailsubj { font-size: 30px; } .mailbody { padding: 32px; } }
+-->
+<template data-variant="Day 3" data-note="Counts are aggregate only, no names. The alerts footer is draft copy for the owner.">
+<!--#include email-d3-->
+</template>
+<template data-variant="Day 10 · the last one" data-note="Adds “We'll stop reminding you after this.” No more reminder emails after this one.">
+<!--#include email-d10-->
+</template>

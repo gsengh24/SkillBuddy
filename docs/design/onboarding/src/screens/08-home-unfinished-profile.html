@@ -1,0 +1,40 @@
+<!--meta
+short: 8 · Home, unfinished profile
+kicker: Screen 8 · Home
+title: Home with an unfinished profile.
+title2: Finish panel replaces the empty inbox.
+desc: Existing Home layout. The empty inbox becomes a Finish your profile panel with the strength meter at 40% and an aggregate social-proof line. The composer still works.
+-->
+<template data-variant="Profile at 40% · inbox empty" data-note="Finish in 60 seconds is the one primary button, so Find matches drops to outline in this state. Social proof is an aggregate count only. Focus ring on the primary.">
+<div class="app soft">
+  <!--#include topbar cur=home-->
+  <div class="wrap">
+    <div class="shell">
+      <aside class="inbox" aria-label="Inbox">
+        <div class="inbox-h"><h2>Inbox</h2></div>
+        <section class="panel tint finish fu2" aria-label="Finish your profile">
+          <p class="mono eyebrow">Your profile</p>
+          <h3>Finish your profile. <span class="t2">Then we can match you.</span></h3>
+          <div class="meter">
+            <div class="meter-top"><span class="mono muted">Profile strength</span><span class="meter-num">40<small>%</small></span></div>
+            <div class="bar" role="progressbar" aria-label="Profile strength" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"><i style="width:40%"></i></div>
+          </div>
+          <ul class="checks">
+            <li class="done"><span class="ck"><!--#icon check--></span><span>What brings you here</span></li>
+            <li><span class="ck"></span>What you're good at<span class="mono">20 sec</span></li>
+            <li><span class="ck"></span>What you're looking for<span class="mono">20 sec</span></li>
+            <li><span class="ck"></span>A bit about you<span class="mono">15 sec</span></li>
+          </ul>
+          <p class="mono muted">3 quick steps left</p>
+          <button class="btn btn-primary btn-block is-focus" type="button">Finish in 60 seconds</button>
+        </section>
+        <p class="pnote fu3"><!--#icon buddy--><span><b>23 people</b> are looking for Python skills this week. Finish your profile to be matched.</span></p>
+      </aside>
+      <section class="mainp">
+        <!--#include composer-quiet-->
+      </section>
+    </div>
+  </div>
+  <!--#include bnav cur=home-->
+</div>
+</template>
