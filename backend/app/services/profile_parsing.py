@@ -19,8 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.ai.gateway import AIGateway, Source
 from app.ai.stages import Understanding, understand
-from app.ai.stages.understand import PROMPT_ID
+from app.ai.stages.understand import MAX_ITEMS, PROMPT_ID
 from app.models import ParseSource, ParseStatus, Profile
+from app.services.skills import known_skills_in
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,22 @@ AfterParse = Callable[[AsyncSession, uuid.UUID], Awaitable[None]]
 def text_hash(text: str) -> str:
     """SHA-256 of the text with whitespace normalised, so spacing edits do not re-parse."""
     return hashlib.sha256(" ".join(text.split()).encode()).hexdigest()
+
+
+def vet_template_skills(understanding: Understanding) -> Understanding:
+    """Keep only known skill names in a rule-based reading's ``offers`` and ``seeks``.
+
+    The template copies whatever follows "I do" or "want" ("find people for a hackathon");
+    those lists are the profile's skill columns, so without AI they hold only names from
+    the bundled skills list. The model's tags are already written as skills, and request
+    readings are not touched (their loose phrases still help matching).
+    """
+    return understanding.model_copy(
+        update={
+            "offers": known_skills_in(list(understanding.offers), MAX_ITEMS),
+            "seeks": known_skills_in(list(understanding.seeks), MAX_ITEMS),
+        }
+    )
 
 
 def structured_from(understanding: Understanding) -> dict[str, Any]:
@@ -131,7 +148,9 @@ async def parse_profile(
         if profile.parse_source == ParseSource.USER and profile.parsed_text_hash == digest:
             return False
         llm = result.source is Source.LLM
-        profile.structured = with_chips(profile, structured_from(result.value))
+        # Only the template's guesses are vetted; chips the person picked are kept as they are.
+        reading = result.value if llm else vet_template_skills(result.value)
+        profile.structured = with_chips(profile, structured_from(reading))
         profile.parse_source = ParseSource.LLM if llm else ParseSource.TEMPLATE
         profile.parse_prompt_version = PROMPT_ID if llm else None
         profile.parsed_text_hash = digest

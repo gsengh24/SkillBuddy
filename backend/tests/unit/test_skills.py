@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import re
 
-from app.services.skills import MAX_LIMIT, load_skills, suggest_skills
+from app.ai.stages import Understanding, understand_template
+from app.services.profile_parsing import vet_template_skills
+from app.services.skills import MAX_LIMIT, known_skills_in, load_skills, suggest_skills
 
 
 def test_the_lists_load_without_blanks_comments_or_duplicates() -> None:
@@ -60,3 +62,41 @@ def test_the_limit_is_respected_and_capped() -> None:
     assert len(suggest_skills("a", limit=3)) == 3
     assert len(suggest_skills("a", limit=10_000)) == MAX_LIMIT
     assert len(suggest_skills("a", limit=0)) == 1
+
+
+def test_known_skills_are_picked_out_of_loose_phrases_in_the_lists_spelling() -> None:
+    phrases = ["lot of reading in my free time", "machine learning with pytorch", "node.js"]
+    assert known_skills_in(phrases, 8) == ["Reading", "Machine learning", "PyTorch", "Node.js"]
+
+
+def test_phrases_naming_no_skill_give_nothing() -> None:
+    phrases = ["find people for a hackathon", "I need someone who is good at stuff"]
+    assert known_skills_in(phrases, 8) == []
+
+
+def test_everyday_words_count_only_when_written_as_the_name() -> None:
+    assert known_skills_in(["Go", "Swift"], 8) == ["Go", "Swift"]
+    assert known_skills_in(["a go-getter who will zoom ahead", "swift replies"], 8) == []
+
+
+def test_known_skills_are_listed_once_and_capped() -> None:
+    assert known_skills_in(["Python", "python and Python"], 8) == ["Python"]
+    assert len(known_skills_in(["Python, React, SQL, Figma, Chess, Guitar"], 3)) == 3
+
+
+def test_a_reading_without_ai_keeps_only_skill_names_in_the_skill_columns() -> None:
+    reading = understand_template(
+        "I know Python and some React. I want to find people for a hackathon and I need "
+        "someone who is good at design. I do a lot of reading. I would like to learn guitar "
+        "or maybe chess. I enjoy long walks."
+    )
+    vetted = vet_template_skills(reading)
+    assert vetted.offers == ["Python", "React", "Reading"]
+    assert vetted.seeks == ["Guitar", "Chess"]
+    # Interests and the rest are left as the template read them.
+    assert vetted.interests == reading.interests
+    assert vetted.summary == reading.summary
+
+
+def test_vetting_an_empty_reading_changes_nothing() -> None:
+    assert vet_template_skills(Understanding()) == Understanding()
