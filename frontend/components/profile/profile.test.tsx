@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { profileSchema, type Profile } from "@/lib/api/schemas";
 
-import { ProfileForm } from "./profile-form";
 import { UnderstandingReview } from "./understanding-review";
 import { VisibilityToggle } from "./visibility-toggle";
 
@@ -67,81 +66,6 @@ function sentBody(call = 0): Record<string, unknown> {
   const init = fetchMock.mock.calls[call]?.[1] as RequestInit;
   return JSON.parse(init.body as string) as Record<string, unknown>;
 }
-
-describe("ProfileForm", () => {
-  it("shows the AI consent line and requires it on the first save", async () => {
-    const user = userEvent.setup({ delay: null });
-    render(<ProfileForm profile={null} mode="onboarding" />);
-
-    expect(screen.getByText(/read by AI to find and explain your matches/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "How we use AI" })).toHaveAttribute(
-      "href",
-      "/privacy#ai",
-    );
-    await user.type(screen.getByLabelText("Your name"), "Ananya");
-    await user.type(screen.getByLabelText("About you"), ABOUT);
-    await user.click(screen.getByRole("button", { name: "Save and continue" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent(/agree to how AI is used/);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("checks length and links before calling the API", async () => {
-    const user = userEvent.setup({ delay: null });
-    render(<ProfileForm profile={null} mode="onboarding" />);
-    await user.type(screen.getByLabelText("Your name"), "Ananya");
-    await user.type(screen.getByLabelText("About you"), "Too short");
-    await user.click(screen.getByRole("button", { name: "Save and continue" }));
-    expect(screen.getByRole("alert")).toHaveTextContent(/at least 20 characters/);
-
-    await user.type(screen.getByLabelText("About you"), " but now it is long enough.");
-    await user.type(screen.getByLabelText("Link 1"), "http://insecure.example.com");
-    await user.click(screen.getByRole("button", { name: "Save and continue" }));
-    expect(screen.getByRole("alert")).toHaveTextContent(/https:\/\//);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("saves with consent, then goes to the review step", async () => {
-    const user = userEvent.setup({ delay: null });
-    fetchMock.mockResolvedValueOnce(json(200, { ...PROFILE, parse_status: "pending" }));
-    render(<ProfileForm profile={null} mode="onboarding" />);
-
-    await user.type(screen.getByLabelText("Your name"), "Ananya");
-    await user.type(screen.getByLabelText("About you"), ABOUT);
-    await user.type(screen.getByLabelText("Link 1"), "https://github.com/ananya");
-    await user.click(screen.getByRole("checkbox", { name: "Hindi" }));
-    await user.click(screen.getByRole("checkbox", { name: /read by AI/ }));
-    await user.click(screen.getByRole("button", { name: "Save and continue" }));
-
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/v1/me/profile");
-    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).method).toBe("PUT");
-    expect(sentBody()).toMatchObject({
-      display_name: "Ananya",
-      about_text: ABOUT,
-      links: ["https://github.com/ananya"],
-      languages: ["hi"],
-      ai_consent: true,
-      visibility: "matchable",
-    });
-    expect(router.push).toHaveBeenCalledWith("/you?welcome=1");
-  });
-
-  it("does not ask again while consent is current, and shows API errors", async () => {
-    const user = userEvent.setup({ delay: null });
-    fetchMock.mockResolvedValueOnce(apiError(429, "rate_limited"));
-    render(<ProfileForm profile={PROFILE} mode="edit" />);
-
-    expect(screen.queryByText(/read by AI to find/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
-    expect(sentBody().ai_consent).toBe(false);
-    expect(await screen.findByRole("alert")).toHaveTextContent(/Too many attempts/);
-  });
-
-  it("asks again when the consent version changed", () => {
-    render(<ProfileForm profile={{ ...PROFILE, ai_consent_current: false }} mode="edit" />);
-    expect(screen.getByRole("checkbox", { name: /read by AI/ })).not.toBeChecked();
-  });
-});
 
 describe("UnderstandingReview", () => {
   it("polls while the description is being read, then shows the result", async () => {

@@ -78,3 +78,45 @@ export async function settleAnimations(page: Page) {
     ),
   );
 }
+
+/**
+ * Goes through onboarding (ADR 0022) from step 1 and confirms the card on step 5, landing
+ * on Home. The CI stack has no AI keys, so the card is the template version.
+ */
+export async function onboard(
+  page: Page,
+  {
+    name,
+    offers = ["React", "Python"],
+    wants = ["Figma"],
+    interests = ["Chess"],
+  }: { name: string; offers?: string[]; wants?: string[]; interests?: string[] },
+) {
+  await page.goto("/onboarding");
+  await page.getByRole("button", { name: /Build together/ }).click();
+  await page.getByRole("button", { name: /Continue/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /What are you good at/ })).toBeVisible();
+  for (const skill of offers) {
+    await page.getByRole("button", { name: skill, exact: true }).first().click();
+  }
+  await page.getByRole("button", { name: /Continue/ }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: /What are you looking for/ }),
+  ).toBeVisible();
+  for (const tag of [...wants, ...interests]) {
+    await page.getByRole("button", { name: tag, exact: true }).first().click();
+  }
+  await page.getByRole("button", { name: /Continue/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /Almost done/ })).toBeVisible();
+  await page.getByRole("radio", { name: "2nd" }).click();
+  await page.getByRole("button", { name: "Saturday" }).click();
+  await page.getByLabel("Display name").fill(name);
+  await page.getByRole("checkbox", { name: /read by AI to find and explain/ }).check();
+  await page.getByRole("button", { name: /Finish/ }).click();
+  await expect(page).toHaveURL(/\/onboarding\/review$/);
+  await expect(page.getByRole("article", { name: "Preview of your match card" })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.getByRole("button", { name: /Looks good/ }).click();
+  await expect(page).toHaveURL(/\/home/);
+}

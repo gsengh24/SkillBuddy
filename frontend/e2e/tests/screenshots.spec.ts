@@ -2,7 +2,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { signUp } from "./helpers";
+import { onboard, signUp } from "./helpers";
 
 /**
  * Screenshots of Home beside the design reference, at the spec's two review widths (390 and
@@ -46,14 +46,8 @@ async function shoot(page: Page, name: string) {
 test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1280, height: 900 });
-  await signUp(page, request, "/onboarding/describe");
-  await page.getByLabel("Your name", { exact: true }).fill("Dev");
-  await page
-    .getByLabel("About you", { exact: true })
-    .fill("I build React apps and write Python. Looking for a designer for a budgeting app.");
-  await page.getByRole("checkbox", { name: /read by AI to find and explain/ }).check();
-  await page.getByRole("button", { name: "Save and continue" }).click();
-  await expect(page).toHaveURL(/\/you/);
+  await signUp(page, request, "/onboarding");
+  await onboard(page, { name: "Dev" });
 
   await page.goto("/home");
   await page

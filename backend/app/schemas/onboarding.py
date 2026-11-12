@@ -8,6 +8,7 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
+from app.ai.stages.compose import ABOUT_MAX as ABOUT_STEP_MAX
 from app.ai.stages.understand import Intent
 from app.models import (
     MAX_PICKED_TAGS,
@@ -90,6 +91,30 @@ class AboutStepIn(BaseModel):
         default=None,
         description="Shown to people who receive an intro. Never sent to an AI provider.",
     )
+
+
+class FinishIn(BaseModel):
+    """Leave step 4: write the about text from the chips (step 5 shows it)."""
+
+    model_config = _REQUEST
+
+    ai_consent: bool = Field(
+        default=False,
+        description=(
+            "The user agrees to the AI-processing consent line shown before finishing (ADR "
+            "0007, section 5). Required unless the current version was already agreed."
+        ),
+    )
+
+
+class CompleteIn(BaseModel):
+    """Step 5's "Looks good": keep the about text as shown, or as edited."""
+
+    model_config = _REQUEST
+
+    about_text: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=ABOUT_STEP_MAX)
+    ] = Field(description="What the about box holds when the person confirms it.")
 
 
 class SkippableStep(StrEnum):

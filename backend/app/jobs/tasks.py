@@ -39,6 +39,7 @@ from app.services.matching.housekeeping import (
 from app.services.moderation import purge_old_actions
 from app.services.notification_email import send_notification_email
 from app.services.notifications import purge_old_notifications
+from app.services.profile_compose import compose_profile
 from app.services.profile_parsing import BACKFILL_BATCH_SIZE, parse_profile, pending_profiles
 from app.services.reports import purge_resolved_reports, send_report_alert
 from app.services.spaces import purge_spaces
@@ -135,6 +136,17 @@ async def _parse_profile(ctx: JobContext) -> None:
             gateway,
             uuid.UUID(ctx.payload["user_id"]),
             after_parse=_queue_embedding,
+        )
+
+
+async def _compose_profile(ctx: JobContext) -> None:
+    """Onboarding step 5: the about text from the chips (AI, or the template), then embed."""
+    async with open_gateway(ctx.settings, ctx.session_factory) as gateway:
+        await compose_profile(
+            ctx.session_factory,
+            gateway,
+            uuid.UUID(ctx.payload["user_id"]),
+            after_compose=_queue_embedding,
         )
 
 
@@ -423,6 +435,14 @@ PARSE_PROFILE = JobSpec(
     priority=140,
     timeout_seconds=90,
 )
+# Someone is watching step 5 load: just ahead of ordinary parses.
+COMPOSE_PROFILE = JobSpec(
+    kind="compose_profile",
+    handler=_compose_profile,
+    group=JobGroup.AI,
+    priority=130,
+    timeout_seconds=90,
+)
 PARSE_PENDING_PROFILES = JobSpec(
     kind="parse_pending_profiles",
     handler=_parse_pending_profiles,
@@ -530,6 +550,7 @@ ALL_JOBS = (
     EMBED_PROFILE,
     REEMBED_PROFILES,
     PARSE_PROFILE,
+    COMPOSE_PROFILE,
     PARSE_PENDING_PROFILES,
     MATCH_REQUEST,
     MATCH_HOUSEKEEPING,

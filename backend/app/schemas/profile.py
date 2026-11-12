@@ -179,6 +179,7 @@ class UnderstandingIn(BaseModel):
 
 
 class UnderstandingOut(BaseModel):
+    title: str = Field(description="A short card heading; empty when none was written.")
     summary: str
     offers: list[str]
     seeks: list[str]
@@ -250,6 +251,7 @@ class ProfileOut(BaseModel):
         understanding = None
         if profile.parse_status == ParseStatus.PARSED:
             understanding = UnderstandingOut(
+                title=str(data.get("title", "")),
                 summary=str(data.get("summary", "")),
                 offers=[str(v) for v in data.get("offers", [])],
                 seeks=[str(v) for v in data.get("seeks", [])],
