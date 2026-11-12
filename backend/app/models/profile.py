@@ -28,6 +28,10 @@ MAX_LANGUAGES = 10
 CITY_MAX_LENGTH = 80
 HEADLINE_MAX_LENGTH = 80
 GOAL_MAX_LENGTH = 300
+# Onboarding chips (ADR 0022): plain strings, as on the You page (ADR 0020).
+TAG_MAX_LENGTH = 60
+MAX_PICKED_TAGS = 20
+WANT_NOTE_MAX_LENGTH = 140
 
 
 class ProfileVisibility(StrEnum):
@@ -78,6 +82,44 @@ class LocationPrecision(StrEnum):
     CITY = "city"
     COUNTRY = "country"
     HIDDEN = "hidden"
+
+
+class StudyYear(StrEnum):
+    FIRST = "1"
+    SECOND = "2"
+    THIRD = "3"
+    FOURTH = "4"
+    POSTGRAD = "postgrad"
+
+
+class Branch(StrEnum):
+    """Thapar's main engineering branches; anything else is ``other``."""
+
+    COMPUTER = "computer"
+    ELECTRONICS = "electronics"
+    ELECTRICAL = "electrical"
+    MECHANICAL = "mechanical"
+    CHEMICAL = "chemical"
+    CIVIL = "civil"
+    BIOTECHNOLOGY = "biotechnology"
+    OTHER = "other"
+
+
+class OnboardingStep(StrEnum):
+    """The onboarding steps that save something (ADR 0022). Only the last three can be
+    skipped; step 5 (checking the result) is not a saved step."""
+
+    INTENTS = "intents"
+    OFFERS = "offers"
+    WANTS = "wants"
+    ABOUT = "about"
+
+
+SKIPPABLE_STEPS: tuple[OnboardingStep, ...] = (
+    OnboardingStep.OFFERS,
+    OnboardingStep.WANTS,
+    OnboardingStep.ABOUT,
+)
 
 
 def _in(values: Sequence[str]) -> str:
@@ -149,6 +191,28 @@ class Profile(TimestampMixin, Base):
         ),
         CheckConstraint(f"cardinality(links) <= {MAX_LINKS}", name="links_count"),
         CheckConstraint(f"cardinality(languages) <= {MAX_LANGUAGES}", name="languages_count"),
+        CheckConstraint(
+            f"cardinality(offer_skills) <= {MAX_PICKED_TAGS}", name="offer_skills_count"
+        ),
+        CheckConstraint(f"cardinality(want_skills) <= {MAX_PICKED_TAGS}", name="want_skills_count"),
+        CheckConstraint(
+            f"cardinality(interest_tags) <= {MAX_PICKED_TAGS}", name="interest_tags_count"
+        ),
+        CheckConstraint(
+            f"char_length(want_note) <= {WANT_NOTE_MAX_LENGTH}", name="want_note_length"
+        ),
+        CheckConstraint(
+            f"study_year IS NULL OR study_year IN ({_in(list(StudyYear))})",
+            name="study_year_valid",
+        ),
+        CheckConstraint(f"branch IS NULL OR branch IN ({_in(list(Branch))})", name="branch_valid"),
+        CheckConstraint(
+            f"onboarding_saved <@ {_array(list(OnboardingStep))}", name="onboarding_saved_valid"
+        ),
+        CheckConstraint(
+            f"onboarding_skipped <@ {_array(list(SKIPPABLE_STEPS))}",
+            name="onboarding_skipped_valid",
+        ),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -212,6 +276,35 @@ class Profile(TimestampMixin, Base):
     # Local times in ``timezone``; "until" may be earlier than "from" (past midnight).
     available_from: Mapped[time | None]
     available_until: Mapped[time | None]
+
+    # --- onboarding chips and progress (ADR 0022) ----------------------------------------
+    # What the person picked, in their own order. The source of truth for these; the
+    # matcher's view (``structured``) is derived from them and the about text.
+    offer_skills: Mapped[list[str]] = mapped_column(
+        ARRAY(String(TAG_MAX_LENGTH)), default=list, server_default=text("'{}'::varchar[]")
+    )
+    want_skills: Mapped[list[str]] = mapped_column(
+        ARRAY(String(TAG_MAX_LENGTH)), default=list, server_default=text("'{}'::varchar[]")
+    )
+    interest_tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(TAG_MAX_LENGTH)), default=list, server_default=text("'{}'::varchar[]")
+    )
+    # The optional "anything specific?" line on the wants step.
+    want_note: Mapped[str] = mapped_column(
+        String(WANT_NOTE_MAX_LENGTH), default="", server_default=text("''")
+    )
+    study_year: Mapped[str | None] = mapped_column(String(8))
+    branch: Mapped[str | None] = mapped_column(String(16))
+    # Steps saved, and steps skipped ("Skip for now"); a step is in at most one of them.
+    onboarding_saved: Mapped[list[str]] = mapped_column(
+        ARRAY(String(8)), default=list, server_default=text("'{}'::varchar[]")
+    )
+    onboarding_skipped: Mapped[list[str]] = mapped_column(
+        ARRAY(String(8)), default=list, server_default=text("'{}'::varchar[]")
+    )
+    # Null until the person finishes onboarding. Profiles made before ADR 0022 are
+    # backfilled with their creation time.
+    onboarding_completed_at: Mapped[datetime | None]
 
     # --- privacy -------------------------------------------------------------------------
     location_precision: Mapped[str] = mapped_column(

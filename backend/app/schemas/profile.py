@@ -18,12 +18,14 @@ from app.models import (
     LINK_MAX_LENGTH,
     MAX_LANGUAGES,
     MAX_LINKS,
+    Branch,
     ExperienceLevel,
     LocationPrecision,
     ParseSource,
     ParseStatus,
     Profile,
     ProfileVisibility,
+    StudyYear,
     Weekday,
     WeeklyHours,
     WorkingStyle,
@@ -204,6 +206,15 @@ class ProfileOut(BaseModel):
     available_from: time | None
     available_until: time | None
     location_precision: LocationPrecision
+    offer_skills: list[str] = Field(description="Skills picked during onboarding (ADR 0022).")
+    want_skills: list[str]
+    interest_tags: list[str]
+    want_note: str
+    study_year: StudyYear | None
+    branch: Branch | None
+    onboarding_completed_at: datetime | None = Field(
+        description="`null` until onboarding is finished; see `GET /me/onboarding`."
+    )
     photo_url: str | None = Field(
         description=(
             "The picture people you are connected with see: your Google account picture's "
@@ -267,6 +278,13 @@ class ProfileOut(BaseModel):
             available_from=profile.available_from,
             available_until=profile.available_until,
             location_precision=LocationPrecision(profile.location_precision),
+            offer_skills=list(profile.offer_skills),
+            want_skills=list(profile.want_skills),
+            interest_tags=list(profile.interest_tags),
+            want_note=profile.want_note,
+            study_year=StudyYear(profile.study_year) if profile.study_year else None,
+            branch=Branch(profile.branch) if profile.branch else None,
+            onboarding_completed_at=profile.onboarding_completed_at,
             photo_url=profile.photo_url,
             photo_available=photo_available,
             show_last_active=profile.show_last_active,

@@ -124,6 +124,10 @@ class ProfileService:
         profile.timezone = data.timezone
         profile.languages = list(data.languages)
         profile.visibility = data.visibility
+        # Until step 5 of the new onboarding (ADR 0022) exists, the first full save is what
+        # finishes onboarding.
+        if profile.onboarding_completed_at is None:
+            profile.onboarding_completed_at = now
         if text_changed:
             # Content rules (A7) only flag for a moderator; they never block the save.
             await self._db.flush()
