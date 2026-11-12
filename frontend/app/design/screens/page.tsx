@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Conversation } from "@/components/chat/conversation";
 import { MatchCard } from "@/components/discover/match-card";
 import { NudgeCard } from "@/components/home/nudge-card";
+import { ImportShortcutPreview } from "@/components/onboarding/import-shortcut-preview";
 import { AIStatusView } from "@/components/moderation/ai-status";
 import { ReportReview } from "@/components/moderation/report-review";
 import { IntroCard } from "@/components/social/intro-card";
@@ -232,6 +233,14 @@ export default function ScreensPage() {
             offerSkills={[]}
           />
         </div>
+      </Section>
+      <Section id="screens-resume" title="Resume import">
+        {/* Onboarding step 2's shortcut (ADR 0022 screen 6, ADR 0023). */}
+        <ImportShortcutPreview mode="resume" />
+      </Section>
+      <Section id="screens-paste" title="Paste anything">
+        {/* Screen 7. */}
+        <ImportShortcutPreview mode="paste" />
       </Section>
       <Section id="screens-intro" title="An intro you received">
         <div className="max-w-2xl">

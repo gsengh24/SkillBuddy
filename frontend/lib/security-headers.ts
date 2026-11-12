@@ -6,7 +6,7 @@
  * self-hosted by next/font). The one exception is images from Google's account-picture
  * hosts, for profile pictures (ADR 0017). Next.js needs inline scripts to start the page, hence
  * 'unsafe-inline' for scripts; development also needs 'unsafe-eval' and a WebSocket for
- * hot reload. Framing is refused twice: frame-ancestors and X-Frame-Options.
+ * hot reload. Web workers (PDF.js, ADR 0023) come only from this site. Framing is refused twice: frame-ancestors and X-Frame-Options.
  * Strict-Transport-Security makes browsers use HTTPS only; it is sent in production (on
  * plain-HTTP localhost browsers ignore it anyway).
  */
@@ -32,6 +32,8 @@ export function contentSecurityPolicy(isDev: boolean): string {
     "img-src": ["'self'", "data:", ...PHOTO_HOSTS],
     "font-src": ["'self'"],
     "connect-src": ["'self'", ...(isDev ? ["ws:", "wss:"] : [])],
+    // PDF.js reads resume PDFs in a worker loaded from this site only (ADR 0023): no blob:.
+    "worker-src": ["'self'"],
     "frame-ancestors": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],

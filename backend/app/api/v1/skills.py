@@ -9,10 +9,28 @@ from fastapi import APIRouter, Depends, Query
 from app.api.deps import get_auth
 from app.schemas.errors import ErrorResponse
 from app.schemas.skills import SkillSuggestion, SkillSuggestionsOut
-from app.services.skills import DEFAULT_LIMIT, MAX_LIMIT, QUERY_MAX_LENGTH, suggest_skills
+from app.services.skills import (
+    DEFAULT_LIMIT,
+    MAX_LIMIT,
+    QUERY_MAX_LENGTH,
+    curated_skills,
+    suggest_skills,
+)
 
 # Signed-in only, so the list is not an open endpoint; the caller's identity is not needed.
 router = APIRouter(prefix="/skills", tags=["skills"], dependencies=[Depends(get_auth)])
+
+
+@router.get(
+    "/common",
+    summary="The common skill and interest names",
+    responses={401: {"model": ErrorResponse, "description": "Not signed in."}},
+)
+async def common() -> SkillSuggestionsOut:
+    """The short hand-written list (about 100 names, no O*NET names), for clients that spot
+    skills in text on the device, such as onboarding's resume import, so the text itself is
+    never sent. Same order as the suggestions rank them."""
+    return SkillSuggestionsOut(items=[SkillSuggestion(name=n) for n in curated_skills()])
 
 
 @router.get(

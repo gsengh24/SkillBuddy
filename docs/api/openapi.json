@@ -17893,6 +17893,38 @@
         ]
       }
     },
+    "/api/v1/skills/common": {
+      "get": {
+        "description": "The short hand-written list (about 100 names, no O*NET names), for clients that spot\nskills in text on the device, such as onboarding's resume import, so the text itself is\nnever sent. Same order as the suggestions rank them.",
+        "operationId": "common_api_v1_skills_common_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillSuggestionsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "The common skill and interest names",
+        "tags": [
+          "skills"
+        ]
+      }
+    },
     "/api/v1/skills/suggest": {
       "get": {
         "description": "Names that start with, or contain a word starting with, ``q``. A convenience only:\nprofiles accept any tag, so a skill missing here can still be added.",
