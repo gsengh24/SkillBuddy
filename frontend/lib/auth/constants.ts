@@ -6,8 +6,11 @@ export const SESSION_COOKIE = "session";
 export const CSRF_COOKIE = "csrf_token";
 export const CSRF_HEADER = "X-CSRF-Token";
 
-/** Where people land after signing in, unless a safe `next` path says otherwise. */
-export const DEFAULT_SIGNED_IN_PATH = "/home";
+/**
+ * Where people land after signing in, unless a safe `next` path says otherwise: /start picks
+ * the onboarding steps, step 5 or Home from the API's onboarding progress (lib/auth/landing).
+ */
+export const DEFAULT_SIGNED_IN_PATH = "/start";
 
 /** Seconds before "Resend code" becomes available again. */
 export const RESEND_COOLDOWN_SECONDS = 60;

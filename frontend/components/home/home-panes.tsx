@@ -116,7 +116,12 @@ export function DetailPane({ composer, children }: { composer: ReactNode; childr
           <div className="mx-auto w-full max-w-[640px]">{children}</div>
         </>
       ) : (
-        composer
+        <>
+          {composer}
+          {/* The page renders nothing here, but it must still be rendered: a redirect it
+              raises (plain Home with onboarding steps left, P7) happens only then. */}
+          {children}
+        </>
       )}
     </section>
   );

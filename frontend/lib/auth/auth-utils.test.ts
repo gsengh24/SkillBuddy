@@ -9,13 +9,13 @@ describe("safeNextPath", () => {
   it.each([
     ["/settings/account", "/settings/account"],
     ["/home?tab=1", "/home?tab=1"],
-    [undefined, "/home"],
-    ["", "/home"],
-    ["https://evil.example", "/home"],
-    ["//evil.example", "/home"],
-    ["/\\evil.example", "/home"],
-    ["/login?next=/home", "/home"],
-    ["/api/v1/me", "/home"],
+    [undefined, "/start"],
+    ["", "/start"],
+    ["https://evil.example", "/start"],
+    ["//evil.example", "/start"],
+    ["/\\evil.example", "/start"],
+    ["/login?next=/home", "/start"],
+    ["/api/v1/me", "/start"],
   ])("maps %s to %s", (input, expected) => {
     expect(safeNextPath(input)).toBe(expected);
   });

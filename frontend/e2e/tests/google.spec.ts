@@ -34,8 +34,9 @@ test("the sign-in page offers Google first, with no accessibility violations", a
 test("a thapar.edu Google account signs in and lands signed in", async ({ page }) => {
   const email = `e2e-google-${Date.now()}@thapar.edu`;
   await startGoogle(page, email);
-  await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByText(`You're signed in as ${email}`)).toBeVisible();
+  // A new account lands straight on onboarding step 1 (ADR 0022, P7).
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole("heading", { level: 1, name: /What brings you here/ })).toBeVisible();
 
   const cookies = await page.context().cookies();
   expect(cookies.find((c) => c.name === "session")?.httpOnly).toBe(true);

@@ -18,6 +18,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/start",
     "/home/:path*",
     "/messages/:path*",
     "/saved/:path*",
