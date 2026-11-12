@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  // No dev-only route badge: it sits over fixed bottom bars (onboarding's Edit button on a
+  // phone) and blocks clicks in the Smoke tests. Compile and runtime errors still show.
+  devIndicators: false,
   // The landing page is a self-contained static document (public/landing).
   async rewrites() {
     return {
