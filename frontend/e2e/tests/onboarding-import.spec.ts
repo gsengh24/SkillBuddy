@@ -67,6 +67,15 @@ test("resume import reads a PDF in the browser (screen 6)", async ({ page }) => 
   test.setTimeout(120_000);
   await page.emulateMedia({ reducedMotion: "reduce" });
   const { sent, csp } = watch(page);
+  // While `held` is set, the scripts PDF.js loads on demand wait, so the reading state stays
+  // up for its picture. The route stays for the whole test; anything else passes straight on.
+  let held: Promise<void> | null = null;
+  await page.route("**/_next/static/**", async (route) => {
+    if (held) await held;
+    await route.fallback().catch(() => {
+      // Already answered (the page moved on): nothing to do.
+    });
+  });
 
   for (const { name, width, height } of WIDTHS) {
     await page.setViewportSize({ width, height });
@@ -78,21 +87,16 @@ test("resume import reads a PDF in the browser (screen 6)", async ({ page }) => 
     ).toBeVisible();
     await shoot(resume, `onboarding-resume-pick-${name}`);
 
-    // Hold the scripts PDF.js loads on demand, so the reading state stays up for its picture.
     let release: () => void = () => {};
-    const held = new Promise<void>((resolve) => {
+    held = new Promise<void>((resolve) => {
       release = resolve;
-    });
-    await page.route("**/_next/static/**", async (route) => {
-      await held;
-      await route.continue();
     });
     await resume.getByLabel("Choose a resume PDF").setInputFiles(RESUME);
     await expect(resume.getByRole("heading", { name: /Reading your resume/ })).toBeVisible();
     await expect(resume.getByText("synthetic-resume.pdf")).toBeVisible();
     await shoot(resume, `onboarding-resume-reading-${name}`);
+    held = null;
     release();
-    await page.unroute("**/_next/static/**");
 
     await expect(resume.getByRole("heading", { name: /We found these/ })).toBeVisible({
       timeout: 60_000,
@@ -142,7 +146,9 @@ test("paste anything finds skills without sending the text (screen 7)", async ({
     await expect(paste.getByRole("status")).toHaveText("7 kept");
     await shoot(paste, `onboarding-paste-found-${name}`);
     if (name === "390") await expectNoViolations(page);
-    await paste.getByRole("button", { name: /Use these/ }).click();
+    // By keyboard: on desktop the button lifts under a hovering pointer and never settles.
+    await paste.getByRole("button", { name: /Use these/ }).focus();
+    await page.keyboard.press("Enter");
     await expect(paste.getByText("Would add 7 to step 2.")).toBeVisible();
     await mockup(page, "07-paste-anything", `onboarding-paste-mockup-${name}`);
   }
