@@ -12,7 +12,7 @@ The platform is an AI matchmaker for people, not for jobs or dates: you describe
 
 - **Intent first, skills second.** A match can be made on shared curiosity, a complementary skill, a shared goal, or simply being in the same stage of the same struggle. Skills are one signal among several.
 - **Few, explained matches.** Five good introductions with a reason each beat a hundred profiles. Every match shows why it was suggested.
-- **Describe, don't fill forms.** Onboarding is a conversation or a free-text paragraph; the system extracts structure from it.
+- **Tap first, describe if you like.** Onboarding is a few taps (intents, skills, interests); free text is always optional, and the system writes and shows back an "about" text the person can edit ([ADR 0022](adr/0022-chip-first-onboarding.md)).
 - **Two-sided consent.** Nobody is contacted until both sides opt in. No cold spam, by design.
 - **The model is a bridge, not the product.** After the intro, the value is the relationship: chat, shared space, project tracking.
 
@@ -33,7 +33,7 @@ Every request on the platform is one of six intents, and the intent decides how 
 
 **Main user journeys**
 
-1. **Onboard.** Sign up, write a free-text "about me", optionally add links (GitHub, LinkedIn, portfolio). The system builds a profile and shows it back for correction.
+1. **Onboard.** Sign up, tap what you are here for, what you offer and what you want, and a few details; each step saves on its own and can be skipped ([ADR 0022](adr/0022-chip-first-onboarding.md)). The system builds a profile and shows it back for correction.
 2. **Create a request.** Pick an intent or just type what you want. The system clarifies with one or two follow-up questions if the request is vague.
 3. **Receive matches.** A ranked list of 3 to 10 people, each with a reason such as "you both are building in fintech, she covers the design gap you mentioned".
 4. **Connect.** Send an intro note; the other side sees your request and reason and accepts or declines.
@@ -114,7 +114,7 @@ PostgreSQL is the single source of truth, with the pgvector extension holding em
 | Entity | Key fields | Notes |
 | --- | --- | --- |
 | users | id, email, auth provider, status, created\_at | Identity and account only; no profile data here. Holds the address of the Google account picture, never the picture ([ADR 0017](adr/0017-google-profile-photo.md)) |
-| profiles | user\_id, raw\_about\_text, structured\_json, location, timezone, languages, visibility | Raw text kept forever; structured\_json is re-derivable |
+| profiles | user\_id, raw\_about\_text, structured\_json, onboarding chips (offer\_skills, want\_skills, interest\_tags, want\_note), study\_year, branch, onboarding progress, location, timezone, languages, visibility | Raw text and chips are what the person said; structured\_json is derived from them and re-derivable ([ADR 0022](adr/0022-chip-first-onboarding.md)) |
 | profile\_embeddings | user\_id, facet (identity, offer, seek, interest), vector, model\_version | One row per facet; model\_version enables re-embedding |
 | skills / interests | id, name, category, embedding | Controlled vocabulary grown from extraction; used for filters and display |
 | user\_skills | user\_id, skill\_id, level, offered or wanted | Many-to-many |

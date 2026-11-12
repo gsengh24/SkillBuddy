@@ -458,7 +458,7 @@ ranker · pair-space reminders, conversation starters, templates · normalised s
 | Question | File |
 | --- | --- |
 | Product scope, data model, roadmap | [ARCHITECTURE.md](ARCHITECTURE.md), [roadmap.md](roadmap.md) |
-| Why something is the way it is | [adr/](adr/) (0001–0021) |
+| Why something is the way it is | [adr/](adr/) (0001–0022) |
 | Working rules for Claude Code | [../CLAUDE.md](../CLAUDE.md), [../CONTRIBUTING.md](../CONTRIBUTING.md) |
 | Staging setup, step by step | [deployment-plan.md](deployment-plan.md), [../infra/README.md](../infra/README.md) |
 | Launch blockers | [pre-launch-checklist.md](pre-launch-checklist.md) |

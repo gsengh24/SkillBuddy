@@ -51,7 +51,9 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Your profile:</strong> your display name, what you write about yourself, links,
-            languages, time zone, and what we understood from your description (skills, interests,
+            languages, time zone, what you pick when you set up your profile (what you are here for,
+            skills you offer and want, interests, a short note, and, if you choose to add them, your
+            year and branch), and what we understood from your description (skills, interests,
             goals, availability), which you can correct.
           </li>
           <li>

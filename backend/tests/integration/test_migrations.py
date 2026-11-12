@@ -586,3 +586,36 @@ def test_connection_spaces_migration_deletes_old_rows_and_keeps_teams(
     command.downgrade(config, "0033")
     command.upgrade(config, "head")
     assert _tables(engine) == ALL_TABLES
+
+
+def test_onboarding_migration_backfills_existing_profiles_and_downgrades(
+    empty_database_url: str, engine: Engine
+) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "0035")
+    with engine.begin() as connection:
+        user = connection.scalar(
+            text("INSERT INTO users (email) VALUES ('o@example.com') RETURNING id")
+        )
+        connection.execute(
+            text("INSERT INTO profiles (user_id, raw_about_text) VALUES (:u, 'old onboarding')"),
+            {"u": user},
+        )
+
+    command.upgrade(config, "0036")
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                "SELECT onboarding_completed_at = created_at AS backfilled, offer_skills, "
+                "want_note, onboarding_saved FROM profiles"
+            )
+        ).one()
+    # Everyone with a profile already went through the old onboarding.
+    assert row.backfilled is True
+    assert (row.offer_skills, row.want_note, row.onboarding_saved) == ([], "", [])
+
+    command.downgrade(config, "0035")
+    columns = {column["name"] for column in inspect(engine).get_columns("profiles")}
+    assert not {"offer_skills", "want_note", "study_year", "onboarding_completed_at"} & columns
+    command.upgrade(config, "head")
+    assert _tables(engine) == ALL_TABLES

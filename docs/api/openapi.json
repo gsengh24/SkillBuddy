@@ -81,6 +81,76 @@
         "title": "AIStatusOut",
         "type": "object"
       },
+      "AboutStepIn": {
+        "additionalProperties": false,
+        "description": "Step 4: a few details, all optional. Omitted fields stay as they are.",
+        "properties": {
+          "available_days": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Weekday"
+                },
+                "maxItems": 7,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Days"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Branch"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`null` clears it."
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shown to people who receive an intro. Never sent to an AI provider.",
+            "title": "Display Name"
+          },
+          "study_year": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudyYear"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`null` clears it."
+          },
+          "weekly_hours": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyHours"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`null` clears it."
+          }
+        },
+        "title": "AboutStepIn",
+        "type": "object"
+      },
       "AccessOut": {
         "properties": {
           "allowed_domains": {
@@ -1162,6 +1232,21 @@
           "sent"
         ],
         "title": "Box",
+        "type": "string"
+      },
+      "Branch": {
+        "description": "Thapar's main engineering branches; anything else is ``other``.",
+        "enum": [
+          "computer",
+          "electronics",
+          "electrical",
+          "mechanical",
+          "chemical",
+          "civil",
+          "biotechnology",
+          "other"
+        ],
+        "title": "Branch",
         "type": "string"
       },
       "CaseOut": {
@@ -2553,6 +2638,26 @@
         "title": "Intent",
         "type": "string"
       },
+      "IntentsStepIn": {
+        "additionalProperties": false,
+        "description": "Step 1: what the person is here for. At least one; this step can't be skipped.",
+        "properties": {
+          "intents": {
+            "items": {
+              "$ref": "#/components/schemas/Intent"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Intents",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intents"
+        ],
+        "title": "IntentsStepIn",
+        "type": "object"
+      },
       "IntroIn": {
         "additionalProperties": false,
         "properties": {
@@ -3715,6 +3820,17 @@
         "title": "ModeIn",
         "type": "object"
       },
+      "NextStep": {
+        "enum": [
+          "intents",
+          "offers",
+          "wants",
+          "about",
+          "review"
+        ],
+        "title": "NextStep",
+        "type": "string"
+      },
       "NoteIn": {
         "additionalProperties": false,
         "properties": {
@@ -3902,6 +4018,166 @@
         ],
         "title": "NotificationPage",
         "type": "object"
+      },
+      "OffersStepIn": {
+        "additionalProperties": false,
+        "description": "Step 2: skills the person can offer. Replaces the saved list.",
+        "properties": {
+          "skills": {
+            "description": "Plain skill names; repeats (ignoring case) are dropped.",
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Skills",
+            "type": "array"
+          }
+        },
+        "required": [
+          "skills"
+        ],
+        "title": "OffersStepIn",
+        "type": "object"
+      },
+      "OnboardingOut": {
+        "description": "Where the person is in onboarding, and what they have picked so far.",
+        "properties": {
+          "available_days": {
+            "items": {
+              "$ref": "#/components/schemas/Weekday"
+            },
+            "title": "Available Days",
+            "type": "array"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Branch"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`null` until onboarding is finished.",
+            "title": "Completed At"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "intents": {
+            "items": {
+              "$ref": "#/components/schemas/Intent"
+            },
+            "title": "Intents",
+            "type": "array"
+          },
+          "interest_tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Interest Tags",
+            "type": "array"
+          },
+          "next_step": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NextStep"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The first step neither saved nor skipped, `review` when only checking the result is left, or `null` once onboarding is finished."
+          },
+          "offer_skills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Offer Skills",
+            "type": "array"
+          },
+          "steps": {
+            "description": "Every saved step, in order, with its state.",
+            "items": {
+              "$ref": "#/components/schemas/StepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "study_year": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudyYear"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "want_note": {
+            "title": "Want Note",
+            "type": "string"
+          },
+          "want_skills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Want Skills",
+            "type": "array"
+          },
+          "weekly_hours": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeeklyHours"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "completed_at",
+          "next_step",
+          "steps",
+          "intents",
+          "offer_skills",
+          "want_skills",
+          "interest_tags",
+          "want_note",
+          "study_year",
+          "branch",
+          "available_days",
+          "weekly_hours",
+          "display_name"
+        ],
+        "title": "OnboardingOut",
+        "type": "object"
+      },
+      "OnboardingStep": {
+        "description": "The onboarding steps that save something (ADR 0022). Only the last three can be\nskipped; step 5 (checking the result) is not a saved step.",
+        "enum": [
+          "intents",
+          "offers",
+          "wants",
+          "about"
+        ],
+        "title": "OnboardingStep",
+        "type": "string"
       },
       "OtpRequestIn": {
         "additionalProperties": false,
@@ -4458,6 +4734,16 @@
             ],
             "title": "Available Until"
           },
+          "branch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Branch"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "city": {
             "title": "City",
             "type": "string"
@@ -4512,6 +4798,13 @@
             "title": "Intents",
             "type": "array"
           },
+          "interest_tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Interest Tags",
+            "type": "array"
+          },
           "intros_only_from_strong_matches": {
             "title": "Intros Only From Strong Matches",
             "type": "boolean"
@@ -4532,6 +4825,27 @@
           },
           "location_precision": {
             "$ref": "#/components/schemas/LocationPrecision"
+          },
+          "offer_skills": {
+            "description": "Skills picked during onboarding (ADR 0022).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Offer Skills",
+            "type": "array"
+          },
+          "onboarding_completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`null` until onboarding is finished; see `GET /me/onboarding`.",
+            "title": "Onboarding Completed At"
           },
           "parse_source": {
             "anyOf": [
@@ -4568,6 +4882,16 @@
             "title": "Show Last Active",
             "type": "boolean"
           },
+          "study_year": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudyYear"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "timezone": {
             "anyOf": [
               {
@@ -4601,6 +4925,17 @@
           },
           "visibility": {
             "$ref": "#/components/schemas/ProfileVisibility"
+          },
+          "want_note": {
+            "title": "Want Note",
+            "type": "string"
+          },
+          "want_skills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Want Skills",
+            "type": "array"
           },
           "weekly_hours": {
             "anyOf": [
@@ -4643,6 +4978,13 @@
           "available_from",
           "available_until",
           "location_precision",
+          "offer_skills",
+          "want_skills",
+          "interest_tags",
+          "want_note",
+          "study_year",
+          "branch",
+          "onboarding_completed_at",
           "photo_url",
           "photo_available",
           "show_last_active",
@@ -6090,6 +6432,15 @@
         "title": "SkillSuggestionsOut",
         "type": "object"
       },
+      "SkippableStep": {
+        "enum": [
+          "offers",
+          "wants",
+          "about"
+        ],
+        "title": "SkippableStep",
+        "type": "string"
+      },
       "StartReviewIn": {
         "additionalProperties": false,
         "properties": {
@@ -6105,6 +6456,31 @@
         ],
         "title": "StartReviewIn",
         "type": "object"
+      },
+      "StepOut": {
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/StepState"
+          },
+          "step": {
+            "$ref": "#/components/schemas/OnboardingStep"
+          }
+        },
+        "required": [
+          "step",
+          "state"
+        ],
+        "title": "StepOut",
+        "type": "object"
+      },
+      "StepState": {
+        "enum": [
+          "saved",
+          "skipped",
+          "todo"
+        ],
+        "title": "StepState",
+        "type": "string"
       },
       "StorageReport": {
         "properties": {
@@ -6163,6 +6539,17 @@
         ],
         "title": "StorageReport",
         "type": "object"
+      },
+      "StudyYear": {
+        "enum": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "postgrad"
+        ],
+        "title": "StudyYear",
+        "type": "string"
       },
       "SuspendIn": {
         "additionalProperties": false,
@@ -7692,6 +8079,41 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WantsStepIn": {
+        "additionalProperties": false,
+        "description": "Step 3: skills the person wants, interests, and an optional note. Replaces all three.",
+        "properties": {
+          "interests": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Interests",
+            "type": "array"
+          },
+          "note": {
+            "default": "",
+            "description": "Optional; an empty string clears it.",
+            "maxLength": 140,
+            "title": "Note",
+            "type": "string"
+          },
+          "skills": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Skills",
+            "type": "array"
+          }
+        },
+        "title": "WantsStepIn",
         "type": "object"
       },
       "Weekday": {
@@ -14528,6 +14950,435 @@
         "summary": "Download my data",
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/api/v1/me/onboarding": {
+      "get": {
+        "description": "Works before a profile exists: everything is empty and ``next_step`` is ``intents``.",
+        "operationId": "get_onboarding_api_v1_me_onboarding_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "Get my onboarding progress",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/me/onboarding/about": {
+      "put": {
+        "description": "Omitted fields stay as they are; ``null`` clears year, branch and hours.",
+        "operationId": "save_about_api_v1_me_onboarding_about_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AboutStepIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Save step 4: a bit about me",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/me/onboarding/intents": {
+      "put": {
+        "operationId": "save_intents_api_v1_me_onboarding_intents_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntentsStepIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Save step 1: what I'm here for",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/me/onboarding/offers": {
+      "put": {
+        "operationId": "save_offers_api_v1_me_onboarding_offers_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OffersStepIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Save step 2: skills I offer",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/me/onboarding/wants": {
+      "put": {
+        "operationId": "save_wants_api_v1_me_onboarding_wants_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WantsStepIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Save step 3: what I'm looking for",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/me/onboarding/{step}/skip": {
+      "post": {
+        "description": "Steps 2 to 4 only (``offers``, ``wants``, ``about``); anything saved for the step\nstays. Saving the step later replaces the skip.",
+        "operationId": "skip_step_api_v1_me_onboarding__step__skip_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "step",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SkippableStep"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many saves; retry later."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Storage nearly full; try again later."
+          }
+        },
+        "summary": "Skip a step for now",
+        "tags": [
+          "onboarding"
         ]
       }
     },
