@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FinishProfile } from "@/components/home/finish-profile";
@@ -268,6 +269,47 @@ describe("soft gate (screen 9)", () => {
     await vi.waitFor(() => expect(done).toHaveBeenCalledWith(undefined));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns focus to the button even though it was disabled while sending", async () => {
+    function DisablingSend() {
+      const { guard, dialog } = useSkillGate();
+      const [busy, setBusy] = useState(false);
+      return (
+        <>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await guard(async () => {
+                  // What a browser does to a button that becomes disabled (jsdom doesn't).
+                  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                  const response = await fetch("/api/v1/matches/m1/intro", { method: "POST" });
+                  const { ApiError } = await import("@/lib/api/errors");
+                  throw new ApiError(response.status, await response.json(), undefined);
+                });
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Send intro
+          </button>
+          {dialog}
+        </>
+      );
+    }
+    fetchMock
+      .mockResolvedValueOnce(json(409, SKILLS_REQUIRED))
+      .mockResolvedValueOnce(json(200, progress()));
+    render(<DisablingSend />);
+    const opener = screen.getByRole("button", { name: "Send intro" });
+    await userEvent.click(opener);
+    const dialog = await screen.findByRole("dialog", { name: "Add 3 skills first" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Not now" }));
+    await vi.waitFor(() => expect(opener).toHaveFocus());
   });
 
   it("passes any other error on unchanged", async () => {

@@ -82,7 +82,10 @@ export function HomeView({
           failed={failed}
           top={profile && nudge ? <NudgeCard nudge={nudge} offerSkills={offerSkills} /> : null}
           instead={
-            !profile && progress ? <FinishProfile progress={progress} demand={demand} /> : null
+            // Screen 8: it replaces the empty inbox only; any activity still shows.
+            !profile && progress && !failed && rows.length === 0 ? (
+              <FinishProfile progress={progress} demand={demand} />
+            ) : null
           }
         />
         <DetailPane composer={composer}>{children}</DetailPane>

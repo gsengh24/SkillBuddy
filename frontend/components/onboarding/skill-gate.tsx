@@ -54,12 +54,23 @@ export function useSkillGate(): {
     pending.current?.done(result);
     pending.current = null;
     const target = returnTo.current;
-    window.requestAnimationFrame(() => {
-      if (target?.isConnected) target.focus();
-    });
+    // The caller re-enables its button a render or two later; wait for it (a few frames).
+    let frames = 10;
+    const refocus = () => {
+      if (!target?.isConnected) return;
+      if (target.matches(":disabled") && frames-- > 0) {
+        window.requestAnimationFrame(refocus);
+        return;
+      }
+      target.focus();
+    };
+    window.requestAnimationFrame(refocus);
   }
 
   async function guard<T>(action: () => Promise<T>): Promise<T | undefined> {
+    // Remember the button now: once the action starts the caller disables it, and a
+    // disabled button loses focus.
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     try {
       return await action();
     } catch (caught) {
@@ -73,8 +84,7 @@ export function useSkillGate(): {
       setPicked([]);
     }
     setError(null);
-    returnTo.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    returnTo.current = opener;
     setOpen(true);
     return new Promise<T | undefined>((resolve) => {
       pending.current = { retry: action, done: (value) => resolve(value as T | undefined) };
