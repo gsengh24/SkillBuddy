@@ -486,7 +486,8 @@ async def test_a_users_correction_wins_over_a_queued_parse(
 
     assert corrected.status_code == 200
     assert corrected.json()["parse_source"] == "user"
-    assert after["understanding"] == correction
+    # A correction has no card title (onboarding writes that); it comes back empty.
+    assert after["understanding"] == correction | {"title": ""}
     assert after["parse_source"] == "user"
     assert invalid.status_code == 422
     embedded = run_sql(
