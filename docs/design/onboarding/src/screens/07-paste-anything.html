@@ -1,0 +1,16 @@
+<!--meta
+short: 7 · Paste anything
+kicker: Screen 7 · Shortcut from step 2
+title: Paste anything about you.
+title2: Empty, pasted, suggestions.
+desc: A LinkedIn About, a resume or a portfolio blurb. The text is checked for skills and interests; the person confirms every chip.
+-->
+<template data-variant="1 · Empty" data-note="Find my skills is disabled until there's text. Focus ring on the text box.">
+<!--#include paste-empty focus=is-focus-->
+</template>
+<template data-variant="2 · Pasted" data-note="Counter shows the 2,000 raw-character limit. Find my skills is enabled.">
+<!--#include paste-full focus=nf-->
+</template>
+<template data-variant="3 · Suggestions" data-note="Same suggestions state as the resume import.">
+<!--#include suggestions source=text-->
+</template>

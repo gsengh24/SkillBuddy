@@ -1,0 +1,67 @@
+<!--meta
+short: 4 · A bit about you
+kicker: Screen 4 · Step 4 of 4
+title: Almost done.
+title2: Year, branch, availability, name.
+desc: Taps only: segmented year, branch select, day chips (Sat and Sun picked), hours a week, and a display name prefilled from the Google account.
+css: .days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; } .days .chip { justify-content: center; padding: 0; } .days .chip::before { display: none; } .seg.yr button { font-size: 12px; } @container app (width >= 1024px) { .seg.yr button { font-size: 13px; } } .two { display: grid; gap: 24px; } @container app (width >= 1024px) { .two { grid-template-columns: 1fr 1fr; gap: 16px; } }
+-->
+<template data-variant="Details filled in" data-note="Display name comes from the Google account and is editable (60 characters). Focus ring shown on it. Finish runs profile understanding in the background.">
+<div class="app">
+  <!--#include ob-head step=4-->
+  <div class="ob">
+    <div class="ob-head fu">
+      <h1 class="h-page">Almost done. <span class="t2">A few quick details.</span></h1>
+    </div>
+    <div class="field fu2">
+      <span class="flabel">Year</span>
+      <div class="seg yr" role="radiogroup" aria-label="Year">
+        <button type="button" role="radio" aria-checked="false">1st</button>
+        <button type="button" role="radio" aria-checked="true">2nd</button>
+        <button type="button" role="radio" aria-checked="false">3rd</button>
+        <button type="button" role="radio" aria-checked="false">4th</button>
+        <button type="button" role="radio" aria-checked="false">Postgrad</button>
+      </div>
+    </div>
+    <label class="field fu2">
+      <span class="flabel">Branch</span>
+      <span class="iwrap sel"><select class="input">
+        <option selected>Computer Engineering</option><option>Electronics and Communication</option><option>Electrical</option><option>Mechanical</option><option>Chemical</option><option>Civil</option><option>Biotechnology</option><option>Other</option>
+      </select><!--#icon chevron--></span>
+    </label>
+    <div class="two fu3">
+      <div class="field">
+        <span class="flabel">Days you're usually free</span>
+        <div class="days" role="group" aria-label="Days you're usually free">
+          <button class="chip" type="button" aria-pressed="false" aria-label="Monday">Mon</button>
+          <button class="chip" type="button" aria-pressed="false" aria-label="Tuesday">Tue</button>
+          <button class="chip" type="button" aria-pressed="false" aria-label="Wednesday">Wed</button>
+          <button class="chip" type="button" aria-pressed="false" aria-label="Thursday">Thu</button>
+          <button class="chip" type="button" aria-pressed="false" aria-label="Friday">Fri</button>
+          <button class="chip" type="button" aria-pressed="true" aria-label="Saturday">Sat</button>
+          <button class="chip" type="button" aria-pressed="true" aria-label="Sunday">Sun</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="flabel">Hours a week</span>
+        <div class="seg" role="radiogroup" aria-label="Hours a week">
+          <button type="button" role="radio" aria-checked="false">1–2</button>
+          <button type="button" role="radio" aria-checked="true">3–5</button>
+          <button type="button" role="radio" aria-checked="false">6–10</button>
+          <button type="button" role="radio" aria-checked="false">10+</button>
+        </div>
+      </div>
+    </div>
+    <label class="field fu3">
+      <span class="flabel">Display name <span class="opt">From your Google account</span></span>
+      <input class="input is-focus" type="text" value="Aarav S." maxlength="60">
+      <span class="hint" style="display:flex;justify-content:space-between;gap:12px"><span>Shown only after someone accepts your intro.<span class="draft">Draft copy</span></span><span class="mono counter">8 / 60</span></span>
+    </label>
+  </div>
+  <footer class="ob-foot">
+    <button class="btn btn-ghost" type="button">Skip for now</button>
+    <span class="grow"></span>
+    <button class="btn btn-primary" type="button">Finish <!--#icon check--></button>
+  </footer>
+</div>
+</template>

@@ -1,0 +1,16 @@
+<!--meta
+short: 5 · Check what we understood
+kicker: Screen 5 · Review
+title: Here's how others will see you.
+title2: Ready, loading, fallback.
+desc: A preview of the anonymous match card, built from the picks, plus the generated About text to edit. Understanding runs in the background, so the card has loading and no-AI states.
+-->
+<template data-variant="Ready" data-note="AI-written heading and sentence over the chip data. No name, photo or contact details on the card. Focus ring on the About box.">
+<!--#include s5-shell card=ready focus=is-focus-->
+</template>
+<template data-variant="Loading" data-note="Skeleton pulse while the profile job runs (a few seconds). The About text is already there because it's built from the chips, not the AI. Looks good still works.">
+<!--#include s5-shell card=loading focus=nf-->
+</template>
+<template data-variant="Fallback · AI unavailable" data-note="Card built from chips only, no AI sentence. A quiet muted note, never an error.">
+<!--#include s5-shell card=fallback focus=nf-->
+</template>

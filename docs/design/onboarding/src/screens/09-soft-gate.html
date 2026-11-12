@@ -1,0 +1,59 @@
+<!--meta
+short: 9 · Soft gate dialog
+kicker: Screen 9 · Before an intro or joining a team
+title: Add 3 skills first.
+title2: A soft gate, not a wall.
+desc: Shown when someone without a profile taps Send intro or Join team. Pick three skills inline and carry on. Bottom sheet on phone, centred dialog on desktop.
+-->
+<template data-variant="One of three picked · Save disabled" data-note="Save and continue enables at 3 picks (tap two more chips to try it). Not now closes the dialog and leaves the intro unsent. Focus ring on the next chip.">
+<div class="app soft" data-scope>
+  <!--#include topbar cur=home-->
+  <div class="wrap" aria-hidden="true">
+    <div class="reqv">
+      <a class="back" href="#"><!--#icon back-->Back to inbox</a>
+      <div>
+        <p class="mono eyebrow">Your request · Build together</p>
+        <h1 class="h-page">A designer for my expense-tracker app</h1>
+      </div>
+      <article class="mcard">
+        <div class="mtop"><span class="anon"><!--#icon person--></span><div><b>UI designer who likes fintech</b><span class="mono">3rd year · Electronics and Communication</span></div></div>
+        <p class="whyy"><span class="mono">Why this person</span>Designs in Figma and wants a real app to build with; free on weekends like you.</p>
+        <div class="mfoot"><div class="tags"><span class="tag">Figma</span><span class="tag">UI design</span><span class="tag">Graphic design</span></div><button class="btn btn-primary" type="button" tabindex="-1">Send intro</button></div>
+      </article>
+      <article class="mcard">
+        <div class="mtop"><span class="anon"><!--#icon person--></span><div><b>Product designer, learning React</b><span class="mono">4th year · Computer Engineering</span></div></div>
+        <p class="whyy"><span class="mono">Why this person</span>Wants a frontend partner and has shipped two mobile app designs.</p>
+      </article>
+    </div>
+  </div>
+  <!--#include bnav cur=home-->
+  <div class="scrim">
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Add 3 skills first">
+      <span class="grab" aria-hidden="true"></span>
+      <div style="display:grid;gap:8px">
+        <p class="mono eyebrow">Before you send</p>
+        <h2>Add 3 skills first</h2>
+        <p class="body2">People decide whether to accept based on your profile. It takes under a minute.</p>
+      </div>
+      <div class="grp">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="mono muted">Skills you offer</span><span class="mono counter" data-count="{n} / 3">1 / 3</span></div>
+        <div class="chips" role="group" aria-label="Skills you offer">
+          <button class="chip" type="button" data-pick aria-pressed="false">Python</button>
+          <button class="chip" type="button" data-pick aria-pressed="true">React</button>
+          <button class="chip is-focus" type="button" data-pick aria-pressed="false">Figma</button>
+          <button class="chip" type="button" data-pick aria-pressed="false">UI design</button>
+          <button class="chip" type="button" data-pick aria-pressed="false">Node.js</button>
+          <button class="chip" type="button" data-pick aria-pressed="false">Flutter</button>
+          <button class="chip" type="button" data-pick aria-pressed="false">Machine learning</button>
+          <button class="chip" type="button" data-pick aria-pressed="false">Writing</button>
+        </div>
+        <span class="iwrap"><!--#icon search--><input class="input" type="search" placeholder="Search more skills" aria-label="Search more skills"></span>
+      </div>
+      <div class="acts">
+        <button class="btn btn-ghost" type="button">Not now</button>
+        <button class="btn btn-primary" type="button" data-needs="3" disabled>Save and continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+</template>

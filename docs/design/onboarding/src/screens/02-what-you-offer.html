@@ -1,0 +1,35 @@
+<!--meta
+short: 2 · What you're good at
+kicker: Screen 2 · Step 2 of 4
+title: What are you good at?
+title2: Skills you offer.
+desc: Grouped skill chips with search and the import shortcut (resume PDF or pasted text). Five chips selected. Tap chips to change the count.
+-->
+<template data-variant="Five skills picked" data-note="Shortcut panel on green tint leads to screens 6 and 7. Focus ring shown on the search field. The privacy note is draft copy.">
+<div class="app" data-scope>
+  <!--#include ob-head step=2-->
+  <div class="ob">
+    <div class="ob-head fu">
+      <h1 class="h-page">What are you good at? <span class="t2">Tap a few. You can change these later.</span></h1>
+    </div>
+    <section class="panel tint shortcut fu2" aria-label="Import shortcut">
+      <div class="shortcut-h"><b>Skip the typing</b></div>
+      <div class="acts">
+        <a class="btn btn-outline" href="06-resume-import.html"><!--#icon file-->Import resume (PDF)</a>
+        <a class="btn btn-outline" href="07-paste-anything.html"><!--#icon paste-->Paste text</a>
+      </div>
+      <p class="note"><!--#icon shield--><span>Your file is read in your browser and isn't uploaded.<span class="draft">Draft copy</span></span></p>
+    </section>
+    <div class="grp fu3">
+      <span class="iwrap"><!--#icon search--><input class="input is-focus" type="search" placeholder="Search skills, e.g. Python" aria-label="Search skills"></span>
+    </div>
+    <!--#include skills-offer-->
+  </div>
+  <footer class="ob-foot">
+    <button class="btn btn-ghost" type="button">Skip for now</button>
+    <span class="grow"></span>
+    <span class="mono" data-count="{n} selected">5 selected</span>
+    <button class="btn btn-primary" type="button">Continue <!--#icon arrow--></button>
+  </footer>
+</div>
+</template>
