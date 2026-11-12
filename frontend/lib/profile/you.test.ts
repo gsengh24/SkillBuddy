@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { profileSchema } from "@/lib/api/schemas";
 
-import { TIMES, draftFrom, isDirty, linkSlots, savePlan, strength } from "./you";
+import { missingItems, nudgeStrength } from "./strength";
+import { TIMES, draftFrom, isDirty, linkSlots, savePlan } from "./you";
 
 const PROFILE = profileSchema.parse({
   user_id: "u1",
@@ -49,7 +50,6 @@ describe("savePlan", () => {
       days: ["sat", "sun"],
     });
     expect(plan.aboutChanged).toBe(false);
-    expect(plan.skillsChanged).toBe(false);
     expect(plan.patch).toEqual({
       city: "Pune",
       weekly_hours: "4_6",
@@ -71,32 +71,33 @@ describe("savePlan", () => {
     expect(plan.patch).toEqual({ goal: "Ship it" });
   });
 
-  it("notices skill changes and nothing else", () => {
-    const base = draftFrom(PROFILE);
-    const draft = { ...base, offers: ["React"] };
+  it("saves skill changes to the chip columns (ADR 0022) and nothing else", () => {
+    const base = draftFrom({ ...PROFILE, offer_skills: ["Go"], want_skills: ["Figma"] });
+    expect(base.offers).toEqual(["Go"]);
+    expect(base.seeks).toEqual(["Figma"]);
+    const draft = { ...base, offers: ["Go", "React"] };
     expect(isDirty(base, draft)).toBe(true);
-    expect(savePlan(base, draft)).toMatchObject({ skillsChanged: true, patch: {} });
+    expect(savePlan(base, draft).patch).toEqual({ offer_skills: ["Go", "React"] });
     expect(isDirty(base, { ...base })).toBe(false);
   });
 });
 
-describe("strength", () => {
-  it("counts the reference's eight items and links each missing one to its section", () => {
-    const empty = strength(draftFrom(PROFILE));
-    expect(empty.percent).toBe(0);
-    expect(empty.missing[0]).toEqual({ label: "Add a headline", href: "#s-basics" });
-    const full = strength({
-      ...draftFrom(PROFILE),
-      headline: "Builds React apps",
-      about: "x".repeat(120),
-      offers: ["a", "b", "c"],
-      seeks: ["d"],
-      intents: ["mentor"],
-      days: ["mon"],
-      links: ["https://a.dev", "", ""],
-      goal: "Ship a habit tracker by December.",
-    });
-    expect(full).toEqual({ percent: 100, done: 8, total: 8, missing: [] });
+describe("strength words", () => {
+  it("names the API's missing items, links each to its section, and skips unknown ones", () => {
+    const strength = {
+      percent: 29,
+      done: 2,
+      total: 7,
+      missing: ["availability", "links", "something_new", "wants"],
+    };
+    expect(missingItems(strength)).toEqual([
+      { label: "Add availability", href: "#s-avail" },
+      { label: "Add a link", href: "#s-links" },
+      { label: "Add what you're looking for", href: "#s-skills" },
+    ]);
+    expect(missingItems(null)).toEqual([]);
+    expect(nudgeStrength(strength)).toMatchObject({ done: 2, total: 7 });
+    expect(nudgeStrength(null)).toBeNull();
   });
 });
 

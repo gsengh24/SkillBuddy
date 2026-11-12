@@ -1,7 +1,7 @@
 /**
  * The You page's data (design spec section 13): the editable draft, what changed, which
- * endpoint saves it, and the profile-strength checklist. No React here, so it is tested on
- * its own.
+ * endpoint saves it. No React here, so it is tested on its own. Profile strength comes from
+ * the API (`./strength`).
  */
 import type { Profile } from "@/lib/api/schemas";
 import { intents as INTENT_TOKENS, INTENTS, type Intent } from "@/lib/design/tokens";
@@ -165,8 +165,8 @@ export function draftFrom(profile: Profile): Draft {
     about: profile.about_text,
     languages: [...profile.languages],
     experience: profile.experience_level ?? "",
-    offers: [...(profile.understanding?.offers ?? [])],
-    seeks: [...(profile.understanding?.seeks ?? [])],
+    offers: [...profile.offer_skills],
+    seeks: [...profile.want_skills],
     intents: [...profile.intents],
     goal: profile.goal,
     style: profile.working_style,
@@ -193,12 +193,11 @@ const cleanLinks = (links: string[]) => links.map((l) => l.trim()).filter(Boolea
 
 /**
  * What a save sends. The about text can change only through PUT (it is re-read in the
- * background); skills are the parsed understanding (PUT /understanding); everything else is
- * one PATCH with only the changed fields.
+ * background); everything else, skills included (the chip columns, ADR 0022), is one PATCH
+ * with only the changed fields.
  */
 export function savePlan(base: Draft, draft: Draft) {
   const aboutChanged = draft.about.trim() !== base.about.trim();
-  const skillsChanged = !same(base.offers, draft.offers) || !same(base.seeks, draft.seeks);
   const patch: Record<string, unknown> = {};
   const add = (key: keyof Draft, field: string, value: unknown) => {
     if (!same(base[key], draft[key])) patch[field] = value;
@@ -213,6 +212,8 @@ export function savePlan(base: Draft, draft: Draft) {
   add("city", "city", draft.city.trim());
   add("headline", "headline", draft.headline.trim());
   add("experience", "experience_level", orNull(draft.experience));
+  add("offers", "offer_skills", draft.offers);
+  add("seeks", "want_skills", draft.seeks);
   add("intents", "intents", draft.intents);
   add("goal", "goal", draft.goal.trim());
   add("style", "working_style", draft.style);
@@ -221,33 +222,5 @@ export function savePlan(base: Draft, draft: Draft) {
   add("from", "available_from", orNull(draft.from));
   add("until", "available_until", orNull(draft.until));
   add("location", "location_precision", draft.location);
-  return { aboutChanged, skillsChanged, patch, links: cleanLinks(draft.links) };
-}
-
-export type Missing = { label: string; href: `#${SectionId}` };
-
-/** The profile-strength checklist from the reference: share done, and what's left. */
-export function strength(draft: Draft): {
-  percent: number;
-  done: number;
-  total: number;
-  missing: Missing[];
-} {
-  const items: [string, boolean, `#${SectionId}`][] = [
-    ["Add a headline", draft.headline.trim().length >= 10, "#s-basics"],
-    ["Write a longer bio", draft.about.trim().length >= 120, "#s-basics"],
-    ["Add 3 skills you offer", draft.offers.length >= 3, "#s-skills"],
-    ["Add something to learn", draft.seeks.length >= 1, "#s-skills"],
-    ["Pick an intent", draft.intents.length >= 1, "#s-looking"],
-    ["Pick available days", draft.days.length >= 1, "#s-avail"],
-    ["Add a link", draft.links.some((l) => l.trim()), "#s-links"],
-    ["Share your goal", draft.goal.trim().length >= 20, "#s-looking"],
-  ];
-  const done = items.filter(([, ok]) => ok).length;
-  return {
-    percent: Math.round((done / items.length) * 100),
-    done,
-    total: items.length,
-    missing: items.filter(([, ok]) => !ok).map(([label, , href]) => ({ label, href })),
-  };
+  return { aboutChanged, patch, links: cleanLinks(draft.links) };
 }

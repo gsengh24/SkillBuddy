@@ -66,7 +66,8 @@ _409: dict[str, Any] = {"model": ErrorResponse, "description": "`intro_not_pendi
         404: {"model": ErrorResponse, "description": "`match_not_found` (or not yours)."},
         409: {
             "model": ErrorResponse,
-            "description": "`candidate_unavailable`, `already_connected`, `intro_exists` or "
+            "description": "`skills_required` (offer at least 3 skills first), "
+            "`candidate_unavailable`, `already_connected`, `intro_exists` or "
             "`too_many_pending_intros`.",
         },
         422: {"model": ErrorResponse, "description": "Validation failed."},

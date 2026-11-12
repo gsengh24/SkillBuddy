@@ -47,6 +47,7 @@ from app.services import app_settings, blocks, content_rules
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 from app.services.notifications import add_notification
+from app.services.profile_strength import require_offered_skills
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +159,8 @@ class IntroService:
         ).first()
         if row is None or row[1].user_id != user.id:
             raise MatchNotFoundError
+        # The soft gate: people decide whether to accept from the sender's profile.
+        await require_offered_skills(self._db, user.id)
         match, request = row
         recipient = await self._db.get(User, match.candidate_id)
         profile = await self._db.get(Profile, match.candidate_id)

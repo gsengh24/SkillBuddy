@@ -122,6 +122,15 @@ export const branchSchema = z.enum([
   "other",
 ]);
 
+/** Profile strength, computed by the API only (ADR 0022). Unknown item codes are ignored. */
+export const strengthSchema = z.object({
+  percent: z.number(),
+  done: z.number(),
+  total: z.number(),
+  missing: z.array(z.string()),
+});
+export type Strength = z.infer<typeof strengthSchema>;
+
 export const profileSchema = z.object({
   user_id: z.string(),
   display_name: z.string(),
@@ -165,6 +174,8 @@ export const profileSchema = z.object({
    * Use `isOnboarded()`, not "a profile exists".
    */
   onboarding_completed_at: z.string().nullish(),
+  /** Null from older APIs, which didn't send it. */
+  strength: strengthSchema.nullable().default(null),
   parse_status: z.enum(["empty", "pending", "parsed"]),
   parse_source: z.enum(["llm", "template", "user"]).nullable(),
   understanding: understandingSchema.nullable(),
@@ -200,8 +211,26 @@ export const onboardingSchema = z.object({
   available_days: z.array(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])),
   weekly_hours: z.enum(["1_3", "4_6", "7_10", "10_plus"]).nullable(),
   display_name: z.string(),
+  strength: strengthSchema.nullable().default(null),
 });
 export type Onboarding = z.infer<typeof onboardingSchema>;
+
+/** Home's in-context nudge (screen 11): data only, the words are the client's. */
+export const nudgeSchema = z.object({
+  kind: z.string(),
+  skill: z.string().nullable().default(null),
+  team_id: z.string().nullable().default(null),
+  team_name: z.string().nullable().default(null),
+});
+export type Nudge = z.infer<typeof nudgeSchema>;
+export const currentNudgeSchema = z.object({ nudge: nudgeSchema.nullable() });
+
+/** How many people want a skill this week: a count only, null below the API's minimum. */
+export const demandSchema = z.object({
+  skill: z.string(),
+  count: z.number().nullable(),
+  window_days: z.number(),
+});
 
 export const skillSuggestionsSchema = z.object({
   items: z.array(z.object({ name: z.string() })),

@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ds/button";
+import { useSkillGate } from "@/components/onboarding/skill-gate";
 import { InlineError, Textarea } from "@/components/ds/fields";
 import { browserApi } from "@/lib/api/browser";
 import { noContentSchema, teamInviteSchema, type TeamInvite } from "@/lib/api/schemas";
@@ -27,18 +28,23 @@ export function AskToJoin({
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { guard, dialog } = useSkillGate();
 
   async function send(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      await browserApi(`/teams/${teamId}/requests`, teamInviteSchema, {
-        method: "POST",
-        body: { note: note.trim() },
-      });
-      setDone(true);
-      setOpen(false);
+      const sent = await guard(() =>
+        browserApi(`/teams/${teamId}/requests`, teamInviteSchema, {
+          method: "POST",
+          body: { note: note.trim() },
+        }),
+      );
+      if (sent) {
+        setDone(true);
+        setOpen(false);
+      }
     } catch (caught) {
       setError(describeError(caught));
     }
@@ -65,29 +71,32 @@ export function AskToJoin({
     );
   }
   return (
-    <form onSubmit={send} className="flex w-full flex-col gap-3">
-      <Textarea
-        label={`A note to the owner of ${teamName} (optional)`}
-        rows={2}
-        maxLength={NOTE_MAX}
-        showCounter={false}
-        value={note}
-        onChange={(event) => setNote(event.target.value)}
-      />
-      <p className="text-meta-lg text-muted">
-        The owner will see your name and this note. If they say yes, everyone in the pair space will
-        see your name.
-      </p>
-      {error ? <InlineError announce>{error}</InlineError> : null}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" variant="outline" size="compact" disabled={busy}>
-          Send request
-        </Button>
-        <Button variant="ghost" size="compact" disabled={busy} onClick={() => setOpen(false)}>
-          Cancel
-        </Button>
-      </div>
-    </form>
+    <>
+      {dialog}
+      <form onSubmit={send} className="flex w-full flex-col gap-3">
+        <Textarea
+          label={`A note to the owner of ${teamName} (optional)`}
+          rows={2}
+          maxLength={NOTE_MAX}
+          showCounter={false}
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+        />
+        <p className="text-meta-lg text-muted">
+          The owner will see your name and this note. If they say yes, everyone in the pair space
+          will see your name.
+        </p>
+        {error ? <InlineError announce>{error}</InlineError> : null}
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" variant="outline" size="compact" disabled={busy}>
+            Send request
+          </Button>
+          <Button variant="ghost" size="compact" disabled={busy} onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }
 

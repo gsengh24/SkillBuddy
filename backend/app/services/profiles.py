@@ -21,7 +21,7 @@ from app.models import FlaggedItem, ParseSource, ParseStatus, Profile, User
 from app.schemas.profile import ProfileIn, ProfileSettingsIn, UnderstandingIn
 from app.services import content_rules
 from app.services.auth.rate_limit import RateLimiter
-from app.services.profile_parsing import text_hash
+from app.services.profile_parsing import set_chips, text_hash
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +159,16 @@ class ProfileService:
         for field in _CLEARED_ON_NULL:
             if field in changes:
                 setattr(profile, field, changes[field])
+        if (
+            set_chips(
+                profile,
+                offers=changes.get("offer_skills"),
+                wants=changes.get("want_skills"),
+                interests=changes.get("interest_tags"),
+            )
+            and profile.onboarding_completed_at is not None
+        ):
+            await enqueue(self._db, EMBED_PROFILE, {"user_id": str(user.id)})
         # The picture is only ever the Google one, and only while the person keeps this on
         # (ADR 0017): there is no upload and no address of the person's choosing.
         if changes.get("show_photo") is True:

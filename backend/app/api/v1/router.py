@@ -24,6 +24,7 @@ from app.api.v1 import (
     health,
     jobs,
     moderation,
+    nudges,
     onboarding,
     profile,
     requests,
@@ -44,6 +45,7 @@ api_router.include_router(auth.router)
 api_router.include_router(account.router)
 api_router.include_router(profile.router)
 api_router.include_router(onboarding.router)
+api_router.include_router(nudges.router)
 api_router.include_router(requests.router)
 api_router.include_router(skills.router)
 api_router.include_router(social.router)

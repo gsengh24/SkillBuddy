@@ -48,10 +48,10 @@ import {
   draftFrom,
   isDirty,
   savePlan,
-  strength,
   type Draft,
   type SectionId,
 } from "@/lib/profile/you";
+import { missingItems } from "@/lib/profile/strength";
 
 import { DataDownload, DeviceList, PauseAccount } from "./account-controls";
 import { SectionNav } from "./section-nav";
@@ -328,11 +328,7 @@ export function YouPage({ profile, account }: Props) {
   if (profile !== shown) {
     setShown(profile);
     if (!dirty) {
-      const next = draftFrom(profile);
-      // Still being read: keep the skills shown until the new reading is in.
-      const fresh = profile.understanding
-        ? next
-        : { ...next, offers: draft.offers, seeks: draft.seeks };
+      const fresh = draftFrom(profile);
       setBase(fresh);
       setDraft(fresh);
     }
@@ -351,7 +347,9 @@ export function YouPage({ profile, account }: Props) {
 
   const plan = savePlan(base, draft);
   const needsConsent = plan.aboutChanged && !profile.ai_consent_current;
-  const { percent, missing } = strength(draft);
+  // The API's strength (ADR 0022): it counts what is saved, so it moves after a save.
+  const percent = profile.strength?.percent ?? 0;
+  const missing = missingItems(profile.strength);
   const timezones =
     TIMEZONES.some((t) => t.value === draft.timezone) || !draft.timezone
       ? TIMEZONES
@@ -389,20 +387,6 @@ export function YouPage({ profile, account }: Props) {
             timezone: draft.timezone || null,
             visibility,
             ai_consent: needsConsent ? consent : false,
-          },
-        });
-      }
-      if (plan.skillsChanged) {
-        // After the PUT, so the correction belongs to the new text and isn't re-read.
-        const current = profile.understanding;
-        await browserApi("/me/profile/understanding", profileSchema, {
-          method: "PUT",
-          body: {
-            summary: current?.summary ?? "",
-            offers: draft.offers,
-            seeks: draft.seeks,
-            interests: current?.interests ?? [],
-            availability: current?.availability ?? "",
           },
         });
       }
@@ -485,7 +469,7 @@ export function YouPage({ profile, account }: Props) {
           )}
         </div>
         <div className="lg:flex lg:flex-col">
-          <Button variant="primary" onClick={() => setPreviewOpen(true)}>
+          <Button variant="outline" onClick={() => setPreviewOpen(true)}>
             See how others see you
           </Button>
         </div>

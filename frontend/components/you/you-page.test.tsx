@@ -23,6 +23,11 @@ const PROFILE = profileSchema.parse({
   intents: ["build_together"],
   available_days: ["sat"],
   available_from: "18:00:00",
+  // The chip columns (ADR 0022) are what the skill editors show and save.
+  offer_skills: ["UI design"],
+  want_skills: ["React"],
+  // Computed by the API; the page only shows it.
+  strength: { percent: 57, done: 4, total: 7, missing: ["offers", "about_text", "links"] },
   parse_status: "parsed",
   parse_source: "template",
   understanding: {
@@ -128,10 +133,15 @@ describe("YouPage", () => {
       "aria-pressed",
       "true",
     );
+    // The API's number and its missing items, as links to their sections.
     expect(screen.getByRole("meter", { name: "Profile strength" })).toHaveAttribute(
       "aria-valuenow",
-      // 5 of 8: no longer bio, fewer than 3 skills offered, no goal yet.
-      "63",
+      "57",
+    );
+    const todo = screen.getByRole("list", { name: "To make it stronger" });
+    expect(within(todo).getByRole("link", { name: /Add 3 skills you offer/ })).toHaveAttribute(
+      "href",
+      "#s-skills",
     );
     // Nothing changed yet: no Save bar.
     expect(screen.queryByRole("region", { name: "Unsaved changes" })).not.toBeInTheDocument();
@@ -184,7 +194,7 @@ describe("YouPage", () => {
     expect(router.refresh).not.toHaveBeenCalled();
   });
 
-  it("saves skills as a correction, and a new description with PUT", async () => {
+  it("saves skills to the chip columns, and a new description with PUT", async () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
     await user.type(
@@ -195,23 +205,17 @@ describe("YouPage", () => {
     await user.type(screen.getByLabelText("About you"), " Also into chess.");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
 
-    const [put, understanding] = calls();
+    const [put, patch] = calls();
     expect(put?.slice(0, 2)).toEqual(["/api/v1/me/profile", "PUT"]);
     expect(put?.[2]).toMatchObject({
       about_text: `${PROFILE.about_text} Also into chess.`,
       visibility: "matchable",
       links: ["https://meera.design", "https://github.com/meera"],
     });
-    expect(understanding).toEqual([
-      "/api/v1/me/profile/understanding",
-      "PUT",
-      {
-        summary: "Designs mobile apps.",
-        offers: ["UI design", "Figma"],
-        seeks: [],
-        interests: ["chess"],
-        availability: "weekends",
-      },
+    expect(patch).toEqual([
+      "/api/v1/me/profile",
+      "PATCH",
+      { offer_skills: ["UI design", "Figma"], want_skills: [] },
     ]);
     expect(calls()).toHaveLength(2);
   });

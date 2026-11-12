@@ -2,7 +2,7 @@
  * Whether Home shows the "Finish your profile" popup. One pure rule, so the component only
  * renders and animates.
  */
-import type { Missing } from "./you";
+import type { Missing } from "./strength";
 
 /** localStorage key holding the `session_started_at` the popup was last closed in. */
 export const NUDGE_DISMISSED_KEY = "cynergi:profile-nudge-dismissed";

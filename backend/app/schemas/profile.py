@@ -30,6 +30,9 @@ from app.models import (
     WeeklyHours,
     WorkingStyle,
 )
+from app.schemas.strength import StrengthOut
+from app.schemas.tags import Tags
+from app.services.profile_strength import strength_of
 
 ABOUT_TEXT_MIN_LENGTH: Final = 20
 _REQUEST = ConfigDict(extra="forbid")
@@ -141,6 +144,13 @@ class ProfileSettingsIn(BaseModel):
             "country is stored) or `hidden`."
         ),
     )
+    offer_skills: Tags | None = Field(
+        default=None, description="Skills you offer, in your order; replaces the list."
+    )
+    want_skills: Tags | None = Field(
+        default=None, description="Skills you want to learn or find; replaces the list."
+    )
+    interest_tags: Tags | None = Field(default=None, description="Replaces the list.")
     show_photo: bool | None = Field(
         default=None,
         description=(
@@ -237,6 +247,7 @@ class ProfileOut(BaseModel):
     understanding: UnderstandingOut | None
     ai_consent_version: str | None
     ai_consent_at: datetime | None
+    strength: StrengthOut = Field(description="How complete the profile is (ADR 0022).")
     ai_consent_current: bool = Field(
         description="False when the consent version has changed since the user agreed."
     )
@@ -300,6 +311,7 @@ class ProfileOut(BaseModel):
             ai_consent_version=profile.ai_consent_version,
             ai_consent_at=profile.ai_consent_at,
             ai_consent_current=profile.ai_consent_version == consent_version,
+            strength=StrengthOut.of(strength_of(profile)),
             created_at=profile.created_at,
             updated_at=profile.updated_at,
         )

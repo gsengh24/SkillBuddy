@@ -38,10 +38,12 @@ from app.schemas.onboarding import (
     StepState,
     WantsStepIn,
 )
+from app.schemas.strength import StrengthOut
 from app.services import content_rules
 from app.services.auth.rate_limit import RateLimiter
 from app.services.profile_compose import chips_of, structured_from_chips
-from app.services.profile_parsing import text_hash
+from app.services.profile_parsing import set_chips, text_hash
+from app.services.profile_strength import strength_of
 from app.services.profiles import AiConsentRequiredError
 
 logger = logging.getLogger(__name__)
@@ -71,6 +73,7 @@ def progress(profile: Profile | None) -> OnboardingOut:
             available_days=[],
             weekly_hours=None,
             display_name="",
+            strength=StrengthOut.of(strength_of(None)),
         )
     states: list[StepOut] = []
     for step in STEP_ORDER:
@@ -100,6 +103,7 @@ def progress(profile: Profile | None) -> OnboardingOut:
             "available_days": list(profile.available_days),
             "weekly_hours": profile.weekly_hours,
             "display_name": profile.display_name,
+            "strength": StrengthOut.of(strength_of(profile)),
         }
     )
 
@@ -152,6 +156,12 @@ class OnboardingService:
             await self._db.flush()
         return profile
 
+    async def _reembed_if(self, profile: Profile, changed: bool) -> None:
+        """A finished profile's skills changed (e.g. from the soft gate): match on the new ones.
+        Before "Looks good" nothing is embedded; finishing step 4 again rebuilds the view."""
+        if changed and profile.onboarding_completed_at is not None:
+            await enqueue(self._db, EMBED_PROFILE, {"user_id": str(profile.user_id)})
+
     async def _commit(self, user: User, profile: Profile, step: OnboardingStep) -> OnboardingOut:
         await self._db.commit()
         await self._db.refresh(profile)
@@ -166,15 +176,15 @@ class OnboardingService:
 
     async def save_offers(self, user: User, data: OffersStepIn) -> OnboardingOut:
         profile = await self._profile_for_write(user)
-        profile.offer_skills = list(data.skills)
+        await self._reembed_if(profile, set_chips(profile, offers=data.skills))
         _mark(profile, OnboardingStep.OFFERS, skipped=False)
         return await self._commit(user, profile, OnboardingStep.OFFERS)
 
     async def save_wants(self, user: User, data: WantsStepIn) -> OnboardingOut:
         profile = await self._profile_for_write(user)
         note_changed = data.note != profile.want_note
-        profile.want_skills = list(data.skills)
-        profile.interest_tags = list(data.interests)
+        changed = set_chips(profile, wants=data.skills, interests=data.interests)
+        await self._reembed_if(profile, changed)
         profile.want_note = data.note
         if note_changed:
             # Content rules only flag for a moderator; they never block the save.

@@ -1488,6 +1488,26 @@
         "title": "CurrentBannerOut",
         "type": "object"
       },
+      "CurrentNudgeOut": {
+        "properties": {
+          "nudge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NudgeOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Today's nudge, or `null`. Each kind shows on one day at most, one a day."
+          }
+        },
+        "required": [
+          "nudge"
+        ],
+        "title": "CurrentNudgeOut",
+        "type": "object"
+      },
       "DataExportList": {
         "properties": {
           "items": {
@@ -1761,6 +1781,38 @@
           "deletion_scheduled_for"
         ],
         "title": "DeletionScheduledOut",
+        "type": "object"
+      },
+      "DemandOut": {
+        "description": "How many people want a skill: a count only, never who.",
+        "properties": {
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "People who wanted it in the last 7 days; `null` below 5, so small numbers can't point at anyone.",
+            "title": "Count"
+          },
+          "skill": {
+            "title": "Skill",
+            "type": "string"
+          },
+          "window_days": {
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "skill",
+          "count",
+          "window_days"
+        ],
+        "title": "DemandOut",
         "type": "object"
       },
       "DependencyCheck": {
@@ -4051,6 +4103,65 @@
         "title": "NotificationPage",
         "type": "object"
       },
+      "NudgeKind": {
+        "description": "In-context suggestions on Home (ADR 0022, screen 11). Each is shown on one day at\nmost, and at most one a day.",
+        "enum": [
+          "team_skill",
+          "availability"
+        ],
+        "title": "NudgeKind",
+        "type": "string"
+      },
+      "NudgeOut": {
+        "description": "One suggestion. `team_skill`: add `skill`, named by the team just joined.\n`availability`: add available days (after a first match).",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/NudgeKind"
+          },
+          "skill": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`team_skill` only.",
+            "title": "Skill"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`team_skill` only.",
+            "title": "Team Id"
+          },
+          "team_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`team_skill` only.",
+            "title": "Team Name"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "NudgeOut",
+        "type": "object"
+      },
       "OffersStepIn": {
         "additionalProperties": false,
         "description": "Step 2: skills the person can offer. Replaces the saved list.",
@@ -4150,6 +4261,9 @@
             "title": "Steps",
             "type": "array"
           },
+          "strength": {
+            "$ref": "#/components/schemas/StrengthOut"
+          },
           "study_year": {
             "anyOf": [
               {
@@ -4195,7 +4309,8 @@
           "branch",
           "available_days",
           "weekly_hours",
-          "display_name"
+          "display_name",
+          "strength"
         ],
         "title": "OnboardingOut",
         "type": "object"
@@ -4914,6 +5029,10 @@
             "title": "Show Last Active",
             "type": "boolean"
           },
+          "strength": {
+            "$ref": "#/components/schemas/StrengthOut",
+            "description": "How complete the profile is (ADR 0022)."
+          },
           "study_year": {
             "anyOf": [
               {
@@ -5029,6 +5148,7 @@
           "understanding",
           "ai_consent_version",
           "ai_consent_at",
+          "strength",
           "ai_consent_current",
           "created_at",
           "updated_at"
@@ -5208,6 +5328,24 @@
             "description": "What you want from Cynergi in general. Repeats are dropped.",
             "title": "Intents"
           },
+          "interest_tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 60,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Replaces the list.",
+            "title": "Interest Tags"
+          },
           "intros_only_from_strong_matches": {
             "anyOf": [
               {
@@ -5264,6 +5402,24 @@
             ],
             "description": "How much of your city others see: `city`, `country` (shown as nothing until a country is stored) or `hidden`."
           },
+          "offer_skills": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 60,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Skills you offer, in your order; replaces the list.",
+            "title": "Offer Skills"
+          },
           "show_last_active": {
             "anyOf": [
               {
@@ -5311,6 +5467,24 @@
               }
             ],
             "description": "`matchable`: shown in matches. `after_intro`: people see you only once you accept their intro (for now treated like `paused`). `paused`: hidden from new matches; existing chats continue."
+          },
+          "want_skills": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 60,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Skills you want to learn or find; replaces the list.",
+            "title": "Want Skills"
           },
           "weekly_hours": {
             "anyOf": [
@@ -6570,6 +6744,57 @@
           "checked_at"
         ],
         "title": "StorageReport",
+        "type": "object"
+      },
+      "StrengthItem": {
+        "description": "One checklist item. The order is the order clients list what is missing.",
+        "enum": [
+          "intents",
+          "offers",
+          "wants",
+          "about_text",
+          "availability",
+          "headline",
+          "links"
+        ],
+        "title": "StrengthItem",
+        "type": "string"
+      },
+      "StrengthOut": {
+        "description": "How complete the profile is. Computed by the API only; clients show it.",
+        "properties": {
+          "done": {
+            "minimum": 0.0,
+            "title": "Done",
+            "type": "integer"
+          },
+          "missing": {
+            "description": "What is not done yet, in the order to suggest it.",
+            "items": {
+              "$ref": "#/components/schemas/StrengthItem"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "percent": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Percent",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 1.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "percent",
+          "done",
+          "total",
+          "missing"
+        ],
+        "title": "StrengthOut",
         "type": "object"
       },
       "StudyYear": {
@@ -14766,7 +14991,7 @@
                 }
               }
             },
-            "description": "`candidate_unavailable`, `already_connected`, `intro_exists` or `too_many_pending_intros`."
+            "description": "`skills_required` (offer at least 3 skills first), `candidate_unavailable`, `already_connected`, `intro_exists` or `too_many_pending_intros`."
           },
           "422": {
             "content": {
@@ -14988,6 +15213,82 @@
         "summary": "Download my data",
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/api/v1/me/nudge": {
+      "get": {
+        "description": "At most one nudge a day, each kind on one day at most, never one that was dismissed.\n`null` before onboarding is finished.",
+        "operationId": "current_nudge_api_v1_me_nudge_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentNudgeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          }
+        },
+        "summary": "Today's in-context nudge",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/me/nudges/{kind}/dismiss": {
+      "post": {
+        "operationId": "dismiss_nudge_api_v1_me_nudges__kind__dismiss_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/NudgeKind"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unknown kind."
+          }
+        },
+        "summary": "Dismiss a nudge for good",
+        "tags": [
+          "onboarding"
         ]
       }
     },
@@ -17753,6 +18054,73 @@
         ]
       }
     },
+    "/api/v1/stats/demand": {
+      "get": {
+        "description": "An aggregate count only (no names or avatars), withheld below the minimum.",
+        "operationId": "skill_demand_api_v1_stats_demand_get",
+        "parameters": [
+          {
+            "description": "A skill name, any case.",
+            "in": "query",
+            "name": "skill",
+            "required": true,
+            "schema": {
+              "description": "A skill name, any case.",
+              "maxLength": 60,
+              "minLength": 1,
+              "title": "Skill",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many requests; retry later."
+          }
+        },
+        "summary": "How many people want a skill this week",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
     "/api/v1/team-messages/{message_id}/report": {
       "post": {
         "description": "A message someone else sent in a team you are in. The moderator sees a copy of that\none message, not the rest of the chat. The sender is not told.",
@@ -18160,7 +18528,7 @@
                 }
               }
             },
-            "description": "`team_invite_not_pending`, `team_full`, `too_many_teams` or `team_not_available`."
+            "description": "`team_invite_not_pending`, `skills_required` (accepting an invite needs at least 3 offered skills), `team_full`, `too_many_teams` or `team_not_available`."
           },
           "422": {
             "content": {
@@ -18330,7 +18698,7 @@
                 }
               }
             },
-            "description": "`team_full` or `too_many_teams`."
+            "description": "`skills_required` (offer at least 3 skills first), `team_full` or `too_many_teams`."
           },
           "422": {
             "content": {
@@ -19584,7 +19952,7 @@
                 }
               }
             },
-            "description": "`already_member`, `team_invite_exists`, `team_full`, `too_many_pending_invites` or `too_many_teams`."
+            "description": "`already_member`, `skills_required` (offer at least 3 skills first), `team_invite_exists`, `team_full`, `too_many_pending_invites` or `too_many_teams`."
           },
           "422": {
             "content": {

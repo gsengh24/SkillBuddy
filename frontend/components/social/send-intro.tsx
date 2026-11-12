@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { Button, ButtonLink } from "@/components/ds/button";
 import { InlineError, Textarea } from "@/components/ds/fields";
+import { useSkillGate } from "@/components/onboarding/skill-gate";
 import { browserApi } from "@/lib/api/browser";
 import { introSchema, type Match } from "@/lib/api/schemas";
 import { describeError } from "@/lib/auth/messages";
@@ -36,6 +37,7 @@ export function SendIntro({
   const openRef = useRef<HTMLButtonElement>(null);
   // Set by Cancel, so focus goes back to "Send intro" (not on first render).
   const cancelled = useRef(false);
+  const { guard, dialog } = useSkillGate();
 
   // Keyboard and screen-reader users land in the note when the form opens, and back on
   // "Send intro" after Cancel.
@@ -86,10 +88,14 @@ export function SendIntro({
     setSending(true);
     setError(null);
     try {
-      await browserApi(`/matches/${match.id}/intro`, introSchema, {
-        method: "POST",
-        body: { note: note.trim() },
-      });
+      // The soft gate: with fewer than 3 offered skills, add them here and the intro goes.
+      const sent = await guard(() =>
+        browserApi(`/matches/${match.id}/intro`, introSchema, {
+          method: "POST",
+          body: { note: note.trim() },
+        }),
+      );
+      if (!sent) return;
       setStage("sent");
       notifyHomeChanged();
     } catch (caught) {
@@ -100,48 +106,51 @@ export function SendIntro({
   }
 
   return (
-    <form
-      noValidate
-      onSubmit={onSubmit}
-      className="flex flex-col gap-3"
-      aria-labelledby={`${ids}-h`}
-    >
-      <p id={`${ids}-h`} className="text-title text-ink">
-        Send an intro
-      </p>
-      <Textarea
-        id={`${ids}-note`}
-        ref={noteRef}
-        label="A short hello (optional)"
-        hint={`${note.trim().length}/${NOTE_MAX} characters`}
-        rows={3}
-        maxLength={NOTE_MAX}
-        showCounter={false}
-        value={note}
-        onChange={(event) => setNote(event.target.value)}
-        placeholder="e.g. Hi! I'm building a budgeting app and would love your design eye."
-      />
-      <p className="text-meta-lg text-ink-2">
-        They&apos;ll see what you asked for, why you were matched and your note. Your name and links
-        stay hidden unless they accept.
-      </p>
-      {error ? <InlineError announce>{error}</InlineError> : null}
-      <div className="flex flex-wrap gap-3">
-        <Button type="submit" variant="primary" disabled={sending}>
-          {sending ? "Sending…" : "Send intro"}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => {
-            cancelled.current = true;
-            setStage("idle");
-          }}
-          disabled={sending}
-        >
-          Cancel
-        </Button>
-      </div>
-    </form>
+    <>
+      {dialog}
+      <form
+        noValidate
+        onSubmit={onSubmit}
+        className="flex flex-col gap-3"
+        aria-labelledby={`${ids}-h`}
+      >
+        <p id={`${ids}-h`} className="text-title text-ink">
+          Send an intro
+        </p>
+        <Textarea
+          id={`${ids}-note`}
+          ref={noteRef}
+          label="A short hello (optional)"
+          hint={`${note.trim().length}/${NOTE_MAX} characters`}
+          rows={3}
+          maxLength={NOTE_MAX}
+          showCounter={false}
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          placeholder="e.g. Hi! I'm building a budgeting app and would love your design eye."
+        />
+        <p className="text-meta-lg text-ink-2">
+          They&apos;ll see what you asked for, why you were matched and your note. Your name and
+          links stay hidden unless they accept.
+        </p>
+        {error ? <InlineError announce>{error}</InlineError> : null}
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" variant="primary" disabled={sending}>
+            {sending ? "Sending…" : "Send intro"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              cancelled.current = true;
+              setStage("idle");
+            }}
+            disabled={sending}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }

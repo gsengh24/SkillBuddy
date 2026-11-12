@@ -122,6 +122,16 @@ SKIPPABLE_STEPS: tuple[OnboardingStep, ...] = (
 )
 
 
+class NudgeKind(StrEnum):
+    """In-context suggestions on Home (ADR 0022, screen 11). Each is shown on one day at
+    most, and at most one a day."""
+
+    # After joining a team whose name or description names a skill the person doesn't list.
+    TEAM_SKILL = "team_skill"
+    # After a first match, when no available days are set.
+    AVAILABILITY = "availability"
+
+
 def _in(values: Sequence[str]) -> str:
     return ", ".join(f"'{value}'" for value in values)
 
@@ -212,6 +222,10 @@ class Profile(TimestampMixin, Base):
         CheckConstraint(
             f"onboarding_skipped <@ {_array(list(SKIPPABLE_STEPS))}",
             name="onboarding_skipped_valid",
+        ),
+        CheckConstraint(f"nudges_shown <@ {_array(list(NudgeKind))}", name="nudges_shown_valid"),
+        CheckConstraint(
+            f"nudges_dismissed <@ {_array(list(NudgeKind))}", name="nudges_dismissed_valid"
         ),
     )
 
@@ -305,6 +319,16 @@ class Profile(TimestampMixin, Base):
     # Null until the person finishes onboarding. Profiles made before ADR 0022 are
     # backfilled with their creation time.
     onboarding_completed_at: Mapped[datetime | None]
+
+    # --- in-context nudges (ADR 0022, screen 11) -------------------------------------------
+    # Kinds ever shown, kinds dismissed, and when the latest was first shown (one a day).
+    nudges_shown: Mapped[list[str]] = mapped_column(
+        ARRAY(String(16)), default=list, server_default=text("'{}'::varchar[]")
+    )
+    nudges_dismissed: Mapped[list[str]] = mapped_column(
+        ARRAY(String(16)), default=list, server_default=text("'{}'::varchar[]")
+    )
+    nudge_shown_at: Mapped[datetime | None]
 
     # --- privacy -------------------------------------------------------------------------
     location_precision: Mapped[str] = mapped_column(

@@ -55,18 +55,15 @@ describe("SignedInLayout", () => {
     expect((await shellProps()).profileComplete).toBeNull();
   });
 
-  it("scores the profile with the You page's checklist", async () => {
-    // A new profile: a short bio, a language and a time zone tick nothing on the list.
-    vi.mocked(getMyProfile).mockResolvedValue(PROFILE);
-    expect((await shellProps()).profileComplete).toBe(0);
-
-    // Two of the eight items: a link and an intent.
+  it("shows the API's profile strength, the number the You page shows", async () => {
     vi.mocked(getMyProfile).mockResolvedValue({
       ...PROFILE,
-      links: ["https://a.dev"],
-      intents: ["build_together"],
+      strength: { percent: 29, done: 2, total: 7, missing: ["wants"] },
     });
-    expect((await shellProps()).profileComplete).toBe(25);
+    expect((await shellProps()).profileComplete).toBe(29);
+    // An older API without it: no number rather than a made-up one.
+    vi.mocked(getMyProfile).mockResolvedValue({ ...PROFILE, strength: null });
+    expect((await shellProps()).profileComplete).toBeNull();
   });
 
   it.each([500, 503])("keeps the shell on a profile %i", async (status) => {

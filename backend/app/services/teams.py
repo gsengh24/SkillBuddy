@@ -70,6 +70,7 @@ from app.services import blocks, content_rules
 from app.services.auth.rate_limit import RateLimiter
 from app.services.cursors import decode_cursor, encode
 from app.services.notifications import add_notification
+from app.services.profile_strength import require_offered_skills
 
 logger = logging.getLogger(__name__)
 
@@ -587,6 +588,9 @@ class TeamService:
             raise TeamInviteNotPendingError
         members = await self._member_ids(team.id)
         if accept and joiner not in members:
+            if not is_request:
+                # Joining by accepting an invite: the soft gate (a request was gated when sent).
+                await require_offered_skills(self._db, user.id)
             if (await blocks.blocked_with(self._db, joiner)).intersection(members):
                 raise TeamNotAvailableError
             if len(members) >= MAX_TEAM_MEMBERS:
@@ -663,6 +667,7 @@ class TeamService:
             raise AlreadyMemberError
         if (await blocks.blocked_with(self._db, user.id)).intersection(members):
             raise TeamNotFoundError
+        await require_offered_skills(self._db, user.id)
         open_invites = await self._open_invitees(team.id, user.id, now)
         if user.id in open_invites:
             raise TeamInviteExistsError
@@ -783,6 +788,7 @@ class TeamService:
         team, members = await self._by_link(user, code, lock=True)
         if user.id in members:
             return await self.get(user, team.id)
+        await require_offered_skills(self._db, user.id)
         if len(members) >= MAX_TEAM_MEMBERS:
             raise TeamFullError
         if await self._teams_of(user.id) >= MAX_TEAMS_PER_PERSON:

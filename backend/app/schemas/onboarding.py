@@ -11,8 +11,6 @@ from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstra
 from app.ai.stages.compose import ABOUT_MAX as ABOUT_STEP_MAX
 from app.ai.stages.understand import Intent
 from app.models import (
-    MAX_PICKED_TAGS,
-    TAG_MAX_LENGTH,
     WANT_NOTE_MAX_LENGTH,
     Branch,
     OnboardingStep,
@@ -21,30 +19,16 @@ from app.models import (
     WeeklyHours,
 )
 from app.schemas.profile import Days, DisplayName
+from app.schemas.strength import StrengthOut
+from app.schemas.tags import Tags
 
 _REQUEST = ConfigDict(extra="forbid")
-
-
-def _unique_tags(values: list[str]) -> list[str]:
-    """Drops repeats, ignoring case, keeping the first spelling of each."""
-    seen: set[str] = set()
-    kept: list[str] = []
-    for value in values:
-        key = value.casefold()
-        if key not in seen:
-            seen.add(key)
-            kept.append(value)
-    return kept
 
 
 def _unique_intents(values: list[Intent]) -> list[Intent]:
     return list(dict.fromkeys(values))
 
 
-Tag = Annotated[
-    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=TAG_MAX_LENGTH)
-]
-Tags = Annotated[list[Tag], Field(max_length=MAX_PICKED_TAGS), AfterValidator(_unique_tags)]
 WantNote = Annotated[str, StringConstraints(strip_whitespace=True, max_length=WANT_NOTE_MAX_LENGTH)]
 
 
@@ -164,3 +148,4 @@ class OnboardingOut(BaseModel):
     available_days: list[Weekday]
     weekly_hours: WeeklyHours | None
     display_name: str
+    strength: StrengthOut
