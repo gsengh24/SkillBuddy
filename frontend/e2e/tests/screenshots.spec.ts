@@ -46,7 +46,7 @@ async function shoot(page: Page, name: string) {
 test("Home and its reference, at 390 and 1280px", async ({ page, request }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1280, height: 900 });
-  await signUp(page, request, "/onboarding");
+  await signUp(page, request, "/onboarding/describe");
   await page.getByLabel("Your name", { exact: true }).fill("Dev");
   await page
     .getByLabel("About you", { exact: true })

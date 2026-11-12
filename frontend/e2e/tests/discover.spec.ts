@@ -22,7 +22,7 @@ async function expectNoViolations(page: Page) {
 test("ask for matches from Discover and see the request finish", async ({ page, request }) => {
   test.setTimeout(150_000);
   await page.setViewportSize({ width: 390, height: 844 });
-  await signUp(page, request, "/onboarding");
+  await signUp(page, request, "/onboarding/describe");
 
   await page.getByLabel("Your name", { exact: true }).fill("Dev");
   await page

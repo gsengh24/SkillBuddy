@@ -7,6 +7,7 @@ export { Accordion, type AccordionItem } from "./accordion";
 export { Avatar } from "./avatar";
 export { BottomNav, type BottomNavItem } from "./bottom-nav";
 export { Button, ButtonLink, buttonClasses, type ButtonVariant } from "./button";
+export { ChoiceCard, ChoiceChip, RadioSegments, StepProgress, type RadioOption } from "./choices";
 export { Dialog } from "./dialog";
 export { InlineError, Input, Select, Textarea, Toast } from "./fields";
 export * from "./icons";

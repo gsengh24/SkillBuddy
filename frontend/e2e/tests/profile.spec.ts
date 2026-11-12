@@ -27,7 +27,7 @@ test("create a profile, see what was understood, correct it, pause matching, edi
 }) => {
   test.setTimeout(240_000);
   await page.setViewportSize({ width: 390, height: 844 });
-  const email = await signUp(page, request, "/onboarding");
+  const email = await signUp(page, request, "/onboarding/describe");
   await expect(page.getByRole("heading", { name: "Tell us about you" })).toBeVisible();
   await expectNoViolations(page);
 
