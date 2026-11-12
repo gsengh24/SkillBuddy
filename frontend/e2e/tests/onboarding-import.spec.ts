@@ -91,8 +91,14 @@ test("resume import reads a PDF in the browser (screen 6)", async ({ page }) => 
     held = new Promise<void>((resolve) => {
       release = resolve;
     });
-    await resume.getByLabel("Choose a resume PDF").setInputFiles(RESUME);
-    await expect(resume.getByRole("heading", { name: /Reading your resume/ })).toBeVisible();
+    // A file picked before the page has hydrated is ignored: pick again until it reads.
+    const reading = resume.getByRole("heading", { name: /Reading your resume/ });
+    await expect(async () => {
+      if (!(await reading.isVisible())) {
+        await resume.getByLabel("Choose a resume PDF").setInputFiles(RESUME);
+      }
+      await expect(reading).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
     await expect(resume.getByText("synthetic-resume.pdf")).toBeVisible();
     await shoot(resume, `onboarding-resume-reading-${name}`);
     held = null;
@@ -139,7 +145,13 @@ test("paste anything finds skills without sending the text (screen 7)", async ({
     const box = paste.getByLabel("Text about you");
     await expect(paste.getByRole("button", { name: "Find my skills" })).toBeDisabled();
     await shoot(paste, `onboarding-paste-empty-${name}`);
-    await box.fill(PASTED);
+    // Typing before the page has hydrated is lost: fill again until the button wakes up.
+    await expect(async () => {
+      await box.fill(PASTED);
+      await expect(paste.getByRole("button", { name: "Find my skills" })).toBeEnabled({
+        timeout: 2_000,
+      });
+    }).toPass({ timeout: 30_000 });
     await shoot(paste, `onboarding-paste-filled-${name}`);
     await paste.getByRole("button", { name: "Find my skills" }).click();
     await expect(paste.getByRole("heading", { name: /We found these/ })).toBeVisible();
